@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -19,7 +20,7 @@
       <a href="#inicio" class="logo" id="brandLogo" aria-label="Reciclaje LogiKAS inicio">
         <span class="logo-mark">RG</span>
         <span class="logo-text-wrap">
-          <span class="logo-text">Reciclaje LogiKAS</span>
+          <span class="logo-text">Reciclaje Logi<span class="logo-kas">KAS</span></span>
           <span class="logo-subtext">Mexico</span>
         </span>
       </a>
@@ -94,18 +95,21 @@
       </div>
       <div class="quick-prices-grid">
         <article class="quick-price-card reveal">
+          <span class="quick-icon" aria-hidden="true"><i class="bi bi-phone"></i></span>
           <p class="quick-tag">Celular Tipo 1</p>
           <p class="quick-value">$1,300 /kg</p>
           <p class="quick-copy">Mayor valor por kilo cuando cumple condiciones premium.</p>
           <a class="btn btn-ghost open-material-selector" href="#registro">Ver tipos</a>
         </article>
         <article class="quick-price-card reveal delay-1">
+          <span class="quick-icon" aria-hidden="true"><i class="bi bi-memory"></i></span>
           <p class="quick-tag">RAM</p>
           <p class="quick-value">$450 /kg</p>
           <p class="quick-copy">Aceptamos modulos de varias generaciones y capacidades.</p>
           <a class="btn btn-ghost open-material-selector" href="#registro">Vender RAM</a>
         </article>
         <article class="quick-price-card reveal delay-2">
+          <span class="quick-icon" aria-hidden="true"><i class="bi bi-laptop"></i></span>
           <p class="quick-tag">Laptop</p>
           <p class="quick-value">$150 /kg</p>
           <p class="quick-copy">Placas de laptop en diferentes condiciones y modelos.</p>
@@ -121,32 +125,32 @@
       </div>
       <div class="card-grid">
         <article class="card reveal">
-          <p class="card-icon">CELL</p>
+          <p class="card-icon"><i class="bi bi-phone"></i> CELL</p>
           <h3>Logicas de celular</h3>
           <p>Tarjetas madre de equipos moviles, funcionales o danadas.</p>
         </article>
         <article class="card reveal delay-1">
-          <p class="card-icon">TAB</p>
+          <p class="card-icon"><i class="bi bi-tablet-landscape"></i> TAB</p>
           <h3>Logicas de tablet</h3>
           <p>Tarjetas de tabletas viejas, inservibles o para descarte.</p>
         </article>
         <article class="card reveal delay-2">
-          <p class="card-icon">LAP</p>
+          <p class="card-icon"><i class="bi bi-laptop"></i> LAP</p>
           <h3>Logicas de laptop</h3>
           <p>Motherboards y placas de portatiles en cualquier condicion.</p>
         </article>
         <article class="card reveal delay-1">
-          <p class="card-icon">RAM</p>
+          <p class="card-icon"><i class="bi bi-memory"></i> RAM</p>
           <h3>Memorias RAM</h3>
           <p>Modulos DDR de escritorio o laptop, nuevos o usados.</p>
         </article>
         <article class="card reveal delay-2">
-          <p class="card-icon">CPU</p>
+          <p class="card-icon"><i class="bi bi-cpu"></i> CPU</p>
           <h3>CPUs</h3>
           <p>Procesadores de diferentes generaciones y marcas.</p>
         </article>
         <article class="card reveal delay-3">
-          <p class="card-icon">NET</p>
+          <p class="card-icon"><i class="bi bi-router"></i> NET</p>
           <h3>Modems y tarjetas</h3>
           <p>Equipos de red, placas y otros componentes electronicos.</p>
         </article>
@@ -407,7 +411,7 @@
 
   <footer class="site-footer">
     <div class="container footer-content">
-      <p>Reciclaje LogiKAS - Compra de componentes para reciclaje y destruccion responsable.</p>
+      <p>Reciclaje Logi<span class="logo-kas">KAS</span> - Compra de componentes para reciclaje y destruccion responsable.</p>
       <p>Mexico</p>
     </div>
   </footer>
