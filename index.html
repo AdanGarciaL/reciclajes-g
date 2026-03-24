@@ -1,0 +1,417 @@
+﻿<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reciclajes G | Compra de Electronica en Mexico</title>
+  <meta name="description" content="Compramos tarjetas logicas y componentes electronicos para destruccion y reciclaje en todo Mexico." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg-mesh" aria-hidden="true"></div>
+  <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <nav class="nav container">
+      <a href="#inicio" class="logo" id="brandLogo" aria-label="Reciclajes G inicio">
+        <span class="logo-mark">RG</span>
+        <span class="logo-text-wrap">
+          <span class="logo-text">Reciclajes G</span>
+          <span class="logo-subtext">Mexico</span>
+        </span>
+      </a>
+      <button class="menu-btn" id="menuBtn" aria-label="Abrir menu">Menu</button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#que-compramos">Materiales</a></li>
+        <li><a href="#registro" class="open-material-selector">Tengo material</a></li>
+        <li><a href="#proceso">Proceso</a></li>
+        <li><a href="#galeria">Galeria</a></li>
+        <li><a href="#contacto">Contacto</a></li>
+      </ul>
+      <a class="btn btn-primary nav-cta open-material-selector" href="#registro">Tengo material</a>
+    </nav>
+  </header>
+
+  <section class="campaign-strip" id="campaignStrip" aria-label="Campana activa">
+    <div class="container campaign-strip-inner">
+      <p>Oferta de campana: evaluacion prioritaria de lotes grandes en menos de 24h.</p>
+      <a class="btn btn-primary open-material-selector" href="#registro">Cotizar ahora</a>
+    </div>
+  </section>
+
+  <main>
+    <section class="hero container" id="inicio">
+      <div class="hero-main">
+        <div class="hero-copy-wrap">
+          <p class="eyebrow reveal">Compra responsable en Mexico</p>
+          <h1 class="reveal delay-1">Convertimos electronica guardada en una compra rapida y clara</h1>
+          <p class="hero-copy reveal delay-2">
+            Compramos logicas y componentes para reciclaje y destruccion. Atendemos tecnicos,
+            chatarreros, talleres y negocios de todo Mexico con trato directo.
+          </p>
+          <div class="hero-cta reveal delay-3">
+            <a class="btn btn-primary open-material-selector" id="heroPrimaryCta" href="#registro">Quiero vender mi material</a>
+            <a class="btn btn-ghost" id="heroSecondaryCta" href="#proceso">Ver como funciona</a>
+          </div>
+          <div class="hero-note reveal delay-4">
+            <strong>Importante:</strong> El material se compra para destruccion/desguesadero.
+            Por eso el precio es bajo y se cotiza por tipo, peso y estado.
+          </div>
+        </div>
+
+        <div class="hero-visual reveal delay-2">
+          <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=80" alt="Tarjetas electronicas para reciclaje" />
+          <div class="hero-badge">Cobertura nacional</div>
+          <div class="hero-badge hero-badge-alt">Respuesta rapida por formulario</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats-band">
+      <div class="container stats-grid reveal">
+        <article>
+          <p class="stat-number">6+</p>
+          <p class="stat-label">Tipos de material</p>
+        </article>
+        <article>
+          <p class="stat-number">32</p>
+          <p class="stat-label">Estados de cobertura</p>
+        </article>
+        <article>
+          <p class="stat-number">24h</p>
+          <p class="stat-label">Tiempo de respuesta meta</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="quick-prices container">
+      <div class="section-head reveal">
+        <p class="eyebrow">Precios rapidos</p>
+        <h2>Lo mas buscado hoy</h2>
+      </div>
+      <div class="quick-prices-grid">
+        <article class="quick-price-card reveal">
+          <p class="quick-tag">Celular Tipo 1</p>
+          <p class="quick-value">$1,300 /kg</p>
+          <p class="quick-copy">Mayor valor por kilo cuando cumple condiciones premium.</p>
+          <a class="btn btn-ghost open-material-selector" href="#registro">Ver tipos</a>
+        </article>
+        <article class="quick-price-card reveal delay-1">
+          <p class="quick-tag">RAM</p>
+          <p class="quick-value">$450 /kg</p>
+          <p class="quick-copy">Aceptamos modulos de varias generaciones y capacidades.</p>
+          <a class="btn btn-ghost open-material-selector" href="#registro">Vender RAM</a>
+        </article>
+        <article class="quick-price-card reveal delay-2">
+          <p class="quick-tag">Laptop</p>
+          <p class="quick-value">$150 /kg</p>
+          <p class="quick-copy">Placas de laptop en diferentes condiciones y modelos.</p>
+          <a class="btn btn-ghost open-material-selector" href="#registro">Vender laptop</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="materials container" id="que-compramos">
+      <div class="section-head reveal">
+        <p class="eyebrow">Materiales</p>
+        <h2>Que compramos</h2>
+      </div>
+      <div class="card-grid">
+        <article class="card reveal">
+          <p class="card-icon">CELL</p>
+          <h3>Logicas de celular</h3>
+          <p>Tarjetas madre de equipos moviles, funcionales o danadas.</p>
+        </article>
+        <article class="card reveal delay-1">
+          <p class="card-icon">TAB</p>
+          <h3>Logicas de tablet</h3>
+          <p>Tarjetas de tabletas viejas, inservibles o para descarte.</p>
+        </article>
+        <article class="card reveal delay-2">
+          <p class="card-icon">LAP</p>
+          <h3>Logicas de laptop</h3>
+          <p>Motherboards y placas de portatiles en cualquier condicion.</p>
+        </article>
+        <article class="card reveal delay-1">
+          <p class="card-icon">RAM</p>
+          <h3>Memorias RAM</h3>
+          <p>Modulos DDR de escritorio o laptop, nuevos o usados.</p>
+        </article>
+        <article class="card reveal delay-2">
+          <p class="card-icon">CPU</p>
+          <h3>CPUs</h3>
+          <p>Procesadores de diferentes generaciones y marcas.</p>
+        </article>
+        <article class="card reveal delay-3">
+          <p class="card-icon">NET</p>
+          <h3>Modems y tarjetas</h3>
+          <p>Equipos de red, placas y otros componentes electronicos.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- MATERIAL SELECTOR MODAL -->
+    <section class="material-selector-modal" id="materialSelectorModal" style="display: none;">
+      <div class="modal-overlay" id="modalOverlay"></div>
+      <div class="modal-content">
+        <button class="modal-close" id="modalClose" aria-label="Cerrar">×</button>
+        <div class="modal-head">
+          <h2>¿Qué tipo de material tienes?</h2>
+          <p>Selecciona para ver precio, imagenes y consideraciones</p>
+        </div>
+        <div class="material-grid">
+          <button class="material-btn" data-material="celular">
+            <span class="material-icon">📱</span>
+            <span class="material-text">Celular</span>
+          </button>
+          <button class="material-btn" data-material="teclado">
+            <span class="material-icon">⌨️</span>
+            <span class="material-text">Teclado/Keyboard</span>
+          </button>
+          <button class="material-btn" data-material="tablet">
+            <span class="material-icon">📲</span>
+            <span class="material-text">Tablet</span>
+          </button>
+          <button class="material-btn" data-material="ram">
+            <span class="material-icon">🖬</span>
+            <span class="material-text">RAM</span>
+            <span class="material-price">$450 /kg</span>
+          </button>
+          <button class="material-btn" data-material="laptop">
+            <span class="material-icon">💻</span>
+            <span class="material-text">Laptop</span>
+            <span class="material-price">$150 /kg</span>
+          </button>
+          <button class="material-btn" data-material="otro">
+            <span class="material-icon">⚙️</span>
+            <span class="material-text">Otra cosa</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CELULAR TYPES DISPLAY (shown after selecting celular) -->
+    <section class="celular-types container" id="tipos-celular" style="display: none;">
+      <div class="section-head reveal">
+        <button class="back-btn" id="backBtn">← Atrás</button>
+        <p class="eyebrow">Logica de celular</p>
+        <h2>Tipos y precios segun caracteristicas</h2>
+      </div>
+      <div class="types-selector reveal delay-1">
+        <button class="type-btn active" data-type="tipo1">
+          <span class="type-label">Tipo 1</span>
+          <span class="type-price">$1,300 /kg</span>
+        </button>
+        <button class="type-btn" data-type="tipo2">
+          <span class="type-label">Tipo 2</span>
+          <span class="type-price">$350 /kg</span>
+        </button>
+        <button class="type-btn" data-type="tipo3">
+          <span class="type-label">Tipo 3</span>
+          <span class="type-price">$150 /kg</span>
+        </button>
+        <button class="type-btn" data-type="tipo4">
+          <span class="type-label">Sin pila/tapa</span>
+          <span class="type-price">$100 /kg</span>
+        </button>
+      </div>
+      <div class="type-content reveal delay-2">
+        <div class="carousel-container">
+          <div class="carousel-viewer">
+            <img class="carousel-image" id="carouselImage" src="" alt="Imagen de referencia" />
+            <button class="carousel-btn carousel-prev" id="carouselPrev" aria-label="Anterior">❮</button>
+            <button class="carousel-btn carousel-next" id="carouselNext" aria-label="Siguiente">❯</button>
+          </div>
+          <div class="carousel-dots" id="carouselDots"></div>
+        </div>
+        <div class="type-specs">
+          <h3>Consideraciones importantes</h3>
+          <ul id="typeSpecs"></ul>
+        </div>
+      </div>
+      <div class="modal-actions reveal delay-3">
+        <a class="btn btn-primary" href="#registro">Tengo este material</a>
+        <button class="btn btn-ghost" id="backBtn2">Atrás</button>
+      </div>
+    </section>
+
+    <!-- OTHER MATERIAL TYPES DISPLAY (for RAM, Laptop, etc) -->
+    <section class="other-material-display container" id="otherMaterialDisplay" style="display: none;">
+      <div class="section-head reveal">
+        <button class="back-btn" id="backBtn3">← Atrás</button>
+        <p class="eyebrow" id="otherMaterialEyebrow"></p>
+        <h2 id="otherMaterialTitle"></h2>
+      </div>
+      <div class="other-material-content reveal delay-1">
+        <div class="price-banner" id="priceBanner"></div>
+        <div class="carousel-container">
+          <div class="carousel-viewer">
+            <img class="carousel-image" id="materialCarouselImage" src="" alt="Imagen de referencia" />
+            <button class="carousel-btn carousel-prev" id="materialCarouselPrev" aria-label="Anterior">❮</button>
+            <button class="carousel-btn carousel-next" id="materialCarouselNext" aria-label="Siguiente">❯</button>
+          </div>
+          <div class="carousel-dots" id="materialCarouselDots"></div>
+        </div>
+        <div class="material-specs">
+          <h3>Consideraciones importantes</h3>
+          <ul id="materialSpecsList"></ul>
+        </div>
+      </div>
+      <div class="modal-actions reveal delay-2">
+        <a class="btn btn-primary" href="#registro">Tengo este material</a>
+        <button class="btn btn-ghost" id="backBtn4">Atrás</button>
+      </div>
+    </section>
+
+    <section class="pricing container" id="precios">
+      <div class="section-head reveal">
+        <p class="eyebrow">Transparencia</p>
+        <h2>Como manejamos el precio</h2>
+      </div>
+      <div class="pricing-box reveal delay-1">
+        <p>
+          El precio depende de material, volumen, estado fisico y logistica.
+          Como el destino es reciclaje y destruccion, la cotizacion es menor que una pieza funcional de reventa.
+        </p>
+        <ul>
+          <li>Cotizacion clara antes de cerrar trato.</li>
+          <li>Atencion para lotes pequenos y grandes.</li>
+          <li>Pago y condiciones definidas de forma previa.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="process container" id="proceso">
+      <div class="section-head reveal">
+        <p class="eyebrow">Proceso simple</p>
+        <h2>Como funciona</h2>
+      </div>
+      <div class="steps">
+        <article class="step reveal">
+          <span>01</span>
+          <h3>Nos contactas</h3>
+          <p>Envias fotos y descripcion del material por WhatsApp o formulario.</p>
+        </article>
+        <article class="step reveal delay-1">
+          <span>02</span>
+          <h3>Te cotizamos</h3>
+          <p>Revisamos tipo de componente, kilos y estado para darte precio.</p>
+        </article>
+        <article class="step reveal delay-2">
+          <span>03</span>
+          <h3>Cerramos compra</h3>
+          <p>Definimos envio o entrega local y registramos la compra de forma segura.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="gallery container" id="galeria">
+      <div class="section-head reveal">
+        <p class="eyebrow">Operacion</p>
+        <h2>Asi luce el material que recibimos</h2>
+      </div>
+      <div class="gallery-grid">
+        <article class="gallery-card reveal">
+          <img src="Galeria/logica_celular.jpg" alt="Logicas de celular para reciclaje" />
+        </article>
+        <article class="gallery-card reveal delay-1">
+          <img src="Galeria/logica_lapcpu.jpg" alt="Logicas de laptop y CPU para reciclaje" />
+        </article>
+        <article class="gallery-card reveal delay-2">
+          <img src="Galeria/logica_ram.jpg" alt="Modulos RAM y componentes electronicos" />
+        </article>
+      </div>
+    </section>
+
+    <section class="register container" id="registro">
+      <div class="section-head reveal">
+        <p class="eyebrow">Registro rapido</p>
+        <h2>Yo tengo material</h2>
+      </div>
+      <form class="lead-form reveal delay-1" id="leadForm">
+        <div class="field-grid">
+          <label>
+            Nombre completo
+            <input type="text" name="fullName" required placeholder="Ej. Juan Perez" />
+          </label>
+          <label>
+            Telefono de contacto
+            <input type="tel" name="phone" required placeholder="Ej. 5512345678" />
+          </label>
+          <label>
+            Tipo de material
+            <select name="materialType" required>
+              <option value="">Selecciona una opcion</option>
+              <option value="Logica de celular">Logica de celular</option>
+              <option value="Logica de tablet">Logica de tablet</option>
+              <option value="Logica de laptop">Logica de laptop</option>
+              <option value="RAM">RAM</option>
+              <option value="CPU">CPU</option>
+              <option value="Modem">Modem</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </label>
+          <label>
+            Cantidad aproximada (kg)
+            <input type="number" name="kilos" min="0" step="0.1" required placeholder="Ej. 12.5" />
+          </label>
+        </div>
+        <label>
+          Ubicacion (ciudad/estado o direccion)
+          <input type="text" name="locationText" id="locationText" required placeholder="Ej. Guadalajara, Jalisco" />
+        </label>
+        <div class="geo-row">
+          <button type="button" class="btn btn-ghost" id="detectLocationBtn">Detectar mi ubicacion</button>
+          <p id="geoStatus" class="geo-status"></p>
+        </div>
+        <label>
+          Comentarios adicionales
+          <textarea name="notes" rows="3" placeholder="Ej. Tengo tarjetas mezcladas y algunas piezas sueltas"></textarea>
+        </label>
+        <button class="btn btn-primary" type="submit">Enviar registro</button>
+        <p id="leadSuccess" class="success-msg" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="coverage container" id="cobertura">
+      <div class="section-head reveal">
+        <p class="eyebrow">Cobertura</p>
+        <h2>Queremos llegar a todo Mexico</h2>
+      </div>
+      <p class="coverage-copy reveal delay-1">
+        Atendemos tecnicos, chatarreros, talleres y personas con material electronico acumulado.
+        Si estas en cualquier estado de la Republica Mexicana, escribenos y revisamos envio o recoleccion.
+      </p>
+    </section>
+
+    <section class="contact container" id="contacto">
+      <div class="contact-panel reveal">
+        <h2>Listo para vender tu material?</h2>
+        <p>
+          Registrate en el formulario y te cotizamos rapido.
+          Te respondemos con base en tipo de material, kilos y ubicacion.
+        </p>
+        <div class="contact-actions">
+          <a class="btn btn-primary open-material-selector" href="#registro">Iniciar cotizacion</a>
+          <a class="btn btn-ghost open-material-selector" href="#registro">Llenar formulario</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <a class="floating-wa open-material-selector" href="#registro" aria-label="Abrir formulario">GO</a>
+  <a class="floating-admin" id="floatingAdminBtn" href="admin.html" aria-label="Abrir panel admin">Admin</a>
+
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <p>Reciclajes G - Compra de componentes para reciclaje y destruccion responsable.</p>
+      <p>Mexico</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reciclajes G | Panel Admin</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <div class="admin-shell">
+    <header class="admin-header">
+      <h1>Panel Interno Reciclajes G</h1>
+      <p>Acceso restringido para administracion de registros.</p>
+    </header>
+
+    <main>
+      <form class="admin-login" id="adminLoginForm">
+        <label>
+          Usuario
+          <input type="text" name="username" placeholder="Usuario" required />
+        </label>
+        <label>
+          Contrasena
+          <input type="password" name="password" placeholder="Contrasena" required />
+        </label>
+        <button type="submit" class="btn btn-primary">Iniciar sesion</button>
+        <p id="loginMsg" class="geo-status" aria-live="polite"></p>
+      </form>
+
+      <section class="admin-panel hidden" id="adminPanel">
+        <div class="admin-toolbar">
+          <p>Registros recibidos de Tengo material</p>
+          <button type="button" class="btn btn-ghost" id="logoutBtn">Cerrar sesion</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Nombre</th>
+                <th>Telefono</th>
+                <th>Material</th>
+                <th>Kg</th>
+                <th>Ubicacion</th>
+                <th>Coordenadas</th>
+                <th>Notas</th>
+              </tr>
+            </thead>
+            <tbody id="leadsTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
