@@ -682,7 +682,8 @@ typeBtns.forEach((btn) => {
 
 loadTypeContent("tipo1");
 
-const LEADS_KEY = "reciclajesGLeads";
+const LEADS_KEY = "reciclajeLogikasLeads";
+const LEGACY_LEADS_KEY = "reciclajesGLeads";
 
 const leadForm = document.getElementById("leadForm");
 const detectLocationBtn = document.getElementById("detectLocationBtn");
@@ -693,7 +694,7 @@ const leadSuccess = document.getElementById("leadSuccess");
 let currentCoordinates = "";
 
 function getLeads() {
-  const raw = localStorage.getItem(LEADS_KEY);
+  const raw = localStorage.getItem(LEADS_KEY) || localStorage.getItem(LEGACY_LEADS_KEY);
   if (!raw) {
     return [];
   }
@@ -708,6 +709,7 @@ function getLeads() {
 
 function saveLeads(leads) {
   localStorage.setItem(LEADS_KEY, JSON.stringify(leads));
+  localStorage.removeItem(LEGACY_LEADS_KEY);
 }
 
 

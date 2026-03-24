@@ -1,5 +1,7 @@
-const LEADS_KEY = "reciclajesGLeads";
-const ADMIN_SESSION_KEY = "reciclajesGAdminSession";
+const LEADS_KEY = "reciclajeLogikasLeads";
+const LEGACY_LEADS_KEY = "reciclajesGLeads";
+const ADMIN_SESSION_KEY = "reciclajeLogikasAdminSession";
+const LEGACY_ADMIN_SESSION_KEY = "reciclajesGAdminSession";
 const ADMIN_USER = "AdanGL";
 const ADMIN_PASS = "Agl252002";
 
@@ -10,7 +12,7 @@ const logoutBtn = document.getElementById("logoutBtn");
 const leadsTableBody = document.getElementById("leadsTableBody");
 
 function getLeads() {
-  const raw = localStorage.getItem(LEADS_KEY);
+  const raw = localStorage.getItem(LEADS_KEY) || localStorage.getItem(LEGACY_LEADS_KEY);
   if (!raw) {
     return [];
   }
@@ -85,6 +87,7 @@ if (adminLoginForm && loginMsg) {
 
     if (username === ADMIN_USER && password === ADMIN_PASS) {
       localStorage.setItem(ADMIN_SESSION_KEY, "1");
+      localStorage.removeItem(LEGACY_ADMIN_SESSION_KEY);
       loginMsg.textContent = "Acceso correcto.";
       setAdminView(true);
       return;
@@ -97,8 +100,12 @@ if (adminLoginForm && loginMsg) {
 if (logoutBtn) {
   logoutBtn.addEventListener("click", () => {
     localStorage.removeItem(ADMIN_SESSION_KEY);
+    localStorage.removeItem(LEGACY_ADMIN_SESSION_KEY);
     setAdminView(false);
   });
 }
 
-setAdminView(localStorage.getItem(ADMIN_SESSION_KEY) === "1");
+setAdminView(
+  localStorage.getItem(ADMIN_SESSION_KEY) === "1" ||
+    localStorage.getItem(LEGACY_ADMIN_SESSION_KEY) === "1"
+);
