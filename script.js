@@ -21,10 +21,14 @@ function initThemeToggle() {
   function updateTheme(isDark) {
     if (isDark) {
       document.body.classList.add("dark-mode");
-      themeIcon.className = "bi bi-sun-fill";
+      if (themeIcon) {
+        themeIcon.className = "bi bi-sun-fill";
+      }
     } else {
       document.body.classList.remove("dark-mode");
-      themeIcon.className = "bi bi-moon-fill";
+      if (themeIcon) {
+        themeIcon.className = "bi bi-moon-fill";
+      }
     }
     localStorage.setItem("theme-preference", isDark ? "dark" : "light");
   }
@@ -37,11 +41,17 @@ function initThemeToggle() {
   }
 
   // Listen for system theme changes
-  prefersDark.addEventListener("change", (e) => {
+  const onSystemThemeChange = (e) => {
     if (!localStorage.getItem("theme-preference")) {
       updateTheme(e.matches);
     }
-  });
+  };
+
+  if (typeof prefersDark.addEventListener === "function") {
+    prefersDark.addEventListener("change", onSystemThemeChange);
+  } else if (typeof prefersDark.addListener === "function") {
+    prefersDark.addListener(onSystemThemeChange);
+  }
 
   // Toggle button click
   if (themeToggle) {
@@ -100,23 +110,29 @@ if (menuBtn && navLinks) {
   });
 }
 
-const observer = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add("show");
-        observer.unobserve(entry.target);
-      }
-    });
-  },
-  {
-    threshold: 0.15,
-  }
-);
+if ("IntersectionObserver" in window) {
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("show");
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    {
+      threshold: 0.15,
+    }
+  );
 
-document.querySelectorAll(".reveal").forEach((element) => {
-  observer.observe(element);
-});
+  document.querySelectorAll(".reveal").forEach((element) => {
+    observer.observe(element);
+  });
+} else {
+  document.querySelectorAll(".reveal").forEach((element) => {
+    element.classList.add("show");
+  });
+}
 
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -369,6 +385,12 @@ if (modalOverlay) {
   modalOverlay.addEventListener("click", hideMaterialSelector);
 }
 
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && materialSelectorModal?.classList.contains("active")) {
+    hideMaterialSelector();
+  }
+});
+
 // Handle material selection
 materialBtns.forEach((btn) => {
   btn.addEventListener("click", () => {
@@ -449,7 +471,9 @@ function fillFormAndScroll() {
   window.location.hash = "#registro";
   setTimeout(() => {
     const formSection = document.getElementById("registro");
-    formSection.scrollIntoView({ behavior: "smooth" });
+    if (formSection) {
+      formSection.scrollIntoView({ behavior: "smooth" });
+    }
   }, 100);
 }
 
@@ -614,11 +638,19 @@ function displayOtherMaterial(material) {
   const data = otherMaterialData[material];
   if (!data) return;
 
-  document.getElementById("otherMaterialEyebrow").textContent = data.eyebrow;
-  document.getElementById("otherMaterialTitle").textContent = data.title;
-  document.getElementById("priceBanner").innerHTML = `<div class="price-text">Rango referencial: <strong>${data.price}</strong></div>`;
+  const eyebrow = document.getElementById("otherMaterialEyebrow");
+  const title = document.getElementById("otherMaterialTitle");
+  const priceBanner = document.getElementById("priceBanner");
+  const specsList = document.getElementById("materialSpecsList");
+  if (!eyebrow || !title || !priceBanner || !specsList || !otherMaterialSection) {
+    return;
+  }
 
-  document.getElementById("materialSpecsList").innerHTML = data.specs
+  eyebrow.textContent = data.eyebrow;
+  title.textContent = data.title;
+  priceBanner.innerHTML = `<div class="price-text">Rango referencial: <strong>${data.price}</strong></div>`;
+
+  specsList.innerHTML = data.specs
     .map((spec) => `<li>${spec}</li>`)
     .join("");
 
@@ -649,7 +681,7 @@ function initTypeCarousel(images) {
   const carouselPrev = document.getElementById("carouselPrev");
   const carouselNext = document.getElementById("carouselNext");
 
-  if (!carouselImage || !images || images.length === 0) return;
+  if (!carouselImage || !carouselDots || !carouselPrev || !carouselNext || !images || images.length === 0) return;
 
   currentCarouselIndex = 0;
 
@@ -725,7 +757,14 @@ function initMaterialCarousel(images) {
   const materialCarouselPrev = document.getElementById("materialCarouselPrev");
   const materialCarouselNext = document.getElementById("materialCarouselNext");
 
-  if (!materialCarouselImage || !images || images.length === 0) return;
+  if (
+    !materialCarouselImage ||
+    !materialCarouselDots ||
+    !materialCarouselPrev ||
+    !materialCarouselNext ||
+    !images ||
+    images.length === 0
+  ) return;
 
   currentMaterialCarouselIndex = 0;
 
@@ -793,7 +832,7 @@ function initMaterialCarousel(images) {
 
 function loadTypeContent(typeKey) {
   const data = typeData[typeKey];
-  if (!data) return;
+  if (!data || !typeSpecs) return;
 
   typeSpecs.innerHTML = data.specs
     .map((spec) => `<li>${spec}</li>`)
@@ -989,8 +1028,13 @@ function getLeads() {
 }
 
 function saveLeads(leads) {
-  localStorage.setItem(LEADS_KEY, JSON.stringify(leads));
-  localStorage.removeItem(LEGACY_LEADS_KEY);
+  try {
+    localStorage.setItem(LEADS_KEY, JSON.stringify(leads));
+    localStorage.removeItem(LEGACY_LEADS_KEY);
+    return true;
+  } catch (_error) {
+    return false;
+  }
 }
 
 if (detectLocationBtn && locationTextInput && geoStatus) {
@@ -1010,11 +1054,29 @@ if (detectLocationBtn && locationTextInput && geoStatus) {
         locationTextInput.value = `Coordenadas: ${currentCoordinates}`;
         geoStatus.textContent = "Ubicación detectada. Puedes editarla si quieres.";
       },
-      () => {
-        geoStatus.textContent = "No se pudo obtener ubicación. Escribe tu ciudad/estado manualmente.";
+      (error) => {
+        if (error?.code === 1) {
+          geoStatus.textContent = "Permiso denegado. Escribe tu ciudad/estado manualmente.";
+        } else if (error?.code === 2) {
+          geoStatus.textContent = "Ubicación no disponible. Intenta de nuevo o escribe tu ciudad/estado.";
+        } else if (error?.code === 3) {
+          geoStatus.textContent = "Se agotó el tiempo de detección. Escribe tu ciudad/estado manualmente.";
+        } else {
+          geoStatus.textContent = "No se pudo obtener ubicación. Escribe tu ciudad/estado manualmente.";
+        }
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 120000,
       }
     );
   });
+}
+
+function isValidMexPhone(phone) {
+  const digitsOnly = String(phone || "").replace(/\D/g, "");
+  return digitsOnly.length >= 10 && digitsOnly.length <= 13;
 }
 
 if (leadForm && leadSuccess) {
@@ -1025,11 +1087,38 @@ if (leadForm && leadSuccess) {
     const kilosValue = Number(formData.get("kilos"));
     const stateValue = formData.get("state")?.toString().trim() || "";
     const locationValue = formData.get("locationText")?.toString().trim() || "";
+    const fullNameValue = formData.get("fullName")?.toString().trim() || "";
+    const phoneValue = formData.get("phone")?.toString().trim() || "";
+    const legalConsent = formData.get("legalConsent")?.toString() === "on";
     const inActiveCoverage = isInActiveCoverage(stateValue) || isInActiveCoverage(locationValue);
     const inMin10Coverage =
       isInMin10Coverage(stateValue) ||
       isInMin10Coverage(locationValue) ||
       !inActiveCoverage;
+
+    if (fullNameValue.length < 3) {
+      leadSuccess.classList.add("is-error");
+      leadSuccess.textContent = "Escribe tu nombre completo para continuar.";
+      return;
+    }
+
+    if (!isValidMexPhone(phoneValue)) {
+      leadSuccess.classList.add("is-error");
+      leadSuccess.textContent = "Escribe un teléfono válido (10 a 13 dígitos).";
+      return;
+    }
+
+    if (!Number.isFinite(kilosValue) || kilosValue <= 0) {
+      leadSuccess.classList.add("is-error");
+      leadSuccess.textContent = "Ingresa una cantidad válida en kg (mayor a 0).";
+      return;
+    }
+
+    if (!legalConsent) {
+      leadSuccess.classList.add("is-error");
+      leadSuccess.textContent = "Debes aceptar el aviso de privacidad y términos para enviar el registro.";
+      return;
+    }
 
     if (inMin10Coverage && (!Number.isFinite(kilosValue) || kilosValue < 10)) {
       leadSuccess.classList.add("is-error");
@@ -1039,8 +1128,8 @@ if (leadForm && leadSuccess) {
 
     const lead = {
       date: new Date().toLocaleString("es-MX"),
-      fullName: formData.get("fullName")?.toString().trim(),
-      phone: formData.get("phone")?.toString().trim(),
+      fullName: fullNameValue,
+      phone: phoneValue,
       materialType: formData.get("materialType")?.toString().trim(),
       kilos: formData.get("kilos")?.toString().trim(),
       state: stateValue,
@@ -1051,7 +1140,12 @@ if (leadForm && leadSuccess) {
 
     const leads = getLeads();
     leads.unshift(lead);
-    saveLeads(leads);
+    const saved = saveLeads(leads);
+    if (!saved) {
+      leadSuccess.classList.add("is-error");
+      leadSuccess.textContent = "No se pudo guardar el registro en este dispositivo. Intenta liberar espacio y vuelve a enviar.";
+      return;
+    }
 
     leadForm.reset();
     currentCoordinates = "";
