@@ -14,6 +14,11 @@
   --shadow: 0 16px 40px rgba(20, 12, 8, 0.12);
   --max-width: 1180px;
   --transition: all 0.3s ease;
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 220ms;
+  --duration-medium: 360ms;
+  --hover-shadow-light: 0 16px 30px rgba(20, 12, 8, 0.15);
+  --hover-shadow-dark: 0 18px 34px rgba(0, 0, 0, 0.36);
 }
 
 body.dark-mode {
@@ -45,7 +50,9 @@ body {
 body {
   font-family: "Manrope", sans-serif;
   color: var(--ink);
-  line-height: 1.5;
+  line-height: 1.58;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
   transition: var(--transition);
   background:
     radial-gradient(1200px 500px at -10% -20%, rgba(209, 79, 26, 0.22), transparent 60%),
@@ -305,7 +312,14 @@ body.dark-mode .theme-toggle:hover {
 }
 
 .tab-panel {
-  animation: panelIn 0.26s ease;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.tab-panel.is-active {
+  opacity: 1;
+  transform: translateY(0);
+  animation: panelIn var(--duration-medium) var(--ease-standard);
 }
 
 section {
@@ -335,10 +349,11 @@ section {
 h1 {
   margin: 0.7rem 0 1rem;
   max-width: 16ch;
-  line-height: 1.03;
-  font-size: clamp(2.1rem, 6vw, 4.4rem);
+  line-height: 1.02;
+  font-size: clamp(2.2rem, 5.8vw, 4.65rem);
   color: #1a1410 !important;
   font-weight: 900;
+  letter-spacing: -0.02em;
 }
 
 body.dark-mode h1 {
@@ -348,6 +363,8 @@ body.dark-mode h1 {
 h2 {
   color: #1a1410 !important;
   font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.012em;
 }
 
 body.dark-mode h2 {
@@ -356,7 +373,9 @@ body.dark-mode h2 {
 
 h3 {
   color: #1a1410 !important;
-  font-weight: 700;
+  font-weight: 800;
+  line-height: 1.18;
+  letter-spacing: -0.008em;
 }
 
 body.dark-mode h3 {
@@ -394,6 +413,7 @@ textarea,
 select {
   color: #333333 !important;
   fill: #333333;
+  line-height: 1.64;
 }
 
 body.dark-mode .hero-copy,
@@ -453,7 +473,11 @@ body.dark-mode .hero-copy {
   padding: 0.82rem 1.26rem;
   font-weight: 800;
   text-decoration: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
 }
 
 .btn:hover {
@@ -631,7 +655,10 @@ body.dark-mode .stat-label {
   border-radius: 20px;
   padding: 1rem;
   box-shadow: 0 10px 24px rgba(20, 12, 8, 0.08);
-  transition: transform 0.28s ease, box-shadow 0.28s ease;
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
 }
 
 body.dark-mode .quick-price-card {
@@ -642,8 +669,12 @@ body.dark-mode .quick-price-card {
 
 
 .quick-price-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 18px 30px rgba(20, 12, 8, 0.16);
+  transform: translateY(-4px);
+  box-shadow: var(--hover-shadow-light);
+}
+
+body.dark-mode .quick-price-card:hover {
+  box-shadow: var(--hover-shadow-dark);
 }
 
 .quick-tag {
@@ -1050,11 +1081,19 @@ body.dark-mode .contact-panel {
 }
 
 .step {
-  transition: transform 0.22s ease;
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
 }
 
 .step:hover {
   transform: translateY(-4px);
+  box-shadow: var(--hover-shadow-light);
+}
+
+body.dark-mode .step:hover {
+  box-shadow: var(--hover-shadow-dark);
 }
 
 .step span {
@@ -1607,8 +1646,10 @@ body.dark-mode .footer-legal-links a {
 
 .reveal {
   opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.64s ease, transform 0.64s ease;
+  transform: translateY(18px);
+  transition:
+    opacity var(--duration-medium) var(--ease-standard),
+    transform var(--duration-medium) var(--ease-standard);
 }
 
 .reveal.show {
@@ -1617,19 +1658,19 @@ body.dark-mode .footer-legal-links a {
 }
 
 .delay-1 {
-  transition-delay: 0.08s;
+  transition-delay: 0.06s;
 }
 
 .delay-2 {
-  transition-delay: 0.16s;
+  transition-delay: 0.12s;
 }
 
 .delay-3 {
-  transition-delay: 0.24s;
+  transition-delay: 0.18s;
 }
 
 .delay-4 {
-  transition-delay: 0.32s;
+  transition-delay: 0.24s;
 }
 
 @keyframes fadeInContent {
@@ -1664,7 +1705,7 @@ body.dark-mode .footer-legal-links a {
 @keyframes panelIn {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -3035,6 +3076,95 @@ body.dark-mode .quick-icon {
 
 body.dark-mode .eyebrow {
   color: var(--accent);
+}
+
+/* ===== TYPE CALIBRATION (DESKTOP / TABLET / MOBILE) ===== */
+@media (min-width: 1025px) {
+  h1 {
+    font-size: clamp(3rem, 5vw, 5rem);
+    line-height: 1.01;
+    letter-spacing: -0.024em;
+  }
+
+  h2,
+  .section-head h2 {
+    font-size: clamp(1.9rem, 3.2vw, 2.8rem);
+    line-height: 1.06;
+  }
+
+  h3 {
+    font-size: 1.12rem;
+    line-height: 1.16;
+  }
+
+  .hero-copy,
+  .quick-copy,
+  .card p,
+  .step p,
+  .contact-panel p,
+  .pricing-box p {
+    font-size: 1.03rem;
+    line-height: 1.7;
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 641px) {
+  h1 {
+    font-size: clamp(2.35rem, 5vw, 3.6rem);
+    line-height: 1.03;
+    letter-spacing: -0.02em;
+  }
+
+  h2,
+  .section-head h2 {
+    font-size: clamp(1.6rem, 3.6vw, 2.2rem);
+    line-height: 1.1;
+  }
+
+  h3 {
+    font-size: 1.04rem;
+  }
+
+  .hero-copy,
+  .quick-copy,
+  .card p,
+  .step p,
+  .contact-panel p,
+  .pricing-box p {
+    font-size: 0.99rem;
+    line-height: 1.66;
+  }
+}
+
+@media (max-width: 640px) {
+  h1 {
+    font-size: clamp(1.75rem, 7vw, 2.6rem);
+    line-height: 1.08;
+    letter-spacing: -0.012em;
+  }
+
+  h2,
+  .section-head h2 {
+    font-size: clamp(1.34rem, 5.2vw, 1.9rem);
+    line-height: 1.14;
+  }
+
+  h3 {
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+
+  .hero-copy,
+  .quick-copy,
+  .card p,
+  .step p,
+  .contact-panel p,
+  .pricing-box p,
+  .form-policy-note,
+  .consent-check {
+    font-size: 0.94rem;
+    line-height: 1.62;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
