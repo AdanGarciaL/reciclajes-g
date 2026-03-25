@@ -3,9 +3,56 @@ const navLinks = document.getElementById("navLinks");
 const scrollProgress = document.getElementById("scrollProgress");
 const brandLogo = document.getElementById("brandLogo");
 const floatingAdminBtn = document.getElementById("floatingAdminBtn");
+const themeToggle = document.getElementById("themeToggle");
+const themeIcon = document.getElementById("themeIcon");
+const tabTriggers = document.querySelectorAll("[data-tab-target]");
+const tabPanels = document.querySelectorAll("[data-tab-panel]");
+
+let coverageMapInstance = null;
 
 let logoTapCount = 0;
 let logoTapTimer = null;
+
+// ===== THEME TOGGLE LOGIC =====
+function initThemeToggle() {
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
+  const savedTheme = localStorage.getItem("theme-preference");
+  
+  function updateTheme(isDark) {
+    if (isDark) {
+      document.body.classList.add("dark-mode");
+      themeIcon.className = "bi bi-sun-fill";
+    } else {
+      document.body.classList.remove("dark-mode");
+      themeIcon.className = "bi bi-moon-fill";
+    }
+    localStorage.setItem("theme-preference", isDark ? "dark" : "light");
+  }
+
+  // Set initial theme from localStorage or system preference
+  if (savedTheme) {
+    updateTheme(savedTheme === "dark");
+  } else {
+    updateTheme(prefersDark.matches);
+  }
+
+  // Listen for system theme changes
+  prefersDark.addEventListener("change", (e) => {
+    if (!localStorage.getItem("theme-preference")) {
+      updateTheme(e.matches);
+    }
+  });
+
+  // Toggle button click
+  if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+      const isDark = document.body.classList.contains("dark-mode");
+      updateTheme(!isDark);
+    });
+  }
+}
+
+initThemeToggle();
 
 function toggleAdminAccess() {
   document.body.classList.toggle("admin-access-visible");
@@ -140,6 +187,84 @@ const materialThemeClasses = [
   "material-theme-otro",
 ];
 
+const hashToTab = {
+  "#inicio": "inicio",
+  "#que-compramos": "materiales",
+  "#tipos-celular": "materiales",
+  "#otherMaterialDisplay": "materiales",
+  "#precios": "materiales",
+  "#proceso": "materiales",
+  "#galeria": "materiales",
+  "#cobertura": "cobertura",
+  "#registro": "cotizar",
+  "#contacto": "cotizar",
+};
+
+const tabToHash = {
+  inicio: "#inicio",
+  materiales: "#que-compramos",
+  cobertura: "#cobertura",
+  cotizar: "#registro",
+};
+
+function activateTab(tabId, options = {}) {
+  const { updateHash = true, scrollToTop = true } = options;
+  if (!tabId) {
+    return;
+  }
+
+  tabPanels.forEach((panel) => {
+    const shouldShow = panel.dataset.tabPanel === tabId;
+    panel.hidden = !shouldShow;
+    panel.classList.toggle("is-active", shouldShow);
+  });
+
+  tabTriggers.forEach((trigger) => {
+    const isActive = trigger.dataset.tabTarget === tabId;
+    trigger.classList.toggle("is-active", isActive);
+    if (trigger.getAttribute("role") === "tab") {
+      trigger.setAttribute("aria-selected", isActive ? "true" : "false");
+    }
+  });
+
+  if (tabId === "cobertura") {
+    initCoverageMap();
+  }
+
+  if (updateHash) {
+    const nextHash = tabToHash[tabId] || "#inicio";
+    history.replaceState(null, "", nextHash);
+  }
+
+  if (scrollToTop) {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+}
+
+tabTriggers.forEach((trigger) => {
+  trigger.addEventListener("click", (event) => {
+    const tabId = trigger.dataset.tabTarget;
+    if (!tabId) {
+      return;
+    }
+
+    event.preventDefault();
+    activateTab(tabId);
+  });
+});
+
+window.addEventListener("hashchange", () => {
+  const tabId = hashToTab[window.location.hash];
+  if (tabId) {
+    activateTab(tabId, { updateHash: false, scrollToTop: false });
+  }
+});
+
+activateTab(hashToTab[window.location.hash] || "inicio", {
+  updateHash: false,
+  scrollToTop: false,
+});
+
 function applyMaterialTheme(material) {
   materialThemeClasses.forEach((themeClass) => {
     document.body.classList.remove(themeClass);
@@ -210,6 +335,16 @@ function showMaterialSelector() {
   if (!materialSelectorModal) {
     return;
   }
+
+  // The selector modal lives inside a tab panel; ensure that panel is visible first.
+  const modalHostPanel = materialSelectorModal.closest("[data-tab-panel]");
+  if (modalHostPanel?.hasAttribute("hidden")) {
+    activateTab(modalHostPanel.dataset.tabPanel || "materiales", {
+      updateHash: false,
+      scrollToTop: false,
+    });
+  }
+
   materialSelectorModal.style.display = "flex";
   materialSelectorModal.classList.add("active");
   document.body.style.overflow = "hidden";
@@ -249,6 +384,8 @@ function handleMaterialSelection(material) {
   if (!celularTypesSection || !otherMaterialSection) {
     return;
   }
+
+  activateTab("materiales", { updateHash: true, scrollToTop: false });
 
   // Hide all sections first
   celularTypesSection.style.display = "none";
@@ -292,6 +429,8 @@ function fillFormAndScroll() {
   if (!materialSelect) {
     return;
   }
+
+  activateTab("cotizar", { updateHash: true, scrollToTop: false });
   
   if (selectedMaterial === "celular") {
     materialSelect.value = "Logica de celular";
@@ -318,13 +457,13 @@ function fillFormAndScroll() {
 const typeData = {
   tipo1: {
     label: "Tipo 1 - Premium",
-    price: "$1,300 /kg",
+    price: "$900 - $1,300 /kg",
     specs: [
       "Sin flex ni tiras",
       "Sin camaras",
       "Debe tener su chip",
       "Celulares de gama media a alta",
-      "Condicion optima de funcionamiento"
+      "Condición variable aceptable mientras el chip esté presente"
     ],
     images: [
       "Galeria/Celular Tipo 1/logica_celular1.jpg",
@@ -339,10 +478,10 @@ const typeData = {
   },
   tipo2: {
     label: "Tipo 2 - Placas grandes",
-    price: "$350 /kg",
+    price: "$220 - $350 /kg",
     specs: [
       "Placas grandes que cubren el celular",
-      "Sin chip integrado",
+      "En caso de que si no entrara en tipo 1 se pasara a tipo 2 ya sea sin chip integrado o que este rota",
       "Pueden estar quemadas o ensambladas",
       "Cualquier marca o modelo",
       "Celulares antiguos o de gama baja"
@@ -360,13 +499,13 @@ const typeData = {
   },
   tipo3: {
     label: "Tipo 3 - Teclado y Tablet",
-    price: "$150 /kg",
+    price: "$100 - $150 /kg",
     specs: [
-      "Placas de telefonos con teclado",
-      "O placas de tablet",
+      "Placas de teléfonos con teclado",
+      "placas de tablet",
       "Ambas categorias tienen el mismo precio",
       "Cualquier marca o modelo",
-      "Condicion variable aceptable"
+      "Condición variable aceptable"
     ],
     images: [
       "Galeria/Celular y Tablet Tipo 3/logica_celular3.jpg",
@@ -381,7 +520,7 @@ const typeData = {
   },
   tipo4: {
     label: "Tipo 4 - Sin pila ni tapa",
-    price: "$100 /kg",
+    price: "$70 - $100 /kg",
     specs: [
       "Celulares completos sin desmontar",
       "Sin pila - se debe retirar bateria",
@@ -399,13 +538,13 @@ const otherMaterialData = {
   laptop: {
     eyebrow: "Logica de Laptop",
     title: "Motherboards y Placas de Laptop",
-    price: "$150 /kg",
+    price: "$90 - $150 /kg",
     specs: [
       "Placas madre de laptops y netbooks",
-      "Cualquier condicion - funcionales o danadas",
+      "Cualquier condición - funcionales o dañadas",
       "Cualquier marca (Dell, HP, Lenovo, etc)",
       "Con o sin procesador integrado",
-      "Ideal para reciclaje y extraccion de materiales"
+      "Ideal para reciclaje"
     ],
     images: [
       "Galeria/Laptop/Laptop.jpg",
@@ -419,8 +558,8 @@ const otherMaterialData = {
   },
   ram: {
     eyebrow: "Memorias RAM",
-    title: "Modulos de Memoria RAM DDR / DDR2 / DDR3 / DDR4",
-    price: "$450 /kg",
+    title: "Módulos de Memoria RAM DDR / DDR2 / DDR3 / DDR4",
+    price: "$300 - $450 /kg",
     specs: [
       "Memorias RAM de cualquier generacion",
       "DDR, DDR2, DDR3, DDR4, DDR5",
@@ -435,14 +574,13 @@ const otherMaterialData = {
     ]
   },
   teclado: {
-    eyebrow: "Telefonos con Teclado",
-    title: "Logicas de Telefonos con Teclado Mecanico",
-    price: "$150 /kg",
+    eyebrow: "Teléfonos con Teclado",
+    title: "Lógicas de Teléfonos con Teclado Mecánico",
+    price: "$100 - $150 /kg",
     specs: [
-      "Placas de telefonos antiguos con teclado",
+      "Placas de teléfonos antiguos con teclado",
       "BlackBerry, HTC, y otros modelos",
       "Cualquier estado - rotos o funcionales",
-      "Excelente contenido de materiales preciosos",
       "Demanda consistente en reciclaje"
     ],
     images: [
@@ -454,12 +592,12 @@ const otherMaterialData = {
   tablet: {
     eyebrow: "Placas de Tablet",
     title: "Motherboards y Logicas de Tablets",
-    price: "$150 /kg",
+    price: "$100 - $150 /kg",
     specs: [
       "Placas de tablets iPad, Samsung, Lenovo, etc",
       "Cualquier tamaño - 7\" a 12\"",
       "Funcionales o para descarte",
-      "Alto valor de materiales - oro, cobre, aluminio",
+      "Condición variable aceptable mientras el chip esté presente",
       "Aceptamos grandes volumenes"
     ],
     images: [
@@ -478,7 +616,7 @@ function displayOtherMaterial(material) {
 
   document.getElementById("otherMaterialEyebrow").textContent = data.eyebrow;
   document.getElementById("otherMaterialTitle").textContent = data.title;
-  document.getElementById("priceBanner").innerHTML = `<div class="price-text">Precio: <strong>${data.price}</strong></div>`;
+  document.getElementById("priceBanner").innerHTML = `<div class="price-text">Rango referencial: <strong>${data.price}</strong></div>`;
 
   document.getElementById("materialSpecsList").innerHTML = data.specs
     .map((spec) => `<li>${spec}</li>`)
@@ -691,7 +829,150 @@ const locationTextInput = document.getElementById("locationText");
 const geoStatus = document.getElementById("geoStatus");
 const leadSuccess = document.getElementById("leadSuccess");
 
+const ACTIVE_COVERAGE_TERMS = [
+  "puebla",
+  "cdmx",
+  "ciudad de mexico",
+  "estado de mexico",
+  "edomex",
+  "veracruz",
+  "hidalgo"
+];
+
+const MIN_10KG_TERMS = [
+  "aguascalientes",
+  "baja california",
+  "baja california sur",
+  "campeche",
+  "chiapas",
+  "chihuahua",
+  "coahuila",
+  "colima",
+  "durango",
+  "guanajuato",
+  "guerrero",
+  "jalisco",
+  "michoacan",
+  "morelos",
+  "nayarit",
+  "nuevo leon",
+  "oaxaca",
+  "queretaro",
+  "quintana roo",
+  "cancun",
+  "san luis potosi",
+  "sinaloa",
+  "sonora",
+  "tabasco",
+  "tamaulipas",
+  "tlaxcala",
+  "yucatan",
+  "zacatecas"
+];
+
 let currentCoordinates = "";
+
+function normalizeLocationText(value) {
+  return (value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function isInActiveCoverage(locationText) {
+  const normalizedLocation = normalizeLocationText(locationText);
+  return ACTIVE_COVERAGE_TERMS.some((term) => normalizedLocation.includes(term));
+}
+
+function isInMin10Coverage(locationText) {
+  const normalizedLocation = normalizeLocationText(locationText);
+  return MIN_10KG_TERMS.some((term) => normalizedLocation.includes(term));
+}
+
+const COVERAGE_POINTS = [
+  { label: "Puebla", coords: [19.0414, -98.2063], zoneKm: 75, type: "active" },
+  { label: "CDMX", coords: [19.4326, -99.1332], zoneKm: 65, type: "active" },
+  { label: "Estado de México", coords: [19.2826, -99.6557], zoneKm: 70, type: "active" },
+  { label: "Veracruz", coords: [19.1738, -96.1342], zoneKm: 70, type: "active" },
+  { label: "Hidalgo", coords: [20.1011, -98.7591], zoneKm: 65, type: "active" },
+  { label: "Tabasco", coords: [17.9892, -92.9475], zoneKm: 65, type: "min10" },
+  { label: "Cancun", coords: [21.1619, -86.8515], zoneKm: 60, type: "min10" },
+  { label: "Campeche", coords: [19.845, -90.5231], zoneKm: 55, type: "min10" },
+  { label: "Oaxaca", coords: [17.0732, -96.7266], zoneKm: 60, type: "min10" },
+  { label: "Guerrero", coords: [17.5515, -99.5058], zoneKm: 60, type: "min10" }
+];
+
+function initCoverageMap() {
+  const mapContainer = document.getElementById("coverageMap");
+  if (!mapContainer) {
+    return;
+  }
+
+  if (coverageMapInstance) {
+    setTimeout(() => {
+      coverageMapInstance.invalidateSize();
+    }, 120);
+    return;
+  }
+
+  if (typeof window.L === "undefined") {
+    mapContainer.innerHTML = "<p class='map-fallback'>No se pudo cargar el mapa. Cobertura activa en 5 estados y 5 estados sujetos a recolección desde 10 kg.</p>";
+    return;
+  }
+
+  coverageMapInstance = window.L.map(mapContainer, {
+    scrollWheelZoom: false,
+    minZoom: 4,
+    maxZoom: 10
+  });
+
+  window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap contributors"
+  }).addTo(coverageMapInstance);
+
+  const activeMarkerIcon = window.L.divIcon({
+    className: "coverage-map-marker-wrap",
+    html: "<span class='coverage-map-marker' aria-hidden='true'></span>",
+    iconSize: [18, 18],
+    iconAnchor: [9, 9]
+  });
+
+  const min10MarkerIcon = window.L.divIcon({
+    className: "coverage-map-marker-wrap",
+    html: "<span class='coverage-map-marker coverage-map-marker-min10' aria-hidden='true'></span>",
+    iconSize: [18, 18],
+    iconAnchor: [9, 9]
+  });
+
+  const bounds = [];
+  COVERAGE_POINTS.forEach((point) => {
+    bounds.push(point.coords);
+
+    const isActive = point.type === "active";
+    const zoneColor = isActive ? "#2f80ed" : "#d14f1a";
+
+    window.L.circle(point.coords, {
+      radius: point.zoneKm * 1000,
+      color: zoneColor,
+      weight: 1,
+      opacity: 0.45,
+      fillColor: zoneColor,
+      fillOpacity: 0.08
+    }).addTo(coverageMapInstance);
+
+    const markerIcon = isActive ? activeMarkerIcon : min10MarkerIcon;
+    const popupText = isActive
+      ? `<strong>${point.label}</strong><br/>Cobertura activa`
+      : `<strong>${point.label}</strong><br/>Recolección desde 10 kg`;
+
+    window.L.marker(point.coords, { icon: markerIcon })
+      .addTo(coverageMapInstance)
+      .bindPopup(popupText);
+  });
+
+  coverageMapInstance.fitBounds(bounds, { padding: [30, 30] });
+}
 
 function getLeads() {
   const raw = localStorage.getItem(LEADS_KEY) || localStorage.getItem(LEGACY_LEADS_KEY);
@@ -712,15 +993,14 @@ function saveLeads(leads) {
   localStorage.removeItem(LEGACY_LEADS_KEY);
 }
 
-
 if (detectLocationBtn && locationTextInput && geoStatus) {
   detectLocationBtn.addEventListener("click", () => {
     if (!navigator.geolocation) {
-      geoStatus.textContent = "Tu navegador no permite geolocalizacion.";
+      geoStatus.textContent = "Tu navegador no permite geolocalización.";
       return;
     }
 
-    geoStatus.textContent = "Detectando ubicacion...";
+    geoStatus.textContent = "Detectando ubicación...";
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -728,10 +1008,10 @@ if (detectLocationBtn && locationTextInput && geoStatus) {
         const lng = position.coords.longitude.toFixed(6);
         currentCoordinates = `${lat}, ${lng}`;
         locationTextInput.value = `Coordenadas: ${currentCoordinates}`;
-        geoStatus.textContent = "Ubicacion detectada. Puedes editarla si quieres.";
+        geoStatus.textContent = "Ubicación detectada. Puedes editarla si quieres.";
       },
       () => {
-        geoStatus.textContent = "No se pudo obtener ubicacion. Escribe tu ciudad/estado manualmente.";
+        geoStatus.textContent = "No se pudo obtener ubicación. Escribe tu ciudad/estado manualmente.";
       }
     );
   });
@@ -742,12 +1022,28 @@ if (leadForm && leadSuccess) {
     event.preventDefault();
 
     const formData = new FormData(leadForm);
+    const kilosValue = Number(formData.get("kilos"));
+    const stateValue = formData.get("state")?.toString().trim() || "";
+    const locationValue = formData.get("locationText")?.toString().trim() || "";
+    const inActiveCoverage = isInActiveCoverage(stateValue) || isInActiveCoverage(locationValue);
+    const inMin10Coverage =
+      isInMin10Coverage(stateValue) ||
+      isInMin10Coverage(locationValue) ||
+      !inActiveCoverage;
+
+    if (inMin10Coverage && (!Number.isFinite(kilosValue) || kilosValue < 10)) {
+      leadSuccess.classList.add("is-error");
+      leadSuccess.textContent = "Fuera de cobertura activa, la recolección se revisa a partir de 10 kg.";
+      return;
+    }
+
     const lead = {
       date: new Date().toLocaleString("es-MX"),
       fullName: formData.get("fullName")?.toString().trim(),
       phone: formData.get("phone")?.toString().trim(),
       materialType: formData.get("materialType")?.toString().trim(),
       kilos: formData.get("kilos")?.toString().trim(),
+      state: stateValue,
       locationText: formData.get("locationText")?.toString().trim(),
       coordinates: currentCoordinates,
       notes: formData.get("notes")?.toString().trim(),
@@ -763,6 +1059,7 @@ if (leadForm && leadSuccess) {
       geoStatus.textContent = "";
     }
 
+    leadSuccess.classList.remove("is-error");
     leadSuccess.textContent = "Registro enviado. Gracias, te contactaremos pronto.";
 
   });

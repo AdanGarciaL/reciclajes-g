@@ -15,7 +15,7 @@
   <div class="admin-shell">
     <header class="admin-header">
       <h1>Panel Interno Reciclaje LogiKAS</h1>
-      <p>Acceso restringido para administracion de registros.</p>
+      <p>Acceso restringido para administración de registros.</p>
     </header>
 
     <main>
@@ -25,38 +25,245 @@
           <input type="text" name="username" placeholder="Usuario" required />
         </label>
         <label>
-          Contrasena
-          <input type="password" name="password" placeholder="Contrasena" required />
+          Contraseña
+          <input type="password" name="password" placeholder="Contraseña" required />
         </label>
-        <button type="submit" class="btn btn-primary">Iniciar sesion</button>
+        <button type="submit" class="btn btn-primary">Iniciar sesión</button>
         <p id="loginMsg" class="geo-status" aria-live="polite"></p>
       </form>
 
       <section class="admin-panel hidden" id="adminPanel">
         <div class="admin-toolbar">
           <p>Registros recibidos de Tengo material</p>
-          <button type="button" class="btn btn-ghost" id="logoutBtn">Cerrar sesion</button>
+          <div class="admin-toolbar-actions">
+            <button type="button" class="btn btn-primary" id="addLeadBtn">Agregar lead</button>
+            <button type="button" class="btn btn-ghost" id="exportCsvBtn">Exportar CSV</button>
+            <button type="button" class="btn btn-ghost" id="logoutBtn">Cerrar sesión</button>
+          </div>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Nombre</th>
-                <th>Telefono</th>
-                <th>Material</th>
-                <th>Kg</th>
-                <th>Ubicacion</th>
-                <th>Coordenadas</th>
-                <th>Notas</th>
-              </tr>
-            </thead>
-            <tbody id="leadsTableBody"></tbody>
-          </table>
+
+        <section class="lead-editor hidden" id="leadEditor">
+          <div class="lead-editor-head">
+            <h3 id="leadEditorTitle">Agregar lead</h3>
+            <button type="button" class="btn btn-ghost" id="closeLeadEditorBtn">Cerrar</button>
+          </div>
+          <form id="leadEditorForm">
+            <input type="hidden" id="leadEditorId" name="id" />
+            <div class="lead-editor-grid">
+              <label>
+                Nombre
+                <input type="text" id="leadEditorName" name="fullName" required />
+              </label>
+              <label>
+                Teléfono
+                <input type="text" id="leadEditorPhone" name="phone" required />
+              </label>
+              <label>
+                Material
+                <select id="leadEditorMaterial" name="materialType" required>
+                  <option value="">Selecciona</option>
+                  <option value="Logica de celular">Lógica de celular</option>
+                  <option value="Logica de tablet">Lógica de tablet</option>
+                  <option value="Logica de laptop">Lógica de laptop</option>
+                  <option value="RAM">RAM</option>
+                  <option value="CPU">CPU</option>
+                  <option value="Modem">Modem</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </label>
+              <label>
+                Kg
+                <input type="number" id="leadEditorKilos" name="kilos" step="0.1" min="0" required />
+              </label>
+              <label>
+                Estado
+                <input type="text" id="leadEditorState" name="state" required />
+              </label>
+              <label>
+                Coordenadas
+                <input type="text" id="leadEditorCoordinates" name="coordinates" />
+              </label>
+            </div>
+            <label>
+              Ubicación
+              <input type="text" id="leadEditorLocation" name="locationText" required />
+            </label>
+            <label>
+              Notas
+              <textarea id="leadEditorNotes" name="notes" rows="2"></textarea>
+            </label>
+            <div class="lead-editor-grid">
+              <label>
+                Estatus
+                <select id="leadEditorStatus" name="status">
+                  <option value="Nuevo">Nuevo</option>
+                  <option value="En contacto">En contacto</option>
+                  <option value="Cotizado">Cotizado</option>
+                  <option value="Cerrado">Cerrado</option>
+                </select>
+              </label>
+              <label>
+                Nota interna
+                <input type="text" id="leadEditorInternalNote" name="internalNote" />
+              </label>
+            </div>
+            <div class="lead-editor-actions">
+              <button type="submit" class="btn btn-primary" id="saveLeadBtn">Guardar lead</button>
+              <button type="button" class="btn btn-ghost" id="cancelLeadEditorBtn">Cancelar</button>
+            </div>
+          </form>
+        </section>
+
+        <div class="admin-summary" id="adminSummary">
+          <article>
+            <p class="summary-value" id="summaryTotal">0</p>
+            <p class="summary-label">Leads totales</p>
+          </article>
+          <article>
+            <p class="summary-value" id="summaryActive">0</p>
+            <p class="summary-label">Cobertura activa</p>
+          </article>
+          <article>
+            <p class="summary-value" id="summaryMin10">0</p>
+            <p class="summary-label">Regla 10kg+</p>
+          </article>
+          <article>
+            <p class="summary-value" id="summaryKilos">0</p>
+            <p class="summary-label">Kg estimados</p>
+          </article>
+        </div>
+
+        <div class="admin-controls">
+          <label>
+            Buscar
+            <input type="search" id="searchInput" placeholder="Nombre, teléfono o material" />
+          </label>
+          <label>
+            Cobertura
+            <select id="coverageFilter">
+              <option value="all">Todas</option>
+              <option value="Activa">Activa</option>
+              <option value="10kg+">10kg+</option>
+            </select>
+          </label>
+          <label>
+            Estado
+            <select id="stateFilter">
+              <option value="all">Todos</option>
+            </select>
+          </label>
+          <label>
+            Estatus
+            <select id="statusFilter">
+              <option value="all">Todos</option>
+              <option value="Nuevo">Nuevo</option>
+              <option value="En contacto">En contacto</option>
+              <option value="Cotizado">Cotizado</option>
+              <option value="Cerrado">Cerrado</option>
+            </select>
+          </label>
+          <label>
+            Orden
+            <select id="sortBy">
+              <option value="dateDesc">Fecha (nuevo a viejo)</option>
+              <option value="dateAsc">Fecha (viejo a nuevo)</option>
+              <option value="kilosDesc">Kilos (mayor a menor)</option>
+              <option value="kilosAsc">Kilos (menor a mayor)</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="bulk-actions" id="bulkActions">
+          <p id="selectedCount">0 seleccionados</p>
+          <div class="bulk-actions-controls">
+            <label>
+              Estatus masivo
+              <select id="bulkStatusSelect">
+                <option value="">Selecciona</option>
+                <option value="Nuevo">Nuevo</option>
+                <option value="En contacto">En contacto</option>
+                <option value="Cotizado">Cotizado</option>
+                <option value="Cerrado">Cerrado</option>
+              </select>
+            </label>
+            <button type="button" class="btn btn-ghost" id="applyBulkStatusBtn" disabled>Aplicar estatus</button>
+            <button type="button" class="btn btn-ghost" id="exportSelectedBtn" disabled>Exportar seleccionados</button>
+            <button type="button" class="btn btn-ghost" id="deleteSelectedBtn" disabled>Eliminar seleccionados</button>
+            <button type="button" class="btn btn-ghost" id="clearSelectionBtn" disabled>Limpiar selección</button>
+          </div>
+        </div>
+
+        <div class="admin-content-grid">
+          <section class="admin-data-card" aria-label="Tabla de leads">
+            <div class="table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th class="select-col">
+                      <input type="checkbox" id="selectPageCheckbox" aria-label="Seleccionar fila visible" />
+                    </th>
+                    <th>Fecha</th>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Material</th>
+                    <th>Kg</th>
+                    <th>Estado</th>
+                    <th>Cobertura</th>
+                    <th>Prioridad</th>
+                    <th>Estatus</th>
+                    <th>Ubicación</th>
+                    <th>Coordenadas</th>
+                    <th>Notas</th>
+                    <th>Nota interna</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="leadsTableBody"></tbody>
+              </table>
+            </div>
+            <div class="table-footer">
+              <div class="table-footer-left">
+                <label>
+                  Filas por página
+                  <select id="pageSizeSelect">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="30">30</option>
+                    <option value="50">50</option>
+                  </select>
+                </label>
+                <p id="tableRangeInfo">Mostrando 0 de 0</p>
+              </div>
+              <div class="table-pagination" aria-label="Paginación de leads">
+                <button type="button" class="btn btn-ghost" id="prevPageBtn">Anterior</button>
+                <p id="pageInfo">Página 1 de 1</p>
+                <button type="button" class="btn btn-ghost" id="nextPageBtn">Siguiente</button>
+              </div>
+            </div>
+          </section>
+
+          <aside class="history-panel" id="historyPanel" aria-live="polite">
+            <div class="history-head">
+              <h3>Historial de cambios</h3>
+              <span class="history-count" id="historyCount">0 eventos</span>
+            </div>
+            <label class="history-filter">
+              Filtrar historial
+              <select id="historyLeadFilter">
+                <option value="all">Todos los leads</option>
+              </select>
+            </label>
+            <div class="history-list" id="historyList">
+              <p class="history-empty">Aún no hay cambios registrados.</p>
+            </div>
+            <button type="button" class="btn btn-ghost" id="clearHistoryBtn">Limpiar historial</button>
+          </aside>
         </div>
       </section>
     </main>
   </div>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
 
   <script src="admin.js"></script>
 </body>

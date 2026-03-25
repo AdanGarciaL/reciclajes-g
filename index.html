@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reciclaje LogiKAS | Compra de Electronica en Mexico</title>
-  <meta name="description" content="Compramos tarjetas logicas y componentes electronicos para destruccion y reciclaje en todo Mexico." />
+  <title>Reciclaje LogiKAS | Compra de Electrónica en México</title>
+  <meta name="description" content="Compramos tarjetas lógicas y componentes electrónicos para destrucción y reciclaje en todo México." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -21,18 +22,22 @@
         <span class="logo-mark">RG</span>
         <span class="logo-text-wrap">
           <span class="logo-text">Reciclaje Logi<span class="logo-kas">KAS</span></span>
-          <span class="logo-subtext">Mexico</span>
+          <span class="logo-subtext">México</span>
         </span>
       </a>
-      <button class="menu-btn" id="menuBtn" aria-label="Abrir menu">Menu</button>
+      <button class="menu-btn" id="menuBtn" aria-label="Abrir menú">Menú</button>
       <ul class="nav-links" id="navLinks">
-        <li><a href="#que-compramos">Materiales</a></li>
-        <li><a href="#registro" class="open-material-selector">Tengo material</a></li>
-        <li><a href="#proceso">Proceso</a></li>
-        <li><a href="#galeria">Galeria</a></li>
-        <li><a href="#contacto">Contacto</a></li>
+        <li><a href="#inicio" data-tab-target="inicio">Inicio</a></li>
+        <li><a href="#que-compramos" data-tab-target="materiales">Materiales</a></li>
+        <li><a href="#cobertura" data-tab-target="cobertura">Cobertura</a></li>
+        <li><a href="#registro" data-tab-target="cotizar">Cotizar</a></li>
       </ul>
-      <a class="btn btn-primary nav-cta open-material-selector" href="#registro">Tengo material</a>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Cambiar tema" title="Cambiar tema">
+          <i class="bi bi-moon-fill" id="themeIcon"></i>
+        </button>
+        <a class="btn btn-primary nav-cta open-material-selector" href="#registro">Tengo material</a>
+      </div>
     </nav>
   </header>
 
@@ -44,29 +49,30 @@
   </section>
 
   <main>
+    <div class="tab-panel is-active" id="panel-inicio" data-tab-panel="inicio" role="tabpanel">
     <section class="hero container" id="inicio">
       <div class="hero-main">
         <div class="hero-copy-wrap">
-          <p class="eyebrow reveal">Compra responsable en Mexico</p>
-          <h1 class="reveal delay-1">Convertimos electronica guardada en una compra rapida y clara</h1>
+          <p class="eyebrow reveal">Compra responsable en México</p>
+          <h1 class="reveal delay-1">Convertimos electrónica guardada en una compra rápida y clara</h1>
           <p class="hero-copy reveal delay-2">
-            Compramos logicas y componentes para reciclaje y destruccion. Atendemos tecnicos,
-            chatarreros, talleres y negocios de todo Mexico con trato directo.
+            Compramos lógicas y componentes para reciclaje y destrucción. Atendemos técnicos,
+            chatarreros, talleres y negocios con cobertura activa en 5 estados y el resto de la República sujeto a regla de 10 kg.
           </p>
           <div class="hero-cta reveal delay-3">
             <a class="btn btn-primary open-material-selector" id="heroPrimaryCta" href="#registro">Quiero vender mi material</a>
-            <a class="btn btn-ghost" id="heroSecondaryCta" href="#proceso">Ver como funciona</a>
+            <a class="btn btn-ghost" id="heroSecondaryCta" href="#proceso">Ver cómo funciona</a>
           </div>
           <div class="hero-note reveal delay-4">
-            <strong>Importante:</strong> El material se compra para destruccion/desguesadero.
+            <strong>Importante:</strong> El material se compra para destrucción/desguace.
             Por eso el precio es bajo y se cotiza por tipo, peso y estado.
           </div>
         </div>
 
         <div class="hero-visual reveal delay-2">
-          <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=80" alt="Tarjetas electronicas para reciclaje" />
-          <div class="hero-badge">Cobertura nacional</div>
-          <div class="hero-badge hero-badge-alt">Respuesta rapida por formulario</div>
+          <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=80" alt="Tarjetas electrónicas para reciclaje" />
+          <div class="hero-badge">Cobertura activa: 5 estados</div>
+          <div class="hero-badge hero-badge-alt">Respuesta rápida por formulario</div>
         </div>
       </div>
     </section>
@@ -78,8 +84,8 @@
           <p class="stat-label">Tipos de material</p>
         </article>
         <article>
-          <p class="stat-number">32</p>
-          <p class="stat-label">Estados de cobertura</p>
+          <p class="stat-number">5 + 27</p>
+          <p class="stat-label">Activos + min 10kg</p>
         </article>
         <article>
           <p class="stat-number">24h</p>
@@ -90,33 +96,38 @@
 
     <section class="quick-prices container">
       <div class="section-head reveal">
-        <p class="eyebrow">Precios rapidos</p>
-        <h2>Lo mas buscado hoy</h2>
+        <p class="eyebrow">Precios rápidos</p>
+        <h2>Lo más buscado hoy</h2>
+        <p>Rangos referenciales sujetos al estado del material y a la plaza de compra.</p>
       </div>
       <div class="quick-prices-grid">
         <article class="quick-price-card reveal">
           <span class="quick-icon" aria-hidden="true"><i class="bi bi-phone"></i></span>
-          <p class="quick-tag">Celular Tipo 1</p>
-          <p class="quick-value">$1,300 /kg</p>
-          <p class="quick-copy">Mayor valor por kilo cuando cumple condiciones premium.</p>
+          <p class="quick-tag">Celular</p>
+          <p class="quick-value">$100 - $1,300 /kg</p>
+          <p class="quick-copy">Rango completo según tipo, estado y material. El Tipo 1 alcanza el precio máximo.</p>
           <a class="btn btn-ghost open-material-selector" href="#registro">Ver tipos</a>
         </article>
         <article class="quick-price-card reveal delay-1">
           <span class="quick-icon" aria-hidden="true"><i class="bi bi-memory"></i></span>
           <p class="quick-tag">RAM</p>
-          <p class="quick-value">$450 /kg</p>
+          <p class="quick-value">$300 - $450 /kg</p>
           <p class="quick-copy">Aceptamos modulos de varias generaciones y capacidades.</p>
           <a class="btn btn-ghost open-material-selector" href="#registro">Vender RAM</a>
         </article>
         <article class="quick-price-card reveal delay-2">
           <span class="quick-icon" aria-hidden="true"><i class="bi bi-laptop"></i></span>
           <p class="quick-tag">Laptop</p>
-          <p class="quick-value">$150 /kg</p>
+          <p class="quick-value">$90 - $150 /kg</p>
           <p class="quick-copy">Placas de laptop en diferentes condiciones y modelos.</p>
           <a class="btn btn-ghost open-material-selector" href="#registro">Vender laptop</a>
         </article>
       </div>
     </section>
+
+    </div>
+
+    <div class="tab-panel" id="panel-materiales" data-tab-panel="materiales" role="tabpanel" hidden>
 
     <section class="materials container" id="que-compramos">
       <div class="section-head reveal">
@@ -126,18 +137,18 @@
       <div class="card-grid">
         <article class="card reveal">
           <p class="card-icon"><i class="bi bi-phone"></i> CELL</p>
-          <h3>Logicas de celular</h3>
-          <p>Tarjetas madre de equipos moviles, funcionales o danadas.</p>
+          <h3>Lógicas de celular</h3>
+          <p>Tarjetas madre de equipos móviles, funcionales o dañadas.</p>
         </article>
         <article class="card reveal delay-1">
           <p class="card-icon"><i class="bi bi-tablet-landscape"></i> TAB</p>
-          <h3>Logicas de tablet</h3>
+          <h3>Lógicas de tablet</h3>
           <p>Tarjetas de tabletas viejas, inservibles o para descarte.</p>
         </article>
         <article class="card reveal delay-2">
           <p class="card-icon"><i class="bi bi-laptop"></i> LAP</p>
-          <h3>Logicas de laptop</h3>
-          <p>Motherboards y placas de portatiles en cualquier condicion.</p>
+          <h3>Lógicas de laptop</h3>
+          <p>Motherboards y placas de portátiles en cualquier condición.</p>
         </article>
         <article class="card reveal delay-1">
           <p class="card-icon"><i class="bi bi-memory"></i> RAM</p>
@@ -170,24 +181,27 @@
           <button class="material-btn" data-material="celular">
             <span class="material-icon">📱</span>
             <span class="material-text">Celular</span>
+            <span class="material-price">$100 - $1,300 /kg</span>
           </button>
           <button class="material-btn" data-material="teclado">
             <span class="material-icon">⌨️</span>
-            <span class="material-text">Teclado/Keyboard</span>
+            <span class="material-text">Celular de Teclado</span>
+            <span class="material-price">$100 - $150 /kg</span>
           </button>
           <button class="material-btn" data-material="tablet">
             <span class="material-icon">📲</span>
             <span class="material-text">Tablet</span>
+            <span class="material-price">$100 - $150 /kg</span>
           </button>
           <button class="material-btn" data-material="ram">
             <span class="material-icon">🖬</span>
             <span class="material-text">RAM</span>
-            <span class="material-price">$450 /kg</span>
+            <span class="material-price">$300 - $450 /kg</span>
           </button>
           <button class="material-btn" data-material="laptop">
             <span class="material-icon">💻</span>
             <span class="material-text">Laptop</span>
-            <span class="material-price">$150 /kg</span>
+            <span class="material-price">$100 - $150 /kg</span>
           </button>
           <button class="material-btn" data-material="otro">
             <span class="material-icon">⚙️</span>
@@ -202,24 +216,24 @@
       <div class="section-head reveal">
         <button class="back-btn" id="backBtn">← Atrás</button>
         <p class="eyebrow">Logica de celular</p>
-        <h2>Tipos y precios segun caracteristicas</h2>
+        <h2>Tipos y precios según características</h2>
       </div>
       <div class="types-selector reveal delay-1">
         <button class="type-btn active" data-type="tipo1">
           <span class="type-label">Tipo 1</span>
-          <span class="type-price">$1,300 /kg</span>
+          <span class="type-price">$900 - $1,300 /kg</span>
         </button>
         <button class="type-btn" data-type="tipo2">
           <span class="type-label">Tipo 2</span>
-          <span class="type-price">$350 /kg</span>
+          <span class="type-price">$200 - $350 /kg</span>
         </button>
         <button class="type-btn" data-type="tipo3">
           <span class="type-label">Tipo 3</span>
-          <span class="type-price">$150 /kg</span>
+          <span class="type-price">$100 - $150 /kg</span>
         </button>
         <button class="type-btn" data-type="tipo4">
           <span class="type-label">Sin pila/tapa</span>
-          <span class="type-price">$100 /kg</span>
+          <span class="type-price">$70 - $100 /kg</span>
         </button>
       </div>
       <div class="type-content reveal delay-2">
@@ -273,16 +287,17 @@
     <section class="pricing container" id="precios">
       <div class="section-head reveal">
         <p class="eyebrow">Transparencia</p>
-        <h2>Como manejamos el precio</h2>
+        <h2>Cómo manejamos el precio</h2>
       </div>
       <div class="pricing-box reveal delay-1">
         <p>
-          El precio depende de material, volumen, estado fisico y logistica.
-          Como el destino es reciclaje y destruccion, la cotizacion es menor que una pieza funcional de reventa.
+          El precio depende de material, volumen, estado físico y logística.
+          Como el destino es reciclaje y destrucción, la cotización es menor que una pieza funcional de reventa.
+          Mostramos rangos referenciales y la compra final se confirma según revisión del lote.
         </p>
         <ul>
-          <li>Cotizacion clara antes de cerrar trato.</li>
-          <li>Atencion para lotes pequenos y grandes.</li>
+          <li>Cotización clara antes de cerrar trato.</li>
+          <li>Atención para lotes pequeños y grandes.</li>
           <li>Pago y condiciones definidas de forma previa.</li>
         </ul>
       </div>
@@ -291,13 +306,13 @@
     <section class="process container" id="proceso">
       <div class="section-head reveal">
         <p class="eyebrow">Proceso simple</p>
-        <h2>Como funciona</h2>
+        <h2>Cómo funciona</h2>
       </div>
       <div class="steps">
         <article class="step reveal">
           <span>01</span>
           <h3>Nos contactas</h3>
-          <p>Envias fotos y descripcion del material por WhatsApp o formulario.</p>
+          <p>Envías fotos y descripción del material por WhatsApp o formulario.</p>
         </article>
         <article class="step reveal delay-1">
           <span>02</span>
@@ -307,32 +322,94 @@
         <article class="step reveal delay-2">
           <span>03</span>
           <h3>Cerramos compra</h3>
-          <p>Definimos envio o entrega local y registramos la compra de forma segura.</p>
+          <p>Definimos envío o entrega local y registramos la compra de forma segura.</p>
         </article>
       </div>
     </section>
 
     <section class="gallery container" id="galeria">
       <div class="section-head reveal">
-        <p class="eyebrow">Operacion</p>
-        <h2>Asi luce el material que recibimos</h2>
+        <p class="eyebrow">Operación</p>
+        <h2>Así luce el material que recibimos</h2>
       </div>
       <div class="gallery-grid">
         <article class="gallery-card reveal">
-          <img src="Galeria/logica_celular.jpg" alt="Logicas de celular para reciclaje" />
+          <img src="Galeria/logica_celular.jpg" alt="Lógicas de celular para reciclaje" />
         </article>
         <article class="gallery-card reveal delay-1">
-          <img src="Galeria/logica_lapcpu.jpg" alt="Logicas de laptop y CPU para reciclaje" />
+          <img src="Galeria/logica_lapcpu.jpg" alt="Lógicas de laptop y CPU para reciclaje" />
         </article>
         <article class="gallery-card reveal delay-2">
           <img src="Galeria/logica_ram.jpg" alt="Modulos RAM y componentes electronicos" />
         </article>
       </div>
     </section>
+    </div>
+
+    <div class="tab-panel" id="panel-cobertura" data-tab-panel="cobertura" role="tabpanel" hidden>
+
+    <section class="coverage container" id="cobertura">
+      <div class="section-head reveal">
+        <p class="eyebrow">Cobertura</p>
+        <h2>Cobertura activa y logística</h2>
+      </div>
+      <div class="coverage-layout reveal delay-1">
+        <div class="coverage-map-card">
+          <div class="coverage-map-head">
+            <p>Mapa operativo actual</p>
+            <span>5 activos | resto 10kg</span>
+          </div>
+          <div class="coverage-map-legend" aria-label="Leyenda de mapa">
+            <span class="legend-item"><i class="legend-dot legend-dot-active"></i>Cobertura activa</span>
+            <span class="legend-item"><i class="legend-dot legend-dot-zone"></i>Zona de operación</span>
+            <span class="legend-item"><i class="legend-dot legend-dot-min10"></i>Estado con regla 10 kg</span>
+          </div>
+          <div id="coverageMap" class="coverage-map" aria-label="Mapa de cobertura actual"></div>
+        </div>
+        <aside class="coverage-policy-card">
+          <h3>Estados con cobertura activa</h3>
+          <div class="coverage-kpis">
+            <article>
+              <p class="kpi-value">5</p>
+              <p class="kpi-label">Estados activos</p>
+            </article>
+            <article>
+              <p class="kpi-value">27</p>
+              <p class="kpi-label">Estados con 10kg+</p>
+            </article>
+          </div>
+          <div class="coverage-state-list" aria-label="Lista de cobertura activa">
+            <span class="coverage-state-chip">Puebla</span>
+            <span class="coverage-state-chip">CDMX</span>
+            <span class="coverage-state-chip">Estado de México</span>
+            <span class="coverage-state-chip">Veracruz</span>
+            <span class="coverage-state-chip">Hidalgo</span>
+          </div>
+          <p class="coverage-list-title">Estados con recolección desde 10 kg (incluye resto de la República)</p>
+          <div class="coverage-state-list" aria-label="Lista de estados con regla 10 kg">
+            <span class="coverage-state-chip coverage-state-chip-min10">Tabasco</span>
+            <span class="coverage-state-chip coverage-state-chip-min10">Cancun</span>
+            <span class="coverage-state-chip coverage-state-chip-min10">Campeche</span>
+            <span class="coverage-state-chip coverage-state-chip-min10">Oaxaca</span>
+            <span class="coverage-state-chip coverage-state-chip-min10">Guerrero</span>
+          </div>
+          <div class="coverage-rule">
+            <p class="coverage-rule-title">Regla para otros estados</p>
+            <p>
+              Si estás en otro estado no hay problema. Solo consideramos recolección cuando el lote es de
+              <strong>10 kg o más</strong>.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </section>
+    </div>
+
+    <div class="tab-panel" id="panel-cotizar" data-tab-panel="cotizar" role="tabpanel" hidden>
 
     <section class="register container" id="registro">
       <div class="section-head reveal">
-        <p class="eyebrow">Registro rapido</p>
+        <p class="eyebrow">Registro rápido</p>
         <h2>Yo tengo material</h2>
       </div>
       <form class="lead-form reveal delay-1" id="leadForm">
@@ -342,13 +419,13 @@
             <input type="text" name="fullName" required placeholder="Ej. Juan Perez" />
           </label>
           <label>
-            Telefono de contacto
+            Teléfono de contacto
             <input type="tel" name="phone" required placeholder="Ej. 5512345678" />
           </label>
           <label>
             Tipo de material
             <select name="materialType" required>
-              <option value="">Selecciona una opcion</option>
+              <option value="">Selecciona una opción</option>
               <option value="Logica de celular">Logica de celular</option>
               <option value="Logica de tablet">Logica de tablet</option>
               <option value="Logica de laptop">Logica de laptop</option>
@@ -362,48 +439,94 @@
             Cantidad aproximada (kg)
             <input type="number" name="kilos" min="0" step="0.1" required placeholder="Ej. 12.5" />
           </label>
+          <label>
+            Estado donde se encuentra el material
+            <select name="state" required>
+              <option value="">Selecciona tu estado</option>
+              <optgroup label="Cobertura activa">
+                <option value="Puebla">Puebla</option>
+                <option value="CDMX">CDMX</option>
+                <option value="Estado de México">Estado de México</option>
+                <option value="Veracruz">Veracruz</option>
+                <option value="Hidalgo">Hidalgo</option>
+              </optgroup>
+              <optgroup label="Recolección desde 10 kg">
+                <option value="Aguascalientes">Aguascalientes</option>
+                <option value="Baja California">Baja California</option>
+                <option value="Baja California Sur">Baja California Sur</option>
+                <option value="Campeche">Campeche</option>
+                <option value="Chiapas">Chiapas</option>
+                <option value="Chihuahua">Chihuahua</option>
+                <option value="Coahuila">Coahuila</option>
+                <option value="Colima">Colima</option>
+                <option value="Durango">Durango</option>
+                <option value="Guanajuato">Guanajuato</option>
+                <option value="Guerrero">Guerrero</option>
+                <option value="Jalisco">Jalisco</option>
+                <option value="Michoacán">Michoacán</option>
+                <option value="Morelos">Morelos</option>
+                <option value="Nayarit">Nayarit</option>
+                <option value="Nuevo León">Nuevo León</option>
+                <option value="Oaxaca">Oaxaca</option>
+                <option value="Querétaro">Querétaro</option>
+                <option value="Quintana Roo">Quintana Roo</option>
+                <option value="San Luis Potosí">San Luis Potosí</option>
+                <option value="Sinaloa">Sinaloa</option>
+                <option value="Sonora">Sonora</option>
+                <option value="Tabasco">Tabasco</option>
+                <option value="Tamaulipas">Tamaulipas</option>
+                <option value="Tlaxcala">Tlaxcala</option>
+                <option value="Yucatán">Yucatán</option>
+                <option value="Zacatecas">Zacatecas</option>
+              </optgroup>
+            </select>
+          </label>
         </div>
+        <p class="form-policy-note">
+          Cobertura activa: Puebla, CDMX, Estado de México, Veracruz e Hidalgo.
+          Estados con regla 10 kg: Tabasco, Cancún, Campeche, Oaxaca y Guerrero.
+          El resto de estados también entra en recolección con mínimo 10 kg.
+        </p>
         <label>
-          Ubicacion (ciudad/estado o direccion)
-          <input type="text" name="locationText" id="locationText" required placeholder="Ej. Guadalajara, Jalisco" />
+          Ubicación (ciudad o dirección)
+          <input type="text" name="locationText" id="locationText" required placeholder="Ej. Centro, Puebla" />
         </label>
         <div class="geo-row">
-          <button type="button" class="btn btn-ghost" id="detectLocationBtn">Detectar mi ubicacion</button>
+          <button type="button" class="btn btn-ghost" id="detectLocationBtn">Detectar mi ubicación</button>
           <p id="geoStatus" class="geo-status"></p>
         </div>
         <label>
           Comentarios adicionales
           <textarea name="notes" rows="3" placeholder="Ej. Tengo tarjetas mezcladas y algunas piezas sueltas"></textarea>
         </label>
+        <label class="consent-check">
+          <input type="checkbox" name="legalConsent" required />
+          <span>
+            Acepto el
+            <a href="aviso-privacidad.html" target="_blank" rel="noopener noreferrer">Aviso de Privacidad</a>
+            y los
+            <a href="terminos.html" target="_blank" rel="noopener noreferrer">Términos y Condiciones</a>.
+          </span>
+        </label>
         <button class="btn btn-primary" type="submit">Enviar registro</button>
         <p id="leadSuccess" class="success-msg" aria-live="polite"></p>
       </form>
-    </section>
-
-    <section class="coverage container" id="cobertura">
-      <div class="section-head reveal">
-        <p class="eyebrow">Cobertura</p>
-        <h2>Queremos llegar a todo Mexico</h2>
-      </div>
-      <p class="coverage-copy reveal delay-1">
-        Atendemos tecnicos, chatarreros, talleres y personas con material electronico acumulado.
-        Si estas en cualquier estado de la Republica Mexicana, escribenos y revisamos envio o recoleccion.
-      </p>
     </section>
 
     <section class="contact container" id="contacto">
       <div class="contact-panel reveal">
         <h2>Listo para vender tu material?</h2>
         <p>
-          Registrate en el formulario y te cotizamos rapido.
-          Te respondemos con base en tipo de material, kilos y ubicacion.
+          Regístrate en el formulario y te cotizamos rápido.
+          Te respondemos con base en tipo de material, kilos y ubicación.
         </p>
         <div class="contact-actions">
-          <a class="btn btn-primary open-material-selector" href="#registro">Iniciar cotizacion</a>
+          <a class="btn btn-primary open-material-selector" href="#registro">Iniciar cotización</a>
           <a class="btn btn-ghost open-material-selector" href="#registro">Llenar formulario</a>
         </div>
       </div>
     </section>
+    </div>
   </main>
 
   <a class="floating-wa open-material-selector" href="#registro" aria-label="Abrir formulario">GO</a>
@@ -411,11 +534,17 @@
 
   <footer class="site-footer">
     <div class="container footer-content">
-      <p>Reciclaje Logi<span class="logo-kas">KAS</span> - Compra de componentes para reciclaje y destruccion responsable.</p>
-      <p>Mexico</p>
+      <p>Reciclaje Logi<span class="logo-kas">KAS</span> - Compra de componentes para reciclaje y destrucción responsable.</p>
+      <p class="footer-legal-links">
+        <a href="aviso-privacidad.html" target="_blank" rel="noopener noreferrer">Aviso de Privacidad</a>
+        <span aria-hidden="true">|</span>
+        <a href="terminos.html" target="_blank" rel="noopener noreferrer">Términos y Condiciones</a>
+      </p>
+      <p>México</p>
     </div>
   </footer>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="script.js"></script>
 </body>
 </html>
