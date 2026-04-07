@@ -1,61 +1,82 @@
 # ECO LÓGICA Garcia
 
-Landing page y panel interno para registro, gestión y seguimiento de leads de compra de material electrónico para reciclaje.
+Sitio web y panel interno para administrar solicitudes de compra de material electrónico para reciclaje.
 
-## Contenido del proyecto
+**Última actualización:** 7 de abril de 2026
 
-- Sitio público con secciones por pestañas (Inicio, Materiales, Cobertura, Cotizar).
-- Selector de material con modal y carruseles.
-- Formulario de registro con validaciones de cobertura y regla de 10 kg.
-- Modo claro/oscuro con persistencia local.
-- Panel admin para gestión de leads (filtros, edición, exportación, historial y acciones masivas).
-- Páginas legales mínimas:
+## Resumen
+
+Este proyecto está pensado para que una persona pueda:
+
+- conocer la propuesta de reciclaje;
+- seleccionar el tipo de material desde el sitio público;
+- registrar un lead con sus datos;
+- revisar, filtrar y administrar esos registros desde un panel interno.
+
+La información se guarda en el navegador mediante `localStorage`, por lo que el sistema funciona sin backend.
+
+## Qué incluye
+
+- Sitio público con navegación por secciones.
+- Selector visual de materiales con modal.
+- Formulario de registro con validaciones básicas.
+- Tema claro y oscuro con persistencia local.
+- Panel administrativo con:
+  - filtros de búsqueda;
+  - edición de leads;
+  - acciones masivas;
+  - historial de cambios;
+  - exportación a CSV.
+- Páginas legales:
   - `aviso-privacidad.html`
   - `terminos.html`
 
-## Estructura principal
+## Cómo usarlo
 
-- `index.html`: sitio público.
-- `styles.css`: estilos globales del sitio.
-- `script.js`: lógica del sitio (tabs, tema, formulario, mapa, modal, carruseles).
+### Sitio público
+
+1. Abre `index.html` en el navegador.
+2. Recorre las secciones del sitio.
+3. Usa el formulario para enviar una solicitud.
+
+### Panel administrativo
+
+1. Abre `admin.html` en el navegador.
+2. Inicia sesión con una cuenta de administrador.
+3. Usa la tabla de leads para buscar, filtrar, editar o exportar registros.
+
+## Archivos principales
+
+- `index.html`: página principal del sitio.
+- `styles.css`: estilos del sitio público.
+- `script.js`: lógica del sitio público.
 - `admin.html`: panel administrativo.
 - `admin.css`: estilos del panel administrativo.
 - `admin.js`: lógica del panel administrativo.
 - `aviso-privacidad.html`: aviso de privacidad.
 - `terminos.html`: términos y condiciones.
 
-## Ejecutar en local
+## Funcionamiento de los datos
 
-Este proyecto es estático. Puedes abrir `index.html` directamente en navegador:
+1. El usuario registra sus datos desde el sitio público.
+2. La información se guarda en `localStorage`.
+3. El panel admin lee esos datos para administrarlos.
+4. Los cambios quedan disponibles mientras se conserve el almacenamiento del navegador.
 
-1. Doble clic en `index.html`, o
-2. Desde PowerShell:
+## Importante
 
-```powershell
-Start-Process "index.html"
-```
+- Este proyecto no usa base de datos ni servidor.
+- Si se borra el almacenamiento del navegador, los registros locales se pierden.
+- Para un entorno productivo real, conviene migrar autenticación y datos a un backend.
 
-Para panel interno:
+## Publicación
 
-```powershell
-Start-Process "admin.html"
-```
-
-## Flujo de leads
-
-1. El usuario llena el formulario en el sitio público.
-2. El registro se guarda en `localStorage` del navegador.
-3. El panel admin consume esos datos para operar filtros, estatus, historial y exportación.
-
-## Notas importantes
-
-- Al ser una app estática, la persistencia depende del navegador/dispositivo (`localStorage`).
-- Las credenciales admin están definidas en frontend; para producción real se recomienda migrar autenticación y datos a backend.
-- Para publicar en producción, considerar HTTPS, políticas de datos, y control de accesos robusto.
+Cada actualización que se sube a la rama principal se puede publicar en GitHub Pages si el repositorio está configurado para ello.
 
 ## Estado actual
 
-- UI refinada (tipografía y microanimaciones coherentes).
-- Contraste y legibilidad en tema claro/oscuro corregidos.
-- CTA principales y modal de material funcionales.
-- Legal mínimo integrado en formulario y footer.
+- Interfaz refinada y más legible.
+- Tema claro y oscuro sincronizado.
+- Panel administrativo dividido por zonas.
+- Manejo de errores y validaciones mejorado.
+- Acciones masivas integradas junto a la tabla de leads.
