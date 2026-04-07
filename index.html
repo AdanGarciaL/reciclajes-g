@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reciclaje LogiKAS | Compra de Electrónica en México</title>
-  <meta name="description" content="Compramos tarjetas lógicas y componentes electrónicos para destrucción y reciclaje en todo México." />
+  <title>ECO LÓGICA Garcia | Compra de Lógica de Celular en México</title>
+  <meta name="description" content="ECO LÓGICA Garcia compra lógica de celular y componentes electrónicos para reciclaje responsable en todo México." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet" />
@@ -18,11 +18,11 @@
 
   <header class="site-header">
     <nav class="nav container">
-      <a href="#inicio" class="logo" id="brandLogo" aria-label="Reciclaje LogiKAS inicio">
-        <span class="logo-mark">RG</span>
+      <a href="#inicio" class="logo" id="brandLogo" aria-label="ECO LÓGICA Garcia inicio">
+        <span class="logo-mark"><i class="bi bi-recycle"></i></span>
         <span class="logo-text-wrap">
-          <span class="logo-text">Reciclaje Logi<span class="logo-kas">KAS</span></span>
-          <span class="logo-subtext">México</span>
+          <span class="logo-text">ECO <span class="logo-kas">LÓGICA</span></span>
+          <span class="logo-subtext">Garcia · Compra de Lógica de Celular</span>
         </span>
       </a>
       <button class="menu-btn" id="menuBtn" aria-label="Abrir menú">Menú</button>
@@ -41,9 +41,9 @@
     </nav>
   </header>
 
-  <section class="campaign-strip" id="campaignStrip" aria-label="Campana activa">
+  <section class="campaign-strip" id="campaignStrip" aria-label="Campaña activa">
     <div class="container campaign-strip-inner">
-      <p>Oferta de campana: evaluacion prioritaria de lotes grandes en menos de 24h.</p>
+      <p>Oferta de campaña: evaluación prioritaria de lotes grandes en menos de 24h.</p>
       <a class="btn btn-primary open-material-selector" href="#registro">Cotizar ahora</a>
     </div>
   </section>
@@ -53,8 +53,8 @@
     <section class="hero container" id="inicio">
       <div class="hero-main">
         <div class="hero-copy-wrap">
-          <p class="eyebrow reveal">Compra responsable en México</p>
-          <h1 class="reveal delay-1">Convertimos electrónica guardada en una compra rápida y clara</h1>
+          <p class="eyebrow reveal">ECO LÓGICA Garcia en México</p>
+          <h1 class="reveal delay-1">Renovamos tu electrónica en desuso con compra rápida, clara y responsable</h1>
           <p class="hero-copy reveal delay-2">
             Compramos lógicas y componentes para reciclaje y destrucción. Atendemos técnicos,
             chatarreros, talleres y negocios con cobertura activa en 5 estados y el resto de la República sujeto a regla de 10 kg.
@@ -70,7 +70,7 @@
         </div>
 
         <div class="hero-visual reveal delay-2">
-          <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=80" alt="Tarjetas electrónicas para reciclaje" />
+          <img src="Galeria/LogoGarcia.jpeg" alt="Logo ECO LÓGICA Garcia" />
           <div class="hero-badge">Cobertura activa: 5 estados</div>
           <div class="hero-badge hero-badge-alt">Respuesta rápida por formulario</div>
         </div>
@@ -175,35 +175,42 @@
         <button class="modal-close" id="modalClose" aria-label="Cerrar">×</button>
         <div class="modal-head">
           <h2>¿Qué tipo de material tienes?</h2>
-          <p>Selecciona para ver precio, imagenes y consideraciones</p>
+          <p>Primero elige si es celular u otro tipo, después selecciona para ver precio, imágenes y consideraciones.</p>
+          <p class="modal-step-label">1. Elige categoría</p>
+          <div class="material-mode-switch" aria-label="Elegir categoría de material">
+            <button class="material-mode-btn is-active" type="button" data-material-mode="all">Ver todos</button>
+            <button class="material-mode-btn" type="button" data-material-mode="celular">Solo celular</button>
+            <button class="material-mode-btn" type="button" data-material-mode="otros">Otros tipos</button>
+          </div>
         </div>
+        <p class="modal-step-label modal-step-label-2">2. Selecciona material</p>
         <div class="material-grid">
-          <button class="material-btn" data-material="celular">
+          <button class="material-btn" data-material="celular" data-group="celular">
             <span class="material-icon">📱</span>
             <span class="material-text">Celular</span>
             <span class="material-price">$100 - $1,300 /kg</span>
           </button>
-          <button class="material-btn" data-material="teclado">
+          <button class="material-btn" data-material="teclado" data-group="celular">
             <span class="material-icon">⌨️</span>
             <span class="material-text">Celular de Teclado</span>
             <span class="material-price">$100 - $150 /kg</span>
           </button>
-          <button class="material-btn" data-material="tablet">
+          <button class="material-btn" data-material="tablet" data-group="otros">
             <span class="material-icon">📲</span>
             <span class="material-text">Tablet</span>
             <span class="material-price">$100 - $150 /kg</span>
           </button>
-          <button class="material-btn" data-material="ram">
+          <button class="material-btn" data-material="ram" data-group="otros">
             <span class="material-icon">🖬</span>
             <span class="material-text">RAM</span>
             <span class="material-price">$300 - $450 /kg</span>
           </button>
-          <button class="material-btn" data-material="laptop">
+          <button class="material-btn" data-material="laptop" data-group="otros">
             <span class="material-icon">💻</span>
             <span class="material-text">Laptop</span>
-            <span class="material-price">$100 - $150 /kg</span>
+            <span class="material-price">$90 - $150 /kg</span>
           </button>
-          <button class="material-btn" data-material="otro">
+          <button class="material-btn" data-material="otro" data-group="otros">
             <span class="material-icon">⚙️</span>
             <span class="material-text">Otra cosa</span>
           </button>
@@ -215,7 +222,7 @@
     <section class="celular-types container" id="tipos-celular" style="display: none;">
       <div class="section-head reveal">
         <button class="back-btn" id="backBtn">← Atrás</button>
-        <p class="eyebrow">Logica de celular</p>
+        <p class="eyebrow">Lógica de celular</p>
         <h2>Tipos y precios según características</h2>
       </div>
       <div class="types-selector reveal delay-1">
@@ -225,7 +232,7 @@
         </button>
         <button class="type-btn" data-type="tipo2">
           <span class="type-label">Tipo 2</span>
-          <span class="type-price">$200 - $350 /kg</span>
+          <span class="type-price">$220 - $350 /kg</span>
         </button>
         <button class="type-btn" data-type="tipo3">
           <span class="type-label">Tipo 3</span>
@@ -426,9 +433,9 @@
             Tipo de material
             <select name="materialType" required>
               <option value="">Selecciona una opción</option>
-              <option value="Logica de celular">Logica de celular</option>
-              <option value="Logica de tablet">Logica de tablet</option>
-              <option value="Logica de laptop">Logica de laptop</option>
+              <option value="Logica de celular">Lógica de celular</option>
+              <option value="Logica de tablet">Lógica de tablet</option>
+              <option value="Logica de laptop">Lógica de laptop</option>
               <option value="RAM">RAM</option>
               <option value="CPU">CPU</option>
               <option value="Modem">Modem</option>
@@ -521,20 +528,20 @@
           Te respondemos con base en tipo de material, kilos y ubicación.
         </p>
         <div class="contact-actions">
-          <a class="btn btn-primary open-material-selector" href="#registro">Iniciar cotización</a>
-          <a class="btn btn-ghost open-material-selector" href="#registro">Llenar formulario</a>
+          <a class="btn btn-primary" href="#registro">Iniciar cotización</a>
+          <a class="btn btn-ghost" href="#registro">Llenar formulario</a>
         </div>
       </div>
     </section>
     </div>
   </main>
 
-  <a class="floating-wa open-material-selector" href="#registro" aria-label="Abrir formulario">GO</a>
+  <a class="floating-wa" href="#registro" aria-label="Abrir formulario">GO</a>
   <a class="floating-admin" id="floatingAdminBtn" href="admin.html" aria-label="Abrir panel admin">Admin</a>
 
   <footer class="site-footer">
     <div class="container footer-content">
-      <p>Reciclaje Logi<span class="logo-kas">KAS</span> - Compra de componentes para reciclaje y destrucción responsable.</p>
+      <p>ECO <span class="logo-kas">LÓGICA</span> Garcia - Compra de lógica de celular y componentes para reciclaje responsable.</p>
       <p class="footer-legal-links">
         <a href="aviso-privacidad.html" target="_blank" rel="noopener noreferrer">Aviso de Privacidad</a>
         <span aria-hidden="true">|</span>

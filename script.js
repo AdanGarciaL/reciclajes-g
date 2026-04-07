@@ -60,6 +60,14 @@ function initThemeToggle() {
       updateTheme(!isDark);
     });
   }
+
+  window.addEventListener("storage", (event) => {
+    if (event.key !== "theme-preference" || !event.newValue) {
+      return;
+    }
+
+    updateTheme(event.newValue === "dark");
+  });
 }
 
 initThemeToggle();
@@ -183,6 +191,7 @@ const materialSelectorModal = document.getElementById("materialSelectorModal");
 const modalOverlay = document.getElementById("modalOverlay");
 const modalClose = document.getElementById("modalClose");
 const materialBtns = document.querySelectorAll(".material-btn");
+const materialModeBtns = document.querySelectorAll(".material-mode-btn");
 const celularTypesSection = document.getElementById("tipos-celular");
 const otherMaterialSection = document.getElementById("otherMaterialDisplay");
 const backBtns = document.querySelectorAll("#backBtn, #backBtn2, #backBtn3, #backBtn4");
@@ -193,6 +202,7 @@ const heroSection = document.getElementById("inicio");
 const mainElement = document.querySelector("main");
 
 let selectedMaterial = null;
+let selectedMaterialMode = "all";
 
 const materialThemeClasses = [
   "material-theme-celular",
@@ -269,17 +279,26 @@ tabTriggers.forEach((trigger) => {
   });
 });
 
-window.addEventListener("hashchange", () => {
-  const tabId = hashToTab[window.location.hash];
-  if (tabId) {
-    activateTab(tabId, { updateHash: false, scrollToTop: false });
+function syncTabWithHash(behavior = "auto") {
+  const hash = window.location.hash;
+  const tabId = hashToTab[hash] || "inicio";
+  activateTab(tabId, { updateHash: false, scrollToTop: false });
+
+  if (!hash) {
+    return;
   }
+
+  const targetSection = document.querySelector(hash);
+  if (targetSection) {
+    targetSection.scrollIntoView({ behavior, block: "start" });
+  }
+}
+
+window.addEventListener("hashchange", () => {
+  syncTabWithHash("smooth");
 });
 
-activateTab(hashToTab[window.location.hash] || "inicio", {
-  updateHash: false,
-  scrollToTop: false,
-});
+syncTabWithHash("auto");
 
 function applyMaterialTheme(material) {
   materialThemeClasses.forEach((themeClass) => {
@@ -289,6 +308,24 @@ function applyMaterialTheme(material) {
   if (material) {
     document.body.classList.add(`material-theme-${material}`);
   }
+}
+
+function applyMaterialMode(mode = "all") {
+  selectedMaterialMode = mode;
+
+  materialModeBtns.forEach((btn) => {
+    btn.classList.toggle("is-active", btn.dataset.materialMode === mode);
+  });
+
+  materialBtns.forEach((btn) => {
+    const group = btn.dataset.group || "otros";
+    const shouldShow =
+      mode === "all" ||
+      (mode === "celular" && group === "celular") ||
+      (mode === "otros" && group === "otros");
+
+    btn.classList.toggle("is-hidden-mode", !shouldShow);
+  });
 }
 
 function initCampaignMode() {
@@ -363,6 +400,7 @@ function showMaterialSelector() {
 
   materialSelectorModal.style.display = "flex";
   materialSelectorModal.classList.add("active");
+  applyMaterialMode("all");
   document.body.style.overflow = "hidden";
 }
 
@@ -384,6 +422,13 @@ if (modalClose) {
 if (modalOverlay) {
   modalOverlay.addEventListener("click", hideMaterialSelector);
 }
+
+materialModeBtns.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const mode = btn.dataset.materialMode || "all";
+    applyMaterialMode(mode);
+  });
+});
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && materialSelectorModal?.classList.contains("active")) {
@@ -859,8 +904,8 @@ typeBtns.forEach((btn) => {
 
 loadTypeContent("tipo1");
 
-const LEADS_KEY = "reciclajeLogikasLeads";
-const LEGACY_LEADS_KEY = "reciclajesGLeads";
+const LEADS_KEY = "ecoLogicaGarciaLeads";
+const LEGACY_LEADS_KEY = "reciclajeLogikasLeads";
 
 const leadForm = document.getElementById("leadForm");
 const detectLocationBtn = document.getElementById("detectLocationBtn");

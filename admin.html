@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reciclaje LogiKAS | Panel Admin</title>
+  <title>ECO LÓGICA Garcia | Panel Admin</title>
   <meta name="robots" content="noindex, nofollow" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -14,8 +14,19 @@
 <body>
   <div class="admin-shell">
     <header class="admin-header">
-      <h1>Panel Interno Reciclaje LogiKAS</h1>
-      <p>Acceso restringido para administración de registros.</p>
+      <div class="admin-header-top">
+        <div>
+          <p class="admin-eyebrow">Centro de operaciones</p>
+          <h1>Panel Interno ECO LÓGICA Garcia</h1>
+          <p>Acceso restringido para administración de registros.</p>
+        </div>
+        <div class="admin-status-stack" aria-label="Estado del panel">
+          <button type="button" class="admin-status-chip admin-theme-toggle" id="adminThemeToggle" aria-label="Cambiar tema del panel">Tema claro</button>
+          <span class="admin-status-chip admin-status-chip-live">Panel activo</span>
+          <span class="admin-status-chip">Lead routing</span>
+          <span class="admin-status-chip">Auditoría</span>
+        </div>
+      </div>
     </header>
 
     <main>
@@ -34,13 +45,111 @@
 
       <section class="admin-panel hidden" id="adminPanel">
         <div class="admin-toolbar">
-          <p>Registros recibidos de Tengo material</p>
+          <div>
+            <p>Registros recibidos de Tengo material</p>
+            <div class="admin-toolbar-meta" aria-live="polite">
+              <span class="admin-toolbar-chip" id="adminCurrentZoneChip">Zona activa: Operación</span>
+              <span class="admin-toolbar-chip" id="adminCurrentUserChip">Sesión: --</span>
+            </div>
+          </div>
           <div class="admin-toolbar-actions">
             <button type="button" class="btn btn-primary" id="addLeadBtn">Agregar lead</button>
             <button type="button" class="btn btn-ghost" id="exportCsvBtn">Exportar CSV</button>
             <button type="button" class="btn btn-ghost" id="logoutBtn">Cerrar sesión</button>
           </div>
         </div>
+
+        <div class="admin-dashboard-layout">
+          <aside class="admin-sidebar" aria-label="Menú del panel admin">
+            <div class="admin-sidebar-card">
+              <p class="admin-sidebar-title">Menú del dashboard</p>
+              <nav class="admin-sidebar-nav">
+                <a href="#adminSummarySection" data-admin-zone="operation" data-admin-scroll="#adminSummarySection">Resumen operativo</a>
+                <a href="#adminUsersSection" data-admin-zone="operation" data-admin-scroll="#adminUsersSection">Gestión de admins</a>
+                <a href="#adminFiltersSection" data-admin-zone="control" data-admin-scroll="#adminFiltersSection">Filtros</a>
+                <a href="#adminTableSection" data-admin-zone="data" data-admin-scroll="#adminTableSection">Tabla de leads</a>
+                <a href="#historyPanel" data-admin-zone="data" data-admin-scroll="#historyPanel">Historial</a>
+              </nav>
+            </div>
+
+            <div class="admin-sidebar-card admin-sidebar-card-session">
+              <p class="admin-sidebar-title">Sesión interna</p>
+              <p class="admin-session-user" id="adminSessionSidebarUser">Admin: --</p>
+              <p class="admin-session-zone" id="adminSessionSidebarZone">Zona activa: Operación</p>
+            </div>
+
+            <div class="admin-sidebar-card admin-sidebar-card-highlight">
+              <p class="admin-sidebar-title">Atajos</p>
+              <p>Usa Agregar lead para nuevos registros y Exportar CSV para respaldos rápidos.</p>
+              <p>Gestiona credenciales en “Gestión de admins” sin salir del panel.</p>
+            </div>
+          </aside>
+
+          <div class="admin-main-stack">
+
+        <section class="admin-zone is-active" data-zone-name="operation" aria-label="Zona de operación">
+          <div class="admin-zone-head">
+            <h3>Zona de operación</h3>
+            <p>Monitoreo general y control de accesos internos.</p>
+          </div>
+          <div class="admin-top-grid">
+
+        <section class="admin-block admin-block-summary" id="adminSummarySection" aria-label="Resumen del panel">
+          <div class="admin-block-head">
+            <h2>Dashboard de operación</h2>
+            <p>Métricas clave para seguimiento comercial y logístico.</p>
+          </div>
+
+          <div class="admin-summary" id="adminSummary">
+            <article>
+              <p class="summary-value" id="summaryTotal">0</p>
+              <p class="summary-label">Leads totales</p>
+            </article>
+            <article>
+              <p class="summary-value" id="summaryActive">0</p>
+              <p class="summary-label">Cobertura activa</p>
+            </article>
+            <article>
+              <p class="summary-value" id="summaryMin10">0</p>
+              <p class="summary-label">Regla 10kg+</p>
+            </article>
+            <article>
+              <p class="summary-value" id="summaryKilos">0</p>
+              <p class="summary-label">Kg estimados</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="admin-block admin-block-users" id="adminUsersSection" aria-label="Gestión de usuarios admin">
+          <div class="admin-block-head">
+            <h2>Gestión de admins</h2>
+            <p>Edita usuario y contraseña de accesos internos.</p>
+          </div>
+
+          <form class="admin-users-form" id="adminUsersForm">
+            <label>
+              Admin a editar
+              <select id="adminUserSelect">
+                <option value="">Selecciona un admin</option>
+              </select>
+            </label>
+            <label>
+              Usuario
+              <input type="text" id="adminUserNameInput" placeholder="Usuario" required />
+            </label>
+            <label>
+              Contraseña
+              <input type="text" id="adminUserPasswordInput" placeholder="Nueva contraseña" required />
+            </label>
+            <div class="admin-users-actions">
+              <button type="submit" class="btn btn-primary" id="saveAdminUserBtn">Guardar cambios</button>
+              <button type="button" class="btn btn-ghost" id="resetAdminUserBtn">Limpiar</button>
+            </div>
+          </form>
+        </section>
+
+          </div>
+        </section>
 
         <section class="lead-editor hidden" id="leadEditor">
           <div class="lead-editor-head">
@@ -114,87 +223,90 @@
           </form>
         </section>
 
-        <div class="admin-summary" id="adminSummary">
-          <article>
-            <p class="summary-value" id="summaryTotal">0</p>
-            <p class="summary-label">Leads totales</p>
-          </article>
-          <article>
-            <p class="summary-value" id="summaryActive">0</p>
-            <p class="summary-label">Cobertura activa</p>
-          </article>
-          <article>
-            <p class="summary-value" id="summaryMin10">0</p>
-            <p class="summary-label">Regla 10kg+</p>
-          </article>
-          <article>
-            <p class="summary-value" id="summaryKilos">0</p>
-            <p class="summary-label">Kg estimados</p>
-          </article>
-        </div>
+        <section class="admin-zone" data-zone-name="control" aria-label="Zona de control">
+          <div class="admin-zone-head">
+            <h3>Zona de control</h3>
+            <p>Segmentación y acciones masivas para operación diaria.</p>
+          </div>
 
-        <div class="admin-controls">
-          <label>
-            Buscar
-            <input type="search" id="searchInput" placeholder="Nombre, teléfono o material" />
-          </label>
-          <label>
-            Cobertura
-            <select id="coverageFilter">
-              <option value="all">Todas</option>
-              <option value="Activa">Activa</option>
-              <option value="10kg+">10kg+</option>
-            </select>
-          </label>
-          <label>
-            Estado
-            <select id="stateFilter">
-              <option value="all">Todos</option>
-            </select>
-          </label>
-          <label>
-            Estatus
-            <select id="statusFilter">
-              <option value="all">Todos</option>
-              <option value="Nuevo">Nuevo</option>
-              <option value="En contacto">En contacto</option>
-              <option value="Cotizado">Cotizado</option>
-              <option value="Cerrado">Cerrado</option>
-            </select>
-          </label>
-          <label>
-            Orden
-            <select id="sortBy">
-              <option value="dateDesc">Fecha (nuevo a viejo)</option>
-              <option value="dateAsc">Fecha (viejo a nuevo)</option>
-              <option value="kilosDesc">Kilos (mayor a menor)</option>
-              <option value="kilosAsc">Kilos (menor a mayor)</option>
-            </select>
-          </label>
-        </div>
+        <section class="admin-block admin-block-controls" id="adminFiltersSection" aria-label="Filtros del listado">
+          <div class="admin-block-head">
+            <h2>Filtros inteligentes</h2>
+            <p>Encuentra y segmenta leads sin salir del listado principal.</p>
+          </div>
 
-        <div class="bulk-actions" id="bulkActions">
-          <p id="selectedCount">0 seleccionados</p>
-          <div class="bulk-actions-controls">
+          <div class="admin-controls">
             <label>
-              Estatus masivo
-              <select id="bulkStatusSelect">
-                <option value="">Selecciona</option>
+              Buscar
+              <input type="search" id="searchInput" placeholder="Nombre, teléfono o material" />
+            </label>
+            <label>
+              Cobertura
+              <select id="coverageFilter">
+                <option value="all">Todas</option>
+                <option value="Activa">Activa</option>
+                <option value="10kg+">10kg+</option>
+              </select>
+            </label>
+            <label>
+              Estado
+              <select id="stateFilter">
+                <option value="all">Todos</option>
+              </select>
+            </label>
+            <label>
+              Estatus
+              <select id="statusFilter">
+                <option value="all">Todos</option>
                 <option value="Nuevo">Nuevo</option>
                 <option value="En contacto">En contacto</option>
                 <option value="Cotizado">Cotizado</option>
                 <option value="Cerrado">Cerrado</option>
               </select>
             </label>
-            <button type="button" class="btn btn-ghost" id="applyBulkStatusBtn" disabled>Aplicar estatus</button>
-            <button type="button" class="btn btn-ghost" id="exportSelectedBtn" disabled>Exportar seleccionados</button>
-            <button type="button" class="btn btn-ghost" id="deleteSelectedBtn" disabled>Eliminar seleccionados</button>
-            <button type="button" class="btn btn-ghost" id="clearSelectionBtn" disabled>Limpiar selección</button>
+            <label>
+              Orden
+              <select id="sortBy">
+                <option value="dateDesc">Fecha (nuevo a viejo)</option>
+                <option value="dateAsc">Fecha (viejo a nuevo)</option>
+                <option value="kilosDesc">Kilos (mayor a menor)</option>
+                <option value="kilosAsc">Kilos (menor a mayor)</option>
+              </select>
+            </label>
           </div>
-        </div>
+
+        </section>
+
+        </section>
+
+        <section class="admin-zone" data-zone-name="data" aria-label="Zona de datos">
+          <div class="admin-zone-head">
+            <h3>Zona de datos</h3>
+            <p>Consulta de leads, paginación e historial de cambios.</p>
+          </div>
+
+          <div class="bulk-actions bulk-actions-inline" id="bulkActions" aria-label="Acciones de selección">
+            <p id="selectedCount">0 seleccionados</p>
+            <div class="bulk-actions-controls">
+              <label>
+                Estatus masivo
+                <select id="bulkStatusSelect">
+                  <option value="">Selecciona</option>
+                  <option value="Nuevo">Nuevo</option>
+                  <option value="En contacto">En contacto</option>
+                  <option value="Cotizado">Cotizado</option>
+                  <option value="Cerrado">Cerrado</option>
+                </select>
+              </label>
+              <button type="button" class="btn btn-ghost" id="applyBulkStatusBtn" disabled>Aplicar estatus</button>
+              <button type="button" class="btn btn-ghost" id="exportSelectedBtn" disabled>Exportar seleccionados</button>
+              <button type="button" class="btn btn-ghost" id="deleteSelectedBtn" disabled>Eliminar seleccionados</button>
+              <button type="button" class="btn btn-ghost" id="clearSelectionBtn" disabled>Limpiar selección</button>
+            </div>
+          </div>
 
         <div class="admin-content-grid">
-          <section class="admin-data-card" aria-label="Tabla de leads">
+          <section class="admin-data-card" id="adminTableSection" aria-label="Tabla de leads">
             <div class="table-wrap">
               <table class="admin-table">
                 <thead>
@@ -258,6 +370,11 @@
             </div>
             <button type="button" class="btn btn-ghost" id="clearHistoryBtn">Limpiar historial</button>
           </aside>
+        </div>
+
+        </section>
+
+          </div>
         </div>
       </section>
     </main>

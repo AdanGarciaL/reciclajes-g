@@ -1,4 +1,4 @@
-# Reciclaje LogiKAS
+# ECO LÓGICA Garcia
 
 Landing page y panel interno para registro, gestión y seguimiento de leads de compra de material electrónico para reciclaje.
 
