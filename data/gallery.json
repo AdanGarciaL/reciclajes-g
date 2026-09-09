@@ -1,0 +1,98 @@
+{
+  "updatedAt": "2026-09-09",
+  "categories": [
+    {
+      "id": "celular-tipo-1",
+      "label": "Celular Tipo 1",
+      "folder": "Galeria/Celular Tipo 1",
+      "images": [
+        { "src": "Galeria/Celular Tipo 1/logica_celular1.jpg", "alt": "Lógica de celular Tipo 1" },
+        { "src": "Galeria/Celular Tipo 1/logica_celular11.jpg", "alt": "Lógica de celular Tipo 1" },
+        { "src": "Galeria/Celular Tipo 1/logica_celular12.jpg", "alt": "Lógica de celular Tipo 1" },
+        { "src": "Galeria/Celular Tipo 1/logica_celular13.jpg", "alt": "Lógica de celular Tipo 1" },
+        { "src": "Galeria/Celular Tipo 1/logica_celular14.jpg", "alt": "Lógica de celular Tipo 1" },
+        { "src": "Galeria/Celular Tipo 1/logica_celular15.jpg", "alt": "Lógica de celular Tipo 1" },
+        { "src": "Galeria/Celular Tipo 1/logica_celular16.jpg", "alt": "Lógica de celular Tipo 1" },
+        { "src": "Galeria/Celular Tipo 1/logica_celular17.jpg", "alt": "Lógica de celular Tipo 1" },
+        { "src": "Galeria/Celular Tipo 1/logica_celular18.jpg", "alt": "Lógica de celular Tipo 1" },
+        { "src": "Galeria/Celular Tipo 1/logica_celular19.jpg", "alt": "Lógica de celular Tipo 1" }
+      ]
+    },
+    {
+      "id": "celular-tipo-2",
+      "label": "Celular Tipo 2",
+      "folder": "Galeria/Celular Tipo 2",
+      "images": [
+        { "src": "Galeria/Celular Tipo 2/logica_celular2.jpg", "alt": "Lógica de celular Tipo 2" },
+        { "src": "Galeria/Celular Tipo 2/logica_celular21.jpg", "alt": "Lógica de celular Tipo 2" },
+        { "src": "Galeria/Celular Tipo 2/logica_celular22.jpg", "alt": "Lógica de celular Tipo 2" },
+        { "src": "Galeria/Celular Tipo 2/logica_celular23.jpg", "alt": "Lógica de celular Tipo 2" },
+        { "src": "Galeria/Celular Tipo 2/logica_celular24.jpg", "alt": "Lógica de celular Tipo 2" },
+        { "src": "Galeria/Celular Tipo 2/logica_celular25.jpg", "alt": "Lógica de celular Tipo 2" },
+        { "src": "Galeria/Celular Tipo 2/logica_celular26.jpg", "alt": "Lógica de celular Tipo 2" },
+        { "src": "Galeria/Celular Tipo 2/logica_celular27.jpg", "alt": "Lógica de celular Tipo 2" },
+        { "src": "Galeria/Celular Tipo 2/logica_celular29.jpg", "alt": "Lógica de celular Tipo 2" }
+      ]
+    },
+    {
+      "id": "celular-tipo-3",
+      "label": "Celular y Tablet Tipo 3",
+      "folder": "Galeria/Celular y Tablet Tipo 3",
+      "images": [
+        { "src": "Galeria/Celular y Tablet Tipo 3/logica_celular3.jpg", "alt": "Lógica de celular Tipo 3" },
+        { "src": "Galeria/Celular y Tablet Tipo 3/logica_celular31.jpg", "alt": "Lógica de celular Tipo 3" },
+        { "src": "Galeria/Celular y Tablet Tipo 3/logica_celular32.jpg", "alt": "Lógica de celular Tipo 3" },
+        { "src": "Galeria/Celular y Tablet Tipo 3/logica_celular33.jpg", "alt": "Lógica de celular Tipo 3" },
+        { "src": "Galeria/Celular y Tablet Tipo 3/logica_celular34.jpg", "alt": "Lógica de celular Tipo 3" },
+        { "src": "Galeria/Celular y Tablet Tipo 3/logica_tablet35.jpg", "alt": "Lógica de tablet Tipo 3" },
+        { "src": "Galeria/Celular y Tablet Tipo 3/logica_tablet36.jpg", "alt": "Lógica de tablet Tipo 3" },
+        { "src": "Galeria/Celular y Tablet Tipo 3/logica_tablet37.jpg", "alt": "Lógica de tablet Tipo 3" },
+        { "src": "Galeria/Celular y Tablet Tipo 3/logica_tablet38.jpg", "alt": "Lógica de tablet Tipo 3" },
+        { "src": "Galeria/Celular y Tablet Tipo 3/logica_tablet39.jpg", "alt": "Lógica de tablet Tipo 3" },
+        { "src": "Galeria/Celular y Tablet Tipo 3/logica_tablet310.jpg", "alt": "Lógica de tablet Tipo 3" }
+      ]
+    },
+    {
+      "id": "sin-pila-tapa",
+      "label": "Sin pila y tapa Tipo 4",
+      "folder": "Galeria/Sin Pila y Tapa Tipo 4",
+      "images": [
+        { "src": "Galeria/Sin Pila y Tapa Tipo 4/sin_pila_y_tapa.jpg", "alt": "Celular sin pila ni tapa" }
+      ]
+    },
+    {
+      "id": "laptop",
+      "label": "Laptop",
+      "folder": "Galeria/Laptop",
+      "images": [
+        { "src": "Galeria/Laptop/Laptop.jpg", "alt": "Lógica de laptop" },
+        { "src": "Galeria/Laptop/Laptop1.jpg", "alt": "Lógica de laptop" },
+        { "src": "Galeria/Laptop/Laptop2.jpg", "alt": "Lógica de laptop" },
+        { "src": "Galeria/Laptop/Laptop3.jpg", "alt": "Lógica de laptop" },
+        { "src": "Galeria/Laptop/Laptop4.jpg", "alt": "Lógica de laptop" },
+        { "src": "Galeria/Laptop/Laptop5.jpg", "alt": "Lógica de laptop" },
+        { "src": "Galeria/Laptop/Laptop6.jpg", "alt": "Lógica de laptop" }
+      ]
+    },
+    {
+      "id": "ram",
+      "label": "RAM",
+      "folder": "Galeria/RAM",
+      "images": [
+        { "src": "Galeria/RAM/RAM.jpg", "alt": "Módulos de memoria RAM" },
+        { "src": "Galeria/RAM/RAM1.jpg", "alt": "Módulos de memoria RAM" },
+        { "src": "Galeria/RAM/RAM2.jpg", "alt": "Módulos de memoria RAM" }
+      ]
+    },
+    {
+      "id": "operacion",
+      "label": "Galería general",
+      "folder": "Galeria",
+      "images": [
+        { "src": "Galeria/logica_celular.jpg", "alt": "Lógicas de celular para reciclaje" },
+        { "src": "Galeria/logica_lapcpu.jpg", "alt": "Lógicas de laptop y CPU para reciclaje" },
+        { "src": "Galeria/logica_ram.jpg", "alt": "Módulos RAM y componentes electrónicos" }
+      ]
+    }
+  ]
+}

@@ -3,384 +3,139 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ECO LÓGICA Garcia | Panel Admin</title>
   <meta name="robots" content="noindex, nofollow" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+  <title>Panel interno | ECO LÓGICA García</title>
+  <meta name="theme-color" content="#064528" />
+  <link rel="icon" href="icons/icono.png" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
   <link rel="stylesheet" href="admin.css" />
 </head>
 <body>
-  <div class="admin-shell">
-    <header class="admin-header">
-      <div class="admin-header-top">
-        <div>
-          <p class="admin-eyebrow">Centro de operaciones</p>
-          <h1>Panel Interno ECO LÓGICA Garcia</h1>
-          <p>Acceso restringido para administración de registros.</p>
+
+  <!-- LOGIN -->
+  <div class="login-screen" id="loginScreen">
+    <form class="login-card" id="loginForm" autocomplete="off">
+      <div class="login-brand">
+        <img src="icons/icono.png" alt="" />
+        <div class="login-brand-text">
+          <strong>ECO LÓGICA García</strong>
+          <span>Panel interno</span>
         </div>
-        <div class="admin-status-stack" aria-label="Estado del panel">
-          <button type="button" class="admin-status-chip admin-theme-toggle" id="adminThemeToggle" aria-label="Cambiar tema del panel">Tema claro</button>
-          <span class="admin-status-chip admin-status-chip-live">Panel activo</span>
-          <span class="admin-status-chip">Lead routing</span>
-          <span class="admin-status-chip">Auditoría</span>
+      </div>
+      <h1>Inicia sesión</h1>
+      <div class="field">
+        <label for="loginUser">Usuario</label>
+        <input type="text" id="loginUser" name="username" autocomplete="username" required />
+      </div>
+      <div class="field">
+        <label for="loginPass">Contraseña</label>
+        <input type="password" id="loginPass" name="password" autocomplete="current-password" required />
+      </div>
+      <p class="login-msg" id="loginMsg"></p>
+      <button class="btn btn-primary btn-block" type="submit">Entrar</button>
+      <p class="login-note">Acceso solo para el equipo de ECO LÓGICA García. Este panel controla los precios y la galería del sitio público.</p>
+    </form>
+  </div>
+
+  <!-- APP -->
+  <div id="adminApp" hidden>
+    <header class="app-header">
+      <div class="container app-header-inner">
+        <div class="app-brand">
+          <img src="icons/icono.png" alt="" />
+          <div>
+            <strong>ECO LÓGICA García</strong>
+            <span>Panel interno</span>
+          </div>
         </div>
+        <div class="app-user">
+          <button class="theme-toggle" id="themeToggle" aria-label="Cambiar tema"><i class="bi bi-moon-fill" id="themeIcon"></i></button>
+          <p class="who">Sesión: <strong id="whoAmI">—</strong></p>
+          <button class="btn btn-ghost btn-sm" id="logoutBtn"><i class="bi bi-box-arrow-right"></i> Salir</button>
+          <a class="btn btn-ghost btn-sm" href="index.html" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> Ver sitio</a>
+        </div>
+      </div>
+      <div class="container app-tabs">
+        <button class="app-tab is-active" data-tab="precios">Precios</button>
+        <button class="app-tab" data-tab="galeria">Galería</button>
       </div>
     </header>
 
-    <main>
-      <form class="admin-login" id="adminLoginForm">
-        <label>
-          Usuario
-          <input type="text" name="username" placeholder="Usuario" required />
-        </label>
-        <label>
-          Contraseña
-          <input type="password" name="password" placeholder="Contraseña" required />
-        </label>
-        <button type="submit" class="btn btn-primary">Iniciar sesión</button>
-        <p id="loginMsg" class="geo-status" aria-live="polite"></p>
-      </form>
+    <main class="app-main container">
 
-      <section class="admin-panel hidden" id="adminPanel">
-        <div class="admin-toolbar">
-          <div>
-            <p>Registros recibidos de Tengo material</p>
-            <div class="admin-toolbar-meta" aria-live="polite">
-              <span class="admin-toolbar-chip" id="adminCurrentZoneChip">Zona activa: Operación</span>
-              <span class="admin-toolbar-chip" id="adminCurrentUserChip">Sesión: --</span>
-            </div>
-          </div>
-          <div class="admin-toolbar-actions">
-            <button type="button" class="btn btn-primary" id="addLeadBtn">Agregar lead</button>
-            <button type="button" class="btn btn-ghost" id="exportCsvBtn">Exportar CSV</button>
-            <button type="button" class="btn btn-ghost" id="logoutBtn">Cerrar sesión</button>
-          </div>
+      <!-- Conexión con GitHub, compartida por ambas pestañas -->
+      <div class="card">
+        <p class="card-title"><i class="bi bi-github"></i> Conexión para guardar cambios</p>
+        <p class="card-sub">Este sitio no usa base de datos: los cambios se guardan directamente en el repositorio de GitHub. Necesitas un token de acceso para poder guardar.</p>
+        <div class="gh-status">
+          <span class="gh-dot" id="ghDot"></span>
+          <span class="gh-status-text" id="ghStatusText">Sin conectar</span>
         </div>
-
-        <div class="admin-dashboard-layout">
-          <aside class="admin-sidebar" aria-label="Menú del panel admin">
-            <div class="admin-sidebar-card">
-              <p class="admin-sidebar-title">Menú del dashboard</p>
-              <nav class="admin-sidebar-nav">
-                <a href="#adminSummarySection" data-admin-zone="operation" data-admin-scroll="#adminSummarySection">Resumen operativo</a>
-                <a href="#adminUsersSection" data-admin-zone="operation" data-admin-scroll="#adminUsersSection">Gestión de admins</a>
-                <a href="#adminFiltersSection" data-admin-zone="control" data-admin-scroll="#adminFiltersSection">Filtros</a>
-                <a href="#adminTableSection" data-admin-zone="data" data-admin-scroll="#adminTableSection">Tabla de leads</a>
-                <a href="#historyPanel" data-admin-zone="data" data-admin-scroll="#historyPanel">Historial</a>
-              </nav>
-            </div>
-
-            <div class="admin-sidebar-card admin-sidebar-card-session">
-              <p class="admin-sidebar-title">Sesión interna</p>
-              <p class="admin-session-user" id="adminSessionSidebarUser">Admin: --</p>
-              <p class="admin-session-zone" id="adminSessionSidebarZone">Zona activa: Operación</p>
-            </div>
-
-            <div class="admin-sidebar-card admin-sidebar-card-highlight">
-              <p class="admin-sidebar-title">Atajos</p>
-              <p>Usa Agregar lead para nuevos registros y Exportar CSV para respaldos rápidos.</p>
-              <p>Gestiona credenciales en “Gestión de admins” sin salir del panel.</p>
-            </div>
-          </aside>
-
-          <div class="admin-main-stack">
-
-        <section class="admin-zone is-active" data-zone-name="operation" aria-label="Zona de operación">
-          <div class="admin-zone-head">
-            <h3>Zona de operación</h3>
-            <p>Monitoreo general y control de accesos internos.</p>
+        <div class="gh-row">
+          <div class="field">
+            <label for="ghToken">Token de acceso de GitHub</label>
+            <input type="password" id="ghToken" placeholder="github_pat_..." autocomplete="off" />
           </div>
-          <div class="admin-top-grid">
-
-        <section class="admin-block admin-block-summary" id="adminSummarySection" aria-label="Resumen del panel">
-          <div class="admin-block-head">
-            <h2>Dashboard de operación</h2>
-            <p>Métricas clave para seguimiento comercial y logístico.</p>
-          </div>
-
-          <div class="admin-summary" id="adminSummary">
-            <article>
-              <p class="summary-value" id="summaryTotal">0</p>
-              <p class="summary-label">Leads totales</p>
-            </article>
-            <article>
-              <p class="summary-value" id="summaryActive">0</p>
-              <p class="summary-label">Cobertura activa</p>
-            </article>
-            <article>
-              <p class="summary-value" id="summaryMin10">0</p>
-              <p class="summary-label">Regla 10kg+</p>
-            </article>
-            <article>
-              <p class="summary-value" id="summaryKilos">0</p>
-              <p class="summary-label">Kg estimados</p>
-            </article>
-          </div>
-        </section>
-
-        <section class="admin-block admin-block-users" id="adminUsersSection" aria-label="Gestión de usuarios admin">
-          <div class="admin-block-head">
-            <h2>Gestión de admins</h2>
-            <p>Edita usuario y contraseña de accesos internos.</p>
-          </div>
-
-          <form class="admin-users-form" id="adminUsersForm">
-            <label>
-              Admin a editar
-              <select id="adminUserSelect">
-                <option value="">Selecciona un admin</option>
-              </select>
-            </label>
-            <label>
-              Usuario
-              <input type="text" id="adminUserNameInput" placeholder="Usuario" required />
-            </label>
-            <label>
-              Contraseña
-              <input type="text" id="adminUserPasswordInput" placeholder="Nueva contraseña" required />
-            </label>
-            <div class="admin-users-actions">
-              <button type="submit" class="btn btn-primary" id="saveAdminUserBtn">Guardar cambios</button>
-              <button type="button" class="btn btn-ghost" id="resetAdminUserBtn">Limpiar</button>
-            </div>
-          </form>
-        </section>
-
-          </div>
-        </section>
-
-        <section class="lead-editor hidden" id="leadEditor">
-          <div class="lead-editor-head">
-            <h3 id="leadEditorTitle">Agregar lead</h3>
-            <button type="button" class="btn btn-ghost" id="closeLeadEditorBtn">Cerrar</button>
-          </div>
-          <form id="leadEditorForm">
-            <input type="hidden" id="leadEditorId" name="id" />
-            <div class="lead-editor-grid">
-              <label>
-                Nombre
-                <input type="text" id="leadEditorName" name="fullName" required />
-              </label>
-              <label>
-                Teléfono
-                <input type="text" id="leadEditorPhone" name="phone" required />
-              </label>
-              <label>
-                Material
-                <select id="leadEditorMaterial" name="materialType" required>
-                  <option value="">Selecciona</option>
-                  <option value="Logica de celular">Lógica de celular</option>
-                  <option value="Logica de tablet">Lógica de tablet</option>
-                  <option value="Logica de laptop">Lógica de laptop</option>
-                  <option value="RAM">RAM</option>
-                  <option value="CPU">CPU</option>
-                  <option value="Modem">Modem</option>
-                  <option value="Otro">Otro</option>
-                </select>
-              </label>
-              <label>
-                Kg
-                <input type="number" id="leadEditorKilos" name="kilos" step="0.1" min="0" required />
-              </label>
-              <label>
-                Estado
-                <input type="text" id="leadEditorState" name="state" required />
-              </label>
-              <label>
-                Coordenadas
-                <input type="text" id="leadEditorCoordinates" name="coordinates" />
-              </label>
-            </div>
-            <label>
-              Ubicación
-              <input type="text" id="leadEditorLocation" name="locationText" required />
-            </label>
-            <label>
-              Notas
-              <textarea id="leadEditorNotes" name="notes" rows="2"></textarea>
-            </label>
-            <div class="lead-editor-grid">
-              <label>
-                Estatus
-                <select id="leadEditorStatus" name="status">
-                  <option value="Nuevo">Nuevo</option>
-                  <option value="En contacto">En contacto</option>
-                  <option value="Cotizado">Cotizado</option>
-                  <option value="Cerrado">Cerrado</option>
-                </select>
-              </label>
-              <label>
-                Nota interna
-                <input type="text" id="leadEditorInternalNote" name="internalNote" />
-              </label>
-            </div>
-            <div class="lead-editor-actions">
-              <button type="submit" class="btn btn-primary" id="saveLeadBtn">Guardar lead</button>
-              <button type="button" class="btn btn-ghost" id="cancelLeadEditorBtn">Cancelar</button>
-            </div>
-          </form>
-        </section>
-
-        <section class="admin-zone" data-zone-name="control" aria-label="Zona de control">
-          <div class="admin-zone-head">
-            <h3>Zona de control</h3>
-            <p>Segmentación y acciones masivas para operación diaria.</p>
-          </div>
-
-        <section class="admin-block admin-block-controls" id="adminFiltersSection" aria-label="Filtros del listado">
-          <div class="admin-block-head">
-            <h2>Filtros inteligentes</h2>
-            <p>Encuentra y segmenta leads sin salir del listado principal.</p>
-          </div>
-
-          <div class="admin-controls">
-            <label>
-              Buscar
-              <input type="search" id="searchInput" placeholder="Nombre, teléfono o material" />
-            </label>
-            <label>
-              Cobertura
-              <select id="coverageFilter">
-                <option value="all">Todas</option>
-                <option value="Activa">Activa</option>
-                <option value="10kg+">10kg+</option>
-              </select>
-            </label>
-            <label>
-              Estado
-              <select id="stateFilter">
-                <option value="all">Todos</option>
-              </select>
-            </label>
-            <label>
-              Estatus
-              <select id="statusFilter">
-                <option value="all">Todos</option>
-                <option value="Nuevo">Nuevo</option>
-                <option value="En contacto">En contacto</option>
-                <option value="Cotizado">Cotizado</option>
-                <option value="Cerrado">Cerrado</option>
-              </select>
-            </label>
-            <label>
-              Orden
-              <select id="sortBy">
-                <option value="dateDesc">Fecha (nuevo a viejo)</option>
-                <option value="dateAsc">Fecha (viejo a nuevo)</option>
-                <option value="kilosDesc">Kilos (mayor a menor)</option>
-                <option value="kilosAsc">Kilos (menor a mayor)</option>
-              </select>
-            </label>
-          </div>
-
-        </section>
-
-        </section>
-
-        <section class="admin-zone" data-zone-name="data" aria-label="Zona de datos">
-          <div class="admin-zone-head">
-            <h3>Zona de datos</h3>
-            <p>Consulta de leads, paginación e historial de cambios.</p>
-          </div>
-
-          <div class="bulk-actions bulk-actions-inline" id="bulkActions" aria-label="Acciones de selección">
-            <p id="selectedCount">0 seleccionados</p>
-            <div class="bulk-actions-controls">
-              <label>
-                Estatus masivo
-                <select id="bulkStatusSelect">
-                  <option value="">Selecciona</option>
-                  <option value="Nuevo">Nuevo</option>
-                  <option value="En contacto">En contacto</option>
-                  <option value="Cotizado">Cotizado</option>
-                  <option value="Cerrado">Cerrado</option>
-                </select>
-              </label>
-              <button type="button" class="btn btn-ghost" id="applyBulkStatusBtn" disabled>Aplicar estatus</button>
-              <button type="button" class="btn btn-ghost" id="exportSelectedBtn" disabled>Exportar seleccionados</button>
-              <button type="button" class="btn btn-ghost" id="deleteSelectedBtn" disabled>Eliminar seleccionados</button>
-              <button type="button" class="btn btn-ghost" id="clearSelectionBtn" disabled>Limpiar selección</button>
-            </div>
-          </div>
-
-        <div class="admin-content-grid">
-          <section class="admin-data-card" id="adminTableSection" aria-label="Tabla de leads">
-            <div class="table-wrap">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th class="select-col">
-                      <input type="checkbox" id="selectPageCheckbox" aria-label="Seleccionar fila visible" />
-                    </th>
-                    <th>Fecha</th>
-                    <th>Nombre</th>
-                    <th>Teléfono</th>
-                    <th>Material</th>
-                    <th>Kg</th>
-                    <th>Estado</th>
-                    <th>Cobertura</th>
-                    <th>Prioridad</th>
-                    <th>Estatus</th>
-                    <th>Ubicación</th>
-                    <th>Coordenadas</th>
-                    <th>Notas</th>
-                    <th>Nota interna</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody id="leadsTableBody"></tbody>
-              </table>
-            </div>
-            <div class="table-footer">
-              <div class="table-footer-left">
-                <label>
-                  Filas por página
-                  <select id="pageSizeSelect">
-                    <option value="10">10</option>
-                    <option value="20">20</option>
-                    <option value="30">30</option>
-                    <option value="50">50</option>
-                  </select>
-                </label>
-                <p id="tableRangeInfo">Mostrando 0 de 0</p>
-              </div>
-              <div class="table-pagination" aria-label="Paginación de leads">
-                <button type="button" class="btn btn-ghost" id="prevPageBtn">Anterior</button>
-                <p id="pageInfo">Página 1 de 1</p>
-                <button type="button" class="btn btn-ghost" id="nextPageBtn">Siguiente</button>
-              </div>
-            </div>
-          </section>
-
-          <aside class="history-panel" id="historyPanel" aria-live="polite">
-            <div class="history-head">
-              <h3>Historial de cambios</h3>
-              <span class="history-count" id="historyCount">0 eventos</span>
-            </div>
-            <label class="history-filter">
-              Filtrar historial
-              <select id="historyLeadFilter">
-                <option value="all">Todos los leads</option>
-              </select>
-            </label>
-            <div class="history-list" id="historyList">
-              <p class="history-empty">Aún no hay cambios registrados.</p>
-            </div>
-            <button type="button" class="btn btn-ghost" id="clearHistoryBtn">Limpiar historial</button>
-          </aside>
+          <button class="btn btn-primary" id="ghConnectBtn" type="button">Conectar</button>
+          <button class="btn btn-ghost" id="ghDisconnectBtn" type="button" hidden>Desconectar</button>
         </div>
-
-        </section>
-
-          </div>
+        <button class="help-toggle" id="ghHelpToggle" type="button">¿Cómo consigo un token?</button>
+        <div class="help-box" id="ghHelp" hidden>
+          <p>El token le da permiso a este panel para guardar cambios en el repositorio <code>AdanGarciaL/reciclajes-g</code>, solo en tu navegador. No se guarda en ningún servidor.</p>
+          <ol>
+            <li>Entra a <code>github.com/settings/personal-access-tokens/new</code> con la cuenta que administra el repositorio.</li>
+            <li>Elige "Only select repositories" y selecciona <code>reciclajes-g</code>.</li>
+            <li>En "Repository permissions" activa <code>Contents: Read and write</code>.</li>
+            <li>Genera el token y cópialo aquí. Empieza con <code>github_pat_</code>.</li>
+          </ol>
+          <p>El token se guarda solo mientras dure la sesión del navegador (se borra al cerrar la pestaña).</p>
         </div>
+      </div>
+
+      <!-- PESTAÑA PRECIOS -->
+      <section class="panel is-active" id="panelPrecios">
+        <div class="card">
+          <p class="card-title">Materiales y precio por kilo</p>
+          <p class="card-sub">Actualiza el rango mínimo y máximo que se muestra en el sitio. Los cambios se reflejan en la tabla de precios, el selector de materiales y las tarjetas destacadas.</p>
+          <p class="group-heading">Materiales</p>
+          <div id="materialsForm"></div>
+        </div>
+        <div class="card">
+          <p class="card-title">Tipos de lógica de celular</p>
+          <p class="card-sub">Precio de cada tipo mostrado en la clasificación de lógica de celular.</p>
+          <div id="typesForm"></div>
+        </div>
+        <div class="actions-row">
+          <button class="btn btn-primary" id="savePricesBtn"><i class="bi bi-cloud-arrow-up"></i> Guardar cambios de precios</button>
+          <button class="btn btn-ghost" id="resetPricesBtn">Descartar cambios</button>
+        </div>
+        <p class="status-msg" id="pricesStatus"></p>
       </section>
+
+      <!-- PESTAÑA GALERIA -->
+      <section class="panel" id="panelGaleria">
+        <div class="card">
+          <p class="card-title">Fotos por categoría</p>
+          <p class="card-sub">Agrega, edita o quita las fotos que se muestran en cada tipo de material. "Quitar" retira la foto de la galería del sitio, sin borrar el archivo del repositorio.</p>
+          <div class="gallery-cats" id="galleryCats"></div>
+          <div class="gallery-thumb-grid" id="galleryThumbs"></div>
+          <div class="add-photo-box">
+            <i class="bi bi-cloud-arrow-up"></i>
+            <p style="margin:0;font-size:13px;color:var(--ink-muted)">Agregar foto a esta categoría</p>
+            <input type="file" id="addPhotoInput" accept="image/*" />
+            <p style="margin:0;font-size:11px;color:var(--ink-soft)">Se reduce automáticamente a un tamaño razonable para el sitio.</p>
+          </div>
+        </div>
+        <div class="actions-row">
+          <button class="btn btn-primary" id="saveGalleryBtn"><i class="bi bi-cloud-arrow-up"></i> Guardar cambios de galería</button>
+          <button class="btn btn-ghost" id="resetGalleryBtn">Descartar cambios</button>
+        </div>
+        <p class="status-msg" id="galleryStatus"></p>
+      </section>
+
     </main>
   </div>
-
-  <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
 
   <script src="admin.js"></script>
 </body>
