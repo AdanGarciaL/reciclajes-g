@@ -363,6 +363,27 @@ async function ghPutFile(path, base64Content, message, sha) {
   return res.json();
 }
 
+// Borra un archivo real del repositorio (una foto de galería o de equipo
+// que ya no se usa). La API de contenidos de GitHub exige el "sha" actual
+// del archivo para borrarlo, así que primero se consulta. Si ya no existe
+// (por ejemplo, un reintento después de que un guardado anterior sí lo
+// logró borrar) simplemente no hace nada: así es seguro llamarla más de
+// una vez con la misma ruta.
+async function ghDeleteFile(path, message) {
+  const existing = await ghGetFile(path);
+  if (!existing) return null;
+  const res = await fetch(`${API_BASE}/contents/${encodeURI(path)}`, {
+    method: "DELETE",
+    headers: { ...ghHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ message, sha: existing.sha, branch: REPO_BRANCH }),
+  });
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({}));
+    throw new Error(errBody.message || `No se pudo borrar ${path} (${res.status}).`);
+  }
+  return res.json();
+}
+
 /** Guarda JSON en el repo, reintenta una vez si el sha cambió (409/422). */
 async function ghSaveJson(path, dataObject, message) {
   const existing = await ghGetFile(path);
@@ -432,13 +453,22 @@ function unavailableNoticeHtml(label) {
 const itemModal = document.getElementById("itemModal");
 const itemModalBodyEl = document.getElementById("itemModalBody");
 let itemModalApplyHandler = null; // () => string de error, o null/undefined si se aplicó bien
+// Se llama SOLO al cerrar SIN aplicar (Cancelar, la X, clic afuera o Escape)
+// — no al cerrar tras un "Aplicar a la lista" exitoso. Por ahora solo lo usa
+// el editor de personas, para deshacer cambios de foto (ver openTeamEditor):
+// a diferencia de los demás campos (que solo tocan el objeto en vivo hasta
+// que se aplica), quitar o cambiar la foto sí modifica el borrador al
+// instante para poder mostrar la vista previa nueva, así que cancelar
+// necesita un paso explícito para deshacer eso.
+let itemModalCancelHandler = null;
 let currentModalDraft = null; // el objeto (material/tipo/ficha/persona/sucursal) que se edita ahora mismo
 
-function openItemModal(title, bodyHtml, onApply) {
+function openItemModal(title, bodyHtml, onApply, onCancel) {
   document.getElementById("itemModalTitle").textContent = title;
   itemModalBodyEl.innerHTML = bodyHtml;
   hideStatus("itemModalStatus");
   itemModalApplyHandler = onApply;
+  itemModalCancelHandler = onCancel || null;
   itemModal.classList.add("active");
   itemModal.setAttribute("aria-hidden", "false");
   itemModalBodyEl.querySelector("input, select, textarea")?.focus();
@@ -447,13 +477,18 @@ function closeItemModal() {
   itemModal.classList.remove("active");
   itemModal.setAttribute("aria-hidden", "true");
   itemModalApplyHandler = null;
+  itemModalCancelHandler = null;
   currentModalDraft = null;
   itemModalBodyEl.innerHTML = "";
   delete itemModalBodyEl.dataset.itemType;
 }
-document.getElementById("itemModalClose")?.addEventListener("click", closeItemModal);
-document.getElementById("itemModalOverlay")?.addEventListener("click", closeItemModal);
-document.getElementById("itemModalCancelBtn")?.addEventListener("click", closeItemModal);
+function cancelItemModal() {
+  itemModalCancelHandler?.();
+  closeItemModal();
+}
+document.getElementById("itemModalClose")?.addEventListener("click", cancelItemModal);
+document.getElementById("itemModalOverlay")?.addEventListener("click", cancelItemModal);
+document.getElementById("itemModalCancelBtn")?.addEventListener("click", cancelItemModal);
 document.getElementById("itemModalSaveBtn")?.addEventListener("click", () => {
   if (!itemModalApplyHandler) { closeItemModal(); return; }
   const error = itemModalApplyHandler();
@@ -461,7 +496,7 @@ document.getElementById("itemModalSaveBtn")?.addEventListener("click", () => {
   closeItemModal();
 });
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && itemModal?.classList.contains("active")) closeItemModal();
+  if (e.key === "Escape" && itemModal?.classList.contains("active")) cancelItemModal();
 });
 
 /* =========================================================
@@ -556,6 +591,20 @@ function showStatus(elId, kind, text) {
 }
 function hideStatus(elId) {
   document.getElementById(elId).classList.remove("is-visible");
+}
+// Bloquea (visualmente y a clics) una lista de contenedores mientras un
+// guardado está en curso — se usa en Galería y Quiénes somos, donde quitar
+// o cambiar algo A MEDIO GUARDADO podría agendar el borrado de un archivo
+// que el JSON que ya se mandó a GitHub en ESE guardado ni siquiera alcanzó
+// a dejar de referenciar (dejaría, brevemente, una foto rota en el sitio
+// hasta el siguiente guardado). Deshabilitar solo el botón "Guardar
+// cambios" no alcanza porque el resto de los botones de la sección
+// (editar, quitar, agregar) siguen sueltos.
+function setSectionLocked(ids, locked) {
+  ids.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle("is-saving-locked", locked);
+  });
 }
 function formatPriceRangeAdmin(min, max) {
   const fmt = (n) => `$${Number(n).toLocaleString("es-MX")}`;
@@ -872,10 +921,17 @@ document.getElementById("savePricesBtn")?.addEventListener("click", async () => 
 let workingGallery = null;
 let activeCategoryId = null;
 let pendingUploads = []; // { categoryId, fileName, base64, previewUrl, alt }
+// Rutas de fotos que ya se quitaron de data/gallery.json (una foto suelta o
+// una categoría completa) pero cuyo archivo real en Galeria/ todavía sigue
+// en el repositorio: se borran al presionar "Guardar cambios" (ver
+// saveGalleryBtn), después de guardar el JSON, para que el sitio nunca
+// referencie una foto ya borrada.
+let pendingGalleryDeletions = [];
 
 async function loadGalleryIntoUI() {
   const data = await fetchJsonOrFromGitHub("data/gallery.json");
   pendingUploads = [];
+  pendingGalleryDeletions = [];
   if (!data) {
     showDataUnavailableBanner();
     workingGallery = { categories: [] };
@@ -953,6 +1009,10 @@ document.getElementById("galleryCatEditor")?.addEventListener("click", (e) => {
   const removed = workingGallery.categories[i];
   workingGallery.categories.splice(i, 1);
   pendingUploads = pendingUploads.filter((p) => p.categoryId !== removed.id);
+  // Quitar la categoría entera también agenda el borrado de todas sus fotos
+  // ya guardadas (no solo las quita de la lista, como pasaba antes: si no,
+  // el archivo se quedaba huérfano en el repositorio para siempre).
+  pendingGalleryDeletions.push(...removed.images.map((img) => img.src));
   if (activeCategoryId === removed.id) activeCategoryId = workingGallery.categories[0]?.id || null;
   // Si algún tipo o ficha de "Precios y tipos" todavía usaba esta categoría
   // para sus fotos, avisa: su tarjeta mostrará una foto genérica hasta que
@@ -1013,7 +1073,11 @@ function renderGalleryThumbs() {
     btn.addEventListener("click", () => {
       readGalleryAltEdits();
       const idx = Number(btn.closest(".gallery-thumb").dataset.existingIndex);
-      cat.images.splice(idx, 1);
+      const [removed] = cat.images.splice(idx, 1);
+      // Se agenda el borrado del archivo real; se ejecuta al guardar (no
+      // aquí mismo), para que "Descartar cambios" pueda deshacerlo sin
+      // haber tocado ya el repositorio.
+      if (removed) pendingGalleryDeletions.push(removed.src);
       renderGalleryCats();
       renderGalleryThumbs();
     });
@@ -1188,6 +1252,7 @@ if (addPhotoBox) {
 
 document.getElementById("resetGalleryBtn")?.addEventListener("click", loadGalleryIntoUI);
 
+const GALLERY_LOCK_IDS = ["galleryCats", "galleryCatEditor", "galleryThumbs", "addPhotoBox", "addCategoryBtn", "resetGalleryBtn"];
 document.getElementById("saveGalleryBtn")?.addEventListener("click", async () => {
   if (!guardDataLoaded("galleryStatus")) return;
   if (!requireGitHub("galleryStatus")) return;
@@ -1195,6 +1260,7 @@ document.getElementById("saveGalleryBtn")?.addEventListener("click", async () =>
 
   const btn = document.getElementById("saveGalleryBtn");
   btn.disabled = true;
+  setSectionLocked(GALLERY_LOCK_IDS, true);
   const toUpload = pendingUploads.filter((u) => !u._uploaded);
   showStatus("galleryStatus", "info", `Subiendo ${toUpload.length} foto(s) y guardando cambios…`);
   try {
@@ -1211,7 +1277,28 @@ document.getElementById("saveGalleryBtn")?.addEventListener("click", async () =>
     workingGallery.updatedAt = new Date().toISOString().slice(0, 10);
     await ghSaveJson("data/gallery.json", workingGallery, `Actualiza galería (panel interno, ${ghUsername})`);
     pendingUploads = [];
-    showStatus("galleryStatus", "success", "Galería guardada. El sitio público se actualiza en unos segundos.");
+
+    // El JSON ya quedó guardado con las referencias correctas (sin las
+    // fotos quitadas), así que ahora es seguro borrar sus archivos reales
+    // de Galeria/. Se hace DESPUÉS del guardado del JSON a propósito: así
+    // nunca queda un momento en que el sitio referencie una foto que ya no
+    // existe. Si alguna no se pudo borrar, se deja agendada para el
+    // siguiente "Guardar cambios" en vez de perderla de vista (borrar es
+    // idempotente: si ya no existe, ghDeleteFile no hace nada).
+    const uniqueDeletions = [...new Set(pendingGalleryDeletions)];
+    const stillPending = [];
+    for (const path of uniqueDeletions) {
+      try {
+        await ghDeleteFile(path, `Quita foto de galería (panel interno, ${ghUsername})`);
+      } catch (err) {
+        stillPending.push(path);
+      }
+    }
+    pendingGalleryDeletions = stillPending;
+
+    showStatus("galleryStatus", "success", stillPending.length
+      ? `Galería guardada. ${stillPending.length} archivo(s) de fotos quitadas no se pudieron borrar del repositorio todavía; se reintentará en el próximo "Guardar cambios".`
+      : "Galería guardada. El sitio público se actualiza en unos segundos.");
     renderGalleryCats();
     renderGalleryThumbs();
   } catch (err) {
@@ -1222,6 +1309,7 @@ document.getElementById("saveGalleryBtn")?.addEventListener("click", async () =>
     renderGalleryThumbs();
   } finally {
     btn.disabled = false;
+    setSectionLocked(GALLERY_LOCK_IDS, false);
   }
 });
 
@@ -1229,9 +1317,15 @@ document.getElementById("saveGalleryBtn")?.addEventListener("click", async () =>
    QUIÉNES SOMOS
    ========================================================= */
 let workingTeam = null;
+// Rutas de fotos de equipo (icons/equipo/...) que ya dejaron de usarse —
+// porque se quitó la foto, se reemplazó por otra, o se quitó a la persona
+// completa — y que se borran del repositorio al guardar (mismo patrón que
+// pendingGalleryDeletions, arriba).
+let pendingTeamPhotoDeletions = [];
 
 async function loadTeamIntoForm() {
   const data = await fetchJsonOrFromGitHub("data/team.json");
+  pendingTeamPhotoDeletions = [];
   if (!data) {
     showDataUnavailableBanner();
     workingTeam = { members: [] };
@@ -1324,10 +1418,24 @@ function openTeamEditor(i) {
   const m = workingTeam.members[i];
   currentModalDraft = m;
   itemModalBodyEl.dataset.itemType = "team";
+  // A diferencia del resto de los campos (nombre, WhatsApp, redes...), que
+  // solo se copian a "m" al aplicar, quitar o cambiar la foto modifica el
+  // borrador AL INSTANTE (para poder mostrar la vista previa nueva), y
+  // agenda el borrado del archivo viejo. Si el admin cancela en vez de
+  // aplicar, hay que deshacer justo eso — si no, la próxima vez que se
+  // guarde "Quiénes somos" por cualquier motivo, se perdería la foto que
+  // el admin nunca quiso cambiar.
+  const pendingPhotoAtOpen = m._pendingPhoto;
+  const removePhotoAtOpen = m._removePhoto;
+  const deletionQueueLenAtOpen = pendingTeamPhotoDeletions.length;
   openItemModal("Editar persona", teamFormHtml(m), () => {
     const err = applyTeamForm(m);
     if (err) return err;
     renderTeamList();
+  }, () => {
+    m._pendingPhoto = pendingPhotoAtOpen;
+    m._removePhoto = removePhotoAtOpen;
+    pendingTeamPhotoDeletions.length = deletionQueueLenAtOpen;
   });
 }
 document.getElementById("teamForm")?.addEventListener("click", (e) => {
@@ -1338,7 +1446,10 @@ document.getElementById("teamForm")?.addEventListener("click", (e) => {
   }
   const removeBtn = e.target.closest(".team-remove-btn");
   if (!removeBtn) return;
-  workingTeam.members.splice(Number(removeBtn.closest(".item-row").dataset.teamIndex), 1);
+  const [removed] = workingTeam.members.splice(Number(removeBtn.closest(".item-row").dataset.teamIndex), 1);
+  // Quitar a la persona completa también agenda el borrado de su foto (si
+  // tenía una guardada); si no, se quedaría huérfana en icons/equipo/.
+  if (removed?.photo) pendingTeamPhotoDeletions.push(removed.photo);
   renderTeamList();
 });
 document.getElementById("addTeamMemberBtn")?.addEventListener("click", () => {
@@ -1374,6 +1485,11 @@ itemModalBodyEl.addEventListener("click", (e) => {
   }
   const removePhotoBtn = e.target.closest(".team-photo-remove");
   if (removePhotoBtn && currentModalDraft) {
+    // Si ya tenía una foto guardada de antes, se agenda su borrado; una
+    // foto todavía pendiente de subir (elegida en esta misma edición, sin
+    // guardar aún) no tiene archivo real en el repositorio, así que no hay
+    // nada que borrar por ese lado, solo se descarta el borrador.
+    if (currentModalDraft.photo) pendingTeamPhotoDeletions.push(currentModalDraft.photo);
     currentModalDraft._pendingPhoto = null;
     currentModalDraft._removePhoto = true;
     itemModalBodyEl.querySelector(".team-photo-edit").innerHTML = teamPhotoEditHtml(currentModalDraft);
@@ -1386,6 +1502,13 @@ itemModalBodyEl.addEventListener("change", async (e) => {
   try {
     const dataUrl = await resizeImageFile(fileInput.files[0], 800, 0.85);
     const base64 = dataUrl.split(",")[1];
+    // Reemplazar una foto ya guardada por una nueva deja obsoleta la
+    // anterior: se agenda su borrado (una sola vez por sesión de edición,
+    // aunque el admin cambie de opinión varias veces antes de guardar,
+    // gracias a la condición !_pendingPhoto).
+    if (currentModalDraft.photo && !currentModalDraft._pendingPhoto) {
+      pendingTeamPhotoDeletions.push(currentModalDraft.photo);
+    }
     currentModalDraft._pendingPhoto = { base64, previewUrl: dataUrl, fileName: `${slugify(currentModalDraft.id || currentModalDraft.name || "persona")}-${Date.now()}.jpg` };
     currentModalDraft._removePhoto = false;
     itemModalBodyEl.querySelector(".team-photo-edit").innerHTML = teamPhotoEditHtml(currentModalDraft);
@@ -1394,11 +1517,13 @@ itemModalBodyEl.addEventListener("change", async (e) => {
   }
 });
 
+const TEAM_LOCK_IDS = ["teamForm", "addTeamMemberBtn", "resetTeamBtn"];
 document.getElementById("saveTeamBtn")?.addEventListener("click", async () => {
   if (!guardDataLoaded("teamStatus")) return;
   if (!requireGitHub("teamStatus")) return;
   const btn = document.getElementById("saveTeamBtn");
   btn.disabled = true;
+  setSectionLocked(TEAM_LOCK_IDS, true);
   showStatus("teamStatus", "info", "Guardando cambios en GitHub…");
   try {
     for (const m of workingTeam.members) {
@@ -1416,12 +1541,30 @@ document.getElementById("saveTeamBtn")?.addEventListener("click", async () => {
     };
     await ghSaveJson("data/team.json", toSave, `Actualiza "Quiénes somos" (panel interno, ${ghUsername})`);
     workingTeam.members.forEach((m) => { m._pendingPhoto = null; m._removePhoto = false; });
-    showStatus("teamStatus", "success", "Guardado. El sitio público se actualiza en unos segundos.");
+
+    // Igual que en Galería: el JSON ya quedó guardado sin apuntar a las
+    // fotos viejas, así que ahora es seguro borrar esos archivos de
+    // icons/equipo/. Se reintenta en el siguiente guardado si alguno falla.
+    const uniqueDeletions = [...new Set(pendingTeamPhotoDeletions)];
+    const stillPending = [];
+    for (const path of uniqueDeletions) {
+      try {
+        await ghDeleteFile(path, `Quita foto de equipo (panel interno, ${ghUsername})`);
+      } catch (err) {
+        stillPending.push(path);
+      }
+    }
+    pendingTeamPhotoDeletions = stillPending;
+
+    showStatus("teamStatus", "success", stillPending.length
+      ? `Guardado. ${stillPending.length} foto(s) anteriores no se pudieron borrar del repositorio todavía; se reintentará en el próximo guardado.`
+      : "Guardado. El sitio público se actualiza en unos segundos.");
     renderTeamList();
   } catch (err) {
     showStatus("teamStatus", "error", err.message || "No se pudo guardar.");
   } finally {
     btn.disabled = false;
+    setSectionLocked(TEAM_LOCK_IDS, false);
   }
 });
 

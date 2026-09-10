@@ -108,7 +108,7 @@ const FALLBACK_PRICES = {
 
 const FALLBACK_GALLERY = {
   categories: [
-    { id: "celular-tipo-1", label: "Celular Tipo 1", images: [{ src: "Galeria/Celular Tipo 1/logica_celular1.jpg", alt: "Lógica de celular Tipo 1" }] },
+    { id: "celular-tipo-1", label: "Celular Tipo 1", images: [{ src: "Galeria/Celular Tipo 1/logica_celular12.jpg", alt: "Lógica de celular Tipo 1" }] },
     { id: "celular-tipo-2", label: "Celular Tipo 2", images: [{ src: "Galeria/Celular Tipo 2/logica_celular2.jpg", alt: "Lógica de celular Tipo 2" }] },
     { id: "celular-tipo-3", label: "Celular y Tablet Tipo 3", images: [{ src: "Galeria/Celular y Tablet Tipo 3/logica_celular31.jpg", alt: "Lógica de celular Tipo 3" }] },
     { id: "sin-pila-tapa", label: "Sin pila y tapa Tipo 4", images: [{ src: "Galeria/Sin Pila y Tapa Tipo 4/sin_pila_y_tapa.jpg", alt: "Celular sin pila ni tapa" }] },

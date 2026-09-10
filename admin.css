@@ -372,6 +372,14 @@ body.dark-mode .state-chip-remove { background: rgba(255,255,255,.1); }
 #itemModalBody .field { margin-top: 0; }
 #itemModalStatus.status-msg { margin-top: 12px; }
 
+/* Mientras "Guardar cambios" está en curso en Galería o Quiénes somos, se
+   bloquea el resto de esa sección (agregar/editar/quitar): tocar algo a
+   media subida podría agendar un borrado que el JSON que ya se mandó a
+   GitHub en ESE guardado no alcanzó a reflejar. Deshabilitar solo el botón
+   "Guardar cambios" no bastaba, porque el resto de los botones seguían
+   sueltos. */
+.is-saving-locked { pointer-events: none; opacity: 0.55; transition: opacity 0.15s ease; }
+
 /* ---------- Listas compactas (materiales, tipos, fichas, personas, sucursales) ----------
    Cada fila muestra solo un resumen; "Editar" abre el formulario completo en la ventana
    de arriba, así la lista no obliga a hacer scroll por todos los campos de todo. */

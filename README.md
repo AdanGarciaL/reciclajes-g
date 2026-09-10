@@ -128,8 +128,11 @@ versionada y con historial de cambios visible en GitHub.
   computadora" dentro de Ajustes para revocar el acceso local a esa llave.
 - Un token con permiso de escritura debe generarse con acceso limitado solo a este repositorio
   (fine-grained personal access token), no un token con acceso a toda la cuenta.
-- Quitar una foto en el panel la retira de la galería del sitio, pero no borra el archivo de
-  `Galeria/` en el repositorio.
+- Quitar una foto en el panel (de la galería, o de una persona en "Quiénes somos") también borra
+  su archivo real del repositorio al presionar "Guardar cambios", no solo la referencia en el JSON.
+  Igual al quitar una categoría completa de la galería: se borran todas sus fotos. Si el borrado de
+  algún archivo falla (por ejemplo, sin conexión), queda pendiente y se reintenta automáticamente
+  en el siguiente "Guardar cambios".
 
 ## Publicación
 

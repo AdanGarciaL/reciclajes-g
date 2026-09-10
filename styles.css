@@ -282,12 +282,25 @@ body.dark-mode .hero-stats .stat-number { color: var(--brand-green); }
   position: relative; border: 1px solid var(--border-strong); border-radius: var(--radius-lg); overflow: hidden;
   background: var(--surface); box-shadow: var(--shadow-md); animation: floatSoft 6s ease-in-out infinite;
 }
-.hero-media-frame { aspect-ratio: 4/3; position: relative; overflow: hidden; }
-.hero-media-frame img { width: 100%; height: 100%; object-fit: cover; transition: transform 8s ease; }
-.hero-media:hover .hero-media-frame img { transform: scale(1.06); }
+.hero-media-frame { aspect-ratio: 4/3; position: relative; overflow: hidden; background: var(--surface-alt); }
+/* object-fit: contain (no "cover") a propósito: las fotos reales que sube el
+   panel vienen en cualquier proporción (una placa fotografiada de forma
+   vertical, por ejemplo), y "cover" recortaba una parte para rellenar el
+   marco. "contain" siempre muestra la foto completa, con un margen neutro
+   si no coincide exactamente con la proporción del marco. */
+/* Sin zoom al pasar el mouse (se quitó "transform: scale()" que tenía
+   antes): con "contain" la foto no necesariamente toca los 4 bordes del
+   marco, así que agrandarla podía salirse por el lado donde sí lo toca y
+   recortarse contra el overflow:hidden del marco — justo lo que este
+   cambio de cover a contain buscaba evitar. */
+.hero-media-frame img { width: 100%; height: 100%; object-fit: contain; }
 .hero-media-frame::after {
   content: ""; position: absolute; inset: 0;
-  background: linear-gradient(200deg, rgba(6, 24, 15, 0.05) 0%, rgba(6, 24, 15, 0.72) 85%);
+  /* Más tenue que antes: con "contain" puede haber un margen neutro
+     (letterbox) a los lados de la foto, y este degradado pinta encima de
+     TODO el marco (foto + margen); con la opacidad original ese margen se
+     veía como una mancha oscura en vez de un margen limpio. */
+  background: linear-gradient(200deg, rgba(6, 24, 15, 0.05) 0%, rgba(6, 24, 15, 0.4) 85%);
 }
 .hero-media-tag {
   position: absolute; left: 18px; top: 18px; z-index: 2; display: inline-flex; align-items: center; gap: 8px;
@@ -316,8 +329,10 @@ body.dark-mode .hero-media-foot .foot-price { color: var(--brand-green); }
 .price-card-photo {
   margin: -24px -24px 4px; aspect-ratio: 16/10; overflow: hidden; background: var(--surface-alt);
 }
-.price-card-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
-.price-card:hover .price-card-photo img { transform: scale(1.06); }
+/* contain, no cover: ver nota en .hero-media-frame img sobre por qué. Sin
+   zoom al pasar el mouse por el mismo motivo que el hero: recortaría la
+   foto contra el overflow:hidden del lado donde sí toca el borde. */
+.price-card-photo img { width: 100%; height: 100%; object-fit: contain; }
 .price-card .price-icon {
   width: 38px; height: 38px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center;
   background: var(--surface-alt); border: 1px solid var(--border); color: var(--brand-green-strong); font-size: 16px;
@@ -415,7 +430,7 @@ body.dark-mode .mode-btn.is-active { background: var(--brand-green); border-colo
 .selector-btn.is-hidden { display: none; }
 .selector-btn .sel-icon { font-size: 26px; }
 .selector-btn .sel-photo { width: 100%; aspect-ratio: 4/3; border-radius: 8px; overflow: hidden; background: var(--surface-alt); }
-.selector-btn .sel-photo img { width: 100%; height: 100%; object-fit: cover; }
+.selector-btn .sel-photo img { width: 100%; height: 100%; object-fit: contain; }
 .selector-btn .sel-name { font-family: var(--font-display); font-weight: 700; font-size: 13.5px; color: var(--ink); }
 .selector-btn .sel-price { font-family: var(--font-mono); font-size: 12px; color: var(--brand-green-strong); }
 body.dark-mode .selector-btn .sel-price { color: var(--brand-green); }
@@ -442,8 +457,12 @@ body.dark-mode .type-tab.is-active .tab-price { color: var(--brand-green); }
 .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: stretch; }
 .detail-media { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: var(--surface); display: flex; flex-direction: column; }
 .carousel-viewport { position: relative; aspect-ratio: 16/11; background: var(--surface-alt); overflow: hidden; }
-.carousel-track { display: flex; width: 100%; height: 100%; transition: transform 0.5s cubic-bezier(.2,.7,.2,1); }
-.carousel-track img { width: 100%; height: 100%; object-fit: cover; flex: none; }
+/* El fondo del "letterbox" ya lo da .carousel-viewport (el abuelo), pero se
+   repite aquí a propósito: así sigue funcionando aunque en el futuro
+   alguien le agregue su propio fondo a .carousel-track (por ejemplo, para
+   una transición), sin depender de que se quede transparente. */
+.carousel-track { display: flex; width: 100%; height: 100%; background: var(--surface-alt); transition: transform 0.5s cubic-bezier(.2,.7,.2,1); }
+.carousel-track img { width: 100%; height: 100%; object-fit: contain; flex: none; }
 .carousel-nav {
   position: absolute; top: 50%; translate: 0 -50%; width: 34px; height: 34px; border-radius: 50%;
   background: rgba(6, 24, 15, 0.55); color: #fff; border: none; font-size: 15px; display: inline-flex;
@@ -513,9 +532,11 @@ body.dark-mode .chip-min10 { color: #e7c182; }
 
 /* ---------- Galería general ---------- */
 .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
-.gallery-card { border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); aspect-ratio: 4/3; }
-.gallery-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
-.gallery-card:hover img { transform: scale(1.08); }
+.gallery-card { border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); aspect-ratio: 4/3; background: var(--surface-alt); }
+/* Sin zoom al pasar el mouse, mismo motivo que el hero y las tarjetas de
+   precios: con "contain" recortaría la foto por el lado que sí toca el
+   marco. */
+.gallery-card img { width: 100%; height: 100%; object-fit: contain; }
 
 /* ---------- Sucursales ---------- */
 .sucursales-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
