@@ -14,7 +14,7 @@ function esc(value) {
   return String(value ?? "").replace(/[&<>"']/g, (ch) => ESCAPE_MAP[ch]);
 }
 
-const WA_NUMBER = "522215855199";
+const WA_NUMBER = "522227548704";
 function waLink(message) {
   const base = `https://wa.me/${WA_NUMBER}`;
   return message ? `${base}?text=${encodeURIComponent(message)}` : base;
@@ -70,7 +70,7 @@ const FAQ_DATA = [
 ];
 
 const SUCURSALES = [
-  { ciudad: "Recolección a domicilio", plaza: "En todo el estado de Puebla", encargado: "José G.", tel: "221 585 5199", telHref: "522215855199", icon: "bi-truck", primary: true },
+  { ciudad: "Recolección a domicilio", plaza: "En todo el estado de Puebla", encargado: "José G.", tel: "222 754 8704", telHref: "522227548704", icon: "bi-truck", primary: true },
   { ciudad: "Aguascalientes", plaza: "Plaza de la Tecnología, Local 83", encargado: "Mari G.", tel: "221 381 5164", telHref: "522213815164", icon: "bi-geo-alt" },
   { ciudad: "Coatzacoalcos", plaza: "Atención directa en plaza", encargado: "Adán G.", tel: "221 410 2306", telHref: "522214102306", icon: "bi-geo-alt" },
   { ciudad: "Guanajuato", plaza: "Atención directa en plaza", encargado: "Luis G.", tel: "222 293 2290", telHref: "522222932290", icon: "bi-geo-alt" },
