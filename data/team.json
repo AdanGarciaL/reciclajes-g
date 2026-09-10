@@ -1,0 +1,7 @@
+{
+  "members": [
+    { "id": "ceo", "role": "Director General", "name": "", "photo": "", "whatsapp": "", "email": "" },
+    { "id": "dev", "role": "Desarrollador web", "name": "", "photo": "", "whatsapp": "", "email": "" }
+  ],
+  "updatedAt": "2026-09-09"
+}

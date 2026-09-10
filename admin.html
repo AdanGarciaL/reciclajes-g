@@ -61,8 +61,11 @@
         </div>
       </div>
       <div class="container app-tabs">
-        <button class="app-tab is-active" data-tab="precios"><i class="bi bi-tags"></i> Precios y tipos de tarjeta</button>
-        <button class="app-tab" data-tab="galeria"><i class="bi bi-images"></i> Galería de fotos</button>
+        <button class="app-tab is-active" data-tab="precios"><i class="bi bi-tags"></i> Precios y tipos</button>
+        <button class="app-tab" data-tab="galeria"><i class="bi bi-images"></i> Galería</button>
+        <button class="app-tab" data-tab="equipo"><i class="bi bi-people"></i> Quiénes somos</button>
+        <button class="app-tab" data-tab="sucursales"><i class="bi bi-shop"></i> Sucursales y contacto</button>
+        <button class="app-tab" data-tab="cobertura"><i class="bi bi-geo-alt"></i> Cobertura y redes</button>
       </div>
     </header>
 
@@ -160,6 +163,85 @@
           <button class="btn btn-ghost" id="resetGalleryBtn">Descartar cambios</button>
         </div>
         <p class="status-msg" id="galleryStatus"></p>
+      </section>
+
+      <!-- PESTAÑA QUIENES SOMOS -->
+      <section class="panel" id="panelEquipo">
+        <div class="section-block">
+          <div class="section-block-head">
+            <span class="section-num">1</span>
+            <div>
+              <p class="card-title">Quiénes somos</p>
+              <p class="card-sub">Nombre, foto y contacto de cada persona. Una persona solo aparece en el sitio público cuando su nombre no está vacío, así que puedes dejar una tarjeta a medio llenar sin que se vea rota en la página.</p>
+            </div>
+          </div>
+          <div class="card" id="teamForm"></div>
+          <button type="button" class="btn btn-ghost btn-sm" id="addTeamMemberBtn" style="margin-top:14px"><i class="bi bi-plus-lg"></i> Agregar persona</button>
+        </div>
+        <div class="actions-row">
+          <button class="btn btn-primary" id="saveTeamBtn"><i class="bi bi-cloud-arrow-up"></i> Guardar cambios</button>
+          <button class="btn btn-ghost" id="resetTeamBtn">Descartar cambios</button>
+        </div>
+        <p class="status-msg" id="teamStatus"></p>
+      </section>
+
+      <!-- PESTAÑA SUCURSALES Y CONTACTO -->
+      <section class="panel" id="panelSucursales">
+        <div class="section-block">
+          <div class="section-block-head">
+            <span class="section-num">1</span>
+            <div>
+              <p class="card-title">Sucursales y contacto directo</p>
+              <p class="card-sub">"Sucursal" es un local con dirección fija (y número de local, si aplica). "Contacto directo" es una persona que atiende una zona o estado sin local fijo. Marca "Número principal" en el contacto que debe usarse en los botones generales de WhatsApp de todo el sitio (solo puede haber uno).</p>
+            </div>
+          </div>
+          <div class="card" id="branchesForm"></div>
+          <button type="button" class="btn btn-ghost btn-sm" id="addBranchBtn" style="margin-top:14px"><i class="bi bi-plus-lg"></i> Agregar sucursal o contacto</button>
+        </div>
+        <div class="actions-row">
+          <button class="btn btn-primary" id="saveBranchesBtn"><i class="bi bi-cloud-arrow-up"></i> Guardar cambios</button>
+          <button class="btn btn-ghost" id="resetBranchesBtn">Descartar cambios</button>
+        </div>
+        <p class="status-msg" id="branchesStatus"></p>
+      </section>
+
+      <!-- PESTAÑA COBERTURA Y REDES -->
+      <section class="panel" id="panelCobertura">
+        <div class="section-block">
+          <div class="section-block-head">
+            <span class="section-num">1</span>
+            <div>
+              <p class="card-title">Estados con cobertura activa</p>
+              <p class="card-sub">Estos estados aparecen marcados en el mapa de la página principal. El resto del país se cuenta solo (32 menos los activos), con la política de recolección desde 10 kg.</p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="coverage-add-row">
+              <div class="field"><label>Agregar estado</label><select id="stateSelect"></select></div>
+              <button type="button" class="btn btn-primary btn-sm" id="addStateBtn"><i class="bi bi-plus-lg"></i> Agregar</button>
+            </div>
+            <div class="state-chip-list" id="stateChipList"></div>
+            <p class="price-hint" id="coverageCountHint"></p>
+          </div>
+        </div>
+
+        <div class="section-block">
+          <div class="section-block-head">
+            <span class="section-num">2</span>
+            <div>
+              <p class="card-title">Redes sociales</p>
+              <p class="card-sub">Enlaces que aparecen en el pie de página del sitio (Facebook, Instagram, etc.).</p>
+            </div>
+          </div>
+          <div class="card" id="socialForm"></div>
+          <button type="button" class="btn btn-ghost btn-sm" id="addSocialBtn" style="margin-top:14px"><i class="bi bi-plus-lg"></i> Agregar red social</button>
+        </div>
+
+        <div class="actions-row">
+          <button class="btn btn-primary" id="saveCoverageBtn"><i class="bi bi-cloud-arrow-up"></i> Guardar cambios</button>
+          <button class="btn btn-ghost" id="resetCoverageBtn">Descartar cambios</button>
+        </div>
+        <p class="status-msg" id="coverageStatus"></p>
       </section>
 
     </main>

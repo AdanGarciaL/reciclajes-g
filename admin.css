@@ -123,9 +123,11 @@ body.dark-mode .btn-primary { background: var(--brand-green); }
 .app-user .who { font-size: 13px; color: var(--ink-muted); }
 .app-user .who strong { color: var(--ink); }
 
-.app-tabs { display: flex; gap: 6px; padding: 14px 0 0; }
+/* Con 5 pestañas, el renglón ya no cabe en pantallas angostas: se desliza
+   horizontalmente dentro de sí mismo en vez de romper el ancho de la página. */
+.app-tabs { display: flex; gap: 6px; padding: 14px 0 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .app-tab {
-  background: none; border: none; padding: 10px 16px; border-radius: 9px 9px 0 0; font-weight: 600;
+  flex: none; white-space: nowrap; background: none; border: none; padding: 10px 16px; border-radius: 9px 9px 0 0; font-weight: 600;
   font-size: 13.5px; color: var(--ink-soft); border-bottom: 2px solid transparent;
 }
 .app-tab.is-active { color: var(--ink); border-bottom-color: var(--brand-green-strong); background: var(--surface); }
@@ -269,6 +271,61 @@ body.dark-mode .spec-row i.bi-check2 { color: var(--brand-green); }
   background: var(--surface); color: var(--ink-soft); display: inline-flex; align-items: center; justify-content: center;
 }
 .spec-remove:hover { border-color: var(--danger); color: var(--danger); }
+
+/* ---------- Quiénes somos ---------- */
+.team-edit-card { padding-top: 18px; margin-top: 18px; border-top: 1px solid var(--border); }
+.team-edit-card:first-child { padding-top: 0; margin-top: 0; border-top: none; }
+.team-edit-top { display: grid; grid-template-columns: 120px 1fr; gap: 18px; }
+.team-photo-edit { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.team-photo-preview {
+  width: 92px; height: 92px; border-radius: 50%; overflow: hidden; background: var(--surface-alt);
+  border: 1px solid var(--border-strong); display: flex; align-items: center; justify-content: center;
+}
+.team-photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+.team-photo-fallback-admin { font-family: var(--font-display); font-weight: 800; font-size: 22px; color: var(--brand-green-strong); }
+body.dark-mode .team-photo-fallback-admin { color: var(--brand-green); }
+.team-photo-pick { cursor: pointer; white-space: nowrap; }
+.team-edit-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-content: start; }
+.team-edit-card > .team-remove-btn { margin-top: 14px; }
+
+@media (max-width: 560px) {
+  .team-edit-top { grid-template-columns: 1fr; }
+  .team-photo-edit { flex-direction: row; }
+}
+
+/* ---------- Sucursales y contacto ---------- */
+/* El renglón de 3 columnas se comparte con "tipos de tarjeta" (dos campos de
+   precio cortos); aquí la 3ª columna es un teléfono de 10 dígitos, así que
+   necesita más ancho que los 100px fijos de precio. */
+.branch-edit-card .price-edit-row.cols-3 { grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(130px,1fr); }
+.branch-edit-card { padding-top: 18px; margin-top: 18px; border-top: 1px solid var(--border); }
+.branch-edit-card:first-child { padding-top: 0; margin-top: 0; border-top: none; }
+.branch-edit-card .otm-row { margin-top: 12px; }
+.branch-edit-card .field.branch-fields-directo { margin-top: 12px; }
+.branch-toggles { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 14px; }
+.check-inline { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--ink-muted); cursor: pointer; }
+.check-inline input { accent-color: var(--brand-green-strong); width: 15px; height: 15px; }
+.branch-edit-card .branch-remove-btn { margin-top: 14px; }
+
+/* ---------- Cobertura (estados) ---------- */
+.coverage-add-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.coverage-add-row .field { flex: 1; min-width: 200px; }
+.state-chip-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.state-chip {
+  display: inline-flex; align-items: center; gap: 8px; background: var(--surface-alt); border: 1px solid var(--border-strong);
+  color: var(--ink); font-size: 12.5px; font-weight: 600; padding: 6px 8px 6px 12px; border-radius: 999px;
+}
+.state-chip-remove {
+  width: 20px; height: 20px; border-radius: 50%; border: none; background: rgba(0,0,0,.08); color: var(--ink-soft);
+  display: inline-flex; align-items: center; justify-content: center; font-size: 10px;
+}
+.state-chip-remove:hover { background: var(--danger); color: #fff; }
+body.dark-mode .state-chip-remove { background: rgba(255,255,255,.1); }
+
+/* ---------- Redes sociales ---------- */
+.social-edit-card { padding-top: 18px; margin-top: 18px; border-top: 1px solid var(--border); }
+.social-edit-card:first-child { padding-top: 0; margin-top: 0; border-top: none; }
+.social-edit-card .social-remove-btn { margin-top: 12px; }
 
 /* ---------- Modal de ajustes ---------- */
 .settings-modal { position: fixed; inset: 0; z-index: 300; display: none; align-items: center; justify-content: center; padding: 20px; }

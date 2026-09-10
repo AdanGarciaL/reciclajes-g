@@ -14,11 +14,61 @@ function esc(value) {
   return String(value ?? "").replace(/[&<>"']/g, (ch) => ESCAPE_MAP[ch]);
 }
 
-const WA_NUMBER = "522227548704";
-function waLink(message) {
-  const base = `https://wa.me/${WA_NUMBER}`;
+// Número de respaldo (por si aún no cargan los datos de sucursales); en cuanto
+// carga data/branches.json se reemplaza por el contacto marcado como "principal".
+let WA_NUMBER = "522227548704";
+function waLinkTo(number, message) {
+  const base = `https://wa.me/${number}`;
   return message ? `${base}?text=${encodeURIComponent(message)}` : base;
 }
+function waLink(message) {
+  return waLinkTo(WA_NUMBER, message);
+}
+function formatMexPhone(rawDigits) {
+  let d = String(rawDigits || "").replace(/\D/g, "");
+  if (d.length === 12 && d.startsWith("52")) d = d.slice(2);
+  return d.length === 10 ? `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}` : d;
+}
+
+/* Los 32 estados de la República: catálogo fijo (id, nombre y coordenadas
+   aproximadas de su capital) que usan tanto el mapa de cobertura como el
+   selector del panel admin. Cuáles están "activos" sí es editable desde el
+   panel (data/coverage.json); este catálogo de geografía no cambia. */
+const MEXICO_STATES = [
+  { id: "aguascalientes", name: "Aguascalientes", lat: 21.8853, lng: -102.2916 },
+  { id: "baja-california", name: "Baja California", lat: 32.6245, lng: -115.4523 },
+  { id: "baja-california-sur", name: "Baja California Sur", lat: 24.1426, lng: -110.3128 },
+  { id: "campeche", name: "Campeche", lat: 19.8301, lng: -90.5349 },
+  { id: "chiapas", name: "Chiapas", lat: 16.7569, lng: -93.1292 },
+  { id: "chihuahua", name: "Chihuahua", lat: 28.6353, lng: -106.0889 },
+  { id: "cdmx", name: "Ciudad de México", lat: 19.4326, lng: -99.1332 },
+  { id: "coahuila", name: "Coahuila", lat: 25.4260, lng: -101.0053 },
+  { id: "colima", name: "Colima", lat: 19.2452, lng: -103.7241 },
+  { id: "durango", name: "Durango", lat: 24.0277, lng: -104.6532 },
+  { id: "guanajuato", name: "Guanajuato", lat: 21.0190, lng: -101.2574 },
+  { id: "guerrero", name: "Guerrero", lat: 17.5515, lng: -99.5058 },
+  { id: "hidalgo", name: "Hidalgo", lat: 20.1011, lng: -98.7591 },
+  { id: "jalisco", name: "Jalisco", lat: 20.6597, lng: -103.3496 },
+  { id: "mexico", name: "Estado de México", lat: 19.2826, lng: -99.6557 },
+  { id: "michoacan", name: "Michoacán", lat: 19.7008, lng: -101.1844 },
+  { id: "morelos", name: "Morelos", lat: 18.9242, lng: -99.2216 },
+  { id: "nayarit", name: "Nayarit", lat: 21.5041, lng: -104.8946 },
+  { id: "nuevo-leon", name: "Nuevo León", lat: 25.6866, lng: -100.3161 },
+  { id: "oaxaca", name: "Oaxaca", lat: 17.0732, lng: -96.7266 },
+  { id: "puebla", name: "Puebla", lat: 19.0414, lng: -98.2063 },
+  { id: "queretaro", name: "Querétaro", lat: 20.5888, lng: -100.3899 },
+  { id: "quintana-roo", name: "Quintana Roo", lat: 18.5036, lng: -88.3055 },
+  { id: "san-luis-potosi", name: "San Luis Potosí", lat: 22.1565, lng: -100.9855 },
+  { id: "sinaloa", name: "Sinaloa", lat: 24.8091, lng: -107.4022 },
+  { id: "sonora", name: "Sonora", lat: 29.0729, lng: -110.9559 },
+  { id: "tabasco", name: "Tabasco", lat: 17.9892, lng: -92.9475 },
+  { id: "tamaulipas", name: "Tamaulipas", lat: 23.7369, lng: -99.1411 },
+  { id: "tlaxcala", name: "Tlaxcala", lat: 19.3139, lng: -98.2404 },
+  { id: "veracruz", name: "Veracruz", lat: 19.1738, lng: -96.1342 },
+  { id: "yucatan", name: "Yucatán", lat: 20.9674, lng: -89.5926 },
+  { id: "zacatecas", name: "Zacatecas", lat: 22.7709, lng: -102.5832 },
+];
+const TOTAL_MEXICO_STATES = MEXICO_STATES.length;
 
 /* ---------- Datos de respaldo (por si falla el fetch, ej. file://) ---------- */
 const FALLBACK_PRICES = {
@@ -69,13 +119,30 @@ const FAQ_DATA = [
   { q: "¿Cómo se hace el pago?", a: "Se define antes de cerrar el trato, junto con la forma de entrega o envío. Nunca movemos material sin que las condiciones estén acordadas." }
 ];
 
-const SUCURSALES = [
-  { ciudad: "Recolección a domicilio", plaza: "En todo el estado de Puebla", encargado: "José G.", tel: "222 754 8704", telHref: "522227548704", icon: "bi-truck", primary: true },
-  { ciudad: "Aguascalientes", plaza: "Plaza de la Tecnología, Local 83", encargado: "Mari G.", tel: "221 381 5164", telHref: "522213815164", icon: "bi-geo-alt" },
-  { ciudad: "Coatzacoalcos", plaza: "Atención directa en plaza", encargado: "Adán G.", tel: "221 410 2306", telHref: "522214102306", icon: "bi-geo-alt" },
-  { ciudad: "Guanajuato", plaza: "Atención directa en plaza", encargado: "Luis G.", tel: "222 293 2290", telHref: "522222932290", icon: "bi-geo-alt" },
-  { ciudad: "Acapulco", plaza: "Plaza de la Tecnología", encargado: "Próximamente", tel: "Próximamente", telHref: null, icon: "bi-geo-alt" }
-];
+const FALLBACK_BRANCHES = {
+  branches: [
+    { id: "puebla-domicilio", kind: "directo", nombre: "José G.", cobertura: "En todo el estado de Puebla", ubicacion: "", local: "", whatsapp: "522227548704", primary: true, activo: true },
+    { id: "aguascalientes", kind: "sucursal", nombre: "Mari G.", cobertura: "", ubicacion: "Plaza de la Tecnología", local: "Local 83", whatsapp: "522213815164", primary: false, activo: true },
+    { id: "coatzacoalcos", kind: "directo", nombre: "Adán G.", cobertura: "Coatzacoalcos y alrededores", ubicacion: "", local: "", whatsapp: "522214102306", primary: false, activo: true },
+    { id: "guanajuato", kind: "directo", nombre: "Luis G.", cobertura: "Guanajuato y alrededores", ubicacion: "", local: "", whatsapp: "522222932290", primary: false, activo: true },
+    { id: "acapulco", kind: "sucursal", nombre: "", cobertura: "", ubicacion: "Plaza de la Tecnología", local: "", whatsapp: "", primary: false, activo: false }
+  ]
+};
+
+const FALLBACK_TEAM = {
+  members: [
+    { id: "ceo", role: "Director General", name: "", photo: "", whatsapp: "", email: "" },
+    { id: "dev", role: "Desarrollador web", name: "", photo: "", whatsapp: "", email: "" }
+  ]
+};
+
+const FALLBACK_COVERAGE = { activeStateIds: ["puebla", "cdmx", "mexico", "veracruz", "hidalgo"] };
+
+const FALLBACK_SOCIAL = {
+  links: [
+    { id: "facebook", network: "facebook", label: "Facebook", url: "https://www.facebook.com/profile.php?id=100063747836703" }
+  ]
+};
 
 /* Materiales visibles en el selector, en orden. "otro" no tiene precio fijo. */
 const SELECTOR_ITEMS = [
@@ -95,20 +162,40 @@ function formatPrice(min, max, unit = "/kg") {
 /* ---------- Estado cargado ---------- */
 let PRICES = null;
 let GALLERY = null;
+let TEAM = null;
+let COVERAGE = null;
+let BRANCHES = null;
+let SOCIAL = null;
+
+async function fetchJson(path, fallback) {
+  try {
+    const res = await fetch(path, { cache: "no-store" });
+    return res.ok ? await res.json() : fallback;
+  } catch (_err) {
+    return fallback;
+  }
+}
 
 async function loadData() {
-  try {
-    const [pricesRes, galleryRes] = await Promise.all([
-      fetch("data/prices.json", { cache: "no-store" }),
-      fetch("data/gallery.json", { cache: "no-store" }),
-    ]);
-    PRICES = pricesRes.ok ? await pricesRes.json() : FALLBACK_PRICES;
-    GALLERY = galleryRes.ok ? await galleryRes.json() : FALLBACK_GALLERY;
-  } catch (_err) {
-    PRICES = FALLBACK_PRICES;
-    GALLERY = FALLBACK_GALLERY;
-  }
+  [PRICES, GALLERY, TEAM, COVERAGE, BRANCHES, SOCIAL] = await Promise.all([
+    fetchJson("data/prices.json", FALLBACK_PRICES),
+    fetchJson("data/gallery.json", FALLBACK_GALLERY),
+    fetchJson("data/team.json", FALLBACK_TEAM),
+    fetchJson("data/coverage.json", FALLBACK_COVERAGE),
+    fetchJson("data/branches.json", FALLBACK_BRANCHES),
+    fetchJson("data/social.json", FALLBACK_SOCIAL),
+  ]);
+  // El número de WhatsApp que usan los botones generales del sitio es el
+  // contacto marcado como "principal" en Sucursales y contacto (panel admin),
+  // no un valor fijo en el código.
+  const primary = BRANCHES.branches.find((b) => b.primary && b.whatsapp) || BRANCHES.branches.find((b) => b.whatsapp);
+  if (primary) WA_NUMBER = primary.whatsapp;
   renderEverything();
+}
+
+function getActiveStates() {
+  const ids = (COVERAGE && COVERAGE.activeStateIds) || [];
+  return ids.map((id) => MEXICO_STATES.find((s) => s.id === id)).filter(Boolean);
 }
 
 function getMaterial(id) {
@@ -362,25 +449,95 @@ function renderGalleryGeneral() {
   observeReveals();
 }
 
-/* ---------- Sucursales ---------- */
-function renderSucursales() {
+/* ---------- Sucursales y contacto directo ---------- */
+function renderBranches() {
   const grid = document.getElementById("sucursalesGrid");
   if (!grid) return;
-  grid.innerHTML = SUCURSALES.map((s, i) => `
-    <article class="sucursal-card reveal ${i ? "delay-" + Math.min(i, 3) : ""} ${s.primary ? "is-primary" : ""}">
+  const branches = (BRANCHES && BRANCHES.branches) || [];
+  grid.innerHTML = branches.map((b, i) => {
+    const isSucursal = b.kind === "sucursal";
+    const title = isSucursal ? (b.ubicacion || "Sucursal") : (b.cobertura || "Contacto directo");
+    const subtitle = isSucursal ? (b.local || "Sucursal") : "Contacto directo";
+    const icon = isSucursal ? "bi-shop" : "bi-geo-alt";
+    const canWrite = b.activo !== false && b.whatsapp;
+    return `
+    <article class="sucursal-card reveal ${i ? "delay-" + Math.min(i, 3) : ""} ${b.primary ? "is-primary" : ""}">
       <div class="sucursal-top">
-        <div><h3>${s.ciudad}</h3><p>${s.plaza}</p></div>
-        <span class="sucursal-icon"><i class="bi ${s.icon}"></i></span>
+        <div><h3>${esc(title)}</h3><p>${esc(subtitle)}</p></div>
+        <span class="sucursal-icon"><i class="bi ${icon}"></i></span>
       </div>
       <div class="sucursal-bottom">
-        <p class="sucursal-encargado">${s.encargado}</p>
-        ${s.telHref
-          ? `<a class="sucursal-tel is-link" href="${waLink('Hola, quiero vender material en ' + s.ciudad)}" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i>${s.tel}</a>`
-          : `<p class="sucursal-tel"><i class="bi bi-whatsapp"></i>${s.tel}</p>`}
+        <p class="sucursal-encargado">${esc(b.nombre || "Próximamente")}</p>
+        ${canWrite
+          ? `<a class="sucursal-tel is-link" href="${waLinkTo(b.whatsapp, "Hola, quiero vender material en " + title)}" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i>${esc(formatMexPhone(b.whatsapp))}</a>`
+          : `<p class="sucursal-tel"><i class="bi bi-whatsapp"></i>Próximamente</p>`}
+      </div>
+    </article>`;
+  }).join("");
+  observeReveals();
+}
+
+/* ---------- Quiénes somos ---------- */
+function initials(name) {
+  return String(name || "").trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() || "").join("");
+}
+function renderTeam() {
+  const section = document.getElementById("equipo");
+  const grid = document.getElementById("teamGrid");
+  const navItem = document.getElementById("navTeamItem");
+  if (!section || !grid) return;
+  // Solo se muestra en el sitio público cuando alguien ya llenó su nombre
+  // desde el panel admin; nunca se inventa contenido de relleno.
+  const members = ((TEAM && TEAM.members) || []).filter((m) => (m.name || "").trim());
+  if (!members.length) {
+    section.hidden = true;
+    if (navItem) navItem.hidden = true;
+    return;
+  }
+  section.hidden = false;
+  if (navItem) navItem.hidden = false;
+  grid.innerHTML = members.map((m, i) => `
+    <article class="team-card reveal ${i ? "delay-" + Math.min(i, 3) : ""}">
+      <div class="team-photo">${m.photo ? `<img src="${esc(m.photo)}" alt="${esc(m.name)}" loading="lazy" />` : `<span class="team-photo-fallback">${esc(initials(m.name))}</span>`}</div>
+      <p class="team-name">${esc(m.name)}</p>
+      <p class="team-role">${esc(m.role || "")}</p>
+      <div class="team-contacts">
+        ${m.whatsapp ? `<a class="team-contact-link" href="${waLinkTo(m.whatsapp, "Hola, quiero contactarte por Eco Lógica García")}" target="_blank" rel="noopener" aria-label="WhatsApp de ${esc(m.name)}"><i class="bi bi-whatsapp"></i></a>` : ""}
+        ${m.email ? `<a class="team-contact-link" href="mailto:${esc(m.email)}" aria-label="Correo de ${esc(m.name)}"><i class="bi bi-envelope"></i></a>` : ""}
       </div>
     </article>
   `).join("");
   observeReveals();
+}
+
+/* ---------- Redes sociales ---------- */
+const SOCIAL_ICONS = { facebook: "bi-facebook", instagram: "bi-instagram", tiktok: "bi-tiktok", youtube: "bi-youtube", x: "bi-twitter-x", other: "bi-globe2" };
+function renderSocial() {
+  const links = (SOCIAL && SOCIAL.links) || [];
+  document.querySelectorAll(".js-social-links").forEach((wrap) => {
+    wrap.innerHTML = links.map((l) => `
+      <a class="social-link" href="${esc(l.url)}" target="_blank" rel="noopener" aria-label="${esc(l.label || l.network)}">
+        <i class="bi ${SOCIAL_ICONS[l.network] || "bi-globe2"}"></i>
+      </a>`).join("");
+    wrap.hidden = links.length === 0;
+  });
+}
+
+/* ---------- Estadísticas de cobertura (dinámicas, según estados activos) ---------- */
+function renderCoverageStats() {
+  const active = getActiveStates();
+  const restCount = Math.max(0, TOTAL_MEXICO_STATES - active.length);
+  const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  setText("coverageActiveInline", active.length);
+  setText("heroStatStates", `${active.length}+`);
+  setText("coverageActiveKpi", active.length);
+  setText("coverageRestKpi", restCount);
+  const chips = document.getElementById("coverageActiveChips");
+  if (chips) {
+    chips.innerHTML = active.length
+      ? active.map((s) => `<span class="chip chip-active">${esc(s.name)}</span>`).join("")
+      : `<span class="chip">Cobertura activa próximamente</span>`;
+  }
 }
 
 /* ---------- FAQ ---------- */
@@ -415,12 +572,25 @@ function renderFAQ() {
   });
 }
 
+/* ---------- Enlaces/textos de WhatsApp fijos en el HTML ---------- */
+function applyWaLinks() {
+  document.querySelectorAll(".js-wa-link").forEach((el) => {
+    el.setAttribute("href", waLink(el.dataset.waMsg || ""));
+  });
+  const display = formatMexPhone(WA_NUMBER);
+  document.querySelectorAll(".js-wa-text").forEach((el) => { el.textContent = display; });
+}
+
 /* ---------- Orquesta el render inicial ---------- */
 function renderEverything() {
+  applyWaLinks();
   renderPrices();
   renderSelector();
   renderGalleryGeneral();
-  renderSucursales();
+  renderBranches();
+  renderTeam();
+  renderSocial();
+  renderCoverageStats();
   renderFAQ();
   observeReveals();
 
@@ -495,7 +665,7 @@ function onScroll() {
 window.addEventListener("scroll", onScroll, { passive: true });
 onScroll();
 
-const sections = ["precios", "que-compramos", "cobertura", "sucursales", "faq"];
+const sections = ["precios", "que-compramos", "equipo", "cobertura", "sucursales", "faq"];
 const navAnchors = Array.from(document.querySelectorAll('.nav-links a'));
 if ("IntersectionObserver" in window && navAnchors.length) {
   const navObserver = new IntersectionObserver((entries) => {
@@ -553,24 +723,13 @@ if (!prefersReducedMotion) {
 
 /* ---------- Mapa de cobertura (Leaflet) ---------- */
 let coverageMapInstance = null;
-const COVERAGE_POINTS = [
-  { label: "Puebla", coords: [19.0414, -98.2063], zoneKm: 75, type: "active" },
-  { label: "CDMX", coords: [19.4326, -99.1332], zoneKm: 65, type: "active" },
-  { label: "Estado de México", coords: [19.2826, -99.6557], zoneKm: 70, type: "active" },
-  { label: "Veracruz", coords: [19.1738, -96.1342], zoneKm: 70, type: "active" },
-  { label: "Hidalgo", coords: [20.1011, -98.7591], zoneKm: 65, type: "active" },
-  { label: "Tabasco", coords: [17.9892, -92.9475], zoneKm: 65, type: "min10" },
-  { label: "Cancún", coords: [21.1619, -86.8515], zoneKm: 60, type: "min10" },
-  { label: "Campeche", coords: [19.845, -90.5231], zoneKm: 55, type: "min10" },
-  { label: "Oaxaca", coords: [17.0732, -96.7266], zoneKm: 60, type: "min10" },
-  { label: "Guerrero", coords: [17.5515, -99.5058], zoneKm: 60, type: "min10" }
-];
 
 function initCoverageMap() {
   const mapContainer = document.getElementById("coverageMap");
   if (!mapContainer || coverageMapInstance) return;
+  const active = getActiveStates();
   if (typeof window.L === "undefined") {
-    mapContainer.innerHTML = "<p class='map-fallback'>No se pudo cargar el mapa. Cobertura activa en 5 estados; el resto del país aplica desde 10 kg.</p>";
+    mapContainer.innerHTML = `<p class='map-fallback'>No se pudo cargar el mapa. Cobertura activa en ${active.length} estado(s); el resto del país aplica desde 10 kg.</p>`;
     return;
   }
   coverageMapInstance = window.L.map(mapContainer, { scrollWheelZoom: false, minZoom: 4, maxZoom: 10 });
@@ -579,20 +738,21 @@ function initCoverageMap() {
   }).addTo(coverageMapInstance);
 
   const bounds = [];
-  COVERAGE_POINTS.forEach((point) => {
-    bounds.push(point.coords);
-    const isActive = point.type === "active";
-    const zoneColor = isActive ? "#1fb859" : "#d98d2b";
-    window.L.circle(point.coords, { radius: point.zoneKm * 1000, color: zoneColor, weight: 1, opacity: 0.45, fillColor: zoneColor, fillOpacity: 0.08 }).addTo(coverageMapInstance);
+  const zoneColor = "#1fb859";
+  active.forEach((state) => {
+    const coords = [state.lat, state.lng];
+    bounds.push(coords);
+    window.L.circle(coords, { radius: 70000, color: zoneColor, weight: 1, opacity: 0.45, fillColor: zoneColor, fillOpacity: 0.08 }).addTo(coverageMapInstance);
     const icon = window.L.divIcon({
       className: "coverage-map-marker-wrap",
       html: `<span style="display:block;width:12px;height:12px;border-radius:50%;background:${zoneColor};border:2px solid #fff;box-shadow:0 0 0 2px ${zoneColor}"></span>`,
       iconSize: [14, 14], iconAnchor: [7, 7]
     });
-    window.L.marker(point.coords, { icon }).addTo(coverageMapInstance)
-      .bindPopup(`<strong>${point.label}</strong><br/>${isActive ? "Cobertura activa" : "Recolección desde 10 kg"}`);
+    window.L.marker(coords, { icon }).addTo(coverageMapInstance)
+      .bindPopup(`<strong>${esc(state.name)}</strong><br/>Cobertura activa`);
   });
-  coverageMapInstance.fitBounds(bounds, { padding: [30, 30] });
+  if (bounds.length) coverageMapInstance.fitBounds(bounds, { padding: [30, 30] });
+  else coverageMapInstance.setView([23.6345, -102.5528], 5);
 }
 if ("IntersectionObserver" in window) {
   const coverageSection = document.getElementById("cobertura");

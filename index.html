@@ -21,7 +21,7 @@
   <div class="topbar">
     <div class="container">
       <p>Compra · Venta · Reciclaje de componentes electrónicos</p>
-      <p>Recolección a domicilio en Puebla · <strong><a href="https://wa.me/522227548704" target="_blank" rel="noopener">222 754 8704</a></strong></p>
+      <p>Recolección a domicilio en Puebla · <strong><a class="js-wa-link js-wa-text" href="https://wa.me/522227548704" target="_blank" rel="noopener">222 754 8704</a></strong></p>
     </div>
   </div>
 
@@ -38,6 +38,7 @@
       <ul class="nav-links" id="navLinks">
         <li><a href="#precios">Precios</a></li>
         <li><a href="#que-compramos">Qué compramos</a></li>
+        <li id="navTeamItem" hidden><a href="#equipo">Quiénes somos</a></li>
         <li><a href="#cobertura">Cobertura</a></li>
         <li><a href="#sucursales">Sucursales</a></li>
         <li><a href="#faq">Preguntas</a></li>
@@ -46,7 +47,7 @@
         <button class="theme-toggle" id="themeToggle" aria-label="Cambiar tema" title="Cambiar tema">
           <i class="bi bi-moon-fill" id="themeIcon"></i>
         </button>
-        <a class="btn btn-primary nav-cta" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Escríbenos</a>
+        <a class="btn btn-primary nav-cta js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Escríbenos</a>
       </div>
     </nav>
   </header>
@@ -54,7 +55,7 @@
   <section class="campaign-strip" id="campaignStrip" hidden aria-label="Campaña activa">
     <div class="container campaign-strip-inner">
       <p>Oferta de campaña: evaluación prioritaria de lotes grandes en menos de 24h.</p>
-      <a class="btn btn-primary" href="https://wa.me/522227548704" target="_blank" rel="noopener">Escribir ahora</a>
+      <a class="btn btn-primary js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener">Escribir ahora</a>
     </div>
   </section>
 
@@ -63,7 +64,7 @@
     <section class="hero" id="inicio">
       <div class="container hero-grid">
         <div class="hero-copy">
-          <p class="hero-badge-pill reveal"><span class="dot"></span>Cobertura activa en 5 estados · recolección en toda la República desde 10 kg</p>
+          <p class="hero-badge-pill reveal"><span class="dot"></span>Cobertura activa en <span id="coverageActiveInline">5</span> estados · recolección en toda la República desde 10 kg</p>
           <h1 class="reveal delay-1">Compramos tu lógica de celular al precio justo por kilo</h1>
           <p class="lede reveal delay-2">
             Trabajamos con técnicos, talleres, chatarreros y negocios. Damos precio por tipo, peso y estado
@@ -71,7 +72,7 @@
             sin formularios ni registros.
           </p>
           <div class="hero-cta reveal delay-3">
-            <a class="btn btn-primary" href="https://wa.me/522227548704?text=Hola%2C%20tengo%20material%20para%20reciclar%20y%20quiero%20una%20cotizaci%C3%B3n" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Pregunta por tu material</a>
+            <a class="btn btn-primary js-wa-link" data-wa-msg="Hola, tengo material para reciclar y quiero una cotización" href="https://wa.me/522227548704?text=Hola%2C%20tengo%20material%20para%20reciclar%20y%20quiero%20una%20cotizaci%C3%B3n" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Pregunta por tu material</a>
             <a class="btn btn-ghost" href="#que-compramos">Ver tipos y precios</a>
           </div>
           <p class="hero-note reveal delay-4">
@@ -79,7 +80,7 @@
             es menor que una pieza funcional de reventa. Cotizamos por tipo, peso y estado.
           </p>
           <div class="hero-stats reveal delay-4" id="heroStats">
-            <article><p class="stat-number">5+</p><p class="stat-label">Estados activos, resto del país desde 10&nbsp;kg</p></article>
+            <article><p class="stat-number" id="heroStatStates">5+</p><p class="stat-label">Estados activos, resto del país desde 10&nbsp;kg</p></article>
             <article><p class="stat-number">24h</p><p class="stat-label">Meta de respuesta por WhatsApp</p></article>
             <article><p class="stat-number">6</p><p class="stat-label">Tipos de material que compramos</p></article>
           </div>
@@ -165,7 +166,7 @@
           </article>
         </div>
         <p class="reveal delay-3" style="margin-top:18px;font-size:13.5px;color:var(--ink-soft)">
-          ¿Tienes otro tipo de componente? <a class="text-accent" style="font-weight:600" href="https://wa.me/522227548704?text=Hola%2C%20tengo%20otro%20tipo%20de%20material%2C%20%C2%BFme%20pueden%20cotizar%3F" target="_blank" rel="noopener">Pregúntanos por WhatsApp</a>, seguramente también lo compramos.
+          ¿Tienes otro tipo de componente? <a class="text-accent js-wa-link" style="font-weight:600" data-wa-msg="Hola, tengo otro tipo de material, ¿me pueden cotizar?" href="https://wa.me/522227548704?text=Hola%2C%20tengo%20otro%20tipo%20de%20material%2C%20%C2%BFme%20pueden%20cotizar%3F" target="_blank" rel="noopener">Pregúntanos por WhatsApp</a>, seguramente también lo compramos.
         </p>
       </div>
     </section>
@@ -248,6 +249,17 @@
       </div>
     </section>
 
+    <!-- QUIENES SOMOS -->
+    <section class="bg-alt" id="equipo" hidden>
+      <div class="container">
+        <div class="section-head-solo reveal">
+          <p class="eyebrow">Quiénes somos</p>
+          <h2>El equipo detrás de Eco Lógica García</h2>
+        </div>
+        <div class="team-grid" id="teamGrid"></div>
+      </div>
+    </section>
+
     <!-- COBERTURA -->
     <section id="cobertura">
       <div class="container">
@@ -260,16 +272,15 @@
             <div class="coverage-map-head">
               <p>Mapa operativo</p>
               <div class="coverage-map-legend">
-                <span class="legend-item"><i class="legend-dot legend-dot-active"></i>Activa</span>
-                <span class="legend-item"><i class="legend-dot legend-dot-min10"></i>Resto del país, desde 10 kg</span>
+                <span class="legend-item"><i class="legend-dot legend-dot-active"></i>Cobertura activa</span>
               </div>
             </div>
             <div id="coverageMap" class="coverage-map" aria-label="Mapa de cobertura actual"></div>
           </div>
           <div class="coverage-side">
             <div class="coverage-block">
-              <div class="coverage-block-head"><p class="title">Cobertura activa</p><p class="kpi">5</p></div>
-              <div class="chip-row">
+              <div class="coverage-block-head"><p class="title">Cobertura activa</p><p class="kpi" id="coverageActiveKpi">5</p></div>
+              <div class="chip-row" id="coverageActiveChips">
                 <span class="chip chip-active">Puebla</span>
                 <span class="chip chip-active">CDMX</span>
                 <span class="chip chip-active">Estado de México</span>
@@ -278,7 +289,7 @@
               </div>
             </div>
             <div class="coverage-block">
-              <div class="coverage-block-head"><p class="title">Estados con recolección</p><p class="kpi">32</p></div>
+              <div class="coverage-block-head"><p class="title">Estados con recolección</p><p class="kpi" id="coverageRestKpi">32</p></div>
               <p class="coverage-block-copy">En cualquier estado de la República consideramos la recolección si el lote es de 10 kg o más.</p>
               <div class="chip-row">
                 <span class="chip chip-min10">Toda la República</span>
@@ -340,7 +351,7 @@
         <div class="contact-card reveal delay-1">
           <div>
             <p class="contact-card-label">Atención general</p>
-            <a class="contact-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i>222 754 8704</a>
+            <a class="contact-wa-link js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i><span class="js-wa-text">222 754 8704</span></a>
             <p style="margin-top:8px;font-size:13.5px;color:var(--ink-soft)">Recolección a domicilio en todo el estado de Puebla.</p>
           </div>
           <div style="border-top:1px solid var(--border);padding-top:20px">
@@ -352,7 +363,7 @@
               <li><i class="bi bi-check2"></i>Si necesitas recolección o entregas en sucursal</li>
             </ul>
           </div>
-          <a class="btn btn-primary btn-block" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Abrir chat de WhatsApp</a>
+          <a class="btn btn-primary btn-block js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Abrir chat de WhatsApp</a>
           <p class="contact-fine">Este sitio no guarda ni registra datos personales. Toda la atención es por WhatsApp o en sucursal.</p>
         </div>
       </div>
@@ -376,7 +387,7 @@
           <h2>Tu lógica también tiene valor</h2>
           <p>Pregunta sin compromiso. Te decimos el rango de precio antes de que muevas el material.</p>
           <div class="cta-band-actions">
-            <a class="btn btn-primary" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Escribir por WhatsApp</a>
+            <a class="btn btn-primary js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Escribir por WhatsApp</a>
             <a class="btn btn-ghost" href="#sucursales"><i class="bi bi-geo-alt"></i> Ver sucursales</a>
           </div>
         </div>
@@ -384,7 +395,7 @@
     </section>
   </main>
 
-  <a class="floating-whatsapp" href="https://wa.me/522227548704" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp"><i class="bi bi-whatsapp"></i></a>
+  <a class="floating-whatsapp js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp"><i class="bi bi-whatsapp"></i></a>
 
   <footer class="site-footer">
     <div class="container footer-grid">
@@ -397,11 +408,13 @@
           </span>
         </div>
         <p>Compra de lógica de celular y componentes electrónicos para reciclaje responsable en México.</p>
+        <div class="footer-social js-social-links" hidden></div>
       </div>
       <div class="footer-col">
         <p class="footer-col-title">Sitio</p>
         <a href="#precios">Precios por kilo</a>
         <a href="#que-compramos">Qué compramos</a>
+        <a href="#equipo">Quiénes somos</a>
         <a href="#cobertura">Cobertura</a>
         <a href="#contacto">Contacto</a>
       </div>
@@ -413,7 +426,7 @@
       </div>
       <div class="footer-col">
         <p class="footer-col-title">Contacto</p>
-        <p class="footer-tel">222 754 8704</p>
+        <p class="footer-tel js-wa-text">222 754 8704</p>
         <p style="font-size:13px;line-height:1.6;color:rgba(244,246,244,0.55)">Recolección a domicilio en el estado de Puebla</p>
       </div>
     </div>

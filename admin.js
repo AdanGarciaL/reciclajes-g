@@ -16,6 +16,63 @@ function esc(value) {
   return String(value ?? "").replace(/[&<>"']/g, (ch) => ESCAPE_MAP[ch]);
 }
 
+function formatMexPhone(rawDigits) {
+  let d = String(rawDigits || "").replace(/\D/g, "");
+  if (d.length === 12 && d.startsWith("52")) d = d.slice(2);
+  return d.length === 10 ? `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}` : d;
+}
+function stripCountry(rawDigits) {
+  const d = String(rawDigits || "").replace(/\D/g, "");
+  return d.length === 12 && d.startsWith("52") ? d.slice(2) : d;
+}
+function normalizeWhatsapp(raw) {
+  let d = String(raw || "").replace(/\D/g, "");
+  if (d.length === 10) d = "52" + d;
+  return d;
+}
+function initials(name) {
+  return String(name || "").trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() || "").join("");
+}
+
+/* Los 32 estados de la República: mismo catálogo fijo que usa el sitio
+   público (script.js) para el mapa. Aquí solo sirve para llenar el selector
+   de "agregar estado" — cuáles están activos vive en data/coverage.json. */
+const MEXICO_STATES = [
+  { id: "aguascalientes", name: "Aguascalientes" },
+  { id: "baja-california", name: "Baja California" },
+  { id: "baja-california-sur", name: "Baja California Sur" },
+  { id: "campeche", name: "Campeche" },
+  { id: "chiapas", name: "Chiapas" },
+  { id: "chihuahua", name: "Chihuahua" },
+  { id: "cdmx", name: "Ciudad de México" },
+  { id: "coahuila", name: "Coahuila" },
+  { id: "colima", name: "Colima" },
+  { id: "durango", name: "Durango" },
+  { id: "guanajuato", name: "Guanajuato" },
+  { id: "guerrero", name: "Guerrero" },
+  { id: "hidalgo", name: "Hidalgo" },
+  { id: "jalisco", name: "Jalisco" },
+  { id: "mexico", name: "Estado de México" },
+  { id: "michoacan", name: "Michoacán" },
+  { id: "morelos", name: "Morelos" },
+  { id: "nayarit", name: "Nayarit" },
+  { id: "nuevo-leon", name: "Nuevo León" },
+  { id: "oaxaca", name: "Oaxaca" },
+  { id: "puebla", name: "Puebla" },
+  { id: "queretaro", name: "Querétaro" },
+  { id: "quintana-roo", name: "Quintana Roo" },
+  { id: "san-luis-potosi", name: "San Luis Potosí" },
+  { id: "sinaloa", name: "Sinaloa" },
+  { id: "sonora", name: "Sonora" },
+  { id: "tabasco", name: "Tabasco" },
+  { id: "tamaulipas", name: "Tamaulipas" },
+  { id: "tlaxcala", name: "Tlaxcala" },
+  { id: "veracruz", name: "Veracruz" },
+  { id: "yucatan", name: "Yucatán" },
+  { id: "zacatecas", name: "Zacatecas" },
+];
+const TOTAL_MEXICO_STATES = MEXICO_STATES.length;
+
 const REPO_OWNER = "AdanGarciaL";
 const REPO_NAME = "reciclajes-g";
 const REPO_BRANCH = "main";
@@ -100,6 +157,9 @@ function enterApp(username) {
   initGitHubConnection();
   loadPricesIntoForm();
   loadGalleryIntoUI();
+  loadTeamIntoForm();
+  loadBranchesIntoForm();
+  loadCoverageAndSocialIntoForm();
 }
 
 (function checkExistingSession() {
@@ -109,10 +169,17 @@ function enterApp(username) {
 })();
 
 /* ---------- Pestañas ---------- */
+const TAB_PANEL_MAP = {
+  precios: "panelPrecios",
+  galeria: "panelGaleria",
+  equipo: "panelEquipo",
+  sucursales: "panelSucursales",
+  cobertura: "panelCobertura",
+};
 document.querySelectorAll(".app-tab").forEach((tab) => {
   tab.addEventListener("click", () => {
     document.querySelectorAll(".app-tab").forEach((t) => t.classList.toggle("is-active", t === tab));
-    const targetId = tab.dataset.tab === "precios" ? "panelPrecios" : "panelGaleria";
+    const targetId = TAB_PANEL_MAP[tab.dataset.tab];
     document.querySelectorAll(".panel").forEach((p) => p.classList.toggle("is-active", p.id === targetId));
   });
 });
@@ -620,6 +687,369 @@ document.getElementById("saveGalleryBtn")?.addEventListener("click", async () =>
     renderGalleryThumbs();
   } catch (err) {
     showStatus("galleryStatus", "error", err.message || "No se pudo guardar la galería.");
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+/* =========================================================
+   QUIÉNES SOMOS
+   ========================================================= */
+let workingTeam = null;
+
+async function loadTeamIntoForm() {
+  const res = await fetch(`data/team.json?t=${Date.now()}`, { cache: "no-store" });
+  const data = res.ok ? await res.json() : null;
+  workingTeam = JSON.parse(JSON.stringify(data || { members: [] }));
+  workingTeam.members.forEach((m) => { m._pendingPhoto = null; m._removePhoto = false; });
+  renderTeamForm();
+}
+
+function teamPhotoPreviewHtml(m) {
+  if (m._pendingPhoto) return `<img src="${m._pendingPhoto.previewUrl}" alt="" />`;
+  if (m.photo && !m._removePhoto) return `<img src="${esc(m.photo)}" alt="" />`;
+  return `<span class="team-photo-fallback-admin">${esc(initials(m.name) || "?")}</span>`;
+}
+
+function renderTeamForm() {
+  const wrap = document.getElementById("teamForm");
+  wrap.innerHTML = workingTeam.members.map((m, i) => `
+    <div class="team-edit-card" data-team-index="${i}">
+      <div class="team-edit-top">
+        <div class="team-photo-edit">
+          <div class="team-photo-preview">${teamPhotoPreviewHtml(m)}</div>
+          <label class="btn btn-ghost btn-sm team-photo-pick">
+            <i class="bi bi-camera"></i> Cambiar foto
+            <input type="file" accept="image/*" class="team-photo-input" hidden />
+          </label>
+          ${(m.photo || m._pendingPhoto) && !m._removePhoto ? `<button type="button" class="btn btn-ghost btn-sm team-photo-remove">Quitar foto</button>` : ""}
+        </div>
+        <div class="team-edit-fields">
+          <div class="field"><label>Nombre</label><input type="text" class="team-name-input" value="${esc(m.name)}" placeholder="Nombre completo" /></div>
+          <div class="field"><label>Puesto</label><input type="text" class="team-role-input" value="${esc(m.role || "")}" placeholder="Ej. Director General" /></div>
+          <div class="field"><label>WhatsApp (10 dígitos, opcional)</label><input type="text" class="team-wa-input" value="${esc(stripCountry(m.whatsapp))}" placeholder="2221234567" /></div>
+          <div class="field"><label>Correo (opcional)</label><input type="email" class="team-email-input" value="${esc(m.email || "")}" placeholder="correo@ejemplo.com" /></div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-danger btn-sm team-remove-btn"><i class="bi bi-trash"></i> Quitar de "Quiénes somos"</button>
+    </div>
+  `).join("");
+}
+
+document.getElementById("teamForm")?.addEventListener("click", (e) => {
+  const removeCardBtn = e.target.closest(".team-remove-btn");
+  if (removeCardBtn) {
+    const i = Number(removeCardBtn.closest(".team-edit-card").dataset.teamIndex);
+    workingTeam.members.splice(i, 1);
+    renderTeamForm();
+    return;
+  }
+  const removePhotoBtn = e.target.closest(".team-photo-remove");
+  if (removePhotoBtn) {
+    const i = Number(removePhotoBtn.closest(".team-edit-card").dataset.teamIndex);
+    workingTeam.members[i]._pendingPhoto = null;
+    workingTeam.members[i]._removePhoto = true;
+    renderTeamForm();
+  }
+});
+document.getElementById("teamForm")?.addEventListener("change", async (e) => {
+  const fileInput = e.target.closest(".team-photo-input");
+  if (!fileInput || !fileInput.files[0]) return;
+  const i = Number(fileInput.closest(".team-edit-card").dataset.teamIndex);
+  try {
+    const dataUrl = await resizeImageFile(fileInput.files[0], 800, 0.85);
+    const base64 = dataUrl.split(",")[1];
+    const member = workingTeam.members[i];
+    member._pendingPhoto = { base64, previewUrl: dataUrl, fileName: `${slugify(member.id || member.name || "persona")}-${Date.now()}.jpg` };
+    member._removePhoto = false;
+    renderTeamForm();
+  } catch (err) {
+    showStatus("teamStatus", "error", err.message || "No se pudo procesar la foto.");
+  }
+});
+
+document.getElementById("addTeamMemberBtn")?.addEventListener("click", () => {
+  workingTeam.members.push({ id: `persona-${Date.now()}`, role: "", name: "", photo: "", whatsapp: "", email: "", _pendingPhoto: null, _removePhoto: false });
+  renderTeamForm();
+});
+document.getElementById("resetTeamBtn")?.addEventListener("click", loadTeamIntoForm);
+
+function readTeamFromForm() {
+  document.querySelectorAll("#teamForm .team-edit-card").forEach((card) => {
+    const i = Number(card.dataset.teamIndex);
+    const m = workingTeam.members[i];
+    m.name = card.querySelector(".team-name-input").value.trim();
+    m.role = card.querySelector(".team-role-input").value.trim();
+    const wa = card.querySelector(".team-wa-input").value.trim();
+    m.whatsapp = wa ? normalizeWhatsapp(wa) : "";
+    m.email = card.querySelector(".team-email-input").value.trim();
+  });
+}
+
+document.getElementById("saveTeamBtn")?.addEventListener("click", async () => {
+  if (!requireGitHub()) return;
+  readTeamFromForm();
+  const btn = document.getElementById("saveTeamBtn");
+  btn.disabled = true;
+  showStatus("teamStatus", "info", "Guardando cambios en GitHub…");
+  try {
+    for (const m of workingTeam.members) {
+      if (m._pendingPhoto) {
+        const path = `icons/equipo/${m._pendingPhoto.fileName}`;
+        await ghPutFile(path, m._pendingPhoto.base64, `Actualiza foto de equipo (panel interno, ${ghUsername})`);
+        m.photo = path;
+      } else if (m._removePhoto) {
+        m.photo = "";
+      }
+    }
+    const toSave = {
+      members: workingTeam.members.map(({ _pendingPhoto, _removePhoto, ...rest }) => rest),
+      updatedAt: new Date().toISOString().slice(0, 10),
+    };
+    await ghSaveJson("data/team.json", toSave, `Actualiza "Quiénes somos" (panel interno, ${ghUsername})`);
+    workingTeam.members.forEach((m) => { m._pendingPhoto = null; m._removePhoto = false; });
+    showStatus("teamStatus", "success", "Guardado. El sitio público se actualiza en unos segundos.");
+    renderTeamForm();
+  } catch (err) {
+    showStatus("teamStatus", "error", err.message || "No se pudo guardar.");
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+/* =========================================================
+   SUCURSALES Y CONTACTO
+   ========================================================= */
+let workingBranches = null;
+
+async function loadBranchesIntoForm() {
+  const res = await fetch(`data/branches.json?t=${Date.now()}`, { cache: "no-store" });
+  const data = res.ok ? await res.json() : null;
+  workingBranches = JSON.parse(JSON.stringify(data || { branches: [] }));
+  renderBranchesForm();
+}
+
+function branchCardHtml(b, i) {
+  const isSucursal = b.kind !== "directo";
+  return `
+    <div class="branch-edit-card" data-branch-index="${i}">
+      <div class="price-edit-row cols-3">
+        <div class="field"><label>Tipo</label>
+          <select class="branch-kind-input">
+            <option value="sucursal" ${isSucursal ? "selected" : ""}>Sucursal (local fijo)</option>
+            <option value="directo" ${!isSucursal ? "selected" : ""}>Contacto directo (sin local)</option>
+          </select>
+        </div>
+        <div class="field"><label>Nombre de quien atiende</label><input type="text" class="branch-nombre-input" value="${esc(b.nombre || "")}" placeholder="Nombre" /></div>
+        <div class="field"><label>WhatsApp (10 dígitos)</label><input type="text" class="branch-wa-input" value="${esc(stripCountry(b.whatsapp))}" placeholder="2221234567" /></div>
+      </div>
+      <div class="otm-row branch-fields-sucursal" ${isSucursal ? "" : "hidden"}>
+        <div class="field"><label>Ubicación</label><input type="text" class="branch-ubicacion-input" value="${esc(b.ubicacion || "")}" placeholder="Ej. Plaza de la Tecnología" /></div>
+        <div class="field"><label>Número de local (opcional)</label><input type="text" class="branch-local-input" value="${esc(b.local || "")}" placeholder="Ej. Local 83" /></div>
+      </div>
+      <div class="field branch-fields-directo" ${isSucursal ? "hidden" : ""}>
+        <label>Ubicación o cobertura de estado</label>
+        <input type="text" class="branch-cobertura-input" value="${esc(b.cobertura || "")}" placeholder="Ej. En todo el estado de Puebla" />
+      </div>
+      <div class="branch-toggles">
+        <label class="check-inline"><input type="checkbox" class="branch-activo-input" ${b.activo !== false ? "checked" : ""} /> Activo (si no, se muestra "Próximamente")</label>
+        <label class="check-inline"><input type="radio" name="branchPrimary" class="branch-primary-input" ${b.primary ? "checked" : ""} /> Número principal de WhatsApp del sitio</label>
+      </div>
+      <button type="button" class="btn btn-danger btn-sm branch-remove-btn"><i class="bi bi-trash"></i> Quitar</button>
+    </div>`;
+}
+function renderBranchesForm() {
+  document.getElementById("branchesForm").innerHTML = workingBranches.branches.map((b, i) => branchCardHtml(b, i)).join("");
+}
+
+document.getElementById("branchesForm")?.addEventListener("change", (e) => {
+  const kindSelect = e.target.closest(".branch-kind-input");
+  if (!kindSelect) return;
+  const card = kindSelect.closest(".branch-edit-card");
+  const isSucursal = kindSelect.value === "sucursal";
+  card.querySelector(".branch-fields-sucursal").hidden = !isSucursal;
+  card.querySelector(".branch-fields-directo").hidden = isSucursal;
+});
+document.getElementById("branchesForm")?.addEventListener("click", (e) => {
+  const removeBtn = e.target.closest(".branch-remove-btn");
+  if (!removeBtn) return;
+  const i = Number(removeBtn.closest(".branch-edit-card").dataset.branchIndex);
+  workingBranches.branches.splice(i, 1);
+  renderBranchesForm();
+});
+document.getElementById("addBranchBtn")?.addEventListener("click", () => {
+  workingBranches.branches.push({ id: `contacto-${Date.now()}`, kind: "sucursal", nombre: "", cobertura: "", ubicacion: "", local: "", whatsapp: "", primary: false, activo: true });
+  renderBranchesForm();
+});
+document.getElementById("resetBranchesBtn")?.addEventListener("click", loadBranchesIntoForm);
+
+function readBranchesFromForm() {
+  document.querySelectorAll("#branchesForm .branch-edit-card").forEach((card) => {
+    const i = Number(card.dataset.branchIndex);
+    const b = workingBranches.branches[i];
+    b.kind = card.querySelector(".branch-kind-input").value;
+    b.nombre = card.querySelector(".branch-nombre-input").value.trim();
+    const wa = card.querySelector(".branch-wa-input").value.trim();
+    b.whatsapp = wa ? normalizeWhatsapp(wa) : "";
+    b.ubicacion = card.querySelector(".branch-ubicacion-input").value.trim();
+    b.local = card.querySelector(".branch-local-input").value.trim();
+    b.cobertura = card.querySelector(".branch-cobertura-input").value.trim();
+    b.activo = card.querySelector(".branch-activo-input").checked;
+    b.primary = card.querySelector(".branch-primary-input").checked;
+  });
+  // Garantiza que siempre quede exactamente un contacto marcado como principal.
+  if (!workingBranches.branches.some((b) => b.primary && b.whatsapp)) {
+    const firstWithWa = workingBranches.branches.find((b) => b.whatsapp);
+    if (firstWithWa) firstWithWa.primary = true;
+  }
+}
+function validateBranches() {
+  const problems = [];
+  if (!workingBranches.branches.some((b) => b.whatsapp)) problems.push("Agrega al menos un número de WhatsApp.");
+  return problems;
+}
+
+document.getElementById("saveBranchesBtn")?.addEventListener("click", async () => {
+  if (!requireGitHub()) return;
+  readBranchesFromForm();
+  const problems = validateBranches();
+  if (problems.length) { showStatus("branchesStatus", "error", problems.join(" ")); return; }
+  const btn = document.getElementById("saveBranchesBtn");
+  btn.disabled = true;
+  showStatus("branchesStatus", "info", "Guardando cambios en GitHub…");
+  try {
+    workingBranches.updatedAt = new Date().toISOString().slice(0, 10);
+    await ghSaveJson("data/branches.json", workingBranches, `Actualiza sucursales y contacto (panel interno, ${ghUsername})`);
+    showStatus("branchesStatus", "success", "Guardado. El sitio público se actualiza en unos segundos.");
+    renderBranchesForm();
+  } catch (err) {
+    showStatus("branchesStatus", "error", err.message || "No se pudo guardar.");
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+/* =========================================================
+   COBERTURA Y REDES SOCIALES
+   ========================================================= */
+let workingCoverage = null;
+let workingSocial = null;
+const SOCIAL_NETWORKS = [
+  { value: "facebook", label: "Facebook" },
+  { value: "instagram", label: "Instagram" },
+  { value: "tiktok", label: "TikTok" },
+  { value: "youtube", label: "YouTube" },
+  { value: "x", label: "X (Twitter)" },
+  { value: "other", label: "Otra" },
+];
+
+async function loadCoverageAndSocialIntoForm() {
+  const [covRes, socRes] = await Promise.all([
+    fetch(`data/coverage.json?t=${Date.now()}`, { cache: "no-store" }),
+    fetch(`data/social.json?t=${Date.now()}`, { cache: "no-store" }),
+  ]);
+  const covData = covRes.ok ? await covRes.json() : null;
+  const socData = socRes.ok ? await socRes.json() : null;
+  workingCoverage = JSON.parse(JSON.stringify(covData || { activeStateIds: [] }));
+  workingSocial = JSON.parse(JSON.stringify(socData || { links: [] }));
+  renderStateSelect();
+  renderStateChips();
+  renderSocialForm();
+}
+
+function renderStateSelect() {
+  const select = document.getElementById("stateSelect");
+  const activeIds = new Set(workingCoverage.activeStateIds);
+  const available = MEXICO_STATES.filter((s) => !activeIds.has(s.id));
+  select.innerHTML = available.length
+    ? available.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join("")
+    : `<option value="">Ya agregaste los ${TOTAL_MEXICO_STATES} estados</option>`;
+}
+function renderStateChips() {
+  const wrap = document.getElementById("stateChipList");
+  const active = workingCoverage.activeStateIds.map((id) => MEXICO_STATES.find((s) => s.id === id)).filter(Boolean);
+  wrap.innerHTML = active.length
+    ? active.map((s) => `
+      <span class="state-chip" data-state-id="${s.id}">${esc(s.name)}<button type="button" class="state-chip-remove" aria-label="Quitar ${esc(s.name)}"><i class="bi bi-x-lg"></i></button></span>
+    `).join("")
+    : `<p class="price-hint" style="margin:0">Todavía no hay estados con cobertura activa.</p>`;
+  const restCount = Math.max(0, TOTAL_MEXICO_STATES - active.length);
+  const hint = document.getElementById("coverageCountHint");
+  if (hint) hint.textContent = `Activos: ${active.length} · Resto del país (recolección desde 10 kg): ${restCount}`;
+}
+document.getElementById("addStateBtn")?.addEventListener("click", () => {
+  const select = document.getElementById("stateSelect");
+  if (!select.value) return;
+  workingCoverage.activeStateIds.push(select.value);
+  renderStateSelect();
+  renderStateChips();
+});
+document.getElementById("stateChipList")?.addEventListener("click", (e) => {
+  const removeBtn = e.target.closest(".state-chip-remove");
+  if (!removeBtn) return;
+  const id = removeBtn.closest(".state-chip").dataset.stateId;
+  workingCoverage.activeStateIds = workingCoverage.activeStateIds.filter((s) => s !== id);
+  renderStateSelect();
+  renderStateChips();
+});
+
+function renderSocialForm() {
+  const wrap = document.getElementById("socialForm");
+  wrap.innerHTML = workingSocial.links.length
+    ? workingSocial.links.map((l, i) => `
+      <div class="social-edit-card" data-social-index="${i}">
+        <div class="otm-row">
+          <div class="field"><label>Red social</label>
+            <select class="social-network-input">
+              ${SOCIAL_NETWORKS.map((n) => `<option value="${n.value}" ${l.network === n.value ? "selected" : ""}>${n.label}</option>`).join("")}
+            </select>
+          </div>
+          <div class="field"><label>Enlace (URL completa)</label><input type="url" class="social-url-input" value="${esc(l.url || "")}" placeholder="https://..." /></div>
+        </div>
+        <button type="button" class="btn btn-danger btn-sm social-remove-btn"><i class="bi bi-trash"></i> Quitar</button>
+      </div>
+    `).join("")
+    : `<p class="price-hint" style="margin:0">Todavía no hay redes sociales agregadas.</p>`;
+}
+document.getElementById("socialForm")?.addEventListener("click", (e) => {
+  const removeBtn = e.target.closest(".social-remove-btn");
+  if (!removeBtn) return;
+  const i = Number(removeBtn.closest(".social-edit-card").dataset.socialIndex);
+  workingSocial.links.splice(i, 1);
+  renderSocialForm();
+});
+document.getElementById("addSocialBtn")?.addEventListener("click", () => {
+  workingSocial.links.push({ id: `red-${Date.now()}`, network: "facebook", label: "", url: "" });
+  renderSocialForm();
+});
+document.getElementById("resetCoverageBtn")?.addEventListener("click", loadCoverageAndSocialIntoForm);
+
+function readSocialFromForm() {
+  document.querySelectorAll("#socialForm .social-edit-card").forEach((card) => {
+    const i = Number(card.dataset.socialIndex);
+    const l = workingSocial.links[i];
+    l.network = card.querySelector(".social-network-input").value;
+    l.url = card.querySelector(".social-url-input").value.trim();
+    l.label = SOCIAL_NETWORKS.find((n) => n.value === l.network)?.label || "";
+  });
+  workingSocial.links = workingSocial.links.filter((l) => l.url);
+}
+
+document.getElementById("saveCoverageBtn")?.addEventListener("click", async () => {
+  if (!requireGitHub()) return;
+  readSocialFromForm();
+  const btn = document.getElementById("saveCoverageBtn");
+  btn.disabled = true;
+  showStatus("coverageStatus", "info", "Guardando cambios en GitHub…");
+  try {
+    workingCoverage.updatedAt = new Date().toISOString().slice(0, 10);
+    workingSocial.updatedAt = new Date().toISOString().slice(0, 10);
+    await ghSaveJson("data/coverage.json", workingCoverage, `Actualiza cobertura (panel interno, ${ghUsername})`);
+    await ghSaveJson("data/social.json", workingSocial, `Actualiza redes sociales (panel interno, ${ghUsername})`);
+    showStatus("coverageStatus", "success", "Guardado. El sitio público se actualiza en unos segundos.");
+    renderSocialForm();
+  } catch (err) {
+    showStatus("coverageStatus", "error", err.message || "No se pudo guardar.");
   } finally {
     btn.disabled = false;
   }

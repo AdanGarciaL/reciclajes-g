@@ -13,26 +13,37 @@ y toda solicitud se resuelve **por WhatsApp**, directo con la persona encargada 
 No hay formularios de registro, no hay cuentas de cliente y no hay base de datos: el sitio
 no guarda ningún dato personal de quien lo visita.
 
-Lo único que un administrador puede actualizar desde el panel interno son los **precios**, los
-**tipos de tarjeta** (nombre, precio y características de cada tipo) y la **galería de fotos**,
-y esos cambios se guardan directamente en este repositorio de GitHub (no en un servidor ni base
-de datos propia). El panel está pensado para personas que no programan: no hay que tocar código
-ni entender GitHub para el uso diario.
+Un administrador puede actualizar desde el panel interno los **precios**, los **tipos de tarjeta**
+(nombre, precio y características de cada tipo), la **galería de fotos**, el equipo que aparece en
+**"Quiénes somos"**, las **sucursales y contactos directos**, los **estados con cobertura activa**
+del mapa y las **redes sociales** del pie de página. Todos esos cambios se guardan directamente en
+este repositorio de GitHub (no en un servidor ni base de datos propia). El panel está pensado para
+personas que no programan: no hay que tocar código ni entender GitHub para el uso diario.
 
 ## Qué incluye
 
 - Sitio público de una sola página con navegación por secciones y animaciones de entrada.
 - Identidad visual basada en el logo e ícono oficiales (`icons/`).
 - Selector de materiales con precios, fotos reales y consideraciones por tipo.
-- Botón flotante y enlaces directos a WhatsApp en cada sección de contacto.
-- Mapa de cobertura (Leaflet) y tarjetas de sucursales con WhatsApp de cada encargado.
+- Sección "Quiénes somos" con el equipo (nombre, foto, puesto y contacto); se oculta sola mientras
+  nadie la haya llenado desde el panel.
+- Botón flotante y enlaces directos a WhatsApp en cada sección de contacto; el número que usan todos
+  esos botones es el contacto marcado como "principal" en el panel, no un número fijo en el código.
+- Mapa de cobertura (Leaflet) con los estados que el panel marque como activos; los contadores de
+  "cobertura activa" y "resto del país" se recalculan solos según cuántos estados haya.
+- Tarjetas de sucursales (con local fijo) y contacto directo (sin local, por zona o estado), cada una
+  con su propio WhatsApp.
+- Enlaces a redes sociales oficiales (Facebook, Instagram, etc.) en el pie de página.
 - Tema claro y oscuro con persistencia local (solo la preferencia de tema, ningún dato personal).
-- Panel interno (`admin.html`), organizado en secciones numeradas y sin lenguaje técnico a la vista:
+- Panel interno (`admin.html`), organizado en pestañas y secciones numeradas, sin lenguaje técnico a la vista:
   - acceso por usuario/contraseña (cortina de acceso, no una base de usuarios);
-  - **Materiales**: nombre, precio por kilo y nota de cada material;
-  - **Tipos de tarjeta de celular**: nombre, precio y lista de características de Tipo 1 a 4;
-  - **Ficha de otros materiales**: título y características de RAM, laptop, tablet y celular de teclado;
+  - **Precios y tipos**: nombre y precio de cada material, tipos de tarjeta de celular (Tipo 1 a 4)
+    y la ficha de RAM, laptop, tablet y celular de teclado, todos con sus características editables;
   - **Galería**: agregar, editar descripción y quitar fotos por categoría;
+  - **Quiénes somos**: agregar o quitar personas del equipo, con nombre, foto, puesto, WhatsApp y correo;
+  - **Sucursales y contacto**: agregar, editar o quitar sucursales y contactos directos, y marcar cuál
+    es el número principal del sitio;
+  - **Cobertura y redes**: agregar o quitar estados del mapa de cobertura, y los enlaces a redes sociales;
   - un botón de **Ajustes**, aparte del flujo diario, donde se conecta una sola vez por
     computadora la llave que permite guardar cambios de verdad (ver más abajo).
 - Páginas legales actualizadas: `aviso-privacidad.html` y `terminos.html`.
@@ -65,9 +76,10 @@ python -m http.server 8080
 **Uso diario (cualquier persona del equipo, sin tocar Ajustes):**
 
 1. Inicia sesión con tu usuario y contraseña.
-2. Edita precios, tipos de tarjeta o galería.
-3. Presiona "Guardar cambios": se crea un commit en la rama `main` con los archivos
-   `data/prices.json` y/o `data/gallery.json` actualizados.
+2. Entra a la pestaña que necesites: Precios y tipos, Galería, Quiénes somos, Sucursales y
+   contacto, o Cobertura y redes.
+3. Presiona "Guardar cambios" en esa pestaña: se crea un commit en la rama `main` con el archivo
+   de datos correspondiente actualizado.
 4. GitHub Pages reconstruye el sitio automáticamente en menos de un minuto.
 
 El usuario/contraseña del panel es solo una cortina de acceso en el navegador; la escritura real
@@ -80,13 +92,18 @@ contraseña del panel no expone el repositorio por sí solo.
 - `admin.html`, `admin.css`, `admin.js`: panel interno.
 - `data/prices.json`: precios por material y por tipo de lógica de celular (editable desde el panel).
 - `data/gallery.json`: fotos por categoría que alimentan las galerías y carruseles (editable desde el panel).
+- `data/team.json`: personas de "Quiénes somos" (editable desde el panel).
+- `data/branches.json`: sucursales y contactos directos (editable desde el panel).
+- `data/coverage.json`: estados con cobertura activa en el mapa (editable desde el panel).
+- `data/social.json`: enlaces a redes sociales del pie de página (editable desde el panel).
 - `Galeria/`: archivos de imagen reales, organizados por categoría.
-- `icons/`: logo e ícono oficiales de la marca, en sus variantes de color.
+- `icons/`: logo e ícono oficiales de la marca, en sus variantes de color; `icons/equipo/` guarda
+  las fotos que se suben desde "Quiénes somos".
 - `aviso-privacidad.html`, `terminos.html`, `legal.css`, `legal.js`: páginas legales.
 
 ## Cómo se guardan los cambios (sin base de datos)
 
-1. El sitio público carga `data/prices.json` y `data/gallery.json` con `fetch` al abrir la página.
+1. El sitio público carga todos los archivos de `data/*.json` con `fetch` al abrir la página.
 2. El panel interno también los carga para prellenar los formularios de edición.
 3. Al guardar, el panel usa la API de contenidos de GitHub (`PUT /repos/.../contents/...`) para
    crear un commit con el archivo actualizado, usando el token que la persona administradora
