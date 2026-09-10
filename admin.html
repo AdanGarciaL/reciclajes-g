@@ -34,7 +34,7 @@
       </div>
       <p class="login-msg" id="loginMsg"></p>
       <button class="btn btn-primary btn-block" type="submit">Entrar</button>
-      <p class="login-note">Acceso solo para el equipo de ECO LÓGICA García. Este panel controla los precios y la galería del sitio público.</p>
+      <p class="login-note">Acceso solo para el equipo de ECO LÓGICA García. Aquí se actualizan los precios y las fotos del sitio.</p>
     </form>
   </div>
 
@@ -50,64 +50,72 @@
           </div>
         </div>
         <div class="app-user">
+          <button class="conn-pill" id="connPill" type="button" title="Configurar el guardado">
+            <span class="gh-dot" id="ghDot"></span>
+            <span id="connPillText">Guardado: revisando…</span>
+          </button>
           <button class="theme-toggle" id="themeToggle" aria-label="Cambiar tema"><i class="bi bi-moon-fill" id="themeIcon"></i></button>
-          <p class="who">Sesión: <strong id="whoAmI">—</strong></p>
+          <p class="who">Hola, <strong id="whoAmI">—</strong></p>
           <button class="btn btn-ghost btn-sm" id="logoutBtn"><i class="bi bi-box-arrow-right"></i> Salir</button>
           <a class="btn btn-ghost btn-sm" href="index.html" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> Ver sitio</a>
         </div>
       </div>
       <div class="container app-tabs">
-        <button class="app-tab is-active" data-tab="precios">Precios</button>
-        <button class="app-tab" data-tab="galeria">Galería</button>
+        <button class="app-tab is-active" data-tab="precios"><i class="bi bi-tags"></i> Precios y tipos de tarjeta</button>
+        <button class="app-tab" data-tab="galeria"><i class="bi bi-images"></i> Galería de fotos</button>
       </div>
     </header>
 
     <main class="app-main container">
 
-      <!-- Conexión con GitHub, compartida por ambas pestañas -->
-      <div class="card">
-        <p class="card-title"><i class="bi bi-github"></i> Conexión para guardar cambios</p>
-        <p class="card-sub">Este sitio no usa base de datos: los cambios se guardan directamente en el repositorio de GitHub. Necesitas un token de acceso para poder guardar.</p>
-        <div class="gh-status">
-          <span class="gh-dot" id="ghDot"></span>
-          <span class="gh-status-text" id="ghStatusText">Sin conectar</span>
-        </div>
-        <div class="gh-row">
-          <div class="field">
-            <label for="ghToken">Token de acceso de GitHub</label>
-            <input type="password" id="ghToken" placeholder="github_pat_..." autocomplete="off" />
-          </div>
-          <button class="btn btn-primary" id="ghConnectBtn" type="button">Conectar</button>
-          <button class="btn btn-ghost" id="ghDisconnectBtn" type="button" hidden>Desconectar</button>
-        </div>
-        <button class="help-toggle" id="ghHelpToggle" type="button">¿Cómo consigo un token?</button>
-        <div class="help-box" id="ghHelp" hidden>
-          <p>El token le da permiso a este panel para guardar cambios en el repositorio <code>AdanGarciaL/reciclajes-g</code>, solo en tu navegador. No se guarda en ningún servidor.</p>
-          <ol>
-            <li>Entra a <code>github.com/settings/personal-access-tokens/new</code> con la cuenta que administra el repositorio.</li>
-            <li>Elige "Only select repositories" y selecciona <code>reciclajes-g</code>.</li>
-            <li>En "Repository permissions" activa <code>Contents: Read and write</code>.</li>
-            <li>Genera el token y cópialo aquí. Empieza con <code>github_pat_</code>.</li>
-          </ol>
-          <p>El token se guarda solo mientras dure la sesión del navegador (se borra al cerrar la pestaña).</p>
-        </div>
-      </div>
+      <!-- Aviso solo visible si todavía no se configuró el guardado en esta computadora -->
+      <p class="connect-banner" id="connectBanner" hidden>
+        <i class="bi bi-exclamation-triangle"></i>
+        Esta computadora todavía no está lista para guardar cambios.
+        <button type="button" id="connectBannerBtn">Configurar guardado</button>
+        (esto se hace una sola vez).
+      </p>
 
       <!-- PESTAÑA PRECIOS -->
       <section class="panel is-active" id="panelPrecios">
-        <div class="card">
-          <p class="card-title">Materiales y precio por kilo</p>
-          <p class="card-sub">Actualiza el rango mínimo y máximo que se muestra en el sitio. Los cambios se reflejan en la tabla de precios, el selector de materiales y las tarjetas destacadas.</p>
-          <p class="group-heading">Materiales</p>
-          <div id="materialsForm"></div>
+
+        <div class="section-block">
+          <div class="section-block-head">
+            <span class="section-num">1</span>
+            <div>
+              <p class="card-title">Materiales</p>
+              <p class="card-sub">El precio por kilo que se muestra en la página principal y en el selector de materiales.</p>
+            </div>
+          </div>
+          <div class="card">
+            <div id="materialsForm"></div>
+          </div>
         </div>
-        <div class="card">
-          <p class="card-title">Tipos de lógica de celular</p>
-          <p class="card-sub">Precio de cada tipo mostrado en la clasificación de lógica de celular.</p>
-          <div id="typesForm"></div>
+
+        <div class="section-block">
+          <div class="section-block-head">
+            <span class="section-num">2</span>
+            <div>
+              <p class="card-title">Tipos de tarjeta de celular</p>
+              <p class="card-sub">Tipo 1, Tipo 2, Tipo 3 y sin pila/tapa: su nombre, precio y las características que se listan en cada uno.</p>
+            </div>
+          </div>
+          <div class="card" id="typesForm"></div>
         </div>
+
+        <div class="section-block">
+          <div class="section-block-head">
+            <span class="section-num">3</span>
+            <div>
+              <p class="card-title">Ficha de otros materiales</p>
+              <p class="card-sub">El título y las características que se muestran al elegir RAM, laptop, tablet o celular de teclado. El precio de cada uno se edita arriba, en "Materiales".</p>
+            </div>
+          </div>
+          <div class="card" id="otherMaterialsForm"></div>
+        </div>
+
         <div class="actions-row">
-          <button class="btn btn-primary" id="savePricesBtn"><i class="bi bi-cloud-arrow-up"></i> Guardar cambios de precios</button>
+          <button class="btn btn-primary" id="savePricesBtn"><i class="bi bi-cloud-arrow-up"></i> Guardar cambios</button>
           <button class="btn btn-ghost" id="resetPricesBtn">Descartar cambios</button>
         </div>
         <p class="status-msg" id="pricesStatus"></p>
@@ -115,26 +123,87 @@
 
       <!-- PESTAÑA GALERIA -->
       <section class="panel" id="panelGaleria">
-        <div class="card">
-          <p class="card-title">Fotos por categoría</p>
-          <p class="card-sub">Agrega, edita o quita las fotos que se muestran en cada tipo de material. "Quitar" retira la foto de la galería del sitio, sin borrar el archivo del repositorio.</p>
-          <div class="gallery-cats" id="galleryCats"></div>
-          <div class="gallery-thumb-grid" id="galleryThumbs"></div>
-          <div class="add-photo-box">
-            <i class="bi bi-cloud-arrow-up"></i>
-            <p style="margin:0;font-size:13px;color:var(--ink-muted)">Agregar foto a esta categoría</p>
-            <input type="file" id="addPhotoInput" accept="image/*" />
-            <p style="margin:0;font-size:11px;color:var(--ink-soft)">Se reduce automáticamente a un tamaño razonable para el sitio.</p>
+        <div class="section-block">
+          <div class="section-block-head">
+            <span class="section-num">1</span>
+            <div>
+              <p class="card-title">Elige una categoría</p>
+              <p class="card-sub">Cada categoría son las fotos que aparecen al elegir ese tipo de material en el sitio.</p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="gallery-cats" id="galleryCats"></div>
           </div>
         </div>
+
+        <div class="section-block">
+          <div class="section-block-head">
+            <span class="section-num">2</span>
+            <div>
+              <p class="card-title">Fotos de esta categoría</p>
+              <p class="card-sub">"Quitar" retira la foto de la página, sin borrar el archivo. Escribe una descripción corta de cada foto.</p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="gallery-thumb-grid" id="galleryThumbs"></div>
+            <div class="add-photo-box">
+              <i class="bi bi-cloud-arrow-up"></i>
+              <p style="margin:0;font-size:13px;color:var(--ink-muted)">Agregar foto a esta categoría</p>
+              <input type="file" id="addPhotoInput" accept="image/*" />
+              <p style="margin:0;font-size:11px;color:var(--ink-soft)">Se reduce automáticamente a un tamaño razonable para el sitio.</p>
+            </div>
+          </div>
+        </div>
+
         <div class="actions-row">
-          <button class="btn btn-primary" id="saveGalleryBtn"><i class="bi bi-cloud-arrow-up"></i> Guardar cambios de galería</button>
+          <button class="btn btn-primary" id="saveGalleryBtn"><i class="bi bi-cloud-arrow-up"></i> Guardar cambios</button>
           <button class="btn btn-ghost" id="resetGalleryBtn">Descartar cambios</button>
         </div>
         <p class="status-msg" id="galleryStatus"></p>
       </section>
 
     </main>
+  </div>
+
+  <!-- AJUSTES: conexión para poder guardar (configuración técnica, solo una vez por computadora) -->
+  <div class="settings-modal" id="settingsModal" aria-hidden="true">
+    <div class="settings-overlay" id="settingsOverlay"></div>
+    <div class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <button class="selector-close" id="settingsClose" aria-label="Cerrar">×</button>
+      <h2 id="settingsTitle"><i class="bi bi-gear"></i> Ajustes de guardado</h2>
+      <p class="card-sub">
+        Este sitio no usa un servidor propio ni base de datos: cuando guardas cambios, se escriben directamente
+        en el repositorio del sitio. Para eso, esta computadora necesita conectarse una sola vez con una
+        "llave" (token) que solo tiene que configurar quien administra el repositorio (normalmente Adán).
+        Una vez conectada, cualquier persona del equipo puede iniciar sesión y guardar cambios sin volver a
+        tocar esta pantalla.
+      </p>
+
+      <div class="gh-status">
+        <span class="gh-dot" id="ghDotModal"></span>
+        <span class="gh-status-text" id="ghStatusText">Revisando conexión…</span>
+      </div>
+
+      <div class="gh-row">
+        <div class="field">
+          <label for="ghToken">Llave de acceso (token de GitHub)</label>
+          <input type="password" id="ghToken" placeholder="github_pat_..." autocomplete="off" />
+        </div>
+        <button class="btn btn-primary" id="ghConnectBtn" type="button">Conectar esta computadora</button>
+        <button class="btn btn-danger" id="ghDisconnectBtn" type="button" hidden>Desconectar esta computadora</button>
+      </div>
+
+      <div class="help-box">
+        <p><strong>¿Cómo se consigue esta llave?</strong> (solo lo hace quien administra el repositorio de GitHub)</p>
+        <ol>
+          <li>Entra a <code>github.com/settings/personal-access-tokens/new</code> con la cuenta que administra el repositorio.</li>
+          <li>Elige "Only select repositories" y selecciona <code>reciclajes-g</code>.</li>
+          <li>En "Repository permissions" activa <code>Contents: Read and write</code>.</li>
+          <li>Genera la llave y pégala arriba. Empieza con <code>github_pat_</code>.</li>
+        </ol>
+        <p>La llave se guarda solo en esta computadora (en este navegador), nunca se envía a ningún otro lugar. Si la computadora se pierde o se comparte, usa "Desconectar esta computadora".</p>
+      </div>
+    </div>
   </div>
 
   <script src="admin.js"></script>

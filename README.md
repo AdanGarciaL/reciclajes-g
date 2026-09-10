@@ -13,9 +13,11 @@ y toda solicitud se resuelve **por WhatsApp**, directo con la persona encargada 
 No hay formularios de registro, no hay cuentas de cliente y no hay base de datos: el sitio
 no guarda ningún dato personal de quien lo visita.
 
-Lo único que un administrador puede actualizar desde el panel interno son los **precios** y
-la **galería de fotos**, y esos cambios se guardan directamente en este repositorio de GitHub
-(no en un servidor ni base de datos propia).
+Lo único que un administrador puede actualizar desde el panel interno son los **precios**, los
+**tipos de tarjeta** (nombre, precio y características de cada tipo) y la **galería de fotos**,
+y esos cambios se guardan directamente en este repositorio de GitHub (no en un servidor ni base
+de datos propia). El panel está pensado para personas que no programan: no hay que tocar código
+ni entender GitHub para el uso diario.
 
 ## Qué incluye
 
@@ -25,11 +27,14 @@ la **galería de fotos**, y esos cambios se guardan directamente en este reposit
 - Botón flotante y enlaces directos a WhatsApp en cada sección de contacto.
 - Mapa de cobertura (Leaflet) y tarjetas de sucursales con WhatsApp de cada encargado.
 - Tema claro y oscuro con persistencia local (solo la preferencia de tema, ningún dato personal).
-- Panel interno (`admin.html`) con:
+- Panel interno (`admin.html`), organizado en secciones numeradas y sin lenguaje técnico a la vista:
   - acceso por usuario/contraseña (cortina de acceso, no una base de usuarios);
-  - edición de precios por material y por tipo de lógica de celular;
-  - gestión de galería por categoría: agregar, editar descripción y quitar fotos;
-  - guardado real vía la API de GitHub, usando un token que cada persona conecta en su sesión.
+  - **Materiales**: nombre, precio por kilo y nota de cada material;
+  - **Tipos de tarjeta de celular**: nombre, precio y lista de características de Tipo 1 a 4;
+  - **Ficha de otros materiales**: título y características de RAM, laptop, tablet y celular de teclado;
+  - **Galería**: agregar, editar descripción y quitar fotos por categoría;
+  - un botón de **Ajustes**, aparte del flujo diario, donde se conecta una sola vez por
+    computadora la llave que permite guardar cambios de verdad (ver más abajo).
 - Páginas legales actualizadas: `aviso-privacidad.html` y `terminos.html`.
 
 ## Cómo usarlo
@@ -48,16 +53,26 @@ python -m http.server 8080
 
 ### Panel administrativo
 
+**Configuración inicial (una sola vez, por computadora, la hace quien administra el repositorio):**
+
 1. Abre `admin.html` (enlace discreto al final del sitio público) e inicia sesión.
-2. En la tarjeta "Conexión para guardar cambios", pega un token de acceso de GitHub con permiso
-   de escritura sobre este repositorio (instrucciones dentro del panel, botón "¿Cómo consigo un token?").
-3. Edita precios o galería y usa "Guardar cambios": se crea un commit en la rama `main` con los
-   archivos `data/prices.json` y/o `data/gallery.json` actualizados.
+2. Haz clic en "Configurar guardado" (arriba a la izquierda) para abrir **Ajustes**.
+3. Pega ahí un token de acceso de GitHub con permiso de escritura sobre este repositorio
+   (instrucciones dentro del mismo cuadro de Ajustes).
+4. Esa computadora queda conectada de forma permanente (se guarda en `localStorage`, no en la
+   sesión), así que este paso no se repite cada vez que alguien inicia sesión.
+
+**Uso diario (cualquier persona del equipo, sin tocar Ajustes):**
+
+1. Inicia sesión con tu usuario y contraseña.
+2. Edita precios, tipos de tarjeta o galería.
+3. Presiona "Guardar cambios": se crea un commit en la rama `main` con los archivos
+   `data/prices.json` y/o `data/gallery.json` actualizados.
 4. GitHub Pages reconstruye el sitio automáticamente en menos de un minuto.
 
 El usuario/contraseña del panel es solo una cortina de acceso en el navegador; la escritura real
-en el repositorio siempre requiere un token de GitHub válido con permiso sobre este repositorio,
-así que perder o compartir la contraseña del panel no expone el repositorio por sí solo.
+en el repositorio siempre requiere la llave conectada en Ajustes, así que perder o compartir la
+contraseña del panel no expone el repositorio por sí solo.
 
 ## Archivos principales
 
@@ -83,8 +98,11 @@ versionada y con historial de cambios visible en GitHub.
 
 ## Importante
 
-- El token de GitHub que se usa para guardar cambios se conserva únicamente en `sessionStorage`
-  del navegador (se borra al cerrar la pestaña) y nunca se sube al repositorio.
+- El token de GitHub que se usa para guardar cambios se conserva en `localStorage`, es decir,
+  por computadora/navegador, no por persona ni por sesión de login. Se configura una sola vez
+  (ver "Configuración inicial" arriba) y nunca se sube al repositorio.
+- Si una computadora se pierde, se vende o se comparte, usa el botón "Desconectar esta
+  computadora" dentro de Ajustes para revocar el acceso local a esa llave.
 - Un token con permiso de escritura debe generarse con acceso limitado solo a este repositorio
   (fine-grained personal access token), no un token con acceso a toda la cuenta.
 - Quitar una foto en el panel la retira de la galería del sitio, pero no borra el archivo de

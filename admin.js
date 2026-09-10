@@ -86,10 +86,10 @@ loginForm?.addEventListener("submit", async (e) => {
 });
 
 document.getElementById("logoutBtn")?.addEventListener("click", () => {
-  try {
-    sessionStorage.removeItem(SESSION_KEY);
-    sessionStorage.removeItem(TOKEN_KEY);
-  } catch (_e) {}
+  // Salir de la sesión NO desconecta la computadora del guardado: la llave
+  // de GitHub vive por dispositivo (localStorage), no por persona. Así el
+  // resto del equipo puede entrar con su propio usuario sin reconfigurar nada.
+  try { sessionStorage.removeItem(SESSION_KEY); } catch (_e) {}
   window.location.reload();
 });
 
@@ -132,35 +132,49 @@ function ghHeaders() {
   };
 }
 
+// Estado visible en dos lugares: la pastilla del header (siempre visible) y
+// el modal de Ajustes (solo al abrirlo). Ambos se actualizan juntos.
 function setGhStatus(state, text) {
-  const dot = document.getElementById("ghDot");
-  const label = document.getElementById("ghStatusText");
-  dot.classList.remove("is-connected", "is-error");
-  if (state === "ok") dot.classList.add("is-connected");
-  if (state === "error") dot.classList.add("is-error");
-  label.textContent = text;
+  const pillDot = document.getElementById("ghDot");
+  const modalDot = document.getElementById("ghDotModal");
+  const pillText = document.getElementById("connPillText");
+  const modalText = document.getElementById("ghStatusText");
+  [pillDot, modalDot].forEach((dot) => {
+    if (!dot) return;
+    dot.classList.remove("is-connected", "is-error");
+    if (state === "ok") dot.classList.add("is-connected");
+    if (state === "error") dot.classList.add("is-error");
+  });
+  const pillLabel = state === "ok" ? "Guardado: activo" : state === "error" ? "Guardado: con problema" : "Configurar guardado";
+  if (pillText) pillText.textContent = pillLabel;
+  if (modalText) modalText.textContent = text;
+
+  const banner = document.getElementById("connectBanner");
+  if (banner) banner.hidden = state === "ok";
 }
 
 async function connectGitHub(token) {
   setGhStatus("pending", "Conectando…");
   try {
     const userRes = await fetch("https://api.github.com/user", { headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" } });
-    if (!userRes.ok) throw new Error(userRes.status === 401 ? "Token inválido o vencido." : `Error al validar el token (${userRes.status}).`);
+    if (!userRes.ok) throw new Error(userRes.status === 401 ? "Esa llave no es válida o ya venció." : `Error al validar la llave (${userRes.status}).`);
     const userData = await userRes.json();
 
     const repoRes = await fetch(API_BASE, { headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" } });
-    if (!repoRes.ok) throw new Error("No se pudo leer el repositorio con este token.");
+    if (!repoRes.ok) throw new Error("No se pudo leer el repositorio con esta llave.");
     const repoData = await repoRes.json();
     const canWrite = !!(repoData.permissions && repoData.permissions.push);
 
     ghToken = token;
     ghUsername = userData.login;
     ghCanWrite = canWrite;
-    try { sessionStorage.setItem(TOKEN_KEY, token); } catch (_e) {}
+    // Vive en localStorage a propósito: es una configuración del DISPOSITIVO
+    // (se hace una sola vez por computadora), no de cada sesión de login.
+    try { localStorage.setItem(TOKEN_KEY, token); } catch (_e) {}
 
-    setGhStatus("ok", canWrite
-      ? `Conectado como ${userData.login} · puede guardar cambios`
-      : `Conectado como ${userData.login} · sin permiso de escritura en este repositorio`);
+    setGhStatus(canWrite ? "ok" : "error", canWrite
+      ? `Conectado como ${userData.login} · esta computadora ya puede guardar cambios`
+      : `Conectado como ${userData.login}, pero esta llave no tiene permiso de escritura en el repositorio`);
     document.getElementById("ghConnectBtn").hidden = true;
     document.getElementById("ghDisconnectBtn").hidden = false;
     document.getElementById("ghToken").value = "";
@@ -174,33 +188,53 @@ async function connectGitHub(token) {
 
 function disconnectGitHub() {
   ghToken = null; ghUsername = null; ghCanWrite = false;
-  try { sessionStorage.removeItem(TOKEN_KEY); } catch (_e) {}
-  setGhStatus("idle", "Sin conectar");
+  try { localStorage.removeItem(TOKEN_KEY); } catch (_e) {}
+  setGhStatus("idle", "Esta computadora no está conectada.");
   document.getElementById("ghConnectBtn").hidden = false;
   document.getElementById("ghDisconnectBtn").hidden = true;
 }
 
+/* ---------- Modal de Ajustes ---------- */
+const settingsModal = document.getElementById("settingsModal");
+function openSettings() {
+  settingsModal?.classList.add("active");
+  settingsModal?.setAttribute("aria-hidden", "false");
+}
+function closeSettings() {
+  settingsModal?.classList.remove("active");
+  settingsModal?.setAttribute("aria-hidden", "true");
+}
+
 function initGitHubConnection() {
-  setGhStatus("idle", "Sin conectar");
+  setGhStatus("idle", "Revisando conexión…");
+
+  document.getElementById("connPill")?.addEventListener("click", openSettings);
+  document.getElementById("connectBannerBtn")?.addEventListener("click", openSettings);
+  document.getElementById("settingsClose")?.addEventListener("click", closeSettings);
+  document.getElementById("settingsOverlay")?.addEventListener("click", closeSettings);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && settingsModal?.classList.contains("active")) closeSettings();
+  });
+
   document.getElementById("ghConnectBtn").addEventListener("click", async () => {
     const token = document.getElementById("ghToken").value.trim();
     if (!token) return;
-    await connectGitHub(token);
+    const ok = await connectGitHub(token);
+    if (ok) setTimeout(closeSettings, 900);
   });
   document.getElementById("ghDisconnectBtn").addEventListener("click", disconnectGitHub);
-  document.getElementById("ghHelpToggle").addEventListener("click", () => {
-    const help = document.getElementById("ghHelp");
-    help.hidden = !help.hidden;
-  });
 
   let savedToken = null;
-  try { savedToken = sessionStorage.getItem(TOKEN_KEY); } catch (_e) {}
-  if (savedToken) connectGitHub(savedToken);
+  try { savedToken = localStorage.getItem(TOKEN_KEY); } catch (_e) {}
+  if (savedToken) {
+    connectGitHub(savedToken);
+  } else {
+    setGhStatus("idle", "Esta computadora todavía no está conectada.");
+  }
 }
 
 function requireGitHub() {
-  if (!ghToken) { alert("Conecta tu token de GitHub arriba antes de guardar."); return false; }
-  if (!ghCanWrite) { alert("Tu token no tiene permiso de escritura en este repositorio."); return false; }
+  if (!ghToken || !ghCanWrite) { openSettings(); return false; }
   return true;
 }
 
@@ -255,13 +289,58 @@ async function loadPricesIntoForm() {
   renderPricesForm();
 }
 
+/* ---------- Editor de características (lista dinámica de texto) ---------- */
+function specsListHtml(specs) {
+  return (specs || []).map((s) => `
+    <div class="spec-row">
+      <i class="bi bi-check2"></i>
+      <input type="text" class="spec-input" value="${esc(s)}" placeholder="Característica" />
+      <button type="button" class="spec-remove" aria-label="Quitar característica"><i class="bi bi-x-lg"></i></button>
+    </div>
+  `).join("");
+}
+function specsEditorHtml(specs) {
+  return `
+    <div class="specs-editor">
+      <label>Características que se listan</label>
+      <div class="specs-list">${specsListHtml(specs)}</div>
+      <button type="button" class="btn btn-ghost btn-sm add-spec-btn"><i class="bi bi-plus-lg"></i> Agregar característica</button>
+    </div>`;
+}
+function readSpecs(scopeEl) {
+  return Array.from(scopeEl.querySelectorAll(".spec-input"))
+    .map((input) => input.value.trim())
+    .filter(Boolean);
+}
+// Un solo listener por contenedor (delegado) sirve para todas las filas,
+// incluidas las que se agreguen después de renderizar.
+function wireSpecsEditors(containerEl) {
+  containerEl.addEventListener("click", (e) => {
+    const addBtn = e.target.closest(".add-spec-btn");
+    if (addBtn) {
+      const list = addBtn.parentElement.querySelector(".specs-list");
+      const row = document.createElement("div");
+      row.className = "spec-row";
+      row.innerHTML = `<i class="bi bi-check2"></i><input type="text" class="spec-input" placeholder="Característica" /><button type="button" class="spec-remove" aria-label="Quitar característica"><i class="bi bi-x-lg"></i></button>`;
+      list.appendChild(row);
+      row.querySelector("input").focus();
+      return;
+    }
+    const removeBtn = e.target.closest(".spec-remove");
+    if (removeBtn) {
+      removeBtn.closest(".spec-row")?.remove();
+    }
+  });
+}
+
 function renderPricesForm() {
   const materialsWrap = document.getElementById("materialsForm");
   const typesWrap = document.getElementById("typesForm");
+  const otmWrap = document.getElementById("otherMaterialsForm");
 
   materialsWrap.innerHTML = workingPrices.materials.map((m, i) => `
     <div class="price-edit-row" data-material-index="${i}">
-      <div class="price-edit-name"><i class="bi ${esc(m.icon || "bi-tag")}"></i>${esc(m.name)}</div>
+      <div class="field"><label>Nombre</label><input type="text" class="mat-name" value="${esc(m.name)}" /></div>
       <div class="field"><label>Mín. $/kg</label><input type="number" min="0" step="1" class="mat-min" value="${m.min}" /></div>
       <div class="field"><label>Máx. $/kg</label><input type="number" min="0" step="1" class="mat-max" value="${m.max}" /></div>
       <div class="field"><label>Nota que se muestra en el sitio</label><input type="text" class="mat-note" value="${esc(m.note || "")}" /></div>
@@ -269,13 +348,35 @@ function renderPricesForm() {
   `).join("");
 
   typesWrap.innerHTML = workingPrices.celularTypes.map((t, i) => `
-    <div class="price-edit-row" data-type-index="${i}">
-      <div class="price-edit-name"><i class="bi bi-phone"></i>${esc(t.label)}</div>
-      <div class="field"><label>Mín. $/kg</label><input type="number" min="0" step="1" class="type-min" value="${t.min}" /></div>
-      <div class="field"><label>Máx. $/kg</label><input type="number" min="0" step="1" class="type-max" value="${t.max}" /></div>
-      <div class="field"><label>Tipo</label><input type="text" value="${esc(t.shortLabel)}" disabled /></div>
+    <div class="type-card" data-type-index="${i}">
+      <div class="price-edit-row cols-3">
+        <div class="field"><label>Nombre del tipo</label><input type="text" class="type-label" value="${esc(t.label)}" /></div>
+        <div class="field"><label>Mín. $/kg</label><input type="number" min="0" step="1" class="type-min" value="${t.min}" /></div>
+        <div class="field"><label>Máx. $/kg</label><input type="number" min="0" step="1" class="type-max" value="${t.max}" /></div>
+      </div>
+      ${specsEditorHtml(t.specs)}
     </div>
   `).join("");
+  wireSpecsEditors(typesWrap);
+
+  otmWrap.innerHTML = workingPrices.otherMaterials.map((o, i) => {
+    const price = getWorkingMaterial(o.priceId);
+    const priceLabel = price ? `$${price.min.toLocaleString("es-MX")} – $${price.max.toLocaleString("es-MX")} /kg (${esc(price.name)})` : "—";
+    return `
+    <div class="otm-card" data-otm-index="${i}">
+      <div class="otm-row">
+        <div class="field"><label>Etiqueta corta</label><input type="text" class="otm-eyebrow" value="${esc(o.eyebrow)}" /></div>
+        <div class="field"><label>Título</label><input type="text" class="otm-title" value="${esc(o.title)}" /></div>
+      </div>
+      <p class="price-hint">Precio actual: <strong>${priceLabel}</strong> — se edita arriba, en "Materiales".</p>
+      ${specsEditorHtml(o.specs)}
+    </div>`;
+  }).join("");
+  wireSpecsEditors(otmWrap);
+}
+
+function getWorkingMaterial(id) {
+  return workingPrices.materials.find((m) => m.id === id) || null;
 }
 
 function readPricesFromForm() {
@@ -283,16 +384,29 @@ function readPricesFromForm() {
     const i = Number(row.dataset.materialIndex);
     const min = Number(row.querySelector(".mat-min").value);
     const max = Number(row.querySelector(".mat-max").value);
+    const name = row.querySelector(".mat-name").value.trim();
+    if (name) workingPrices.materials[i].name = name;
     workingPrices.materials[i].min = Number.isFinite(min) ? min : workingPrices.materials[i].min;
     workingPrices.materials[i].max = Number.isFinite(max) ? max : workingPrices.materials[i].max;
     workingPrices.materials[i].note = row.querySelector(".mat-note").value.trim();
   });
-  document.querySelectorAll("#typesForm .price-edit-row").forEach((row) => {
-    const i = Number(row.dataset.typeIndex);
-    const min = Number(row.querySelector(".type-min").value);
-    const max = Number(row.querySelector(".type-max").value);
+  document.querySelectorAll("#typesForm .type-card").forEach((card) => {
+    const i = Number(card.dataset.typeIndex);
+    const min = Number(card.querySelector(".type-min").value);
+    const max = Number(card.querySelector(".type-max").value);
+    const label = card.querySelector(".type-label").value.trim();
+    if (label) workingPrices.celularTypes[i].label = label;
     workingPrices.celularTypes[i].min = Number.isFinite(min) ? min : workingPrices.celularTypes[i].min;
     workingPrices.celularTypes[i].max = Number.isFinite(max) ? max : workingPrices.celularTypes[i].max;
+    workingPrices.celularTypes[i].specs = readSpecs(card);
+  });
+  document.querySelectorAll("#otherMaterialsForm .otm-card").forEach((card) => {
+    const i = Number(card.dataset.otmIndex);
+    const eyebrow = card.querySelector(".otm-eyebrow").value.trim();
+    const title = card.querySelector(".otm-title").value.trim();
+    if (eyebrow) workingPrices.otherMaterials[i].eyebrow = eyebrow;
+    if (title) workingPrices.otherMaterials[i].title = title;
+    workingPrices.otherMaterials[i].specs = readSpecs(card);
   });
 }
 
