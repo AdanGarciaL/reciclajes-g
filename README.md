@@ -24,9 +24,12 @@ personas que no programan: no hay que tocar código ni entender GitHub para el u
 
 - Sitio público de una sola página con navegación por secciones y animaciones de entrada.
 - Identidad visual basada en el logo e ícono oficiales (`icons/`).
-- Selector de materiales con precios, fotos reales y consideraciones por tipo.
-- Sección "Quiénes somos" con el equipo (nombre, foto, puesto y contacto); se oculta sola mientras
-  nadie la haya llenado desde el panel.
+- Selector de materiales con precios, fotos reales y consideraciones por tipo; los materiales, sus
+  tipos y las fichas de "otros materiales" se agregan, editan o quitan desde el panel, sin tocar
+  código. Un material que todavía no tenga ficha propia puede marcarse como "sin ficha propia" para
+  que mande mensaje directo por WhatsApp en vez de abrir una página vacía.
+- Sección "Quiénes somos" con el equipo (nombre, foto, puesto, WhatsApp, correo y sus propias redes
+  sociales); se oculta sola mientras nadie la haya llenado desde el panel.
 - Botón flotante y enlaces directos a WhatsApp en cada sección de contacto; el número que usan todos
   esos botones es el contacto marcado como "principal" en el panel, no un número fijo en el código.
 - Mapa de cobertura (Leaflet) con los estados que el panel marque como activos; los contadores de
@@ -37,10 +40,13 @@ personas que no programan: no hay que tocar código ni entender GitHub para el u
 - Tema claro y oscuro con persistencia local (solo la preferencia de tema, ningún dato personal).
 - Panel interno (`admin.html`), organizado en pestañas y secciones numeradas, sin lenguaje técnico a la vista:
   - acceso por usuario/contraseña (cortina de acceso, no una base de usuarios);
-  - **Precios y tipos**: nombre y precio de cada material, tipos de tarjeta de celular (Tipo 1 a 4)
-    y la ficha de RAM, laptop, tablet y celular de teclado, todos con sus características editables;
+  - **Precios y tipos**: agregar, editar o quitar materiales (nombre, precio, categoría, ícono, si
+    aparece en el selector y si manda WhatsApp directo), tipos de tarjeta de celular (Tipo 1 a 4 o
+    los que se agreguen) y fichas de otros materiales (RAM, laptop, tablet, celular de teclado o las
+    que se agreguen), todos con sus características editables;
   - **Galería**: agregar, editar descripción y quitar fotos por categoría;
-  - **Quiénes somos**: agregar o quitar personas del equipo, con nombre, foto, puesto, WhatsApp y correo;
+  - **Quiénes somos**: agregar o quitar personas del equipo, con nombre, foto, puesto, WhatsApp,
+    correo y sus propias redes sociales (agregar, editar o quitar);
   - **Sucursales y contacto**: agregar, editar o quitar sucursales y contactos directos, y marcar cuál
     es el número principal del sitio;
   - **Cobertura y redes**: agregar o quitar estados del mapa de cobertura, y los enlaces a redes sociales;

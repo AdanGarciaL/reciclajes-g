@@ -73,12 +73,12 @@ const TOTAL_MEXICO_STATES = MEXICO_STATES.length;
 /* ---------- Datos de respaldo (por si falla el fetch, ej. file://) ---------- */
 const FALLBACK_PRICES = {
   materials: [
-    { id: "celular", name: "Lógica de celular", icon: "bi-phone", modalIcon: "📱", group: "celular", min: 100, max: 1300, unit: "/kg", note: "El Tipo 1 alcanza el precio máximo del catálogo.", quick: true, quickCopy: "Rango completo según tipo, estado y material. El Tipo 1 alcanza el precio máximo." },
-    { id: "teclado", name: "Celular de teclado", icon: "bi-keyboard", modalIcon: "⌨️", group: "celular", min: 100, max: 150, unit: "/kg", note: "Placas de teléfonos antiguos con teclado mecánico.", quick: false, quickCopy: "" },
-    { id: "tablet", name: "Lógica de tablet", icon: "bi-tablet-landscape", modalIcon: "📲", group: "otros", min: 100, max: 150, unit: "/kg", note: "Placas de iPad, Samsung, Lenovo y similares.", quick: false, quickCopy: "" },
-    { id: "ram", name: "Memorias RAM", icon: "bi-memory", modalIcon: "🖬", group: "otros", min: 300, max: 450, unit: "/kg", note: "DDR a DDR5, cualquier capacidad, funcionales o defectuosas.", quick: true, quickCopy: "Aceptamos módulos de varias generaciones y capacidades." },
-    { id: "laptop", name: "Lógica de laptop", icon: "bi-laptop", modalIcon: "💻", group: "otros", min: 90, max: 150, unit: "/kg", note: "Motherboards de laptop y netbook, cualquier marca.", quick: true, quickCopy: "Placas de laptop en diferentes condiciones y modelos." },
-    { id: "sinpila", name: "Sin pila ni tapa", icon: "bi-battery", modalIcon: "🔋", group: "celular", min: 70, max: 100, unit: "/kg", note: "Celulares completos sin desmontar, sin batería.", quick: false, quickCopy: "" }
+    { id: "celular", name: "Lógica de celular", icon: "bi-phone", modalIcon: "📱", group: "celular", min: 100, max: 1300, unit: "/kg", note: "El Tipo 1 alcanza el precio máximo del catálogo.", quick: true, quickCopy: "Rango completo según tipo, estado y material. El Tipo 1 alcanza el precio máximo.", showInSelector: true, directContact: false },
+    { id: "teclado", name: "Celular de teclado", icon: "bi-keyboard", modalIcon: "⌨️", group: "celular", min: 100, max: 150, unit: "/kg", note: "Placas de teléfonos antiguos con teclado mecánico.", quick: false, quickCopy: "", showInSelector: true, directContact: false },
+    { id: "tablet", name: "Lógica de tablet", icon: "bi-tablet-landscape", modalIcon: "📲", group: "otros", min: 100, max: 150, unit: "/kg", note: "Placas de iPad, Samsung, Lenovo y similares.", quick: false, quickCopy: "", showInSelector: true, directContact: false },
+    { id: "ram", name: "Memorias RAM", icon: "bi-memory", modalIcon: "🖬", group: "otros", min: 300, max: 450, unit: "/kg", note: "DDR a DDR5, cualquier capacidad, funcionales o defectuosas.", quick: true, quickCopy: "Aceptamos módulos de varias generaciones y capacidades.", showInSelector: true, directContact: false },
+    { id: "laptop", name: "Lógica de laptop", icon: "bi-laptop", modalIcon: "💻", group: "otros", min: 90, max: 150, unit: "/kg", note: "Motherboards de laptop y netbook, cualquier marca.", quick: true, quickCopy: "Placas de laptop en diferentes condiciones y modelos.", showInSelector: true, directContact: false },
+    { id: "sinpila", name: "Sin pila ni tapa", icon: "bi-battery", modalIcon: "🔋", group: "celular", min: 70, max: 100, unit: "/kg", note: "Celulares completos sin desmontar, sin batería.", quick: false, quickCopy: "", showInSelector: false, directContact: false }
   ],
   celularTypes: [
     { id: "tipo1", priceId: "celular", label: "Tipo 1", shortLabel: "Tipo 1 · Premium", min: 900, max: 1300, specs: ["Sin flex ni tiras", "Sin cámaras", "Debe tener su chip", "Celulares de gama media a alta", "Condición variable aceptable mientras el chip esté presente"], galleryCategory: "celular-tipo-1" },
@@ -131,8 +131,8 @@ const FALLBACK_BRANCHES = {
 
 const FALLBACK_TEAM = {
   members: [
-    { id: "ceo", role: "Director General", name: "", photo: "", whatsapp: "", email: "" },
-    { id: "dev", role: "Desarrollador web", name: "", photo: "", whatsapp: "", email: "" }
+    { id: "ceo", role: "Director General", name: "", photo: "", whatsapp: "", email: "", social: [] },
+    { id: "dev", role: "Desarrollador web", name: "", photo: "", whatsapp: "", email: "", social: [] }
   ]
 };
 
@@ -143,16 +143,6 @@ const FALLBACK_SOCIAL = {
     { id: "facebook", network: "facebook", label: "Facebook", url: "https://www.facebook.com/profile.php?id=100063747836703" }
   ]
 };
-
-/* Materiales visibles en el selector, en orden. "otro" no tiene precio fijo. */
-const SELECTOR_ITEMS = [
-  { id: "celular", group: "celular" },
-  { id: "teclado", group: "celular" },
-  { id: "tablet", group: "otros" },
-  { id: "ram", group: "otros" },
-  { id: "laptop", group: "otros" },
-  { id: "otro", group: "otros", name: "Otra cosa", modalIcon: "⚙️" }
-];
 
 function formatPrice(min, max, unit = "/kg") {
   const fmt = (n) => `$${Number(n).toLocaleString("es-MX")}`;
@@ -242,7 +232,7 @@ function renderPrices() {
       <p class="price-tag">${esc(m.name)}</p>
       <p class="price-value">${formatPrice(m.min, m.max, m.unit)}</p>
       <p class="price-copy">${esc(m.quickCopy || m.note || "")}</p>
-      <button class="btn btn-ghost open-selector" data-preselect="${esc(m.id)}">Ver detalle</button>
+      <button class="btn btn-ghost open-selector" data-preselect="${esc(m.id)}">${m.directContact ? "Preguntar por WhatsApp" : "Ver detalle"}</button>
     </article>`;
   }).join("");
 
@@ -265,6 +255,8 @@ function renderPrices() {
   const tipo1 = PRICES.celularTypes.find((t) => t.id === "tipo1");
   const heroBest = document.getElementById("heroBestPrice");
   if (heroBest && tipo1) heroBest.textContent = formatPrice(tipo1.min, tipo1.max);
+  const heroStatMaterials = document.getElementById("heroStatMaterials");
+  if (heroStatMaterials) heroStatMaterials.textContent = PRICES.materials.length;
 
   quickGrid.querySelectorAll(".open-selector").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -275,30 +267,30 @@ function renderPrices() {
   });
 }
 
-/* ---------- Render: selector de material ---------- */
+/* ---------- Render: selector de material ----------
+   Los botones salen directo de PRICES.materials (lo que edita el panel
+   admin): un material nuevo aparece aquí solo, sin tocar código. "Otra
+   cosa" es el único botón fijo, para lo que de plano no está en el
+   catálogo. */
 function renderSelector() {
   const grid = document.getElementById("selectorGrid");
   if (!grid) return;
-  grid.innerHTML = SELECTOR_ITEMS.map((item) => {
-    if (item.id === "otro") {
-      return `
-        <button class="selector-btn" type="button" data-material="otro" data-group="${esc(item.group)}">
-          <span class="sel-icon">${esc(item.modalIcon)}</span>
-          <span class="sel-name">${esc(item.name)}</span>
-        </button>`;
-    }
-    const m = getMaterial(item.id);
-    if (!m) return "";
+  const items = PRICES.materials.filter((m) => m.showInSelector !== false);
+  grid.innerHTML = items.map((m) => {
     const photo = materialPhoto(m.id);
     return `
-      <button class="selector-btn" type="button" data-material="${esc(m.id)}" data-group="${esc(item.group)}">
+      <button class="selector-btn" type="button" data-material="${esc(m.id)}" data-group="${esc(m.group)}">
         ${photo
           ? `<span class="sel-photo"><img src="${esc(photo.src)}" alt="" loading="lazy" /></span>`
-          : `<span class="sel-icon">${esc(m.modalIcon)}</span>`}
+          : `<span class="sel-icon">${esc(m.modalIcon || "🔧")}</span>`}
         <span class="sel-name">${esc(m.name)}</span>
         <span class="sel-price">${formatPrice(m.min, m.max, m.unit)}</span>
       </button>`;
-  }).join("");
+  }).join("") + `
+      <button class="selector-btn" type="button" data-material="otro" data-group="otros">
+        <span class="sel-icon">⚙️</span>
+        <span class="sel-name">Otra cosa</span>
+      </button>`;
 
   grid.querySelectorAll(".selector-btn").forEach((btn) => {
     btn.addEventListener("click", () => selectMaterial(btn.dataset.material));
@@ -355,7 +347,15 @@ function selectMaterial(materialId) {
     hideSelector();
     return;
   }
+  const material = getMaterial(materialId);
   hideSelector();
+  // Un material marcado como "sin ficha propia" (por ejemplo, uno recién
+  // agregado desde el panel, sin tipos ni fotos todavía) manda directo a
+  // WhatsApp en vez de abrir un detalle que no tendría nada que mostrar.
+  if (material && material.directContact) {
+    window.open(waLink(`Hola, tengo ${material.name.toLowerCase()} para vender, ¿me pueden cotizar?`), "_blank", "noopener");
+    return;
+  }
   if (materialId === "celular") {
     showCelularTypes("tipo1");
   } else {
@@ -536,6 +536,7 @@ function renderTeam() {
       <div class="team-contacts">
         ${m.whatsapp ? `<a class="team-contact-link" href="${waLinkTo(m.whatsapp, "Hola, quiero contactarte por Eco Lógica García")}" target="_blank" rel="noopener" aria-label="WhatsApp de ${esc(m.name)}"><i class="bi bi-whatsapp"></i></a>` : ""}
         ${m.email ? `<a class="team-contact-link" href="mailto:${esc(m.email)}" aria-label="Correo de ${esc(m.name)}"><i class="bi bi-envelope"></i></a>` : ""}
+        ${(m.social || []).map((s) => `<a class="team-contact-link" href="${esc(s.url)}" target="_blank" rel="noopener" aria-label="${esc(s.network)} de ${esc(m.name)}"><i class="bi ${SOCIAL_ICONS[s.network] || "bi-globe2"}"></i></a>`).join("")}
       </div>
     </article>
   `).join("");

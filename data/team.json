@@ -1,7 +1,7 @@
 {
   "members": [
-    { "id": "ceo", "role": "Director General", "name": "", "photo": "", "whatsapp": "", "email": "" },
-    { "id": "dev", "role": "Desarrollador web", "name": "", "photo": "", "whatsapp": "", "email": "" }
+    { "id": "ceo", "role": "Director General", "name": "", "photo": "", "whatsapp": "", "email": "", "social": [] },
+    { "id": "dev", "role": "Desarrollador web", "name": "", "photo": "", "whatsapp": "", "email": "", "social": [] }
   ],
   "updatedAt": "2026-09-09"
 }

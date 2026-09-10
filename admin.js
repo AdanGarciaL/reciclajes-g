@@ -473,17 +473,60 @@ function wireSpecsEditors(containerEl) {
   });
 }
 
+const MATERIAL_ICON_PRESETS = [
+  { value: "bi-phone", label: "Celular" },
+  { value: "bi-keyboard", label: "Teclado" },
+  { value: "bi-tablet-landscape", label: "Tablet" },
+  { value: "bi-memory", label: "Memoria RAM" },
+  { value: "bi-laptop", label: "Laptop" },
+  { value: "bi-battery", label: "Batería" },
+  { value: "bi-cpu", label: "Procesador" },
+  { value: "bi-router", label: "Módem / red" },
+  { value: "bi-hdd", label: "Disco duro" },
+  { value: "bi-usb-plug", label: "Cable / USB" },
+  { value: "bi-tools", label: "Otro (genérico)" },
+];
+function iconSelectHtml(currentIcon, inputClass) {
+  const hasPreset = MATERIAL_ICON_PRESETS.some((p) => p.value === currentIcon);
+  const extra = !hasPreset && currentIcon ? `<option value="${esc(currentIcon)}" selected>${esc(currentIcon)}</option>` : "";
+  return `<select class="${inputClass}">${extra}${MATERIAL_ICON_PRESETS.map((p) => `<option value="${p.value}" ${p.value === currentIcon ? "selected" : ""}>${p.label}</option>`).join("")}</select>`;
+}
+function materialOptionsHtml(selectedId) {
+  return workingPrices.materials.map((m) => `<option value="${esc(m.id)}" ${m.id === selectedId ? "selected" : ""}>${esc(m.name || m.id)}</option>`).join("");
+}
+
 function renderPricesForm() {
   const materialsWrap = document.getElementById("materialsForm");
   const typesWrap = document.getElementById("typesForm");
   const otmWrap = document.getElementById("otherMaterialsForm");
 
   materialsWrap.innerHTML = workingPrices.materials.map((m, i) => `
-    <div class="price-edit-row" data-material-index="${i}">
-      <div class="field"><label>Nombre</label><input type="text" class="mat-name" value="${esc(m.name)}" /></div>
-      <div class="field"><label>Mín. $/kg</label><input type="number" min="0" step="1" class="mat-min" value="${m.min}" /></div>
-      <div class="field"><label>Máx. $/kg</label><input type="number" min="0" step="1" class="mat-max" value="${m.max}" /></div>
-      <div class="field"><label>Nota que se muestra en el sitio</label><input type="text" class="mat-note" value="${esc(m.note || "")}" /></div>
+    <div class="material-edit-card" data-material-index="${i}">
+      <div class="price-edit-row">
+        <div class="field"><label>Nombre</label><input type="text" class="mat-name" value="${esc(m.name)}" /></div>
+        <div class="field"><label>Mín. $/kg</label><input type="number" min="0" step="1" class="mat-min" value="${m.min}" /></div>
+        <div class="field"><label>Máx. $/kg</label><input type="number" min="0" step="1" class="mat-max" value="${m.max}" /></div>
+        <div class="field"><label>Nota que se muestra en el sitio</label><input type="text" class="mat-note" value="${esc(m.note || "")}" /></div>
+      </div>
+      <div class="otm-row" style="margin-top:12px">
+        <div class="field"><label>Categoría (para filtrar en el selector)</label>
+          <select class="mat-group">
+            <option value="celular" ${m.group === "celular" ? "selected" : ""}>Celular</option>
+            <option value="otros" ${m.group !== "celular" ? "selected" : ""}>Otros tipos</option>
+          </select>
+        </div>
+        <div class="field"><label>Ícono</label>${iconSelectHtml(m.icon, "mat-icon")}</div>
+      </div>
+      <div class="branch-toggles">
+        <label class="check-inline"><input type="checkbox" class="mat-show-selector" ${m.showInSelector !== false ? "checked" : ""} /> Aparece en el selector de materiales</label>
+        <label class="check-inline"><input type="checkbox" class="mat-direct-contact" ${m.directContact ? "checked" : ""} /> Sin ficha propia: al elegirlo, manda WhatsApp directo</label>
+        <label class="check-inline"><input type="checkbox" class="mat-quick" ${m.quick ? "checked" : ""} /> Destacar en "Precios rápidos" (portada)</label>
+      </div>
+      <div class="field mat-quickcopy-field" style="margin-top:12px" ${m.quick ? "" : "hidden"}>
+        <label>Texto corto para la tarjeta destacada</label>
+        <input type="text" class="mat-quickcopy" value="${esc(m.quickCopy || "")}" />
+      </div>
+      <button type="button" class="btn btn-danger btn-sm mat-remove-btn" style="margin-top:14px"><i class="bi bi-trash"></i> Quitar material</button>
     </div>
   `).join("");
 
@@ -494,10 +537,13 @@ function renderPricesForm() {
         <div class="field"><label>Mín. $/kg</label><input type="number" min="0" step="1" class="type-min" value="${t.min}" /></div>
         <div class="field"><label>Máx. $/kg</label><input type="number" min="0" step="1" class="type-max" value="${t.max}" /></div>
       </div>
+      <div class="field" style="margin-top:12px"><label>Material al que pertenece</label>
+        <select class="type-priceid">${materialOptionsHtml(t.priceId)}</select>
+      </div>
       ${specsEditorHtml(t.specs)}
+      <button type="button" class="btn btn-danger btn-sm type-remove-btn" style="margin-top:14px"><i class="bi bi-trash"></i> Quitar tipo</button>
     </div>
   `).join("");
-  wireSpecsEditors(typesWrap);
 
   otmWrap.innerHTML = workingPrices.otherMaterials.map((o, i) => {
     const price = getWorkingMaterial(o.priceId);
@@ -508,36 +554,120 @@ function renderPricesForm() {
         <div class="field"><label>Etiqueta corta</label><input type="text" class="otm-eyebrow" value="${esc(o.eyebrow)}" /></div>
         <div class="field"><label>Título</label><input type="text" class="otm-title" value="${esc(o.title)}" /></div>
       </div>
+      <div class="field" style="margin-top:12px"><label>Material al que pertenece</label>
+        <select class="otm-priceid">${materialOptionsHtml(o.priceId)}</select>
+      </div>
       <p class="price-hint">Precio actual: <strong>${priceLabel}</strong> — se edita arriba, en "Materiales".</p>
       ${specsEditorHtml(o.specs)}
+      <button type="button" class="btn btn-danger btn-sm otm-remove-btn" style="margin-top:14px"><i class="bi bi-trash"></i> Quitar ficha</button>
     </div>`;
   }).join("");
-  wireSpecsEditors(otmWrap);
 }
 
 function getWorkingMaterial(id) {
   return workingPrices.materials.find((m) => m.id === id) || null;
 }
 
+// Agregar o quitar una fila reconstruye TODO el formulario a partir de
+// workingPrices; sin este paso, cualquier cosa que ya se hubiera escrito en
+// otras filas (que solo vive en el DOM hasta guardar) se perdería al volver
+// a dibujar. Por eso cada agregar/quitar primero sincroniza el DOM con
+// workingPrices y hasta entonces modifica la lista y vuelve a renderizar.
+document.getElementById("addMaterialBtn")?.addEventListener("click", () => {
+  readPricesFromForm();
+  workingPrices.materials.push({
+    id: `material-${Date.now()}`, name: "", icon: "bi-tools", modalIcon: "🔧", group: "otros",
+    min: 0, max: 0, unit: "/kg", note: "", quick: false, quickCopy: "",
+    showInSelector: true, directContact: true,
+  });
+  renderPricesForm();
+});
+document.getElementById("addTypeBtn")?.addEventListener("click", () => {
+  readPricesFromForm();
+  workingPrices.celularTypes.push({
+    id: `tipo-${Date.now()}`, priceId: workingPrices.materials[0]?.id || "", label: "Nuevo tipo", shortLabel: "Nuevo tipo",
+    min: 0, max: 0, specs: [], galleryCategory: "",
+  });
+  renderPricesForm();
+});
+document.getElementById("addOtherMaterialBtn")?.addEventListener("click", () => {
+  readPricesFromForm();
+  workingPrices.otherMaterials.push({
+    id: `ficha-${Date.now()}`, priceId: workingPrices.materials[0]?.id || "", eyebrow: "", title: "", specs: [], galleryCategory: "",
+  });
+  renderPricesForm();
+});
+
+// Delegados UNA sola vez sobre los contenedores (que no se vuelven a crear,
+// solo se reemplaza su contenido en cada render): así "Agregar
+// característica" y "Quitar" siguen funcionando aunque se agreguen o
+// quiten materiales/tipos/fichas muchas veces seguidas, sin duplicarse.
+const materialsFormEl = document.getElementById("materialsForm");
+const typesFormEl = document.getElementById("typesForm");
+const otherMaterialsFormEl = document.getElementById("otherMaterialsForm");
+if (typesFormEl) wireSpecsEditors(typesFormEl);
+if (otherMaterialsFormEl) wireSpecsEditors(otherMaterialsFormEl);
+materialsFormEl?.addEventListener("change", (e) => {
+  const quickCheckbox = e.target.closest(".mat-quick");
+  if (!quickCheckbox) return;
+  const field = quickCheckbox.closest(".material-edit-card").querySelector(".mat-quickcopy-field");
+  if (field) field.hidden = !quickCheckbox.checked;
+});
+materialsFormEl?.addEventListener("click", (e) => {
+  const removeBtn = e.target.closest(".mat-remove-btn");
+  if (!removeBtn) return;
+  readPricesFromForm();
+  const i = Number(removeBtn.closest(".material-edit-card").dataset.materialIndex);
+  workingPrices.materials.splice(i, 1);
+  renderPricesForm();
+});
+typesFormEl?.addEventListener("click", (e) => {
+  const removeBtn = e.target.closest(".type-remove-btn");
+  if (!removeBtn) return;
+  readPricesFromForm();
+  const i = Number(removeBtn.closest(".type-card").dataset.typeIndex);
+  workingPrices.celularTypes.splice(i, 1);
+  renderPricesForm();
+});
+otherMaterialsFormEl?.addEventListener("click", (e) => {
+  const removeBtn = e.target.closest(".otm-remove-btn");
+  if (!removeBtn) return;
+  readPricesFromForm();
+  const i = Number(removeBtn.closest(".otm-card").dataset.otmIndex);
+  workingPrices.otherMaterials.splice(i, 1);
+  renderPricesForm();
+});
+
 function readPricesFromForm() {
-  document.querySelectorAll("#materialsForm .price-edit-row").forEach((row) => {
-    const i = Number(row.dataset.materialIndex);
-    const min = Number(row.querySelector(".mat-min").value);
-    const max = Number(row.querySelector(".mat-max").value);
-    const name = row.querySelector(".mat-name").value.trim();
-    if (name) workingPrices.materials[i].name = name;
-    workingPrices.materials[i].min = Number.isFinite(min) ? min : workingPrices.materials[i].min;
-    workingPrices.materials[i].max = Number.isFinite(max) ? max : workingPrices.materials[i].max;
-    workingPrices.materials[i].note = row.querySelector(".mat-note").value.trim();
+  document.querySelectorAll("#materialsForm .material-edit-card").forEach((card) => {
+    const i = Number(card.dataset.materialIndex);
+    const m = workingPrices.materials[i];
+    const name = card.querySelector(".mat-name").value.trim();
+    if (name) m.name = name;
+    const min = Number(card.querySelector(".mat-min").value);
+    const max = Number(card.querySelector(".mat-max").value);
+    m.min = Number.isFinite(min) ? min : m.min;
+    m.max = Number.isFinite(max) ? max : m.max;
+    m.note = card.querySelector(".mat-note").value.trim();
+    m.group = card.querySelector(".mat-group").value;
+    m.icon = card.querySelector(".mat-icon").value;
+    m.showInSelector = card.querySelector(".mat-show-selector").checked;
+    m.directContact = card.querySelector(".mat-direct-contact").checked;
+    m.quick = card.querySelector(".mat-quick").checked;
+    m.quickCopy = card.querySelector(".mat-quickcopy").value.trim();
   });
   document.querySelectorAll("#typesForm .type-card").forEach((card) => {
     const i = Number(card.dataset.typeIndex);
     const min = Number(card.querySelector(".type-min").value);
     const max = Number(card.querySelector(".type-max").value);
     const label = card.querySelector(".type-label").value.trim();
-    if (label) workingPrices.celularTypes[i].label = label;
+    if (label) {
+      workingPrices.celularTypes[i].label = label;
+      workingPrices.celularTypes[i].shortLabel = label;
+    }
     workingPrices.celularTypes[i].min = Number.isFinite(min) ? min : workingPrices.celularTypes[i].min;
     workingPrices.celularTypes[i].max = Number.isFinite(max) ? max : workingPrices.celularTypes[i].max;
+    workingPrices.celularTypes[i].priceId = card.querySelector(".type-priceid").value;
     workingPrices.celularTypes[i].specs = readSpecs(card);
   });
   document.querySelectorAll("#otherMaterialsForm .otm-card").forEach((card) => {
@@ -546,13 +676,17 @@ function readPricesFromForm() {
     const title = card.querySelector(".otm-title").value.trim();
     if (eyebrow) workingPrices.otherMaterials[i].eyebrow = eyebrow;
     if (title) workingPrices.otherMaterials[i].title = title;
+    workingPrices.otherMaterials[i].priceId = card.querySelector(".otm-priceid").value;
     workingPrices.otherMaterials[i].specs = readSpecs(card);
   });
 }
 
 function validatePrices() {
   const problems = [];
-  workingPrices.materials.forEach((m) => { if (m.min < 0 || m.max < 0 || m.min > m.max) problems.push(`"${esc(m.name)}": el mínimo no puede ser mayor al máximo.`); });
+  workingPrices.materials.forEach((m) => {
+    if (!m.name) problems.push('Falta el nombre de un material.');
+    if (m.min < 0 || m.max < 0 || m.min > m.max) problems.push(`"${esc(m.name || "Material sin nombre")}": el mínimo no puede ser mayor al máximo.`);
+  });
   workingPrices.celularTypes.forEach((t) => { if (t.min < 0 || t.max < 0 || t.min > t.max) problems.push(`"${esc(t.label)}": el mínimo no puede ser mayor al máximo.`); });
   return problems;
 }
@@ -788,7 +922,7 @@ async function loadTeamIntoForm() {
     return;
   }
   workingTeam = JSON.parse(JSON.stringify(data));
-  workingTeam.members.forEach((m) => { m._pendingPhoto = null; m._removePhoto = false; });
+  workingTeam.members.forEach((m) => { m._pendingPhoto = null; m._removePhoto = false; m.social = m.social || []; });
   renderTeamForm();
 }
 
@@ -818,14 +952,31 @@ function renderTeamForm() {
           <div class="field"><label>Correo (opcional)</label><input type="email" class="team-email-input" value="${esc(m.email || "")}" placeholder="correo@ejemplo.com" /></div>
         </div>
       </div>
-      <button type="button" class="btn btn-danger btn-sm team-remove-btn"><i class="bi bi-trash"></i> Quitar de "Quiénes somos"</button>
+      <div class="specs-editor">
+        <label>Redes sociales de esta persona (opcional)</label>
+        <div class="team-social-list">
+          ${(m.social || []).map((s, si) => `
+            <div class="team-social-row" data-social-index="${si}">
+              <select class="team-social-network">${SOCIAL_NETWORKS.map((n) => `<option value="${n.value}" ${s.network === n.value ? "selected" : ""}>${n.label}</option>`).join("")}</select>
+              <input type="url" class="team-social-url" value="${esc(s.url || "")}" placeholder="https://..." />
+              <button type="button" class="team-social-remove" aria-label="Quitar red social"><i class="bi bi-x-lg"></i></button>
+            </div>
+          `).join("")}
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm team-social-add-btn"><i class="bi bi-plus-lg"></i> Agregar red social</button>
+      </div>
+      <button type="button" class="btn btn-danger btn-sm team-remove-btn" style="margin-top:14px"><i class="bi bi-trash"></i> Quitar de "Quiénes somos"</button>
     </div>
   `).join("");
 }
 
+// Cada agregar/quitar redibuja todo desde workingTeam, así que primero
+// sincroniza lo que ya esté escrito en el formulario (en cualquier tarjeta,
+// no solo la que se está tocando) para no perder texto sin guardar.
 document.getElementById("teamForm")?.addEventListener("click", (e) => {
   const removeCardBtn = e.target.closest(".team-remove-btn");
   if (removeCardBtn) {
+    syncTeamFormFields();
     const i = Number(removeCardBtn.closest(".team-edit-card").dataset.teamIndex);
     workingTeam.members.splice(i, 1);
     renderTeamForm();
@@ -833,9 +984,29 @@ document.getElementById("teamForm")?.addEventListener("click", (e) => {
   }
   const removePhotoBtn = e.target.closest(".team-photo-remove");
   if (removePhotoBtn) {
+    syncTeamFormFields();
     const i = Number(removePhotoBtn.closest(".team-edit-card").dataset.teamIndex);
     workingTeam.members[i]._pendingPhoto = null;
     workingTeam.members[i]._removePhoto = true;
+    renderTeamForm();
+    return;
+  }
+  const addSocialBtn = e.target.closest(".team-social-add-btn");
+  if (addSocialBtn) {
+    syncTeamFormFields();
+    const i = Number(addSocialBtn.closest(".team-edit-card").dataset.teamIndex);
+    const member = workingTeam.members[i];
+    member.social = member.social || [];
+    member.social.push({ network: "facebook", url: "" });
+    renderTeamForm();
+    return;
+  }
+  const removeSocialBtn = e.target.closest(".team-social-remove");
+  if (removeSocialBtn) {
+    syncTeamFormFields();
+    const i = Number(removeSocialBtn.closest(".team-edit-card").dataset.teamIndex);
+    const si = Number(removeSocialBtn.closest(".team-social-row").dataset.socialIndex);
+    workingTeam.members[i].social.splice(si, 1);
     renderTeamForm();
   }
 });
@@ -856,12 +1027,18 @@ document.getElementById("teamForm")?.addEventListener("change", async (e) => {
 });
 
 document.getElementById("addTeamMemberBtn")?.addEventListener("click", () => {
-  workingTeam.members.push({ id: `persona-${Date.now()}`, role: "", name: "", photo: "", whatsapp: "", email: "", _pendingPhoto: null, _removePhoto: false });
+  syncTeamFormFields();
+  workingTeam.members.push({ id: `persona-${Date.now()}`, role: "", name: "", photo: "", whatsapp: "", email: "", social: [], _pendingPhoto: null, _removePhoto: false });
   renderTeamForm();
 });
 document.getElementById("resetTeamBtn")?.addEventListener("click", loadTeamIntoForm);
 
-function readTeamFromForm() {
+// Sin filtrar filas de redes sociales en blanco: mantiene el mismo largo de
+// arreglo que el formulario, para que un índice tomado del DOM (por ejemplo
+// al quitar una fila) siga apuntando a lo correcto. Se usa antes de agregar
+// o quitar cualquier cosa; readTeamFromForm (abajo) sí filtra, pero solo se
+// usa al guardar, cuando ya no hace falta que los índices sigan alineados.
+function syncTeamFormFields() {
   document.querySelectorAll("#teamForm .team-edit-card").forEach((card) => {
     const i = Number(card.dataset.teamIndex);
     const m = workingTeam.members[i];
@@ -870,7 +1047,13 @@ function readTeamFromForm() {
     const wa = card.querySelector(".team-wa-input").value.trim();
     m.whatsapp = wa ? normalizeWhatsapp(wa) : "";
     m.email = card.querySelector(".team-email-input").value.trim();
+    m.social = Array.from(card.querySelectorAll(".team-social-row"))
+      .map((row) => ({ network: row.querySelector(".team-social-network").value, url: row.querySelector(".team-social-url").value.trim() }));
   });
+}
+function readTeamFromForm() {
+  syncTeamFormFields();
+  workingTeam.members.forEach((m) => { m.social = m.social.filter((s) => s.url); });
 }
 
 document.getElementById("saveTeamBtn")?.addEventListener("click", async () => {
@@ -973,11 +1156,13 @@ document.getElementById("branchesForm")?.addEventListener("change", (e) => {
 document.getElementById("branchesForm")?.addEventListener("click", (e) => {
   const removeBtn = e.target.closest(".branch-remove-btn");
   if (!removeBtn) return;
+  readBranchesFromForm();
   const i = Number(removeBtn.closest(".branch-edit-card").dataset.branchIndex);
   workingBranches.branches.splice(i, 1);
   renderBranchesForm();
 });
 document.getElementById("addBranchBtn")?.addEventListener("click", () => {
+  readBranchesFromForm();
   workingBranches.branches.push({ id: `contacto-${Date.now()}`, kind: "sucursal", estado: MEXICO_STATES[0].id, nombre: "", cobertura: "", ubicacion: "", local: "", whatsapp: "", primary: false, activo: true });
   renderBranchesForm();
 });
@@ -1125,24 +1310,34 @@ function renderSocialForm() {
 document.getElementById("socialForm")?.addEventListener("click", (e) => {
   const removeBtn = e.target.closest(".social-remove-btn");
   if (!removeBtn) return;
+  syncSocialFormFields();
   const i = Number(removeBtn.closest(".social-edit-card").dataset.socialIndex);
   workingSocial.links.splice(i, 1);
   renderSocialForm();
 });
 document.getElementById("addSocialBtn")?.addEventListener("click", () => {
+  syncSocialFormFields();
   workingSocial.links.push({ id: `red-${Date.now()}`, network: "facebook", label: "", url: "" });
   renderSocialForm();
 });
 document.getElementById("resetCoverageBtn")?.addEventListener("click", loadCoverageAndSocialIntoForm);
 
-function readSocialFromForm() {
+// Sin filtrar filas en blanco (ver syncTeamFormFields arriba): mantiene el
+// largo del arreglo para que un índice tomado del DOM (al quitar una fila)
+// siga siendo válido. readSocialFromForm sí filtra, pero solo se usa al
+// guardar.
+function syncSocialFormFields() {
   document.querySelectorAll("#socialForm .social-edit-card").forEach((card) => {
     const i = Number(card.dataset.socialIndex);
     const l = workingSocial.links[i];
+    if (!l) return;
     l.network = card.querySelector(".social-network-input").value;
     l.url = card.querySelector(".social-url-input").value.trim();
     l.label = SOCIAL_NETWORKS.find((n) => n.value === l.network)?.label || "";
   });
+}
+function readSocialFromForm() {
+  syncSocialFormFields();
   workingSocial.links = workingSocial.links.filter((l) => l.url);
 }
 

@@ -12,7 +12,9 @@
       "unit": "/kg",
       "note": "El Tipo 1 alcanza el precio máximo del catálogo.",
       "quick": true,
-      "quickCopy": "Rango completo según tipo, estado y material. El Tipo 1 alcanza el precio máximo."
+      "quickCopy": "Rango completo según tipo, estado y material. El Tipo 1 alcanza el precio máximo.",
+      "showInSelector": true,
+      "directContact": false
     },
     {
       "id": "teclado",
@@ -25,7 +27,9 @@
       "unit": "/kg",
       "note": "Placas de teléfonos antiguos con teclado mecánico.",
       "quick": false,
-      "quickCopy": ""
+      "quickCopy": "",
+      "showInSelector": true,
+      "directContact": false
     },
     {
       "id": "tablet",
@@ -38,7 +42,9 @@
       "unit": "/kg",
       "note": "Placas de iPad, Samsung, Lenovo y similares.",
       "quick": false,
-      "quickCopy": ""
+      "quickCopy": "",
+      "showInSelector": true,
+      "directContact": false
     },
     {
       "id": "ram",
@@ -51,7 +57,9 @@
       "unit": "/kg",
       "note": "DDR a DDR5, cualquier capacidad, funcionales o defectuosas.",
       "quick": true,
-      "quickCopy": "Aceptamos módulos de varias generaciones y capacidades."
+      "quickCopy": "Aceptamos módulos de varias generaciones y capacidades.",
+      "showInSelector": true,
+      "directContact": false
     },
     {
       "id": "laptop",
@@ -64,7 +72,9 @@
       "unit": "/kg",
       "note": "Motherboards de laptop y netbook, cualquier marca.",
       "quick": true,
-      "quickCopy": "Placas de laptop en diferentes condiciones y modelos."
+      "quickCopy": "Placas de laptop en diferentes condiciones y modelos.",
+      "showInSelector": true,
+      "directContact": false
     },
     {
       "id": "sinpila",
@@ -77,7 +87,9 @@
       "unit": "/kg",
       "note": "Celulares completos sin desmontar, sin batería.",
       "quick": false,
-      "quickCopy": ""
+      "quickCopy": "",
+      "showInSelector": false,
+      "directContact": false
     }
   ],
   "celularTypes": [
