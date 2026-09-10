@@ -150,11 +150,14 @@ document.getElementById("logoutBtn")?.addEventListener("click", () => {
   window.location.reload();
 });
 
-function enterApp(username) {
+async function enterApp(username) {
   loginScreen.hidden = true;
   adminApp.hidden = false;
   whoAmI.textContent = username;
-  initGitHubConnection();
+  // Espera la conexión con GitHub antes de cargar los datos: así, si el
+  // fetch local falla (ver fetchJsonOrFromGitHub), ya hay una llave lista
+  // para leerlos directo de la API de GitHub en el primer intento.
+  await initGitHubConnection();
   loadPricesIntoForm();
   loadGalleryIntoUI();
   loadTeamIntoForm();
@@ -280,7 +283,12 @@ function closeSettings() {
   settingsModal?.setAttribute("aria-hidden", "true");
 }
 
-function initGitHubConnection() {
+// Devuelve una promesa: los formularios esperan a que esto termine antes de
+// cargar datos, así, si ya hay una llave guardada, pueden usarla como
+// respaldo para leer los JSON directo de GitHub cuando la ruta local falla
+// (por ejemplo, si esta página se abrió con doble clic en vez de con un
+// servidor: ver fetchJsonOrFromGitHub más abajo).
+async function initGitHubConnection() {
   setGhStatus("idle", "Revisando conexión…");
 
   document.getElementById("connPill")?.addEventListener("click", openSettings);
@@ -302,7 +310,7 @@ function initGitHubConnection() {
   let savedToken = null;
   try { savedToken = localStorage.getItem(TOKEN_KEY); } catch (_e) {}
   if (savedToken) {
-    connectGitHub(savedToken);
+    await connectGitHub(savedToken);
   } else {
     setGhStatus("idle", "Esta computadora todavía no está conectada.");
   }
@@ -357,14 +365,67 @@ async function ghSaveJson(path, dataObject, message) {
 }
 
 /* =========================================================
+   Carga resiliente de los archivos de data/
+   La ruta normal es un fetch relativo (funciona en GitHub Pages o en
+   cualquier servidor local). Eso falla si esta página se abre con doble
+   clic desde el explorador de archivos (protocolo file://): los
+   navegadores bloquean ese tipo de lectura por seguridad. Como respaldo,
+   si ya hay una llave de GitHub conectada, se lee el archivo actual
+   directo de la API de GitHub (que sí funciona bajo file://, porque es
+   una petición normal a otro sitio, no una lectura de disco). Solo si
+   ambos caminos fallan se avisa con un mensaje claro, en vez de dejar
+   la sección en blanco sin explicación.
+   ========================================================= */
+let dataLoadFailed = false;
+function showDataUnavailableBanner() {
+  dataLoadFailed = true;
+  const banner = document.getElementById("dataUnavailableBanner");
+  if (banner) banner.hidden = false;
+}
+// Si algo no cargó, los datos "de trabajo" de esa sección quedan vacíos por
+// dentro; guardar en ese estado borraría el archivo real. Bloquea CUALQUIER
+// guardado mientras falte cargar algo, hasta recargar la página con éxito.
+function guardDataLoaded(statusElId) {
+  if (dataLoadFailed) {
+    showStatus(statusElId, "error", "No se pudo cargar la información actual del sitio, así que no se puede guardar todavía (para no borrar datos por accidente). Recarga esta página e inténtalo de nuevo.");
+    return false;
+  }
+  return true;
+}
+async function fetchJsonOrFromGitHub(path) {
+  try {
+    const res = await fetch(`${path}?t=${Date.now()}`, { cache: "no-store" });
+    if (res.ok) return await res.json();
+  } catch (_err) { /* probablemente file://: sigue con el respaldo de GitHub */ }
+
+  if (ghToken) {
+    try {
+      const file = await ghGetFile(path);
+      if (file) return JSON.parse(base64ToUtf8(file.content));
+    } catch (_err) { /* sigue al mensaje de error */ }
+  }
+  return null;
+}
+function unavailableNoticeHtml(label) {
+  return `<p class="price-hint" style="margin:0">No se pudo cargar "${esc(label)}". Conéctate en Ajustes y recarga la página, o abre este panel desde el sitio publicado en vez de abrir el archivo directamente.</p>`;
+}
+
+/* =========================================================
    PRECIOS
    ========================================================= */
 let workingPrices = null;
 
 async function loadPricesIntoForm() {
-  const res = await fetch(`data/prices.json?t=${Date.now()}`, { cache: "no-store" });
-  const data = res.ok ? await res.json() : null;
-  workingPrices = JSON.parse(JSON.stringify(data || { materials: [], celularTypes: [], otherMaterials: [] }));
+  const data = await fetchJsonOrFromGitHub("data/prices.json");
+  if (!data) {
+    showDataUnavailableBanner();
+    workingPrices = { materials: [], celularTypes: [], otherMaterials: [] };
+    document.getElementById("materialsForm").innerHTML = unavailableNoticeHtml("Materiales");
+    document.getElementById("typesForm").innerHTML = "";
+    document.getElementById("otherMaterialsForm").innerHTML = "";
+    return;
+  }
+  workingPrices = JSON.parse(JSON.stringify(data));
   renderPricesForm();
 }
 
@@ -508,6 +569,7 @@ function hideStatus(elId) {
 document.getElementById("resetPricesBtn")?.addEventListener("click", loadPricesIntoForm);
 
 document.getElementById("savePricesBtn")?.addEventListener("click", async () => {
+  if (!guardDataLoaded("pricesStatus")) return;
   if (!requireGitHub("pricesStatus")) return;
   readPricesFromForm();
   const problems = validatePrices();
@@ -535,10 +597,17 @@ let activeCategoryId = null;
 let pendingUploads = []; // { categoryId, fileName, base64, previewUrl, alt }
 
 async function loadGalleryIntoUI() {
-  const res = await fetch(`data/gallery.json?t=${Date.now()}`, { cache: "no-store" });
-  const data = res.ok ? await res.json() : null;
-  workingGallery = JSON.parse(JSON.stringify(data || { categories: [] }));
+  const data = await fetchJsonOrFromGitHub("data/gallery.json");
   pendingUploads = [];
+  if (!data) {
+    showDataUnavailableBanner();
+    workingGallery = { categories: [] };
+    activeCategoryId = null;
+    document.getElementById("galleryCats").innerHTML = unavailableNoticeHtml("Galería de fotos");
+    document.getElementById("galleryThumbs").innerHTML = "";
+    return;
+  }
+  workingGallery = JSON.parse(JSON.stringify(data));
   activeCategoryId = workingGallery.categories[0]?.id || null;
   renderGalleryCats();
   renderGalleryThumbs();
@@ -679,6 +748,7 @@ document.getElementById("addPhotoInput")?.addEventListener("change", async (e) =
 document.getElementById("resetGalleryBtn")?.addEventListener("click", loadGalleryIntoUI);
 
 document.getElementById("saveGalleryBtn")?.addEventListener("click", async () => {
+  if (!guardDataLoaded("galleryStatus")) return;
   if (!requireGitHub("galleryStatus")) return;
   readGalleryAltEdits();
 
@@ -710,9 +780,14 @@ document.getElementById("saveGalleryBtn")?.addEventListener("click", async () =>
 let workingTeam = null;
 
 async function loadTeamIntoForm() {
-  const res = await fetch(`data/team.json?t=${Date.now()}`, { cache: "no-store" });
-  const data = res.ok ? await res.json() : null;
-  workingTeam = JSON.parse(JSON.stringify(data || { members: [] }));
+  const data = await fetchJsonOrFromGitHub("data/team.json");
+  if (!data) {
+    showDataUnavailableBanner();
+    workingTeam = { members: [] };
+    document.getElementById("teamForm").innerHTML = unavailableNoticeHtml("Quiénes somos");
+    return;
+  }
+  workingTeam = JSON.parse(JSON.stringify(data));
   workingTeam.members.forEach((m) => { m._pendingPhoto = null; m._removePhoto = false; });
   renderTeamForm();
 }
@@ -799,6 +874,7 @@ function readTeamFromForm() {
 }
 
 document.getElementById("saveTeamBtn")?.addEventListener("click", async () => {
+  if (!guardDataLoaded("teamStatus")) return;
   if (!requireGitHub("teamStatus")) return;
   readTeamFromForm();
   const btn = document.getElementById("saveTeamBtn");
@@ -835,9 +911,14 @@ document.getElementById("saveTeamBtn")?.addEventListener("click", async () => {
 let workingBranches = null;
 
 async function loadBranchesIntoForm() {
-  const res = await fetch(`data/branches.json?t=${Date.now()}`, { cache: "no-store" });
-  const data = res.ok ? await res.json() : null;
-  workingBranches = JSON.parse(JSON.stringify(data || { branches: [] }));
+  const data = await fetchJsonOrFromGitHub("data/branches.json");
+  if (!data) {
+    showDataUnavailableBanner();
+    workingBranches = { branches: [] };
+    document.getElementById("branchesForm").innerHTML = unavailableNoticeHtml("Sucursales y contacto");
+    return;
+  }
+  workingBranches = JSON.parse(JSON.stringify(data));
   renderBranchesForm();
 }
 
@@ -930,6 +1011,7 @@ function validateBranches() {
 }
 
 document.getElementById("saveBranchesBtn")?.addEventListener("click", async () => {
+  if (!guardDataLoaded("branchesStatus")) return;
   if (!requireGitHub("branchesStatus")) return;
   readBranchesFromForm();
   const problems = validateBranches();
@@ -964,17 +1046,26 @@ const SOCIAL_NETWORKS = [
 ];
 
 async function loadCoverageAndSocialIntoForm() {
-  const [covRes, socRes] = await Promise.all([
-    fetch(`data/coverage.json?t=${Date.now()}`, { cache: "no-store" }),
-    fetch(`data/social.json?t=${Date.now()}`, { cache: "no-store" }),
+  const [covData, socData] = await Promise.all([
+    fetchJsonOrFromGitHub("data/coverage.json"),
+    fetchJsonOrFromGitHub("data/social.json"),
   ]);
-  const covData = covRes.ok ? await covRes.json() : null;
-  const socData = socRes.ok ? await socRes.json() : null;
   workingCoverage = JSON.parse(JSON.stringify(covData || { activeStateIds: [] }));
   workingSocial = JSON.parse(JSON.stringify(socData || { links: [] }));
   renderStateSelect();
-  renderStateChips();
-  renderSocialForm();
+  if (!covData) {
+    showDataUnavailableBanner();
+    document.getElementById("stateChipList").innerHTML = unavailableNoticeHtml("Cobertura activa");
+    document.getElementById("coverageCountHint").textContent = "";
+  } else {
+    renderStateChips();
+  }
+  if (!socData) {
+    showDataUnavailableBanner();
+    document.getElementById("socialForm").innerHTML = unavailableNoticeHtml("Redes sociales");
+  } else {
+    renderSocialForm();
+  }
 }
 
 function renderStateSelect() {
@@ -1056,6 +1147,7 @@ function readSocialFromForm() {
 }
 
 document.getElementById("saveCoverageBtn")?.addEventListener("click", async () => {
+  if (!guardDataLoaded("coverageStatus")) return;
   if (!requireGitHub("coverageStatus")) return;
   readSocialFromForm();
   const btn = document.getElementById("saveCoverageBtn");

@@ -232,6 +232,8 @@ body.dark-mode .status-msg.is-success { color: var(--brand-green); }
   border: none; background: var(--warn); color: #fff; font-weight: 700; font-size: 12.5px;
   padding: 6px 12px; border-radius: 999px; cursor: pointer;
 }
+.connect-banner.is-danger { background: var(--danger-bg); color: var(--danger); }
+.connect-banner.is-danger a { color: var(--danger); font-weight: 700; text-decoration: underline; }
 
 /* ---------- Secciones numeradas ("bien seccionado") ---------- */
 .section-block { margin-bottom: 22px; }
