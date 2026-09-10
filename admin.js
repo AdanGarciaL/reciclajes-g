@@ -422,6 +422,49 @@ function unavailableNoticeHtml(label) {
 }
 
 /* =========================================================
+   Ventana de edición de un elemento de una lista
+   Materiales, tipos, fichas, personas y sucursales ya no muestran todos
+   sus campos abiertos a la vez en la página (eso obligaba a hacer mucho
+   scroll): "Editar" abre el formulario completo de ESE elemento en una
+   ventana aparte; "Agregar" hace lo mismo con uno nuevo en blanco. La
+   lista de abajo solo muestra un resumen de cada uno.
+   ========================================================= */
+const itemModal = document.getElementById("itemModal");
+const itemModalBodyEl = document.getElementById("itemModalBody");
+let itemModalApplyHandler = null; // () => string de error, o null/undefined si se aplicó bien
+let currentModalDraft = null; // el objeto (material/tipo/ficha/persona/sucursal) que se edita ahora mismo
+
+function openItemModal(title, bodyHtml, onApply) {
+  document.getElementById("itemModalTitle").textContent = title;
+  itemModalBodyEl.innerHTML = bodyHtml;
+  hideStatus("itemModalStatus");
+  itemModalApplyHandler = onApply;
+  itemModal.classList.add("active");
+  itemModal.setAttribute("aria-hidden", "false");
+  itemModalBodyEl.querySelector("input, select, textarea")?.focus();
+}
+function closeItemModal() {
+  itemModal.classList.remove("active");
+  itemModal.setAttribute("aria-hidden", "true");
+  itemModalApplyHandler = null;
+  currentModalDraft = null;
+  itemModalBodyEl.innerHTML = "";
+  delete itemModalBodyEl.dataset.itemType;
+}
+document.getElementById("itemModalClose")?.addEventListener("click", closeItemModal);
+document.getElementById("itemModalOverlay")?.addEventListener("click", closeItemModal);
+document.getElementById("itemModalCancelBtn")?.addEventListener("click", closeItemModal);
+document.getElementById("itemModalSaveBtn")?.addEventListener("click", () => {
+  if (!itemModalApplyHandler) { closeItemModal(); return; }
+  const error = itemModalApplyHandler();
+  if (error) { showStatus("itemModalStatus", "error", error); return; }
+  closeItemModal();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && itemModal?.classList.contains("active")) closeItemModal();
+});
+
+/* =========================================================
    PRECIOS
    ========================================================= */
 let workingPrices = null;
@@ -506,129 +549,120 @@ function materialOptionsHtml(selectedId) {
   return workingPrices.materials.map((m) => `<option value="${esc(m.id)}" ${m.id === selectedId ? "selected" : ""}>${esc(m.name || m.id)}</option>`).join("");
 }
 
-function renderPricesForm() {
-  const materialsWrap = document.getElementById("materialsForm");
-  const typesWrap = document.getElementById("typesForm");
-  const otmWrap = document.getElementById("otherMaterialsForm");
-
-  materialsWrap.innerHTML = workingPrices.materials.map((m, i) => `
-    <div class="material-edit-card" data-material-index="${i}">
-      <div class="price-edit-row">
-        <div class="field"><label>Nombre</label><input type="text" class="mat-name" value="${esc(m.name)}" /></div>
-        <div class="field"><label>Mín. $/kg</label><input type="number" min="0" step="1" class="mat-min" value="${m.min}" /></div>
-        <div class="field"><label>Máx. $/kg</label><input type="number" min="0" step="1" class="mat-max" value="${m.max}" /></div>
-        <div class="field"><label>Nota que se muestra en el sitio</label><input type="text" class="mat-note" value="${esc(m.note || "")}" /></div>
-      </div>
-      <div class="otm-row" style="margin-top:12px">
-        <div class="field"><label>Categoría (para filtrar en el selector)</label>
-          <select class="mat-group">
-            <option value="celular" ${m.group === "celular" ? "selected" : ""}>Celular</option>
-            <option value="otros" ${m.group !== "celular" ? "selected" : ""}>Otros tipos</option>
-          </select>
-        </div>
-        <div class="field"><label>Ícono</label>${iconSelectHtml(m.icon, "mat-icon")}</div>
-      </div>
-      <div class="branch-toggles">
-        <label class="check-inline"><input type="checkbox" class="mat-show-selector" ${m.showInSelector !== false ? "checked" : ""} /> Aparece en el selector de materiales</label>
-        <label class="check-inline"><input type="checkbox" class="mat-direct-contact" ${m.directContact ? "checked" : ""} /> Sin ficha propia: al elegirlo, manda WhatsApp directo</label>
-        <label class="check-inline"><input type="checkbox" class="mat-quick" ${m.quick ? "checked" : ""} /> Destacar en "Precios rápidos" (portada)</label>
-      </div>
-      <div class="field mat-quickcopy-field" style="margin-top:12px" ${m.quick ? "" : "hidden"}>
-        <label>Texto corto para la tarjeta destacada</label>
-        <input type="text" class="mat-quickcopy" value="${esc(m.quickCopy || "")}" />
-      </div>
-      <button type="button" class="btn btn-danger btn-sm mat-remove-btn" style="margin-top:14px"><i class="bi bi-trash"></i> Quitar material</button>
-    </div>
-  `).join("");
-
-  typesWrap.innerHTML = workingPrices.celularTypes.map((t, i) => `
-    <div class="type-card" data-type-index="${i}">
-      <div class="price-edit-row cols-3">
-        <div class="field"><label>Nombre del tipo</label><input type="text" class="type-label" value="${esc(t.label)}" /></div>
-        <div class="field"><label>Mín. $/kg</label><input type="number" min="0" step="1" class="type-min" value="${t.min}" /></div>
-        <div class="field"><label>Máx. $/kg</label><input type="number" min="0" step="1" class="type-max" value="${t.max}" /></div>
-      </div>
-      <div class="field" style="margin-top:12px"><label>Material al que pertenece</label>
-        <select class="type-priceid">${materialOptionsHtml(t.priceId)}</select>
-      </div>
-      ${specsEditorHtml(t.specs)}
-      <button type="button" class="btn btn-danger btn-sm type-remove-btn" style="margin-top:14px"><i class="bi bi-trash"></i> Quitar tipo</button>
-    </div>
-  `).join("");
-
-  otmWrap.innerHTML = workingPrices.otherMaterials.map((o, i) => {
-    const price = getWorkingMaterial(o.priceId);
-    const priceLabel = price ? `$${price.min.toLocaleString("es-MX")} – $${price.max.toLocaleString("es-MX")} /kg (${esc(price.name)})` : "—";
-    return `
-    <div class="otm-card" data-otm-index="${i}">
-      <div class="otm-row">
-        <div class="field"><label>Etiqueta corta</label><input type="text" class="otm-eyebrow" value="${esc(o.eyebrow)}" /></div>
-        <div class="field"><label>Título</label><input type="text" class="otm-title" value="${esc(o.title)}" /></div>
-      </div>
-      <div class="field" style="margin-top:12px"><label>Material al que pertenece</label>
-        <select class="otm-priceid">${materialOptionsHtml(o.priceId)}</select>
-      </div>
-      <p class="price-hint">Precio actual: <strong>${priceLabel}</strong> — se edita arriba, en "Materiales".</p>
-      ${specsEditorHtml(o.specs)}
-      <button type="button" class="btn btn-danger btn-sm otm-remove-btn" style="margin-top:14px"><i class="bi bi-trash"></i> Quitar ficha</button>
-    </div>`;
-  }).join("");
+function showStatus(elId, kind, text) {
+  const el = document.getElementById(elId);
+  el.className = `status-msg is-visible is-${kind}`;
+  el.innerHTML = kind === "info" ? `<span class="spinner"></span>${text}` : text;
 }
-
+function hideStatus(elId) {
+  document.getElementById(elId).classList.remove("is-visible");
+}
+function formatPriceRangeAdmin(min, max) {
+  const fmt = (n) => `$${Number(n).toLocaleString("es-MX")}`;
+  return `${fmt(min)} – ${fmt(max)} /kg`;
+}
 function getWorkingMaterial(id) {
   return workingPrices.materials.find((m) => m.id === id) || null;
 }
 
-// Agregar o quitar una fila reconstruye TODO el formulario a partir de
-// workingPrices; sin este paso, cualquier cosa que ya se hubiera escrito en
-// otras filas (que solo vive en el DOM hasta guardar) se perdería al volver
-// a dibujar. Por eso cada agregar/quitar primero sincroniza el DOM con
-// workingPrices y hasta entonces modifica la lista y vuelve a renderizar.
+/* ---------- Materiales ---------- */
+function materialRowHtml(m, i) {
+  const sub = [formatPriceRangeAdmin(m.min, m.max), m.directContact ? "manda WhatsApp directo" : null].filter(Boolean).join(" · ");
+  return `
+    <div class="item-row" data-material-index="${i}">
+      <div class="item-row-main">
+        <span class="item-row-icon"><i class="bi ${esc(m.icon || "bi-tools")}"></i></span>
+        <div class="item-row-text">
+          <p class="item-row-title">${esc(m.name) || "(Sin nombre)"}</p>
+          <p class="item-row-sub">${esc(sub)}</p>
+        </div>
+      </div>
+      <div class="item-row-actions">
+        <button type="button" class="btn btn-ghost btn-sm mat-edit-btn"><i class="bi bi-pencil"></i> Editar</button>
+        <button type="button" class="btn btn-danger btn-sm mat-remove-btn" aria-label="Quitar material"><i class="bi bi-trash"></i></button>
+      </div>
+    </div>`;
+}
+function materialFormHtml(m) {
+  return `
+    <div class="price-edit-row">
+      <div class="field"><label>Nombre</label><input type="text" class="mat-name" value="${esc(m.name)}" /></div>
+      <div class="field"><label>Mín. $/kg</label><input type="number" min="0" step="1" class="mat-min" value="${m.min}" /></div>
+      <div class="field"><label>Máx. $/kg</label><input type="number" min="0" step="1" class="mat-max" value="${m.max}" /></div>
+      <div class="field"><label>Nota que se muestra en el sitio</label><input type="text" class="mat-note" value="${esc(m.note || "")}" /></div>
+    </div>
+    <div class="otm-row" style="margin-top:12px">
+      <div class="field"><label>Categoría (para filtrar en el selector)</label>
+        <select class="mat-group">
+          <option value="celular" ${m.group === "celular" ? "selected" : ""}>Celular</option>
+          <option value="otros" ${m.group !== "celular" ? "selected" : ""}>Otros tipos</option>
+        </select>
+      </div>
+      <div class="field"><label>Ícono</label>${iconSelectHtml(m.icon, "mat-icon")}</div>
+    </div>
+    <div class="branch-toggles">
+      <label class="check-inline"><input type="checkbox" class="mat-show-selector" ${m.showInSelector !== false ? "checked" : ""} /> Aparece en el selector de materiales</label>
+      <label class="check-inline"><input type="checkbox" class="mat-direct-contact" ${m.directContact ? "checked" : ""} /> Sin ficha propia: al elegirlo, manda WhatsApp directo</label>
+      <label class="check-inline"><input type="checkbox" class="mat-quick" ${m.quick ? "checked" : ""} /> Destacar en "Precios rápidos" (portada)</label>
+    </div>
+    <div class="field mat-quickcopy-field" style="margin-top:12px" ${m.quick ? "" : "hidden"}>
+      <label>Texto corto para la tarjeta destacada</label>
+      <input type="text" class="mat-quickcopy" value="${esc(m.quickCopy || "")}" />
+    </div>`;
+}
+function applyMaterialForm(m) {
+  const name = itemModalBodyEl.querySelector(".mat-name").value.trim();
+  if (!name) return "Escribe un nombre para el material.";
+  const min = Number(itemModalBodyEl.querySelector(".mat-min").value);
+  const max = Number(itemModalBodyEl.querySelector(".mat-max").value);
+  if (!Number.isFinite(min) || !Number.isFinite(max) || min < 0 || max < 0 || min > max) return "El precio mínimo no puede ser mayor al máximo.";
+  m.name = name;
+  m.min = min;
+  m.max = max;
+  m.note = itemModalBodyEl.querySelector(".mat-note").value.trim();
+  m.group = itemModalBodyEl.querySelector(".mat-group").value;
+  m.icon = itemModalBodyEl.querySelector(".mat-icon").value;
+  m.showInSelector = itemModalBodyEl.querySelector(".mat-show-selector").checked;
+  m.directContact = itemModalBodyEl.querySelector(".mat-direct-contact").checked;
+  m.quick = itemModalBodyEl.querySelector(".mat-quick").checked;
+  m.quickCopy = itemModalBodyEl.querySelector(".mat-quickcopy").value.trim();
+}
+function renderMaterialsList() {
+  const wrap = document.getElementById("materialsForm");
+  wrap.innerHTML = workingPrices.materials.length
+    ? `<div class="item-list">${workingPrices.materials.map((m, i) => materialRowHtml(m, i)).join("")}</div>`
+    : `<p class="item-row-empty">Todavía no hay materiales.</p>`;
+}
+function openMaterialEditor(i) {
+  const m = workingPrices.materials[i];
+  openItemModal("Editar material", materialFormHtml(m), () => {
+    const err = applyMaterialForm(m);
+    if (err) return err;
+    renderMaterialsList();
+  });
+}
 document.getElementById("addMaterialBtn")?.addEventListener("click", () => {
-  readPricesFromForm();
-  workingPrices.materials.push({
+  const draft = {
     id: `material-${Date.now()}`, name: "", icon: "bi-tools", modalIcon: "🔧", group: "otros",
     min: 0, max: 0, unit: "/kg", note: "", quick: false, quickCopy: "",
     showInSelector: true, directContact: true,
+  };
+  openItemModal("Agregar material", materialFormHtml(draft), () => {
+    const err = applyMaterialForm(draft);
+    if (err) return err;
+    workingPrices.materials.push(draft);
+    renderMaterialsList();
   });
-  renderPricesForm();
 });
-document.getElementById("addTypeBtn")?.addEventListener("click", () => {
-  readPricesFromForm();
-  workingPrices.celularTypes.push({
-    id: `tipo-${Date.now()}`, priceId: workingPrices.materials[0]?.id || "", label: "Nuevo tipo", shortLabel: "Nuevo tipo",
-    min: 0, max: 0, specs: [], galleryCategory: "",
-  });
-  renderPricesForm();
-});
-document.getElementById("addOtherMaterialBtn")?.addEventListener("click", () => {
-  readPricesFromForm();
-  workingPrices.otherMaterials.push({
-    id: `ficha-${Date.now()}`, priceId: workingPrices.materials[0]?.id || "", eyebrow: "", title: "", specs: [], galleryCategory: "",
-  });
-  renderPricesForm();
-});
-
-// Delegados UNA sola vez sobre los contenedores (que no se vuelven a crear,
-// solo se reemplaza su contenido en cada render): así "Agregar
-// característica" y "Quitar" siguen funcionando aunque se agreguen o
-// quiten materiales/tipos/fichas muchas veces seguidas, sin duplicarse.
-const materialsFormEl = document.getElementById("materialsForm");
-const typesFormEl = document.getElementById("typesForm");
-const otherMaterialsFormEl = document.getElementById("otherMaterialsForm");
-if (typesFormEl) wireSpecsEditors(typesFormEl);
-if (otherMaterialsFormEl) wireSpecsEditors(otherMaterialsFormEl);
-materialsFormEl?.addEventListener("change", (e) => {
-  const quickCheckbox = e.target.closest(".mat-quick");
-  if (!quickCheckbox) return;
-  const field = quickCheckbox.closest(".material-edit-card").querySelector(".mat-quickcopy-field");
-  if (field) field.hidden = !quickCheckbox.checked;
-});
-materialsFormEl?.addEventListener("click", (e) => {
+document.getElementById("materialsForm")?.addEventListener("click", (e) => {
+  const editBtn = e.target.closest(".mat-edit-btn");
+  if (editBtn) {
+    openMaterialEditor(Number(editBtn.closest(".item-row").dataset.materialIndex));
+    return;
+  }
   const removeBtn = e.target.closest(".mat-remove-btn");
   if (!removeBtn) return;
-  readPricesFromForm();
-  const i = Number(removeBtn.closest(".material-edit-card").dataset.materialIndex);
+  const i = Number(removeBtn.closest(".item-row").dataset.materialIndex);
   const removed = workingPrices.materials[i];
   workingPrices.materials.splice(i, 1);
   // Un tipo o ficha que mostraba el precio de este material se queda sin a
@@ -644,96 +678,180 @@ materialsFormEl?.addEventListener("click", (e) => {
     const fallbackName = workingPrices.materials[0]?.name || "(ninguno, agrega uno)";
     showStatus("pricesStatus", "error", `Quitaste "${esc(removed.name || removed.id)}", pero ${orphaned.length} tipo(s) o ficha(s) mostraban su precio. Se reasignaron a "${esc(fallbackName)}" — revísalos antes de guardar.`);
   }
-  renderPricesForm();
+  renderMaterialsList();
 });
-typesFormEl?.addEventListener("click", (e) => {
+
+/* ---------- Tipos de tarjeta de celular ---------- */
+function typeRowHtml(t, i) {
+  const material = getWorkingMaterial(t.priceId);
+  const sub = `${formatPriceRangeAdmin(t.min, t.max)}${material ? " · " + esc(material.name) : ""}`;
+  return `
+    <div class="item-row" data-type-index="${i}">
+      <div class="item-row-main">
+        <span class="item-row-icon"><i class="bi bi-tag"></i></span>
+        <div class="item-row-text">
+          <p class="item-row-title">${esc(t.label) || "(Sin nombre)"}</p>
+          <p class="item-row-sub">${sub}</p>
+        </div>
+      </div>
+      <div class="item-row-actions">
+        <button type="button" class="btn btn-ghost btn-sm type-edit-btn"><i class="bi bi-pencil"></i> Editar</button>
+        <button type="button" class="btn btn-danger btn-sm type-remove-btn" aria-label="Quitar tipo"><i class="bi bi-trash"></i></button>
+      </div>
+    </div>`;
+}
+function typeFormHtml(t) {
+  return `
+    <div class="price-edit-row cols-3">
+      <div class="field"><label>Nombre del tipo</label><input type="text" class="type-label" value="${esc(t.label)}" /></div>
+      <div class="field"><label>Mín. $/kg</label><input type="number" min="0" step="1" class="type-min" value="${t.min}" /></div>
+      <div class="field"><label>Máx. $/kg</label><input type="number" min="0" step="1" class="type-max" value="${t.max}" /></div>
+    </div>
+    <div class="field" style="margin-top:12px"><label>Material al que pertenece</label>
+      <select class="type-priceid">${materialOptionsHtml(t.priceId)}</select>
+    </div>
+    ${specsEditorHtml(t.specs)}`;
+}
+function applyTypeForm(t) {
+  const label = itemModalBodyEl.querySelector(".type-label").value.trim();
+  if (!label) return "Escribe un nombre para el tipo.";
+  const min = Number(itemModalBodyEl.querySelector(".type-min").value);
+  const max = Number(itemModalBodyEl.querySelector(".type-max").value);
+  if (!Number.isFinite(min) || !Number.isFinite(max) || min < 0 || max < 0 || min > max) return "El precio mínimo no puede ser mayor al máximo.";
+  t.label = label;
+  t.shortLabel = label;
+  t.min = min;
+  t.max = max;
+  t.priceId = itemModalBodyEl.querySelector(".type-priceid").value;
+  t.specs = readSpecs(itemModalBodyEl);
+}
+function renderTypesList() {
+  const wrap = document.getElementById("typesForm");
+  wrap.innerHTML = workingPrices.celularTypes.length
+    ? `<div class="item-list">${workingPrices.celularTypes.map((t, i) => typeRowHtml(t, i)).join("")}</div>`
+    : `<p class="item-row-empty">Todavía no hay tipos.</p>`;
+}
+document.getElementById("addTypeBtn")?.addEventListener("click", () => {
+  const draft = { id: `tipo-${Date.now()}`, priceId: workingPrices.materials[0]?.id || "", label: "", shortLabel: "", min: 0, max: 0, specs: [], galleryCategory: "" };
+  openItemModal("Agregar tipo de tarjeta", typeFormHtml(draft), () => {
+    const err = applyTypeForm(draft);
+    if (err) return err;
+    workingPrices.celularTypes.push(draft);
+    renderTypesList();
+  });
+});
+document.getElementById("typesForm")?.addEventListener("click", (e) => {
+  const editBtn = e.target.closest(".type-edit-btn");
+  if (editBtn) {
+    const t = workingPrices.celularTypes[Number(editBtn.closest(".item-row").dataset.typeIndex)];
+    openItemModal("Editar tipo de tarjeta", typeFormHtml(t), () => {
+      const err = applyTypeForm(t);
+      if (err) return err;
+      renderTypesList();
+    });
+    return;
+  }
   const removeBtn = e.target.closest(".type-remove-btn");
   if (!removeBtn) return;
-  readPricesFromForm();
-  const i = Number(removeBtn.closest(".type-card").dataset.typeIndex);
-  workingPrices.celularTypes.splice(i, 1);
-  renderPricesForm();
+  workingPrices.celularTypes.splice(Number(removeBtn.closest(".item-row").dataset.typeIndex), 1);
+  renderTypesList();
 });
-otherMaterialsFormEl?.addEventListener("click", (e) => {
+
+/* ---------- Ficha de otros materiales ---------- */
+function otmRowHtml(o, i) {
+  return `
+    <div class="item-row" data-otm-index="${i}">
+      <div class="item-row-main">
+        <span class="item-row-icon"><i class="bi bi-card-text"></i></span>
+        <div class="item-row-text">
+          <p class="item-row-title">${esc(o.title) || "(Sin título)"}</p>
+          <p class="item-row-sub">${esc(o.eyebrow || "")}</p>
+        </div>
+      </div>
+      <div class="item-row-actions">
+        <button type="button" class="btn btn-ghost btn-sm otm-edit-btn"><i class="bi bi-pencil"></i> Editar</button>
+        <button type="button" class="btn btn-danger btn-sm otm-remove-btn" aria-label="Quitar ficha"><i class="bi bi-trash"></i></button>
+      </div>
+    </div>`;
+}
+function otmFormHtml(o) {
+  const price = getWorkingMaterial(o.priceId);
+  const priceLabel = price ? `$${price.min.toLocaleString("es-MX")} – $${price.max.toLocaleString("es-MX")} /kg (${esc(price.name)})` : "—";
+  return `
+    <div class="otm-row">
+      <div class="field"><label>Etiqueta corta</label><input type="text" class="otm-eyebrow" value="${esc(o.eyebrow)}" /></div>
+      <div class="field"><label>Título</label><input type="text" class="otm-title" value="${esc(o.title)}" /></div>
+    </div>
+    <div class="field" style="margin-top:12px"><label>Material al que pertenece</label>
+      <select class="otm-priceid">${materialOptionsHtml(o.priceId)}</select>
+    </div>
+    <p class="price-hint">Precio actual: <strong>${priceLabel}</strong> — se edita en "Materiales".</p>
+    ${specsEditorHtml(o.specs)}`;
+}
+function applyOtmForm(o) {
+  const title = itemModalBodyEl.querySelector(".otm-title").value.trim();
+  if (!title) return "Escribe un título para la ficha.";
+  o.eyebrow = itemModalBodyEl.querySelector(".otm-eyebrow").value.trim();
+  o.title = title;
+  o.priceId = itemModalBodyEl.querySelector(".otm-priceid").value;
+  o.specs = readSpecs(itemModalBodyEl);
+}
+function renderOtherMaterialsList() {
+  const wrap = document.getElementById("otherMaterialsForm");
+  wrap.innerHTML = workingPrices.otherMaterials.length
+    ? `<div class="item-list">${workingPrices.otherMaterials.map((o, i) => otmRowHtml(o, i)).join("")}</div>`
+    : `<p class="item-row-empty">Todavía no hay fichas.</p>`;
+}
+document.getElementById("addOtherMaterialBtn")?.addEventListener("click", () => {
+  const draft = { id: `ficha-${Date.now()}`, priceId: workingPrices.materials[0]?.id || "", eyebrow: "", title: "", specs: [], galleryCategory: "" };
+  openItemModal("Agregar ficha de material", otmFormHtml(draft), () => {
+    const err = applyOtmForm(draft);
+    if (err) return err;
+    workingPrices.otherMaterials.push(draft);
+    renderOtherMaterialsList();
+  });
+});
+document.getElementById("otherMaterialsForm")?.addEventListener("click", (e) => {
+  const editBtn = e.target.closest(".otm-edit-btn");
+  if (editBtn) {
+    const o = workingPrices.otherMaterials[Number(editBtn.closest(".item-row").dataset.otmIndex)];
+    openItemModal("Editar ficha de material", otmFormHtml(o), () => {
+      const err = applyOtmForm(o);
+      if (err) return err;
+      renderOtherMaterialsList();
+    });
+    return;
+  }
   const removeBtn = e.target.closest(".otm-remove-btn");
   if (!removeBtn) return;
-  readPricesFromForm();
-  const i = Number(removeBtn.closest(".otm-card").dataset.otmIndex);
-  workingPrices.otherMaterials.splice(i, 1);
-  renderPricesForm();
+  workingPrices.otherMaterials.splice(Number(removeBtn.closest(".item-row").dataset.otmIndex), 1);
+  renderOtherMaterialsList();
 });
 
-function readPricesFromForm() {
-  document.querySelectorAll("#materialsForm .material-edit-card").forEach((card) => {
-    const i = Number(card.dataset.materialIndex);
-    const m = workingPrices.materials[i];
-    const name = card.querySelector(".mat-name").value.trim();
-    if (name) m.name = name;
-    const min = Number(card.querySelector(".mat-min").value);
-    const max = Number(card.querySelector(".mat-max").value);
-    m.min = Number.isFinite(min) ? min : m.min;
-    m.max = Number.isFinite(max) ? max : m.max;
-    m.note = card.querySelector(".mat-note").value.trim();
-    m.group = card.querySelector(".mat-group").value;
-    m.icon = card.querySelector(".mat-icon").value;
-    m.showInSelector = card.querySelector(".mat-show-selector").checked;
-    m.directContact = card.querySelector(".mat-direct-contact").checked;
-    m.quick = card.querySelector(".mat-quick").checked;
-    m.quickCopy = card.querySelector(".mat-quickcopy").value.trim();
-  });
-  document.querySelectorAll("#typesForm .type-card").forEach((card) => {
-    const i = Number(card.dataset.typeIndex);
-    const min = Number(card.querySelector(".type-min").value);
-    const max = Number(card.querySelector(".type-max").value);
-    const label = card.querySelector(".type-label").value.trim();
-    if (label) {
-      workingPrices.celularTypes[i].label = label;
-      workingPrices.celularTypes[i].shortLabel = label;
-    }
-    workingPrices.celularTypes[i].min = Number.isFinite(min) ? min : workingPrices.celularTypes[i].min;
-    workingPrices.celularTypes[i].max = Number.isFinite(max) ? max : workingPrices.celularTypes[i].max;
-    workingPrices.celularTypes[i].priceId = card.querySelector(".type-priceid").value;
-    workingPrices.celularTypes[i].specs = readSpecs(card);
-  });
-  document.querySelectorAll("#otherMaterialsForm .otm-card").forEach((card) => {
-    const i = Number(card.dataset.otmIndex);
-    const eyebrow = card.querySelector(".otm-eyebrow").value.trim();
-    const title = card.querySelector(".otm-title").value.trim();
-    if (eyebrow) workingPrices.otherMaterials[i].eyebrow = eyebrow;
-    if (title) workingPrices.otherMaterials[i].title = title;
-    workingPrices.otherMaterials[i].priceId = card.querySelector(".otm-priceid").value;
-    workingPrices.otherMaterials[i].specs = readSpecs(card);
-  });
+function renderPricesForm() {
+  renderMaterialsList();
+  renderTypesList();
+  renderOtherMaterialsList();
 }
 
-function validatePrices() {
-  const problems = [];
-  workingPrices.materials.forEach((m) => {
-    if (!m.name) problems.push('Falta el nombre de un material.');
-    if (m.min < 0 || m.max < 0 || m.min > m.max) problems.push(`"${esc(m.name || "Material sin nombre")}": el mínimo no puede ser mayor al máximo.`);
-  });
-  workingPrices.celularTypes.forEach((t) => { if (t.min < 0 || t.max < 0 || t.min > t.max) problems.push(`"${esc(t.label)}": el mínimo no puede ser mayor al máximo.`); });
-  return problems;
-}
-
-function showStatus(elId, kind, text) {
-  const el = document.getElementById(elId);
-  el.className = `status-msg is-visible is-${kind}`;
-  el.innerHTML = kind === "info" ? `<span class="spinner"></span>${text}` : text;
-}
-function hideStatus(elId) {
-  document.getElementById(elId).classList.remove("is-visible");
-}
+// Delegados sobre la ventana de edición (no sobre las listas: ahora los
+// campos solo existen ahí mientras se edita un elemento a la vez), conectados
+// UNA sola vez porque el contenedor de la ventana nunca se destruye, solo se
+// reemplaza su contenido cada vez que se abre.
+wireSpecsEditors(itemModalBodyEl);
+itemModalBodyEl.addEventListener("change", (e) => {
+  const quickCheckbox = e.target.closest(".mat-quick");
+  if (quickCheckbox) {
+    const field = itemModalBodyEl.querySelector(".mat-quickcopy-field");
+    if (field) field.hidden = !quickCheckbox.checked;
+  }
+});
 
 document.getElementById("resetPricesBtn")?.addEventListener("click", loadPricesIntoForm);
 
 document.getElementById("savePricesBtn")?.addEventListener("click", async () => {
   if (!guardDataLoaded("pricesStatus")) return;
   if (!requireGitHub("pricesStatus")) return;
-  readPricesFromForm();
-  const problems = validatePrices();
-  if (problems.length) { showStatus("pricesStatus", "error", problems.join(" ")); return; }
-
   const btn = document.getElementById("savePricesBtn");
   btn.disabled = true;
   showStatus("pricesStatus", "info", "Guardando cambios en GitHub…");
@@ -955,41 +1073,117 @@ function slugify(text) {
 }
 
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024; // 25 MB: generoso para una foto de celular, evita colgar el navegador con un archivo enorme
-document.getElementById("addPhotoInput")?.addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  e.target.value = "";
-  if (!file) return;
-  if (!activeCategoryId) {
-    showStatus("galleryStatus", "error", "Agrega una categoría antes de subir una foto.");
-    return;
-  }
-  if (!file.type.startsWith("image/")) {
-    showStatus("galleryStatus", "error", `"${esc(file.name)}" no es una imagen. Sube un archivo JPG, PNG o similar.`);
-    return;
-  }
-  if (file.size > MAX_UPLOAD_BYTES) {
-    showStatus("galleryStatus", "error", `"${esc(file.name)}" es demasiado grande (máximo 25 MB). Prueba con otra foto o reduce su tamaño antes de subirla.`);
-    return;
-  }
+
+// Procesa UN archivo ya validado (ver processPhotoFiles, que es quien revisa
+// tipo y tamaño antes de llamar aquí): lo reduce de tamaño y lo deja listo
+// en pendingUploads. Se usa tanto para arrastrar-y-soltar como para el
+// selector de archivos de siempre, así el mismo código sirve para los dos.
+async function processPhotoFile(file) {
   const cat = currentCategory();
-  try {
-    const dataUrl = await resizeImageFile(file);
-    const base64 = dataUrl.split(",")[1];
-    const baseName = slugify(file.name.replace(/\.[^.]+$/, "")) || "foto";
-    const fileName = `${baseName}-${Date.now()}.jpg`;
-    pendingUploads.push({
-      id: `p${Date.now()}${Math.random().toString(16).slice(2, 6)}`,
-      categoryId: activeCategoryId,
-      fileName,
-      path: `${cat.folder}/${fileName}`,
-      base64,
-      previewUrl: dataUrl,
-      alt: "",
-    });
-    renderGalleryThumbs();
-  } catch (err) {
-    showStatus("galleryStatus", "error", err.message || "No se pudo procesar la imagen.");
+  const dataUrl = await resizeImageFile(file);
+  const base64 = dataUrl.split(",")[1];
+  const baseName = slugify(file.name.replace(/\.[^.]+$/, "")) || "foto";
+  const fileName = `${baseName}-${Date.now()}-${Math.random().toString(16).slice(2, 6)}.jpg`;
+  pendingUploads.push({
+    id: `p${Date.now()}${Math.random().toString(16).slice(2, 6)}`,
+    categoryId: activeCategoryId,
+    fileName,
+    path: `${cat.folder}/${fileName}`,
+    base64,
+    previewUrl: dataUrl,
+    alt: "",
+  });
+}
+
+// Punto único de entrada para cualquier lote de archivos, vengan de
+// arrastrar-y-soltar o del selector: aquí (y solo aquí) se decide qué se
+// acepta. Por seguridad, SOLO se aceptan archivos de imagen (se revisa el
+// tipo real del archivo, no la extensión del nombre) y con un tamaño
+// razonable; todo lo demás se rechaza con un mensaje claro, sin tronar.
+async function processPhotoFiles(fileList) {
+  const files = Array.from(fileList || []);
+  if (!files.length) return;
+  if (!activeCategoryId) {
+    showStatus("galleryStatus", "error", "Agrega una categoría antes de subir fotos.");
+    return;
   }
+  const errors = [];
+  let okCount = 0;
+  for (const file of files) {
+    if (!file.type || !file.type.startsWith("image/")) {
+      errors.push(`"${esc(file.name)}" no es una imagen (solo se aceptan JPG, PNG y similares).`);
+      continue;
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      errors.push(`"${esc(file.name)}" pesa más de 25 MB.`);
+      continue;
+    }
+    try {
+      await processPhotoFile(file);
+      okCount++;
+    } catch (err) {
+      errors.push(`"${esc(file.name)}": ${err.message || "no se pudo procesar."}`);
+    }
+  }
+  renderGalleryThumbs();
+  if (okCount && errors.length) {
+    showStatus("galleryStatus", "error", `${okCount} foto(s) lista(s) para guardar. ${errors.join(" ")}`);
+  } else if (errors.length) {
+    showStatus("galleryStatus", "error", errors.join(" "));
+  } else if (okCount) {
+    showStatus("galleryStatus", "success", `${okCount} foto(s) lista(s) para guardar. No olvides presionar "Guardar cambios".`);
+  }
+}
+
+document.getElementById("addPhotoInput")?.addEventListener("change", async (e) => {
+  const files = e.target.files;
+  e.target.value = "";
+  await processPhotoFiles(files);
+});
+
+// Arrastrar y soltar sobre la zona de carga. "dragover" necesita
+// preventDefault() para que el navegador permita que "drop" se dispare
+// (si no, solo intentaría abrir/descargar el archivo). Se usa un contador
+// de entradas/salidas (en vez de comparar el elemento exacto) porque el
+// cursor cruza varios hijos (ícono, texto, botón) dentro de la misma zona,
+// y cada cruce dispara su propio dragenter/dragleave.
+const addPhotoBox = document.getElementById("addPhotoBox");
+if (addPhotoBox) {
+  let dragDepth = 0;
+  addPhotoBox.addEventListener("dragenter", (e) => {
+    e.preventDefault();
+    dragDepth++;
+    addPhotoBox.classList.add("is-dragover");
+  });
+  addPhotoBox.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
+  });
+  addPhotoBox.addEventListener("dragleave", () => {
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (dragDepth === 0) addPhotoBox.classList.remove("is-dragover");
+  });
+  addPhotoBox.addEventListener("dragend", () => {
+    dragDepth = 0;
+    addPhotoBox.classList.remove("is-dragover");
+  });
+  addPhotoBox.addEventListener("drop", async (e) => {
+    e.preventDefault();
+    dragDepth = 0;
+    addPhotoBox.classList.remove("is-dragover");
+    const files = e.dataTransfer?.files;
+    if (files && files.length) await processPhotoFiles(files);
+  });
+}
+// Red de seguridad: si algo se suelta fuera de la zona de carga, el
+// navegador por default intenta "abrir" el archivo (navegar a él) y se
+// perdería toda la página con los cambios sin guardar. Se evita en toda la
+// ventana, sin afectar el drop normal dentro de la zona de carga.
+["dragover", "drop"].forEach((evtName) => {
+  window.addEventListener(evtName, (e) => {
+    if (e.target?.closest?.("#addPhotoBox")) return;
+    e.preventDefault();
+  });
 });
 
 document.getElementById("resetGalleryBtn")?.addEventListener("click", loadGalleryIntoUI);
@@ -1046,7 +1240,7 @@ async function loadTeamIntoForm() {
   }
   workingTeam = JSON.parse(JSON.stringify(data));
   workingTeam.members.forEach((m) => { m._pendingPhoto = null; m._removePhoto = false; m.social = m.social || []; });
-  renderTeamForm();
+  renderTeamList();
 }
 
 function teamPhotoPreviewHtml(m) {
@@ -1054,140 +1248,155 @@ function teamPhotoPreviewHtml(m) {
   if (m.photo && !m._removePhoto) return `<img src="${esc(m.photo)}" alt="" />`;
   return `<span class="team-photo-fallback-admin">${esc(initials(m.name) || "?")}</span>`;
 }
-
-function renderTeamForm() {
-  const wrap = document.getElementById("teamForm");
-  wrap.innerHTML = workingTeam.members.map((m, i) => `
-    <div class="team-edit-card" data-team-index="${i}">
-      <div class="team-edit-top">
-        <div class="team-photo-edit">
-          <div class="team-photo-preview">${teamPhotoPreviewHtml(m)}</div>
-          <label class="btn btn-ghost btn-sm team-photo-pick">
-            <i class="bi bi-camera"></i> Cambiar foto
-            <input type="file" accept="image/*" class="team-photo-input" hidden />
-          </label>
-          ${(m.photo || m._pendingPhoto) && !m._removePhoto ? `<button type="button" class="btn btn-ghost btn-sm team-photo-remove">Quitar foto</button>` : ""}
-        </div>
-        <div class="team-edit-fields">
-          <div class="field"><label>Nombre</label><input type="text" class="team-name-input" value="${esc(m.name)}" placeholder="Nombre completo" /></div>
-          <div class="field"><label>Puesto</label><input type="text" class="team-role-input" value="${esc(m.role || "")}" placeholder="Ej. Director General" /></div>
-          <div class="field"><label>WhatsApp (10 dígitos, opcional)</label><input type="text" class="team-wa-input" value="${esc(stripCountry(m.whatsapp))}" placeholder="2221234567" /></div>
-          <div class="field"><label>Correo (opcional)</label><input type="email" class="team-email-input" value="${esc(m.email || "")}" placeholder="correo@ejemplo.com" /></div>
-        </div>
-      </div>
-      <div class="specs-editor">
-        <label>Redes sociales de esta persona (opcional)</label>
-        <div class="team-social-list">
-          ${(m.social || []).map((s, si) => `
-            <div class="team-social-row" data-social-index="${si}">
-              <select class="team-social-network">${SOCIAL_NETWORKS.map((n) => `<option value="${n.value}" ${s.network === n.value ? "selected" : ""}>${n.label}</option>`).join("")}</select>
-              <input type="url" class="team-social-url" value="${esc(s.url || "")}" placeholder="https://..." />
-              <button type="button" class="team-social-remove" aria-label="Quitar red social"><i class="bi bi-x-lg"></i></button>
-            </div>
-          `).join("")}
-        </div>
-        <button type="button" class="btn btn-ghost btn-sm team-social-add-btn"><i class="bi bi-plus-lg"></i> Agregar red social</button>
-      </div>
-      <button type="button" class="btn btn-danger btn-sm team-remove-btn" style="margin-top:14px"><i class="bi bi-trash"></i> Quitar de "Quiénes somos"</button>
-    </div>
-  `).join("");
+function teamPhotoEditHtml(m) {
+  return `
+    <div class="team-photo-preview">${teamPhotoPreviewHtml(m)}</div>
+    <label class="btn btn-ghost btn-sm team-photo-pick">
+      <i class="bi bi-camera"></i> Cambiar foto
+      <input type="file" accept="image/*" class="team-photo-input" hidden />
+    </label>
+    ${(m.photo || m._pendingPhoto) && !m._removePhoto ? `<button type="button" class="btn btn-ghost btn-sm team-photo-remove">Quitar foto</button>` : ""}`;
 }
-
-// Cada agregar/quitar redibuja todo desde workingTeam, así que primero
-// sincroniza lo que ya esté escrito en el formulario (en cualquier tarjeta,
-// no solo la que se está tocando) para no perder texto sin guardar.
+function teamSocialRowHtml(s) {
+  return `
+    <div class="team-social-row">
+      <select class="team-social-network">${SOCIAL_NETWORKS.map((n) => `<option value="${n.value}" ${s.network === n.value ? "selected" : ""}>${n.label}</option>`).join("")}</select>
+      <input type="url" class="team-social-url" value="${esc(s.url || "")}" placeholder="https://..." />
+      <button type="button" class="team-social-remove" aria-label="Quitar red social"><i class="bi bi-x-lg"></i></button>
+    </div>`;
+}
+function teamFormHtml(m) {
+  return `
+    <div class="team-edit-top">
+      <div class="team-photo-edit">${teamPhotoEditHtml(m)}</div>
+      <div class="team-edit-fields">
+        <div class="field"><label>Nombre</label><input type="text" class="team-name-input" value="${esc(m.name)}" placeholder="Nombre completo" /></div>
+        <div class="field"><label>Puesto</label><input type="text" class="team-role-input" value="${esc(m.role || "")}" placeholder="Ej. Director General" /></div>
+        <div class="field"><label>WhatsApp (10 dígitos, opcional)</label><input type="text" class="team-wa-input" value="${esc(stripCountry(m.whatsapp))}" placeholder="2221234567" /></div>
+        <div class="field"><label>Correo (opcional)</label><input type="email" class="team-email-input" value="${esc(m.email || "")}" placeholder="correo@ejemplo.com" /></div>
+      </div>
+    </div>
+    <div class="specs-editor">
+      <label>Redes sociales de esta persona (opcional)</label>
+      <div class="team-social-list">${(m.social || []).map((s) => teamSocialRowHtml(s)).join("")}</div>
+      <button type="button" class="btn btn-ghost btn-sm team-social-add-btn"><i class="bi bi-plus-lg"></i> Agregar red social</button>
+    </div>`;
+}
+function applyTeamForm(m) {
+  m.name = itemModalBodyEl.querySelector(".team-name-input").value.trim();
+  m.role = itemModalBodyEl.querySelector(".team-role-input").value.trim();
+  const wa = itemModalBodyEl.querySelector(".team-wa-input").value.trim();
+  m.whatsapp = wa ? normalizeWhatsapp(wa) : "";
+  m.email = itemModalBodyEl.querySelector(".team-email-input").value.trim();
+  const social = Array.from(itemModalBodyEl.querySelectorAll(".team-social-row"))
+    .map((row) => ({ network: row.querySelector(".team-social-network").value, url: row.querySelector(".team-social-url").value.trim() }))
+    .filter((s) => s.url);
+  const unsafeLink = social.find((s) => !isSafeHttpUrl(s.url));
+  if (unsafeLink) return `Ese enlace de red social no es válido: "${esc(unsafeLink.url)}". Debe empezar con http:// o https://`;
+  m.social = social;
+}
+function teamRowHtml(m, i) {
+  const subParts = [m.role, m.whatsapp ? formatMexPhone(m.whatsapp) : null].filter(Boolean);
+  const sub = subParts.length ? subParts.join(" · ") : "Sin puesto ni WhatsApp";
+  const iconContent = (m.photo && !m._removePhoto) ? `<img src="${esc(m.photo)}" alt="" />` : esc(initials(m.name) || "?");
+  return `
+    <div class="item-row" data-team-index="${i}">
+      <div class="item-row-main">
+        <span class="item-row-icon">${iconContent}</span>
+        <div class="item-row-text">
+          <p class="item-row-title">${esc(m.name) || "(Sin nombre)"}</p>
+          <p class="item-row-sub">${esc(sub)}</p>
+        </div>
+      </div>
+      <div class="item-row-actions">
+        <button type="button" class="btn btn-ghost btn-sm team-edit-btn"><i class="bi bi-pencil"></i> Editar</button>
+        <button type="button" class="btn btn-danger btn-sm team-remove-btn" aria-label="Quitar persona"><i class="bi bi-trash"></i></button>
+      </div>
+    </div>`;
+}
+function renderTeamList() {
+  const wrap = document.getElementById("teamForm");
+  wrap.innerHTML = workingTeam.members.length
+    ? `<div class="item-list">${workingTeam.members.map((m, i) => teamRowHtml(m, i)).join("")}</div>`
+    : `<p class="item-row-empty">Todavía no hay nadie en "Quiénes somos".</p>`;
+}
+function openTeamEditor(i) {
+  const m = workingTeam.members[i];
+  currentModalDraft = m;
+  itemModalBodyEl.dataset.itemType = "team";
+  openItemModal("Editar persona", teamFormHtml(m), () => {
+    const err = applyTeamForm(m);
+    if (err) return err;
+    renderTeamList();
+  });
+}
 document.getElementById("teamForm")?.addEventListener("click", (e) => {
-  const removeCardBtn = e.target.closest(".team-remove-btn");
-  if (removeCardBtn) {
-    syncTeamFormFields();
-    const i = Number(removeCardBtn.closest(".team-edit-card").dataset.teamIndex);
-    workingTeam.members.splice(i, 1);
-    renderTeamForm();
+  const editBtn = e.target.closest(".team-edit-btn");
+  if (editBtn) {
+    openTeamEditor(Number(editBtn.closest(".item-row").dataset.teamIndex));
     return;
   }
-  const removePhotoBtn = e.target.closest(".team-photo-remove");
-  if (removePhotoBtn) {
-    syncTeamFormFields();
-    const i = Number(removePhotoBtn.closest(".team-edit-card").dataset.teamIndex);
-    workingTeam.members[i]._pendingPhoto = null;
-    workingTeam.members[i]._removePhoto = true;
-    renderTeamForm();
-    return;
-  }
+  const removeBtn = e.target.closest(".team-remove-btn");
+  if (!removeBtn) return;
+  workingTeam.members.splice(Number(removeBtn.closest(".item-row").dataset.teamIndex), 1);
+  renderTeamList();
+});
+document.getElementById("addTeamMemberBtn")?.addEventListener("click", () => {
+  const draft = { id: `persona-${Date.now()}`, role: "", name: "", photo: "", whatsapp: "", email: "", social: [], _pendingPhoto: null, _removePhoto: false };
+  currentModalDraft = draft;
+  itemModalBodyEl.dataset.itemType = "team";
+  openItemModal("Agregar persona", teamFormHtml(draft), () => {
+    const err = applyTeamForm(draft);
+    if (err) return err;
+    workingTeam.members.push(draft);
+    renderTeamList();
+  });
+});
+document.getElementById("resetTeamBtn")?.addEventListener("click", loadTeamIntoForm);
+
+// Delegados sobre la ventana de edición, activos solo mientras se edita una
+// persona (dataset.itemType === "team"): agregar/quitar una red social solo
+// toca esa fila del DOM (igual que wireSpecsEditors), así que el resto de lo
+// escrito en el formulario nunca se pierde. La foto sí necesita acceso al
+// borrador (currentModalDraft) porque su valor final no vive en un <input>
+// de texto, sino en la imagen ya procesada.
+itemModalBodyEl.addEventListener("click", (e) => {
+  if (itemModalBodyEl.dataset.itemType !== "team") return;
   const addSocialBtn = e.target.closest(".team-social-add-btn");
   if (addSocialBtn) {
-    syncTeamFormFields();
-    const i = Number(addSocialBtn.closest(".team-edit-card").dataset.teamIndex);
-    const member = workingTeam.members[i];
-    member.social = member.social || [];
-    member.social.push({ network: "facebook", url: "" });
-    renderTeamForm();
+    itemModalBodyEl.querySelector(".team-social-list").insertAdjacentHTML("beforeend", teamSocialRowHtml({ network: "facebook", url: "" }));
     return;
   }
   const removeSocialBtn = e.target.closest(".team-social-remove");
   if (removeSocialBtn) {
-    syncTeamFormFields();
-    const i = Number(removeSocialBtn.closest(".team-edit-card").dataset.teamIndex);
-    const si = Number(removeSocialBtn.closest(".team-social-row").dataset.socialIndex);
-    workingTeam.members[i].social.splice(si, 1);
-    renderTeamForm();
+    removeSocialBtn.closest(".team-social-row")?.remove();
+    return;
+  }
+  const removePhotoBtn = e.target.closest(".team-photo-remove");
+  if (removePhotoBtn && currentModalDraft) {
+    currentModalDraft._pendingPhoto = null;
+    currentModalDraft._removePhoto = true;
+    itemModalBodyEl.querySelector(".team-photo-edit").innerHTML = teamPhotoEditHtml(currentModalDraft);
   }
 });
-document.getElementById("teamForm")?.addEventListener("change", async (e) => {
+itemModalBodyEl.addEventListener("change", async (e) => {
+  if (itemModalBodyEl.dataset.itemType !== "team") return;
   const fileInput = e.target.closest(".team-photo-input");
-  if (!fileInput || !fileInput.files[0]) return;
-  const i = Number(fileInput.closest(".team-edit-card").dataset.teamIndex);
+  if (!fileInput || !fileInput.files[0] || !currentModalDraft) return;
   try {
     const dataUrl = await resizeImageFile(fileInput.files[0], 800, 0.85);
     const base64 = dataUrl.split(",")[1];
-    const member = workingTeam.members[i];
-    member._pendingPhoto = { base64, previewUrl: dataUrl, fileName: `${slugify(member.id || member.name || "persona")}-${Date.now()}.jpg` };
-    member._removePhoto = false;
-    renderTeamForm();
+    currentModalDraft._pendingPhoto = { base64, previewUrl: dataUrl, fileName: `${slugify(currentModalDraft.id || currentModalDraft.name || "persona")}-${Date.now()}.jpg` };
+    currentModalDraft._removePhoto = false;
+    itemModalBodyEl.querySelector(".team-photo-edit").innerHTML = teamPhotoEditHtml(currentModalDraft);
   } catch (err) {
-    showStatus("teamStatus", "error", err.message || "No se pudo procesar la foto.");
+    showStatus("itemModalStatus", "error", err.message || "No se pudo procesar la foto.");
   }
 });
-
-document.getElementById("addTeamMemberBtn")?.addEventListener("click", () => {
-  syncTeamFormFields();
-  workingTeam.members.push({ id: `persona-${Date.now()}`, role: "", name: "", photo: "", whatsapp: "", email: "", social: [], _pendingPhoto: null, _removePhoto: false });
-  renderTeamForm();
-});
-document.getElementById("resetTeamBtn")?.addEventListener("click", loadTeamIntoForm);
-
-// Sin filtrar filas de redes sociales en blanco: mantiene el mismo largo de
-// arreglo que el formulario, para que un índice tomado del DOM (por ejemplo
-// al quitar una fila) siga apuntando a lo correcto. Se usa antes de agregar
-// o quitar cualquier cosa; readTeamFromForm (abajo) sí filtra, pero solo se
-// usa al guardar, cuando ya no hace falta que los índices sigan alineados.
-function syncTeamFormFields() {
-  document.querySelectorAll("#teamForm .team-edit-card").forEach((card) => {
-    const i = Number(card.dataset.teamIndex);
-    const m = workingTeam.members[i];
-    m.name = card.querySelector(".team-name-input").value.trim();
-    m.role = card.querySelector(".team-role-input").value.trim();
-    const wa = card.querySelector(".team-wa-input").value.trim();
-    m.whatsapp = wa ? normalizeWhatsapp(wa) : "";
-    m.email = card.querySelector(".team-email-input").value.trim();
-    m.social = Array.from(card.querySelectorAll(".team-social-row"))
-      .map((row) => ({ network: row.querySelector(".team-social-network").value, url: row.querySelector(".team-social-url").value.trim() }));
-  });
-}
-function readTeamFromForm() {
-  syncTeamFormFields();
-  workingTeam.members.forEach((m) => { m.social = m.social.filter((s) => s.url); });
-}
 
 document.getElementById("saveTeamBtn")?.addEventListener("click", async () => {
   if (!guardDataLoaded("teamStatus")) return;
   if (!requireGitHub("teamStatus")) return;
-  readTeamFromForm();
-  const unsafeLink = workingTeam.members.flatMap((m) => m.social || []).find((s) => !isSafeHttpUrl(s.url));
-  if (unsafeLink) {
-    showStatus("teamStatus", "error", `Ese enlace de red social no es válido: "${esc(unsafeLink.url)}". Debe empezar con http:// o https://`);
-    return;
-  }
   const btn = document.getElementById("saveTeamBtn");
   btn.disabled = true;
   showStatus("teamStatus", "info", "Guardando cambios en GitHub…");
@@ -1208,7 +1417,7 @@ document.getElementById("saveTeamBtn")?.addEventListener("click", async () => {
     await ghSaveJson("data/team.json", toSave, `Actualiza "Quiénes somos" (panel interno, ${ghUsername})`);
     workingTeam.members.forEach((m) => { m._pendingPhoto = null; m._removePhoto = false; });
     showStatus("teamStatus", "success", "Guardado. El sitio público se actualiza en unos segundos.");
-    renderTeamForm();
+    renderTeamList();
   } catch (err) {
     showStatus("teamStatus", "error", err.message || "No se pudo guardar.");
   } finally {
@@ -1230,93 +1439,144 @@ async function loadBranchesIntoForm() {
     return;
   }
   workingBranches = JSON.parse(JSON.stringify(data));
-  renderBranchesForm();
+  renderBranchesList();
 }
 
-function branchCardHtml(b, i) {
+function branchFormHtml(b) {
   const isSucursal = b.kind !== "directo";
   const stateOptions = MEXICO_STATES.map((s) => `<option value="${s.id}" ${b.estado === s.id ? "selected" : ""}>${esc(s.name)}</option>`).join("");
   return `
-    <div class="branch-edit-card" data-branch-index="${i}">
-      <div class="otm-row">
-        <div class="field"><label>Tipo</label>
-          <select class="branch-kind-input">
-            <option value="sucursal" ${isSucursal ? "selected" : ""}>Sucursal (local fijo)</option>
-            <option value="directo" ${!isSucursal ? "selected" : ""}>Contacto directo (sin local)</option>
-          </select>
-        </div>
-        <div class="field"><label>Estado</label>
-          <select class="branch-estado-input">${stateOptions}</select>
-        </div>
+    <div class="otm-row">
+      <div class="field"><label>Tipo</label>
+        <select class="branch-kind-input">
+          <option value="sucursal" ${isSucursal ? "selected" : ""}>Sucursal (local fijo)</option>
+          <option value="directo" ${!isSucursal ? "selected" : ""}>Contacto directo (sin local)</option>
+        </select>
       </div>
-      <p class="price-hint">El estado es el título de la tarjeta en el sitio; abajo se muestra "Sucursal" o el nombre de quien atiende, según el tipo.</p>
-      <div class="otm-row" style="margin-top:12px">
-        <div class="field"><label>Nombre de quien atiende</label><input type="text" class="branch-nombre-input" value="${esc(b.nombre || "")}" placeholder="Nombre" /></div>
-        <div class="field"><label>WhatsApp (10 dígitos)</label><input type="text" class="branch-wa-input" value="${esc(stripCountry(b.whatsapp))}" placeholder="2221234567" /></div>
+      <div class="field"><label>Estado</label>
+        <select class="branch-estado-input">${stateOptions}</select>
       </div>
-      <div class="otm-row branch-fields-sucursal" style="margin-top:12px" ${isSucursal ? "" : "hidden"}>
-        <div class="field"><label>Ubicación (plaza o dirección)</label><input type="text" class="branch-ubicacion-input" value="${esc(b.ubicacion || "")}" placeholder="Ej. Plaza de la Tecnología" /></div>
-        <div class="field"><label>Número de local (opcional)</label><input type="text" class="branch-local-input" value="${esc(b.local || "")}" placeholder="Ej. Local 83" /></div>
-      </div>
-      <div class="field branch-fields-directo" style="margin-top:12px" ${isSucursal ? "hidden" : ""}>
-        <label>Detalle de cobertura (se muestra debajo del título)</label>
-        <input type="text" class="branch-cobertura-input" value="${esc(b.cobertura || "")}" placeholder="Ej. Coatzacoalcos y alrededores" />
-      </div>
-      <div class="branch-toggles">
-        <label class="check-inline"><input type="checkbox" class="branch-activo-input" ${b.activo !== false ? "checked" : ""} /> Activo (si no, se muestra "Próximamente")</label>
-        <label class="check-inline"><input type="radio" name="branchPrimary" class="branch-primary-input" ${b.primary ? "checked" : ""} /> Número principal de WhatsApp del sitio</label>
-      </div>
-      <button type="button" class="btn btn-danger btn-sm branch-remove-btn"><i class="bi bi-trash"></i> Quitar</button>
+    </div>
+    <p class="price-hint">El estado es el título de la tarjeta en el sitio; abajo se muestra "Sucursal" o el nombre de quien atiende, según el tipo.</p>
+    <div class="otm-row" style="margin-top:12px">
+      <div class="field"><label>Nombre de quien atiende</label><input type="text" class="branch-nombre-input" value="${esc(b.nombre || "")}" placeholder="Nombre" /></div>
+      <div class="field"><label>WhatsApp (10 dígitos)</label><input type="text" class="branch-wa-input" value="${esc(stripCountry(b.whatsapp))}" placeholder="2221234567" /></div>
+    </div>
+    <div class="otm-row branch-fields-sucursal" style="margin-top:12px" ${isSucursal ? "" : "hidden"}>
+      <div class="field"><label>Ubicación (plaza o dirección)</label><input type="text" class="branch-ubicacion-input" value="${esc(b.ubicacion || "")}" placeholder="Ej. Plaza de la Tecnología" /></div>
+      <div class="field"><label>Número de local (opcional)</label><input type="text" class="branch-local-input" value="${esc(b.local || "")}" placeholder="Ej. Local 83" /></div>
+    </div>
+    <div class="field branch-fields-directo" style="margin-top:12px" ${isSucursal ? "hidden" : ""}>
+      <label>Detalle de cobertura (se muestra debajo del título)</label>
+      <input type="text" class="branch-cobertura-input" value="${esc(b.cobertura || "")}" placeholder="Ej. Coatzacoalcos y alrededores" />
+    </div>
+    <div class="branch-toggles">
+      <label class="check-inline"><input type="checkbox" class="branch-activo-input" ${b.activo !== false ? "checked" : ""} /> Activo (si no, se muestra "Próximamente")</label>
+      <label class="check-inline"><input type="checkbox" class="branch-primary-input" ${b.primary ? "checked" : ""} /> Número principal de WhatsApp del sitio</label>
     </div>`;
 }
-function renderBranchesForm() {
-  document.getElementById("branchesForm").innerHTML = workingBranches.branches.map((b, i) => branchCardHtml(b, i)).join("");
+// Ya no hay <input type="radio" name="..."> agrupando "principal" entre
+// tarjetas (ahora solo existe una sucursal/contacto en el DOM a la vez,
+// dentro de la ventana de edición), así que la exclusividad se hace a mano:
+// al marcar una como principal se desmarcan todas las demás en los datos.
+function applyBranchForm(b) {
+  b.kind = itemModalBodyEl.querySelector(".branch-kind-input").value;
+  b.estado = itemModalBodyEl.querySelector(".branch-estado-input").value;
+  b.nombre = itemModalBodyEl.querySelector(".branch-nombre-input").value.trim();
+  const wa = itemModalBodyEl.querySelector(".branch-wa-input").value.trim();
+  b.whatsapp = wa ? normalizeWhatsapp(wa) : "";
+  b.ubicacion = itemModalBodyEl.querySelector(".branch-ubicacion-input").value.trim();
+  b.local = itemModalBodyEl.querySelector(".branch-local-input").value.trim();
+  b.cobertura = itemModalBodyEl.querySelector(".branch-cobertura-input").value.trim();
+  b.activo = itemModalBodyEl.querySelector(".branch-activo-input").checked;
+  const wantsPrimary = itemModalBodyEl.querySelector(".branch-primary-input").checked;
+  if (wantsPrimary) workingBranches.branches.forEach((other) => { if (other !== b) other.primary = false; });
+  b.primary = wantsPrimary;
 }
-
-document.getElementById("branchesForm")?.addEventListener("change", (e) => {
-  const kindSelect = e.target.closest(".branch-kind-input");
-  if (!kindSelect) return;
-  const card = kindSelect.closest(".branch-edit-card");
-  const isSucursal = kindSelect.value === "sucursal";
-  card.querySelector(".branch-fields-sucursal").hidden = !isSucursal;
-  card.querySelector(".branch-fields-directo").hidden = isSucursal;
-});
-document.getElementById("branchesForm")?.addEventListener("click", (e) => {
-  const removeBtn = e.target.closest(".branch-remove-btn");
-  if (!removeBtn) return;
-  readBranchesFromForm();
-  const i = Number(removeBtn.closest(".branch-edit-card").dataset.branchIndex);
-  workingBranches.branches.splice(i, 1);
-  renderBranchesForm();
-});
-document.getElementById("addBranchBtn")?.addEventListener("click", () => {
-  readBranchesFromForm();
-  workingBranches.branches.push({ id: `contacto-${Date.now()}`, kind: "sucursal", estado: MEXICO_STATES[0].id, nombre: "", cobertura: "", ubicacion: "", local: "", whatsapp: "", primary: false, activo: true });
-  renderBranchesForm();
-});
-document.getElementById("resetBranchesBtn")?.addEventListener("click", loadBranchesIntoForm);
-
-function readBranchesFromForm() {
-  document.querySelectorAll("#branchesForm .branch-edit-card").forEach((card) => {
-    const i = Number(card.dataset.branchIndex);
-    const b = workingBranches.branches[i];
-    b.kind = card.querySelector(".branch-kind-input").value;
-    b.estado = card.querySelector(".branch-estado-input").value;
-    b.nombre = card.querySelector(".branch-nombre-input").value.trim();
-    const wa = card.querySelector(".branch-wa-input").value.trim();
-    b.whatsapp = wa ? normalizeWhatsapp(wa) : "";
-    b.ubicacion = card.querySelector(".branch-ubicacion-input").value.trim();
-    b.local = card.querySelector(".branch-local-input").value.trim();
-    b.cobertura = card.querySelector(".branch-cobertura-input").value.trim();
-    b.activo = card.querySelector(".branch-activo-input").checked;
-    b.primary = card.querySelector(".branch-primary-input").checked;
-  });
-  // Garantiza que siempre quede exactamente un contacto marcado como principal.
+// Red de seguridad: siempre debe quedar exactamente un contacto marcado
+// como principal (es el número que usan los botones generales de WhatsApp
+// del sitio). Se llama después de aplicar o quitar un elemento.
+function ensureOnePrimaryBranch() {
   if (!workingBranches.branches.some((b) => b.primary && b.whatsapp)) {
     const firstWithWa = workingBranches.branches.find((b) => b.whatsapp);
     if (firstWithWa) firstWithWa.primary = true;
   }
 }
+function branchRowHtml(b, i) {
+  const isSucursal = b.kind !== "directo";
+  const stateName = MEXICO_STATES.find((s) => s.id === b.estado)?.name || b.estado || "(Sin estado)";
+  const subParts = [
+    isSucursal ? "Sucursal" : (b.nombre || "Contacto directo"),
+    b.whatsapp ? formatMexPhone(b.whatsapp) : "sin WhatsApp",
+    b.activo === false ? "Próximamente" : null,
+    b.primary ? "Número principal" : null,
+  ].filter(Boolean);
+  return `
+    <div class="item-row" data-branch-index="${i}">
+      <div class="item-row-main">
+        <span class="item-row-icon"><i class="bi ${isSucursal ? "bi-shop" : "bi-person-lines-fill"}"></i></span>
+        <div class="item-row-text">
+          <p class="item-row-title">${esc(stateName)}</p>
+          <p class="item-row-sub">${esc(subParts.join(" · "))}</p>
+        </div>
+      </div>
+      <div class="item-row-actions">
+        <button type="button" class="btn btn-ghost btn-sm branch-edit-btn"><i class="bi bi-pencil"></i> Editar</button>
+        <button type="button" class="btn btn-danger btn-sm branch-remove-btn" aria-label="Quitar"><i class="bi bi-trash"></i></button>
+      </div>
+    </div>`;
+}
+function renderBranchesList() {
+  const wrap = document.getElementById("branchesForm");
+  wrap.innerHTML = workingBranches.branches.length
+    ? `<div class="item-list">${workingBranches.branches.map((b, i) => branchRowHtml(b, i)).join("")}</div>`
+    : `<p class="item-row-empty">Todavía no hay sucursales ni contactos.</p>`;
+}
+function openBranchEditor(i) {
+  const b = workingBranches.branches[i];
+  itemModalBodyEl.dataset.itemType = "branch";
+  openItemModal("Editar sucursal o contacto", branchFormHtml(b), () => {
+    applyBranchForm(b);
+    ensureOnePrimaryBranch();
+    renderBranchesList();
+  });
+}
+document.getElementById("branchesForm")?.addEventListener("click", (e) => {
+  const editBtn = e.target.closest(".branch-edit-btn");
+  if (editBtn) {
+    openBranchEditor(Number(editBtn.closest(".item-row").dataset.branchIndex));
+    return;
+  }
+  const removeBtn = e.target.closest(".branch-remove-btn");
+  if (!removeBtn) return;
+  workingBranches.branches.splice(Number(removeBtn.closest(".item-row").dataset.branchIndex), 1);
+  ensureOnePrimaryBranch();
+  renderBranchesList();
+});
+document.getElementById("addBranchBtn")?.addEventListener("click", () => {
+  const draft = { id: `contacto-${Date.now()}`, kind: "sucursal", estado: MEXICO_STATES[0].id, nombre: "", cobertura: "", ubicacion: "", local: "", whatsapp: "", primary: false, activo: true };
+  itemModalBodyEl.dataset.itemType = "branch";
+  openItemModal("Agregar sucursal o contacto", branchFormHtml(draft), () => {
+    applyBranchForm(draft);
+    workingBranches.branches.push(draft);
+    ensureOnePrimaryBranch();
+    renderBranchesList();
+  });
+});
+document.getElementById("resetBranchesBtn")?.addEventListener("click", loadBranchesIntoForm);
+
+// El selector de tipo (sucursal/contacto directo) solo existe dentro de la
+// ventana de edición ahora; el listener queda sobre itemModalBodyEl,
+// activo únicamente mientras se edita una sucursal (dataset.itemType).
+itemModalBodyEl.addEventListener("change", (e) => {
+  if (itemModalBodyEl.dataset.itemType !== "branch") return;
+  const kindSelect = e.target.closest(".branch-kind-input");
+  if (!kindSelect) return;
+  const isSucursal = kindSelect.value === "sucursal";
+  itemModalBodyEl.querySelector(".branch-fields-sucursal").hidden = !isSucursal;
+  itemModalBodyEl.querySelector(".branch-fields-directo").hidden = isSucursal;
+});
+
 function validateBranches() {
   const problems = [];
   if (!workingBranches.branches.some((b) => b.whatsapp)) problems.push("Agrega al menos un número de WhatsApp.");
@@ -1326,7 +1586,6 @@ function validateBranches() {
 document.getElementById("saveBranchesBtn")?.addEventListener("click", async () => {
   if (!guardDataLoaded("branchesStatus")) return;
   if (!requireGitHub("branchesStatus")) return;
-  readBranchesFromForm();
   const problems = validateBranches();
   if (problems.length) { showStatus("branchesStatus", "error", problems.join(" ")); return; }
   const btn = document.getElementById("saveBranchesBtn");
@@ -1336,7 +1595,7 @@ document.getElementById("saveBranchesBtn")?.addEventListener("click", async () =
     workingBranches.updatedAt = new Date().toISOString().slice(0, 10);
     await ghSaveJson("data/branches.json", workingBranches, `Actualiza sucursales y contacto (panel interno, ${ghUsername})`);
     showStatus("branchesStatus", "success", "Guardado. El sitio público se actualiza en unos segundos.");
-    renderBranchesForm();
+    renderBranchesList();
   } catch (err) {
     showStatus("branchesStatus", "error", err.message || "No se pudo guardar.");
   } finally {

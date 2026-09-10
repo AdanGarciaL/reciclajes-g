@@ -97,7 +97,7 @@
             <span class="section-num">1</span>
             <div>
               <p class="card-title">Materiales</p>
-              <p class="card-sub">Agrega, edita o quita materiales. Un material nuevo, mientras no tenga tipos o ficha propia (abajo), puede marcarse como "Sin ficha propia" para que mande mensaje directo por WhatsApp en vez de abrir una página vacía.</p>
+              <p class="card-sub">Da clic en "Editar" para abrir cada uno en una ventana aparte. Un material nuevo, mientras no tenga tipos o ficha propia (abajo), puede marcarse como "Sin ficha propia" para que mande mensaje directo por WhatsApp en vez de abrir una página vacía.</p>
             </div>
           </div>
           <div class="card">
@@ -111,7 +111,7 @@
             <span class="section-num">2</span>
             <div>
               <p class="card-title">Tipos de tarjeta de celular</p>
-              <p class="card-sub">Tipo 1, Tipo 2, Tipo 3, sin pila/tapa, o cualquier otro que agregues: su nombre, precio, material al que pertenece y las características que se listan.</p>
+              <p class="card-sub">Tipo 1, Tipo 2, Tipo 3, sin pila/tapa, o cualquier otro que agregues. Da clic en "Editar" para cambiar su nombre, precio, material al que pertenece o sus características.</p>
             </div>
           </div>
           <div class="card" id="typesForm"></div>
@@ -164,11 +164,14 @@
           </div>
           <div class="card">
             <div class="gallery-thumb-grid" id="galleryThumbs"></div>
-            <div class="add-photo-box">
+            <div class="add-photo-box" id="addPhotoBox">
               <i class="bi bi-cloud-arrow-up"></i>
-              <p style="margin:0;font-size:13px;color:var(--ink-muted)">Agregar foto a esta categoría</p>
-              <input type="file" id="addPhotoInput" accept="image/*" />
-              <p style="margin:0;font-size:11px;color:var(--ink-soft)">Se reduce automáticamente a un tamaño razonable para el sitio.</p>
+              <p style="margin:0;font-size:13px;color:var(--ink-muted)">Arrastra una o varias fotos aquí, o da clic para elegirlas</p>
+              <label class="btn btn-ghost btn-sm add-photo-pick">
+                Elegir fotos
+                <input type="file" id="addPhotoInput" accept="image/*" multiple hidden />
+              </label>
+              <p style="margin:0;font-size:11px;color:var(--ink-soft)">Solo imágenes (JPG, PNG...); se reducen automáticamente a un tamaño razonable para el sitio.</p>
             </div>
           </div>
         </div>
@@ -187,7 +190,7 @@
             <span class="section-num">1</span>
             <div>
               <p class="card-title">Quiénes somos</p>
-              <p class="card-sub">Nombre, foto y contacto de cada persona. Una persona solo aparece en el sitio público cuando su nombre no está vacío, así que puedes dejar una tarjeta a medio llenar sin que se vea rota en la página.</p>
+              <p class="card-sub">Da clic en "Editar" para abrir a cada persona en una ventana aparte: nombre, foto, contacto y sus redes sociales. Una persona solo aparece en el sitio público cuando su nombre no está vacío.</p>
             </div>
           </div>
           <div class="card" id="teamForm"></div>
@@ -207,7 +210,7 @@
             <span class="section-num">1</span>
             <div>
               <p class="card-title">Sucursales y contacto directo</p>
-              <p class="card-sub">"Sucursal" es un local con dirección fija (y número de local, si aplica). "Contacto directo" es una persona que atiende una zona o estado sin local fijo. Marca "Número principal" en el contacto que debe usarse en los botones generales de WhatsApp de todo el sitio (solo puede haber uno).</p>
+              <p class="card-sub">Da clic en "Editar" para abrir cada una en una ventana aparte. "Sucursal" es un local con dirección fija (y número de local, si aplica); "Contacto directo" es una persona que atiende una zona o estado sin local fijo. Marca "Número principal" en el contacto que debe usarse en los botones generales de WhatsApp de todo el sitio (solo puede haber uno).</p>
             </div>
           </div>
           <div class="card" id="branchesForm"></div>
@@ -260,6 +263,23 @@
       </section>
 
     </main>
+  </div>
+
+  <!-- Ventana de edición: se usa para editar UN elemento de una lista (material, tipo,
+       ficha, persona, sucursal) sin tener que ver toda la lista abierta a la vez. -->
+  <div class="settings-modal item-modal" id="itemModal" aria-hidden="true">
+    <div class="settings-overlay" id="itemModalOverlay"></div>
+    <div class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="itemModalTitle">
+      <button class="selector-close" id="itemModalClose" aria-label="Cerrar">×</button>
+      <h2 id="itemModalTitle"></h2>
+      <div id="itemModalBody"></div>
+      <p class="status-msg" id="itemModalStatus"></p>
+      <div class="actions-row">
+        <button class="btn btn-primary" id="itemModalSaveBtn"><i class="bi bi-check-lg"></i> Aplicar a la lista</button>
+        <button class="btn btn-ghost" id="itemModalCancelBtn">Cancelar</button>
+      </div>
+      <p class="price-hint" style="margin-top:14px">Esto actualiza la lista de abajo. No olvides presionar "Guardar cambios" para publicarlo en el sitio.</p>
+    </div>
   </div>
 
   <!-- AJUSTES: conexión para poder guardar (configuración técnica, solo una vez por computadora) -->

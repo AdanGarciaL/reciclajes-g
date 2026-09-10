@@ -206,9 +206,13 @@ body.dark-mode .gallery-cat-btn.is-active { background: var(--brand-green); }
 .add-photo-box {
   border: 1.5px dashed var(--border-strong); border-radius: var(--radius-sm); padding: 18px; text-align: center;
   display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 16px;
+  transition: border-color .2s ease, background-color .2s ease;
 }
-.add-photo-box i { font-size: 22px; color: var(--brand-mid); }
-.add-photo-box input[type="file"] { font-size: 12.5px; }
+.add-photo-box i { font-size: 22px; color: var(--brand-mid); pointer-events: none; }
+.add-photo-box p { pointer-events: none; }
+.add-photo-box.is-dragover { border-color: var(--brand-green-strong); background: var(--surface-alt); }
+body.dark-mode .add-photo-box.is-dragover { border-color: var(--brand-green); }
+.add-photo-pick { cursor: pointer; white-space: nowrap; }
 
 /* ---------- Estado / toasts ---------- */
 .status-msg { margin-top: 14px; font-size: 13px; padding: 11px 14px; border-radius: 9px; display: none; align-items: center; gap: 8px; }
@@ -361,4 +365,32 @@ body.dark-mode .state-chip-remove { background: rgba(255,255,255,.1); }
 .selector-close {
   position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border-strong);
   background: var(--surface-alt); color: var(--ink); font-size: 17px; display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* ---------- Ventana de edición de un elemento ---------- */
+.item-modal .settings-panel { width: min(680px, 100%); }
+#itemModalBody .field { margin-top: 0; }
+#itemModalStatus.status-msg { margin-top: 12px; }
+
+/* ---------- Listas compactas (materiales, tipos, fichas, personas, sucursales) ----------
+   Cada fila muestra solo un resumen; "Editar" abre el formulario completo en la ventana
+   de arriba, así la lista no obliga a hacer scroll por todos los campos de todo. */
+.item-list { display: flex; flex-direction: column; }
+.item-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.item-row:last-child { border-bottom: none; }
+.item-row-main { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
+.item-row-icon {
+  flex: none; width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--surface-alt); border: 1px solid var(--border); color: var(--brand-green-strong); font-size: 15px; overflow: hidden;
+}
+.item-row-icon img { width: 100%; height: 100%; object-fit: cover; }
+body.dark-mode .item-row-icon { color: var(--brand-green); }
+.item-row-text { min-width: 0; }
+.item-row-title { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 14.5px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item-row-sub { margin: 2px 0 0; font-size: 12px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item-row-actions { display: flex; gap: 8px; flex: none; }
+.item-row-empty { margin: 0; padding: 6px 0; font-size: 13px; color: var(--ink-soft); }
+@media (max-width: 480px) {
+  .item-row { flex-wrap: wrap; }
+  .item-row-title, .item-row-sub { white-space: normal; }
 }
