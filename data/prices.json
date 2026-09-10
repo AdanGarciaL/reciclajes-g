@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-09",
+  "updatedAt": "2026-09-10",
   "materials": [
     {
       "id": "celular",
@@ -7,10 +7,10 @@
       "icon": "bi-phone",
       "modalIcon": "📱",
       "group": "celular",
-      "min": 100,
-      "max": 1300,
+      "min": 250,
+      "max": 10000,
       "unit": "/kg",
-      "note": "El Tipo 1 alcanza el precio máximo del catálogo.",
+      "note": "Del mas barato hasta el tipo 1 alcanza el precio máximo del catálogo.",
       "quick": true,
       "quickCopy": "Rango completo según tipo, estado y material. El Tipo 1 alcanza el precio máximo.",
       "showInSelector": true,
@@ -22,10 +22,10 @@
       "icon": "bi-keyboard",
       "modalIcon": "⌨️",
       "group": "celular",
-      "min": 100,
-      "max": 150,
+      "min": 250,
+      "max": 400,
       "unit": "/kg",
-      "note": "Placas de teléfonos antiguos con teclado mecánico.",
+      "note": "Placas de teléfonos antiguos con teclado mecánico o placa grande.",
       "quick": false,
       "quickCopy": "",
       "showInSelector": true,
@@ -53,7 +53,7 @@
       "modalIcon": "🖬",
       "group": "otros",
       "min": 300,
-      "max": 450,
+      "max": 1000,
       "unit": "/kg",
       "note": "DDR a DDR5, cualquier capacidad, funcionales o defectuosas.",
       "quick": true,
@@ -82,8 +82,8 @@
       "icon": "bi-battery",
       "modalIcon": "🔋",
       "group": "celular",
-      "min": 70,
-      "max": 100,
+      "min": 250,
+      "max": 400,
       "unit": "/kg",
       "note": "Celulares completos sin desmontar, sin batería.",
       "quick": false,
@@ -96,48 +96,49 @@
     {
       "id": "tipo1",
       "priceId": "celular",
-      "label": "Tipo 1",
-      "shortLabel": "Tipo 1 · Premium",
-      "min": 900,
-      "max": 1300,
+      "label": "Tipo 1 (Primera)",
+      "shortLabel": "Tipo 1 (Primera)",
+      "min": 5000,
+      "max": 10000,
       "specs": [
         "Sin flex ni tiras",
         "Sin cámaras",
         "Debe tener su chip",
         "Celulares de gama media a alta",
-        "Condición variable aceptable mientras el chip esté presente"
+        "Condición variable aceptable mientras el chip esté presente",
+        "256 Gbs en adelante"
       ],
       "galleryCategory": "celular-tipo-1"
     },
     {
       "id": "tipo2",
       "priceId": "celular",
-      "label": "Tipo 2",
-      "shortLabel": "Tipo 2 · Placas grandes",
-      "min": 220,
-      "max": 350,
+      "label": "Tipo 2 (Segunda)",
+      "shortLabel": "Tipo 2 (Segunda)",
+      "min": 2000,
+      "max": 4500,
       "specs": [
-        "Placas grandes que cubren el celular",
-        "Si no entra en Tipo 1 pasa a Tipo 2: sin chip integrado o roto",
-        "Pueden estar quemadas o ensambladas",
+        "Sin flex ni tiras",
+        "Si no entra en Tipo 1 pasa a Tipo 2",
+        "Condición variable aceptable mientras el chip esté presente",
         "Cualquier marca o modelo",
-        "Celulares antiguos o de gama baja"
+        "64 Gbs en adelante"
       ],
       "galleryCategory": "celular-tipo-2"
     },
     {
       "id": "tipo3",
       "priceId": "celular",
-      "label": "Tipo 3",
-      "shortLabel": "Tipo 3 · Teclado y tablet",
-      "min": 100,
-      "max": 150,
+      "label": "Tipo 3 (Tercera)",
+      "shortLabel": "Tipo 3 (Tercera)",
+      "min": 1000,
+      "max": 1800,
       "specs": [
-        "Placas de teléfonos con teclado",
-        "Placas de tablet",
-        "Ambas categorías tienen el mismo precio",
+        "Placas tipo L",
+        "Si no entra en Tipo 1, Tipo 2 pasa a Tipo 3",
+        "Condición variable aceptable mientras el chip esté presente",
         "Cualquier marca o modelo",
-        "Condición variable aceptable"
+        "32 Gbs en adelante"
       ],
       "galleryCategory": "celular-tipo-3"
     },
@@ -145,17 +146,36 @@
       "id": "tipo4",
       "priceId": "sinpila",
       "label": "Sin pila/tapa",
-      "shortLabel": "Sin pila ni tapa",
-      "min": 70,
-      "max": 100,
+      "shortLabel": "Sin pila/tapa",
+      "min": 250,
+      "max": 400,
       "specs": [
         "Celulares completos sin desmontar",
         "Sin pila: se debe retirar la batería",
         "Sin tapa: se puede dejar como venga",
         "Para clientes sin tiempo de desarmado",
-        "Ideal para lotes grandes y descarte"
+        "Ideal para lotes grandes y descarte",
+        "Celular de teclas o touch pero que tenga 1 Cámara $250 el kilo",
+        "Celular de teclas o touch pero que tenga 2, 3 y 4 Cámaras $400 el kilo"
       ],
       "galleryCategory": "sin-pila-tapa"
+    },
+    {
+      "id": "tipo-1789065008140",
+      "priceId": "celular",
+      "label": "Teclas o Grande",
+      "shortLabel": "Teclas o Grande",
+      "min": 250,
+      "max": 500,
+      "specs": [
+        "Placas con teclado o que sean completas",
+        "Celulares de gama baja",
+        "Condición variable aceptable mientras el chip esté presente",
+        "Cualquier marca o modelo",
+        "8 Gbs en adelante",
+        "Si no entra en Tipo 1, Tipo 2, Tipo 3 pasa a Teclado o Grande"
+      ],
+      "galleryCategory": ""
     }
   ],
   "otherMaterials": [
