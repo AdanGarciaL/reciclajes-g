@@ -515,6 +515,7 @@ async function loadPricesIntoForm() {
     return;
   }
   workingPrices = JSON.parse(JSON.stringify(data));
+  markSectionSaved("prices", workingPrices);
   renderPricesForm();
 }
 
@@ -606,6 +607,44 @@ function setSectionLocked(ids, locked) {
     if (el) el.classList.toggle("is-saving-locked", locked);
   });
 }
+
+// ---------- Avisa antes de cerrar/recargar si hay cambios sin guardar ----------
+// Cada sección (materiales, galería, equipo, sucursales, cobertura) vive en
+// memoria del navegador (workingPrices, workingGallery, etc.) hasta que se
+// presiona su propio "Guardar cambios" — nada se guarda solo. Si el admin
+// quita fotos, agrega otras, y luego RECARGA LA PÁGINA (o la cierra) en vez
+// de guardar, todo ese trabajo se pierde en silencio y, al volver a cargar,
+// se ve la versión de antes — como si las fotos "quitadas" hubieran vuelto.
+// Esto guarda una "foto" de cada sección justo después de cargarla o de
+// guardarla con éxito, y compara contra eso para saber si hay algo sin
+// guardar; si lo hay, el navegador pregunta antes de dejar la página.
+const savedSnapshots = {};
+function markSectionSaved(key, obj) {
+  savedSnapshots[key] = JSON.stringify(obj);
+}
+function isSectionDirty(key, obj) {
+  if (!(key in savedSnapshots)) return false; // todavía no cargó: nada que perder
+  return JSON.stringify(obj) !== savedSnapshots[key];
+}
+function hasUnsavedChanges() {
+  return (
+    isSectionDirty("prices", workingPrices) ||
+    isSectionDirty("gallery", workingGallery) ||
+    isSectionDirty("team", workingTeam) ||
+    isSectionDirty("branches", workingBranches) ||
+    isSectionDirty("coverage", workingCoverage) ||
+    isSectionDirty("social", workingSocial) ||
+    pendingUploads.length > 0 ||
+    pendingGalleryDeletions.length > 0 ||
+    pendingTeamPhotoDeletions.length > 0
+  );
+}
+window.addEventListener("beforeunload", (e) => {
+  if (!hasUnsavedChanges()) return;
+  e.preventDefault();
+  e.returnValue = ""; // los navegadores modernos ignoran el texto, pero exigen setearlo
+});
+
 function formatPriceRangeAdmin(min, max) {
   const fmt = (n) => `$${Number(n).toLocaleString("es-MX")}`;
   return `${fmt(min)} – ${fmt(max)} /kg`;
@@ -907,6 +946,7 @@ document.getElementById("savePricesBtn")?.addEventListener("click", async () => 
   try {
     workingPrices.updatedAt = new Date().toISOString().slice(0, 10);
     await ghSaveJson("data/prices.json", workingPrices, `Actualiza precios (panel interno, ${ghUsername})`);
+    markSectionSaved("prices", workingPrices);
     showStatus("pricesStatus", "success", "Precios guardados. El sitio público se actualiza en unos segundos.");
   } catch (err) {
     showStatus("pricesStatus", "error", err.message || "No se pudo guardar.");
@@ -941,6 +981,7 @@ async function loadGalleryIntoUI() {
     return;
   }
   workingGallery = JSON.parse(JSON.stringify(data));
+  markSectionSaved("gallery", workingGallery);
   activeCategoryId = workingGallery.categories[0]?.id || null;
   renderGalleryCats();
   renderGalleryThumbs();
@@ -1277,6 +1318,7 @@ document.getElementById("saveGalleryBtn")?.addEventListener("click", async () =>
     workingGallery.updatedAt = new Date().toISOString().slice(0, 10);
     await ghSaveJson("data/gallery.json", workingGallery, `Actualiza galería (panel interno, ${ghUsername})`);
     pendingUploads = [];
+    markSectionSaved("gallery", workingGallery);
 
     // El JSON ya quedó guardado con las referencias correctas (sin las
     // fotos quitadas), así que ahora es seguro borrar sus archivos reales
@@ -1334,6 +1376,7 @@ async function loadTeamIntoForm() {
   }
   workingTeam = JSON.parse(JSON.stringify(data));
   workingTeam.members.forEach((m) => { m._pendingPhoto = null; m._removePhoto = false; m.social = m.social || []; });
+  markSectionSaved("team", workingTeam);
   renderTeamList();
 }
 
@@ -1541,6 +1584,7 @@ document.getElementById("saveTeamBtn")?.addEventListener("click", async () => {
     };
     await ghSaveJson("data/team.json", toSave, `Actualiza "Quiénes somos" (panel interno, ${ghUsername})`);
     workingTeam.members.forEach((m) => { m._pendingPhoto = null; m._removePhoto = false; });
+    markSectionSaved("team", workingTeam);
 
     // Igual que en Galería: el JSON ya quedó guardado sin apuntar a las
     // fotos viejas, así que ahora es seguro borrar esos archivos de
@@ -1582,6 +1626,7 @@ async function loadBranchesIntoForm() {
     return;
   }
   workingBranches = JSON.parse(JSON.stringify(data));
+  markSectionSaved("branches", workingBranches);
   renderBranchesList();
 }
 
@@ -1737,6 +1782,7 @@ document.getElementById("saveBranchesBtn")?.addEventListener("click", async () =
   try {
     workingBranches.updatedAt = new Date().toISOString().slice(0, 10);
     await ghSaveJson("data/branches.json", workingBranches, `Actualiza sucursales y contacto (panel interno, ${ghUsername})`);
+    markSectionSaved("branches", workingBranches);
     showStatus("branchesStatus", "success", "Guardado. El sitio público se actualiza en unos segundos.");
     renderBranchesList();
   } catch (err) {
@@ -1767,6 +1813,8 @@ async function loadCoverageAndSocialIntoForm() {
   ]);
   workingCoverage = JSON.parse(JSON.stringify(covData || { activeStateIds: [] }));
   workingSocial = JSON.parse(JSON.stringify(socData || { links: [] }));
+  if (covData) markSectionSaved("coverage", workingCoverage);
+  if (socData) markSectionSaved("social", workingSocial);
   renderStateSelect();
   if (!covData) {
     showDataUnavailableBanner();
@@ -1888,6 +1936,8 @@ document.getElementById("saveCoverageBtn")?.addEventListener("click", async () =
     workingSocial.updatedAt = new Date().toISOString().slice(0, 10);
     await ghSaveJson("data/coverage.json", workingCoverage, `Actualiza cobertura (panel interno, ${ghUsername})`);
     await ghSaveJson("data/social.json", workingSocial, `Actualiza redes sociales (panel interno, ${ghUsername})`);
+    markSectionSaved("coverage", workingCoverage);
+    markSectionSaved("social", workingSocial);
     showStatus("coverageStatus", "success", "Guardado. El sitio público se actualiza en unos segundos.");
     renderSocialForm();
   } catch (err) {
