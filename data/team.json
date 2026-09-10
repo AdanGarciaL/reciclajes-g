@@ -7,16 +7,26 @@
       "photo": "icons/equipo/ceo-1789015870434.jpg",
       "whatsapp": "522214102306",
       "email": "adan_rostro_@hotmail.com",
-      "social": []
+      "social": [
+        {
+          "network": "facebook",
+          "url": "https://www.facebook.com/adan.garcia.79656/?viewas=100000686899395"
+        }
+      ]
     },
     {
       "id": "dev",
-      "role": "Desarrollador web",
+      "role": "CEO",
       "name": "Karla Garcia",
       "photo": "icons/equipo/dev-1789016156434.jpg",
       "whatsapp": "522227548704",
       "email": "",
-      "social": []
+      "social": [
+        {
+          "network": "facebook",
+          "url": "https://www.facebook.com/karla.garcialima"
+        }
+      ]
     }
   ],
   "updatedAt": "2026-09-10"
