@@ -228,9 +228,17 @@ async function connectGitHub(token) {
     const userData = await userRes.json();
 
     const repoRes = await fetch(API_BASE, { headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" } });
-    if (!repoRes.ok) throw new Error("No se pudo leer el repositorio con esta llave.");
+    if (!repoRes.ok) throw new Error(repoRes.status === 404
+      ? "Esta llave no tiene acceso a este repositorio (revisa que el token incluya reciclajes-g)."
+      : `No se pudo leer el repositorio con esta llave (${repoRes.status}).`);
     const repoData = await repoRes.json();
-    const canWrite = !!(repoData.permissions && repoData.permissions.push);
+    // Un token de acceso detallado ("fine-grained", el que recomendamos en
+    // Ajustes) casi nunca trae el objeto "permissions" en esta respuesta,
+    // así que solo lo tratamos como señal de que NO puede escribir cuando
+    // dice explícitamente push:false. Si no viene, asumimos que sí puede
+    // guardar (el token se configuró con "Contents: Read and write") y es
+    // el propio guardado el que confirma o avisa si en verdad no puede.
+    const canWrite = !(repoData.permissions && repoData.permissions.push === false);
 
     ghToken = token;
     ghUsername = userData.login;
@@ -300,8 +308,12 @@ function initGitHubConnection() {
   }
 }
 
-function requireGitHub() {
-  if (!ghToken || !ghCanWrite) { openSettings(); return false; }
+function requireGitHub(statusElId) {
+  if (!ghToken || !ghCanWrite) {
+    if (statusElId) showStatus(statusElId, "error", "Esta computadora no está conectada para guardar. Se abrió Ajustes para configurarla.");
+    openSettings();
+    return false;
+  }
   return true;
 }
 
@@ -496,7 +508,7 @@ function hideStatus(elId) {
 document.getElementById("resetPricesBtn")?.addEventListener("click", loadPricesIntoForm);
 
 document.getElementById("savePricesBtn")?.addEventListener("click", async () => {
-  if (!requireGitHub()) return;
+  if (!requireGitHub("pricesStatus")) return;
   readPricesFromForm();
   const problems = validatePrices();
   if (problems.length) { showStatus("pricesStatus", "error", problems.join(" ")); return; }
@@ -667,7 +679,7 @@ document.getElementById("addPhotoInput")?.addEventListener("change", async (e) =
 document.getElementById("resetGalleryBtn")?.addEventListener("click", loadGalleryIntoUI);
 
 document.getElementById("saveGalleryBtn")?.addEventListener("click", async () => {
-  if (!requireGitHub()) return;
+  if (!requireGitHub("galleryStatus")) return;
   readGalleryAltEdits();
 
   const btn = document.getElementById("saveGalleryBtn");
@@ -787,7 +799,7 @@ function readTeamFromForm() {
 }
 
 document.getElementById("saveTeamBtn")?.addEventListener("click", async () => {
-  if (!requireGitHub()) return;
+  if (!requireGitHub("teamStatus")) return;
   readTeamFromForm();
   const btn = document.getElementById("saveTeamBtn");
   btn.disabled = true;
@@ -918,7 +930,7 @@ function validateBranches() {
 }
 
 document.getElementById("saveBranchesBtn")?.addEventListener("click", async () => {
-  if (!requireGitHub()) return;
+  if (!requireGitHub("branchesStatus")) return;
   readBranchesFromForm();
   const problems = validateBranches();
   if (problems.length) { showStatus("branchesStatus", "error", problems.join(" ")); return; }
@@ -1044,7 +1056,7 @@ function readSocialFromForm() {
 }
 
 document.getElementById("saveCoverageBtn")?.addEventListener("click", async () => {
-  if (!requireGitHub()) return;
+  if (!requireGitHub("coverageStatus")) return;
   readSocialFromForm();
   const btn = document.getElementById("saveCoverageBtn");
   btn.disabled = true;
