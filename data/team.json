@@ -1,7 +1,23 @@
 {
   "members": [
-    { "id": "ceo", "role": "Director General", "name": "", "photo": "", "whatsapp": "", "email": "", "social": [] },
-    { "id": "dev", "role": "Desarrollador web", "name": "", "photo": "", "whatsapp": "", "email": "", "social": [] }
+    {
+      "id": "ceo",
+      "role": "Programador",
+      "name": "Adan Garcia",
+      "photo": "icons/equipo/ceo-1789015870434.jpg",
+      "whatsapp": "522214102306",
+      "email": "adan_rostro_@hotmail.com",
+      "social": []
+    },
+    {
+      "id": "dev",
+      "role": "Desarrollador web",
+      "name": "Karla Garcia",
+      "photo": "icons/equipo/dev-1789016156434.jpg",
+      "whatsapp": "522227548704",
+      "email": "",
+      "social": []
+    }
   ],
-  "updatedAt": "2026-09-09"
+  "updatedAt": "2026-09-10"
 }

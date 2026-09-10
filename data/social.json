@@ -1,6 +1,11 @@
 {
   "links": [
-    { "id": "facebook", "network": "facebook", "label": "Facebook", "url": "https://www.facebook.com/profile.php?id=100063747836703" }
+    {
+      "id": "facebook",
+      "network": "facebook",
+      "label": "Facebook",
+      "url": "https://www.facebook.com/profile.php?id=100063747836703"
+    }
   ],
-  "updatedAt": "2026-09-09"
+  "updatedAt": "2026-09-10"
 }
