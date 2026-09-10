@@ -699,12 +699,19 @@ if (window.ResizeObserver && siteHeader) {
   new ResizeObserver(updateHeaderOffset).observe(siteHeader);
 }
 
+const backToTopBtn = document.getElementById("backToTop");
+backToTopBtn?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
 function onScroll() {
   const scrollTop = window.scrollY;
   siteHeader?.classList.toggle("is-scrolled", scrollTop > 8);
   if (scrollProgress) {
     const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
     scrollProgress.style.width = `${scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0}%`;
+  }
+  if (backToTopBtn) {
+    backToTopBtn.hidden = false;
+    backToTopBtn.classList.toggle("is-visible", scrollTop > window.innerHeight * 0.8);
   }
 }
 window.addEventListener("scroll", onScroll, { passive: true });

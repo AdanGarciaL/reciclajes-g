@@ -236,14 +236,14 @@ body.dark-mode .btn-primary { background: var(--brand-green); color: #06210f; }
 .campaign-strip .btn { padding: 8px 16px; font-size: 13px; }
 
 /* ---------- Section head genérico ---------- */
-.section-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; margin-bottom: 30px; }
-.section-head-solo { margin-bottom: 30px; }
+.section-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; margin-bottom: 24px; }
+.section-head-solo { margin-bottom: 24px; }
 .eyebrow { margin: 0; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brand-green-strong); }
 body.dark-mode .eyebrow { color: var(--brand-green); }
 .section-head h2 { font-family: var(--font-display); font-weight: 800; font-size: clamp(26px, 3.4vw, 40px); line-height: 1.08; letter-spacing: -0.02em; color: var(--ink); margin-top: 8px; }
 .section-head > p { margin: 0; max-width: 40ch; font-size: 14.5px; line-height: 1.6; color: var(--ink-soft); }
 
-section { padding: clamp(50px, 6vw, 84px) 0; border-bottom: 1px solid var(--border); }
+section { padding: clamp(40px, 5vw, 68px) 0; border-bottom: 1px solid var(--border); }
 section.bg-alt { background: var(--bg-alt); }
 section.no-border { border-bottom: none; }
 
@@ -640,6 +640,17 @@ body.dark-mode .faq-q i { color: var(--brand-green); }
 body.dark-mode .floating-whatsapp { background: var(--brand-green); }
 .floating-whatsapp:hover { transform: scale(1.08); }
 
+/* ---------- Botón flotante "volver arriba" ---------- */
+.back-to-top {
+  position: fixed; right: 22px; bottom: 90px; z-index: 150; width: 44px; height: 44px; border-radius: 50%;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--border-strong);
+  display: inline-flex; align-items: center; justify-content: center; font-size: 17px;
+  box-shadow: var(--shadow-md); transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease;
+  opacity: 0; transform: translateY(8px); pointer-events: none;
+}
+.back-to-top.is-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.back-to-top:hover { transform: translateY(-2px); border-color: var(--brand-green-strong); }
+
 /* ---------- Utilidades varias ---------- */
 .mono { font-family: var(--font-mono); }
 .text-accent { color: var(--brand-green-strong); }
@@ -665,6 +676,7 @@ body.dark-mode .text-accent { color: var(--brand-green); }
   .container { padding: 0 18px; }
   .hero h1 { font-size: 30px; }
   .floating-whatsapp { right: 16px; bottom: 16px; width: 52px; height: 52px; font-size: 23px; }
+  .back-to-top { right: 16px; bottom: 78px; width: 40px; height: 40px; font-size: 15px; }
 }
 
 @media (max-width: 420px) {
