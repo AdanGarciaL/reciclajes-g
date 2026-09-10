@@ -310,8 +310,14 @@ body.dark-mode .hero-media-foot .foot-price { color: var(--brand-green); }
 .price-card {
   border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; background: var(--surface);
   display: flex; flex-direction: column; gap: 10px; transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  overflow: hidden;
 }
 .price-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--border-strong); }
+.price-card-photo {
+  margin: -24px -24px 4px; aspect-ratio: 16/10; overflow: hidden; background: var(--surface-alt);
+}
+.price-card-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+.price-card:hover .price-card-photo img { transform: scale(1.06); }
 .price-card .price-icon {
   width: 38px; height: 38px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center;
   background: var(--surface-alt); border: 1px solid var(--border); color: var(--brand-green-strong); font-size: 16px;
@@ -408,6 +414,8 @@ body.dark-mode .mode-btn.is-active { background: var(--brand-green); border-colo
 .selector-btn:hover { border-color: var(--brand-green-strong); transform: translateY(-3px); box-shadow: var(--shadow-sm); }
 .selector-btn.is-hidden { display: none; }
 .selector-btn .sel-icon { font-size: 26px; }
+.selector-btn .sel-photo { width: 100%; aspect-ratio: 4/3; border-radius: 8px; overflow: hidden; background: var(--surface-alt); }
+.selector-btn .sel-photo img { width: 100%; height: 100%; object-fit: cover; }
 .selector-btn .sel-name { font-family: var(--font-display); font-weight: 700; font-size: 13.5px; color: var(--ink); }
 .selector-btn .sel-price { font-family: var(--font-mono); font-size: 12px; color: var(--brand-green-strong); }
 body.dark-mode .selector-btn .sel-price { color: var(--brand-green); }
@@ -523,6 +531,7 @@ body.dark-mode .chip-min10 { color: #e7c182; }
 .sucursal-icon { width: 32px; height: 32px; flex: none; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; background: var(--surface-alt); border: 1px solid var(--border); color: var(--brand-green-strong); font-size: 14px; }
 body.dark-mode .sucursal-icon { color: var(--brand-green); }
 .sucursal-bottom { border-top: 1px solid var(--border); padding-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.sucursal-meta { margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink-muted); }
 .sucursal-encargado { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
 .sucursal-tel { display: flex; align-items: center; gap: 9px; font-family: var(--font-mono); font-weight: 600; font-size: 16.5px; color: var(--brand-mid); }
 .sucursal-tel.is-link:hover { color: var(--brand-green-strong); }

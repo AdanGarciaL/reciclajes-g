@@ -831,25 +831,32 @@ async function loadBranchesIntoForm() {
 
 function branchCardHtml(b, i) {
   const isSucursal = b.kind !== "directo";
+  const stateOptions = MEXICO_STATES.map((s) => `<option value="${s.id}" ${b.estado === s.id ? "selected" : ""}>${esc(s.name)}</option>`).join("");
   return `
     <div class="branch-edit-card" data-branch-index="${i}">
-      <div class="price-edit-row cols-3">
+      <div class="otm-row">
         <div class="field"><label>Tipo</label>
           <select class="branch-kind-input">
             <option value="sucursal" ${isSucursal ? "selected" : ""}>Sucursal (local fijo)</option>
             <option value="directo" ${!isSucursal ? "selected" : ""}>Contacto directo (sin local)</option>
           </select>
         </div>
+        <div class="field"><label>Estado</label>
+          <select class="branch-estado-input">${stateOptions}</select>
+        </div>
+      </div>
+      <p class="price-hint">El estado es el título de la tarjeta en el sitio; abajo se muestra "Sucursal" o el nombre de quien atiende, según el tipo.</p>
+      <div class="otm-row" style="margin-top:12px">
         <div class="field"><label>Nombre de quien atiende</label><input type="text" class="branch-nombre-input" value="${esc(b.nombre || "")}" placeholder="Nombre" /></div>
         <div class="field"><label>WhatsApp (10 dígitos)</label><input type="text" class="branch-wa-input" value="${esc(stripCountry(b.whatsapp))}" placeholder="2221234567" /></div>
       </div>
-      <div class="otm-row branch-fields-sucursal" ${isSucursal ? "" : "hidden"}>
-        <div class="field"><label>Ubicación</label><input type="text" class="branch-ubicacion-input" value="${esc(b.ubicacion || "")}" placeholder="Ej. Plaza de la Tecnología" /></div>
+      <div class="otm-row branch-fields-sucursal" style="margin-top:12px" ${isSucursal ? "" : "hidden"}>
+        <div class="field"><label>Ubicación (plaza o dirección)</label><input type="text" class="branch-ubicacion-input" value="${esc(b.ubicacion || "")}" placeholder="Ej. Plaza de la Tecnología" /></div>
         <div class="field"><label>Número de local (opcional)</label><input type="text" class="branch-local-input" value="${esc(b.local || "")}" placeholder="Ej. Local 83" /></div>
       </div>
-      <div class="field branch-fields-directo" ${isSucursal ? "hidden" : ""}>
-        <label>Ubicación o cobertura de estado</label>
-        <input type="text" class="branch-cobertura-input" value="${esc(b.cobertura || "")}" placeholder="Ej. En todo el estado de Puebla" />
+      <div class="field branch-fields-directo" style="margin-top:12px" ${isSucursal ? "hidden" : ""}>
+        <label>Detalle de cobertura (se muestra debajo del título)</label>
+        <input type="text" class="branch-cobertura-input" value="${esc(b.cobertura || "")}" placeholder="Ej. Coatzacoalcos y alrededores" />
       </div>
       <div class="branch-toggles">
         <label class="check-inline"><input type="checkbox" class="branch-activo-input" ${b.activo !== false ? "checked" : ""} /> Activo (si no, se muestra "Próximamente")</label>
@@ -878,7 +885,7 @@ document.getElementById("branchesForm")?.addEventListener("click", (e) => {
   renderBranchesForm();
 });
 document.getElementById("addBranchBtn")?.addEventListener("click", () => {
-  workingBranches.branches.push({ id: `contacto-${Date.now()}`, kind: "sucursal", nombre: "", cobertura: "", ubicacion: "", local: "", whatsapp: "", primary: false, activo: true });
+  workingBranches.branches.push({ id: `contacto-${Date.now()}`, kind: "sucursal", estado: MEXICO_STATES[0].id, nombre: "", cobertura: "", ubicacion: "", local: "", whatsapp: "", primary: false, activo: true });
   renderBranchesForm();
 });
 document.getElementById("resetBranchesBtn")?.addEventListener("click", loadBranchesIntoForm);
@@ -888,6 +895,7 @@ function readBranchesFromForm() {
     const i = Number(card.dataset.branchIndex);
     const b = workingBranches.branches[i];
     b.kind = card.querySelector(".branch-kind-input").value;
+    b.estado = card.querySelector(".branch-estado-input").value;
     b.nombre = card.querySelector(".branch-nombre-input").value.trim();
     const wa = card.querySelector(".branch-wa-input").value.trim();
     b.whatsapp = wa ? normalizeWhatsapp(wa) : "";

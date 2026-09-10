@@ -1,10 +1,10 @@
 {
   "branches": [
-    { "id": "puebla-domicilio", "kind": "directo", "nombre": "José G.", "cobertura": "En todo el estado de Puebla", "ubicacion": "", "local": "", "whatsapp": "522227548704", "primary": true, "activo": true },
-    { "id": "aguascalientes", "kind": "sucursal", "nombre": "Mari G.", "cobertura": "", "ubicacion": "Plaza de la Tecnología", "local": "Local 83", "whatsapp": "522213815164", "primary": false, "activo": true },
-    { "id": "coatzacoalcos", "kind": "directo", "nombre": "Adán G.", "cobertura": "Coatzacoalcos y alrededores", "ubicacion": "", "local": "", "whatsapp": "522214102306", "primary": false, "activo": true },
-    { "id": "guanajuato", "kind": "directo", "nombre": "Luis G.", "cobertura": "Guanajuato y alrededores", "ubicacion": "", "local": "", "whatsapp": "522222932290", "primary": false, "activo": true },
-    { "id": "acapulco", "kind": "sucursal", "nombre": "", "cobertura": "", "ubicacion": "Plaza de la Tecnología", "local": "", "whatsapp": "", "primary": false, "activo": false }
+    { "id": "puebla-domicilio", "kind": "directo", "estado": "puebla", "nombre": "José G.", "cobertura": "En todo el estado de Puebla", "ubicacion": "", "local": "", "whatsapp": "522227548704", "primary": true, "activo": true },
+    { "id": "aguascalientes", "kind": "sucursal", "estado": "aguascalientes", "nombre": "Mari G.", "cobertura": "", "ubicacion": "Plaza de la Tecnología", "local": "Local 83", "whatsapp": "522213815164", "primary": false, "activo": true },
+    { "id": "coatzacoalcos", "kind": "directo", "estado": "veracruz", "nombre": "Adán G.", "cobertura": "Coatzacoalcos y alrededores", "ubicacion": "", "local": "", "whatsapp": "522214102306", "primary": false, "activo": true },
+    { "id": "guanajuato", "kind": "directo", "estado": "guanajuato", "nombre": "Luis G.", "cobertura": "Guanajuato y alrededores", "ubicacion": "", "local": "", "whatsapp": "522222932290", "primary": false, "activo": true },
+    { "id": "acapulco", "kind": "sucursal", "estado": "guerrero", "nombre": "", "cobertura": "", "ubicacion": "Plaza de la Tecnología", "local": "", "whatsapp": "", "primary": false, "activo": false }
   ],
-  "updatedAt": "2026-09-09"
+  "updatedAt": "2026-09-10"
 }

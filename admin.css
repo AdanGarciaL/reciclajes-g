@@ -294,10 +294,6 @@ body.dark-mode .team-photo-fallback-admin { color: var(--brand-green); }
 }
 
 /* ---------- Sucursales y contacto ---------- */
-/* El renglón de 3 columnas se comparte con "tipos de tarjeta" (dos campos de
-   precio cortos); aquí la 3ª columna es un teléfono de 10 dígitos, así que
-   necesita más ancho que los 100px fijos de precio. */
-.branch-edit-card .price-edit-row.cols-3 { grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(130px,1fr); }
 .branch-edit-card { padding-top: 18px; margin-top: 18px; border-top: 1px solid var(--border); }
 .branch-edit-card:first-child { padding-top: 0; margin-top: 0; border-top: none; }
 .branch-edit-card .otm-row { margin-top: 12px; }

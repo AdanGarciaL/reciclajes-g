@@ -100,14 +100,11 @@ body.legal-dark-mode .legal-header {
   width: 3rem;
   height: 3rem;
   border-radius: 18px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, var(--legal-primary) 0%, var(--legal-primary-2) 100%);
-  color: #fff;
+  overflow: hidden;
   box-shadow: 0 12px 24px rgba(27, 127, 58, 0.28);
-  font-size: 1.2rem;
   flex: 0 0 auto;
 }
+.legal-mark img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 .legal-brand-copy strong {
   display: block;
@@ -281,6 +278,7 @@ body.legal-dark-mode .legal-pill {
 }
 
 .legal-section {
+  position: relative;
   padding: 0.95rem 0 1rem;
   border-top: 1px solid var(--legal-line);
 }
@@ -501,7 +499,6 @@ body.legal-dark-mode .legal-footer a {
   .legal-actions {
     width: 100%;
   }
-    position: relative;
 
   .legal-chip,
   .legal-button {
@@ -509,18 +506,22 @@ body.legal-dark-mode .legal-footer a {
   }
 }
 
-  .legal-section::before {
-    content: "";
-    position: absolute;
-    left: -1.2rem;
-    top: 1.1rem;
-    width: 0.35rem;
-    height: 1.35rem;
-    border-radius: 999px;
-    background: linear-gradient(180deg, var(--legal-primary), var(--legal-primary-2));
-    opacity: 0.75;
-  }
+.legal-section::before {
+  content: "";
+  position: absolute;
+  left: -1.2rem;
+  top: 1.1rem;
+  width: 0.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--legal-primary), var(--legal-primary-2));
+  opacity: 0.75;
+}
 
-  .legal-section:first-of-type::before {
-    top: 0.25rem;
-  }
+.legal-section:first-of-type::before {
+  top: 0.25rem;
+}
+
+@media (max-width: 640px) {
+  .legal-section::before { left: -0.75rem; }
+}

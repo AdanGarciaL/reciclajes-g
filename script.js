@@ -121,11 +121,11 @@ const FAQ_DATA = [
 
 const FALLBACK_BRANCHES = {
   branches: [
-    { id: "puebla-domicilio", kind: "directo", nombre: "José G.", cobertura: "En todo el estado de Puebla", ubicacion: "", local: "", whatsapp: "522227548704", primary: true, activo: true },
-    { id: "aguascalientes", kind: "sucursal", nombre: "Mari G.", cobertura: "", ubicacion: "Plaza de la Tecnología", local: "Local 83", whatsapp: "522213815164", primary: false, activo: true },
-    { id: "coatzacoalcos", kind: "directo", nombre: "Adán G.", cobertura: "Coatzacoalcos y alrededores", ubicacion: "", local: "", whatsapp: "522214102306", primary: false, activo: true },
-    { id: "guanajuato", kind: "directo", nombre: "Luis G.", cobertura: "Guanajuato y alrededores", ubicacion: "", local: "", whatsapp: "522222932290", primary: false, activo: true },
-    { id: "acapulco", kind: "sucursal", nombre: "", cobertura: "", ubicacion: "Plaza de la Tecnología", local: "", whatsapp: "", primary: false, activo: false }
+    { id: "puebla-domicilio", kind: "directo", estado: "puebla", nombre: "José G.", cobertura: "En todo el estado de Puebla", ubicacion: "", local: "", whatsapp: "522227548704", primary: true, activo: true },
+    { id: "aguascalientes", kind: "sucursal", estado: "aguascalientes", nombre: "Mari G.", cobertura: "", ubicacion: "Plaza de la Tecnología", local: "Local 83", whatsapp: "522213815164", primary: false, activo: true },
+    { id: "coatzacoalcos", kind: "directo", estado: "veracruz", nombre: "Adán G.", cobertura: "Coatzacoalcos y alrededores", ubicacion: "", local: "", whatsapp: "522214102306", primary: false, activo: true },
+    { id: "guanajuato", kind: "directo", estado: "guanajuato", nombre: "Luis G.", cobertura: "Guanajuato y alrededores", ubicacion: "", local: "", whatsapp: "522222932290", primary: false, activo: true },
+    { id: "acapulco", kind: "sucursal", estado: "guerrero", nombre: "", cobertura: "", ubicacion: "Plaza de la Tecnología", local: "", whatsapp: "", primary: false, activo: false }
   ]
 };
 
@@ -197,6 +197,9 @@ function getActiveStates() {
   const ids = (COVERAGE && COVERAGE.activeStateIds) || [];
   return ids.map((id) => MEXICO_STATES.find((s) => s.id === id)).filter(Boolean);
 }
+function getStateName(id) {
+  return MEXICO_STATES.find((s) => s.id === id)?.name || null;
+}
 
 function getMaterial(id) {
   return PRICES.materials.find((m) => m.id === id) || null;
@@ -204,6 +207,21 @@ function getMaterial(id) {
 function getGalleryImages(categoryId) {
   const cat = (GALLERY.categories || []).find((c) => c.id === categoryId);
   return cat ? cat.images : [];
+}
+/* Los materiales de la lista de precios no traen su propia categoría de
+   galería (solo los tipos de celular y "otros materiales" la tienen), así
+   que la buscamos por su priceId: así una foto real aparece desde la
+   tarjeta de precio, sin tener que entrar al detalle para verla. */
+function materialGalleryCategory(materialId) {
+  const type = PRICES.celularTypes.find((t) => t.priceId === materialId);
+  if (type) return type.galleryCategory;
+  const other = PRICES.otherMaterials.find((o) => o.priceId === materialId);
+  return other ? other.galleryCategory : null;
+}
+function materialPhoto(materialId) {
+  const category = materialGalleryCategory(materialId);
+  const images = category ? getGalleryImages(category) : [];
+  return images[0] || null;
 }
 
 /* ---------- Render: precios rápidos + tabla ---------- */
@@ -213,15 +231,20 @@ function renderPrices() {
   if (!quickGrid || !table) return;
 
   const quickItems = PRICES.materials.filter((m) => m.quick);
-  quickGrid.innerHTML = quickItems.map((m, i) => `
+  quickGrid.innerHTML = quickItems.map((m, i) => {
+    const photo = materialPhoto(m.id);
+    return `
     <article class="price-card reveal ${i ? "delay-" + Math.min(i, 3) : ""} show">
+      ${photo
+        ? `<div class="price-card-photo"><img src="${esc(photo.src)}" alt="${esc(photo.alt || m.name)}" loading="lazy" /></div>`
+        : ""}
       <span class="price-icon"><i class="bi ${esc(m.icon)}"></i></span>
       <p class="price-tag">${esc(m.name)}</p>
       <p class="price-value">${formatPrice(m.min, m.max, m.unit)}</p>
       <p class="price-copy">${esc(m.quickCopy || m.note || "")}</p>
       <button class="btn btn-ghost open-selector" data-preselect="${esc(m.id)}">Ver detalle</button>
-    </article>
-  `).join("");
+    </article>`;
+  }).join("");
 
   table.innerHTML = PRICES.materials.map((m) => `
     <div class="price-row">
@@ -266,9 +289,12 @@ function renderSelector() {
     }
     const m = getMaterial(item.id);
     if (!m) return "";
+    const photo = materialPhoto(m.id);
     return `
       <button class="selector-btn" type="button" data-material="${esc(m.id)}" data-group="${esc(item.group)}">
-        <span class="sel-icon">${esc(m.modalIcon)}</span>
+        ${photo
+          ? `<span class="sel-photo"><img src="${esc(photo.src)}" alt="" loading="lazy" /></span>`
+          : `<span class="sel-icon">${esc(m.modalIcon)}</span>`}
         <span class="sel-name">${esc(m.name)}</span>
         <span class="sel-price">${formatPrice(m.min, m.max, m.unit)}</span>
       </button>`;
@@ -449,16 +475,21 @@ function renderGalleryGeneral() {
   observeReveals();
 }
 
-/* ---------- Sucursales y contacto directo ---------- */
+/* ---------- Sucursales y contacto directo ----------
+   El título de cada tarjeta es el ESTADO; debajo, según el tipo, se muestra
+   "Sucursal" (+ local si aplica) o el nombre de la persona que atiende esa
+   zona. El resto de los datos (ubicación/local o cobertura + WhatsApp) va
+   en el cuerpo de la tarjeta. */
 function renderBranches() {
   const grid = document.getElementById("sucursalesGrid");
   if (!grid) return;
   const branches = (BRANCHES && BRANCHES.branches) || [];
   grid.innerHTML = branches.map((b, i) => {
     const isSucursal = b.kind === "sucursal";
-    const title = isSucursal ? (b.ubicacion || "Sucursal") : (b.cobertura || "Contacto directo");
-    const subtitle = isSucursal ? (b.local || "Sucursal") : "Contacto directo";
+    const title = getStateName(b.estado) || b.cobertura || b.ubicacion || "México";
+    const subtitle = isSucursal ? (b.local ? `Sucursal · ${b.local}` : "Sucursal") : (b.nombre || "Contacto directo");
     const icon = isSucursal ? "bi-shop" : "bi-geo-alt";
+    const metaLine = isSucursal ? (b.ubicacion || "") : (b.cobertura || "");
     const canWrite = b.activo !== false && b.whatsapp;
     return `
     <article class="sucursal-card reveal ${i ? "delay-" + Math.min(i, 3) : ""} ${b.primary ? "is-primary" : ""}">
@@ -467,7 +498,8 @@ function renderBranches() {
         <span class="sucursal-icon"><i class="bi ${icon}"></i></span>
       </div>
       <div class="sucursal-bottom">
-        <p class="sucursal-encargado">${esc(b.nombre || "Próximamente")}</p>
+        ${metaLine ? `<p class="sucursal-meta">${esc(metaLine)}</p>` : ""}
+        ${isSucursal ? `<p class="sucursal-encargado">${esc(b.nombre || "Próximamente")}</p>` : ""}
         ${canWrite
           ? `<a class="sucursal-tel is-link" href="${waLinkTo(b.whatsapp, "Hola, quiero vender material en " + title)}" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i>${esc(formatMexPhone(b.whatsapp))}</a>`
           : `<p class="sucursal-tel"><i class="bi bi-whatsapp"></i>Próximamente</p>`}
