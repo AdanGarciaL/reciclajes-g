@@ -15,6 +15,17 @@ const ESCAPE_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'":
 function esc(value) {
   return String(value ?? "").replace(/[&<>"']/g, (ch) => ESCAPE_MAP[ch]);
 }
+// Mismo chequeo que en script.js: un enlace de red social solo se guarda si
+// es http/https. Bloquea guardar un "javascript:..." pegado por error (o a
+// propósito) antes de que llegue a convertirse en un enlace real del sitio.
+function isSafeHttpUrl(url) {
+  try {
+    const u = new URL(String(url || "").trim(), window.location.href);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch (_e) {
+    return false;
+  }
+}
 
 function formatMexPhone(rawDigits) {
   let d = String(rawDigits || "").replace(/\D/g, "");
@@ -618,7 +629,21 @@ materialsFormEl?.addEventListener("click", (e) => {
   if (!removeBtn) return;
   readPricesFromForm();
   const i = Number(removeBtn.closest(".material-edit-card").dataset.materialIndex);
+  const removed = workingPrices.materials[i];
   workingPrices.materials.splice(i, 1);
+  // Un tipo o ficha que mostraba el precio de este material se queda sin a
+  // qué apuntar; se reasigna al primer material que quede (en vez de dejarlo
+  // huérfano en silencio) y se avisa para que se revise antes de guardar.
+  const fallbackId = workingPrices.materials[0]?.id || "";
+  const orphaned = [
+    ...workingPrices.celularTypes.filter((t) => t.priceId === removed.id),
+    ...workingPrices.otherMaterials.filter((o) => o.priceId === removed.id),
+  ];
+  orphaned.forEach((entry) => { entry.priceId = fallbackId; });
+  if (orphaned.length) {
+    const fallbackName = workingPrices.materials[0]?.name || "(ninguno, agrega uno)";
+    showStatus("pricesStatus", "error", `Quitaste "${esc(removed.name || removed.id)}", pero ${orphaned.length} tipo(s) o ficha(s) mostraban su precio. Se reasignaron a "${esc(fallbackName)}" — revísalos antes de guardar.`);
+  }
   renderPricesForm();
 });
 typesFormEl?.addEventListener("click", (e) => {
@@ -1060,6 +1085,11 @@ document.getElementById("saveTeamBtn")?.addEventListener("click", async () => {
   if (!guardDataLoaded("teamStatus")) return;
   if (!requireGitHub("teamStatus")) return;
   readTeamFromForm();
+  const unsafeLink = workingTeam.members.flatMap((m) => m.social || []).find((s) => !isSafeHttpUrl(s.url));
+  if (unsafeLink) {
+    showStatus("teamStatus", "error", `Ese enlace de red social no es válido: "${esc(unsafeLink.url)}". Debe empezar con http:// o https://`);
+    return;
+  }
   const btn = document.getElementById("saveTeamBtn");
   btn.disabled = true;
   showStatus("teamStatus", "info", "Guardando cambios en GitHub…");
@@ -1345,6 +1375,11 @@ document.getElementById("saveCoverageBtn")?.addEventListener("click", async () =
   if (!guardDataLoaded("coverageStatus")) return;
   if (!requireGitHub("coverageStatus")) return;
   readSocialFromForm();
+  const unsafeLink = workingSocial.links.find((l) => !isSafeHttpUrl(l.url));
+  if (unsafeLink) {
+    showStatus("coverageStatus", "error", `Ese enlace de red social no es válido: "${esc(unsafeLink.url)}". Debe empezar con http:// o https://`);
+    return;
+  }
   const btn = document.getElementById("saveCoverageBtn");
   btn.disabled = true;
   showStatus("coverageStatus", "info", "Guardando cambios en GitHub…");

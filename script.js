@@ -13,6 +13,18 @@ const ESCAPE_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'":
 function esc(value) {
   return String(value ?? "").replace(/[&<>"']/g, (ch) => ESCAPE_MAP[ch]);
 }
+// esc() solo protege contra HTML/inyección de etiquetas, no contra un
+// esquema peligroso (javascript:, data:, etc.) guardado como URL de una red
+// social. Cualquier enlace admin-editable que se use como href pasa primero
+// por aquí; si no es http(s), se ignora en vez de crear un enlace real.
+function isSafeHttpUrl(url) {
+  try {
+    const u = new URL(String(url || "").trim(), window.location.href);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch (_e) {
+    return false;
+  }
+}
 
 // Número de respaldo (por si aún no cargan los datos de sucursales); en cuanto
 // carga data/branches.json se reemplaza por el contacto marcado como "principal".
@@ -405,7 +417,7 @@ function showOtherMaterial(materialId) {
   document.getElementById("detailInfoEyebrow").textContent = "Consideraciones importantes";
   document.getElementById("detailCaption").textContent = `Referencia · ${data.eyebrow}`;
   document.getElementById("detailPrice").textContent = formatPrice(price.min, price.max, price.unit);
-  document.getElementById("detailSpecs").innerHTML = data.specs.map((s) => `<li><i class="bi bi-check2"></i><span>${s}</span></li>`).join("");
+  document.getElementById("detailSpecs").innerHTML = data.specs.map((s) => `<li><i class="bi bi-check2"></i><span>${esc(s)}</span></li>`).join("");
   document.getElementById("detailWaLink").href = waLink(`Hola, tengo ${data.eyebrow.toLowerCase()} para vender.`);
 
   setCarousel(getGalleryImages(data.galleryCategory));
@@ -536,7 +548,7 @@ function renderTeam() {
       <div class="team-contacts">
         ${m.whatsapp ? `<a class="team-contact-link" href="${waLinkTo(m.whatsapp, "Hola, quiero contactarte por Eco Lógica García")}" target="_blank" rel="noopener" aria-label="WhatsApp de ${esc(m.name)}"><i class="bi bi-whatsapp"></i></a>` : ""}
         ${m.email ? `<a class="team-contact-link" href="mailto:${esc(m.email)}" aria-label="Correo de ${esc(m.name)}"><i class="bi bi-envelope"></i></a>` : ""}
-        ${(m.social || []).map((s) => `<a class="team-contact-link" href="${esc(s.url)}" target="_blank" rel="noopener" aria-label="${esc(s.network)} de ${esc(m.name)}"><i class="bi ${SOCIAL_ICONS[s.network] || "bi-globe2"}"></i></a>`).join("")}
+        ${(m.social || []).filter((s) => isSafeHttpUrl(s.url)).map((s) => `<a class="team-contact-link" href="${esc(s.url)}" target="_blank" rel="noopener" aria-label="${esc(s.network)} de ${esc(m.name)}"><i class="bi ${SOCIAL_ICONS[s.network] || "bi-globe2"}"></i></a>`).join("")}
       </div>
     </article>
   `).join("");
@@ -546,7 +558,7 @@ function renderTeam() {
 /* ---------- Redes sociales ---------- */
 const SOCIAL_ICONS = { facebook: "bi-facebook", instagram: "bi-instagram", tiktok: "bi-tiktok", youtube: "bi-youtube", x: "bi-twitter-x", other: "bi-globe2" };
 function renderSocial() {
-  const links = (SOCIAL && SOCIAL.links) || [];
+  const links = ((SOCIAL && SOCIAL.links) || []).filter((l) => isSafeHttpUrl(l.url));
   document.querySelectorAll(".js-social-links").forEach((wrap) => {
     wrap.innerHTML = links.map((l) => `
       <a class="social-link" href="${esc(l.url)}" target="_blank" rel="noopener" aria-label="${esc(l.label || l.network)}">
