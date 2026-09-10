@@ -774,17 +774,83 @@ async function loadGalleryIntoUI() {
 
 function renderGalleryCats() {
   const wrap = document.getElementById("galleryCats");
-  wrap.innerHTML = workingGallery.categories.map((c) => `
-    <button type="button" class="gallery-cat-btn ${c.id === activeCategoryId ? "is-active" : ""}" data-cat="${esc(c.id)}">${esc(c.label)} (${c.images.length})</button>
-  `).join("");
+  wrap.innerHTML = workingGallery.categories.length
+    ? workingGallery.categories.map((c) => `
+      <button type="button" class="gallery-cat-btn ${c.id === activeCategoryId ? "is-active" : ""}" data-cat="${esc(c.id)}">${esc(c.label)} (${c.images.length})</button>
+    `).join("")
+    : `<p class="price-hint" style="margin:0">Todavía no hay categorías. Agrega una para poder subir fotos.</p>`;
   wrap.querySelectorAll(".gallery-cat-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
+      syncGalleryCatLabels();
       activeCategoryId = btn.dataset.cat;
       renderGalleryCats();
       renderGalleryThumbs();
     });
   });
+  renderGalleryCatEditor();
 }
+
+// Lista aparte, siempre visible, para renombrar o quitar categorías (los
+// pills de arriba solo sirven para elegir cuál ver). No toca id/folder al
+// renombrar: eso mantendría rotas las fotos ya subidas si cambiara.
+function renderGalleryCatEditor() {
+  const wrap = document.getElementById("galleryCatEditor");
+  if (!wrap) return;
+  wrap.innerHTML = workingGallery.categories.map((c, i) => `
+    <div class="cat-edit-row" data-cat-index="${i}">
+      <input type="text" class="cat-label-input" value="${esc(c.label)}" placeholder="Nombre de la categoría" />
+      <span class="cat-photo-count">${c.images.length} foto(s)</span>
+      <button type="button" class="btn btn-danger btn-sm cat-remove-btn" aria-label="Quitar categoría"><i class="bi bi-trash"></i></button>
+    </div>
+  `).join("");
+}
+// Sin filtrar ni tocar id/folder: solo guarda el texto ya escrito en cada
+// nombre antes de agregar/quitar otra categoría, para no perderlo.
+function syncGalleryCatLabels() {
+  document.querySelectorAll("#galleryCatEditor .cat-edit-row").forEach((row) => {
+    const i = Number(row.dataset.catIndex);
+    const label = row.querySelector(".cat-label-input").value.trim();
+    if (label && workingGallery.categories[i]) workingGallery.categories[i].label = label;
+  });
+}
+
+document.getElementById("addCategoryBtn")?.addEventListener("click", () => {
+  syncGalleryCatLabels();
+  const label = "Nueva categoría";
+  const existingIds = new Set(workingGallery.categories.map((c) => c.id));
+  let id = slugify(label) || "categoria";
+  let suffix = 2;
+  while (existingIds.has(id)) { id = `${slugify(label) || "categoria"}-${suffix++}`; }
+  workingGallery.categories.push({ id, label, folder: `Galeria/${id}`, images: [] });
+  activeCategoryId = id;
+  renderGalleryCats();
+  renderGalleryThumbs();
+});
+
+document.getElementById("galleryCatEditor")?.addEventListener("click", (e) => {
+  const removeBtn = e.target.closest(".cat-remove-btn");
+  if (!removeBtn) return;
+  syncGalleryCatLabels();
+  const i = Number(removeBtn.closest(".cat-edit-row").dataset.catIndex);
+  const removed = workingGallery.categories[i];
+  workingGallery.categories.splice(i, 1);
+  pendingUploads = pendingUploads.filter((p) => p.categoryId !== removed.id);
+  if (activeCategoryId === removed.id) activeCategoryId = workingGallery.categories[0]?.id || null;
+  // Si algún tipo o ficha de "Precios y tipos" todavía usaba esta categoría
+  // para sus fotos, avisa: su tarjeta mostrará una foto genérica hasta que
+  // se le asigne otra (el sitio público no se rompe, pero conviene saberlo).
+  if (workingPrices) {
+    const affected = [
+      ...(workingPrices.celularTypes || []).filter((t) => t.galleryCategory === removed.id),
+      ...(workingPrices.otherMaterials || []).filter((o) => o.galleryCategory === removed.id),
+    ];
+    if (affected.length) {
+      showStatus("galleryStatus", "error", `Quitaste "${esc(removed.label)}", pero ${affected.length} tipo(s)/ficha(s) en "Precios y tipos" todavía la usaban para sus fotos. Mostrarán una foto genérica hasta que les asignes otra categoría.`);
+    }
+  }
+  renderGalleryCats();
+  renderGalleryThumbs();
+});
 
 function currentCategory() {
   return workingGallery.categories.find((c) => c.id === activeCategoryId);
@@ -792,8 +858,14 @@ function currentCategory() {
 
 function renderGalleryThumbs() {
   const grid = document.getElementById("galleryThumbs");
+  const uploadBox = document.querySelector(".add-photo-box");
   const cat = currentCategory();
-  if (!cat) { grid.innerHTML = ""; return; }
+  if (!cat) {
+    grid.innerHTML = `<p class="price-hint" style="margin:0">Agrega una categoría arriba para poder subir fotos.</p>`;
+    if (uploadBox) uploadBox.hidden = true;
+    return;
+  }
+  if (uploadBox) uploadBox.hidden = false;
 
   const existingHtml = cat.images.map((img, i) => `
     <div class="gallery-thumb" data-existing-index="${i}">
@@ -821,6 +893,7 @@ function renderGalleryThumbs() {
 
   grid.querySelectorAll("[data-existing-index] .thumb-remove").forEach((btn) => {
     btn.addEventListener("click", () => {
+      readGalleryAltEdits();
       const idx = Number(btn.closest(".gallery-thumb").dataset.existingIndex);
       cat.images.splice(idx, 1);
       renderGalleryCats();
@@ -829,6 +902,7 @@ function renderGalleryThumbs() {
   });
   grid.querySelectorAll("[data-pending-id] .thumb-remove").forEach((btn) => {
     btn.addEventListener("click", () => {
+      readGalleryAltEdits();
       const id = btn.closest(".gallery-thumb").dataset.pendingId;
       pendingUploads = pendingUploads.filter((p) => p.id !== id);
       renderGalleryThumbs();
@@ -837,6 +911,7 @@ function renderGalleryThumbs() {
 }
 
 function readGalleryAltEdits() {
+  syncGalleryCatLabels();
   const cat = currentCategory();
   if (!cat) return;
   document.querySelectorAll("#galleryThumbs [data-existing-index]").forEach((el) => {
@@ -879,10 +954,23 @@ function slugify(text) {
     .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024; // 25 MB: generoso para una foto de celular, evita colgar el navegador con un archivo enorme
 document.getElementById("addPhotoInput")?.addEventListener("change", async (e) => {
   const file = e.target.files[0];
   e.target.value = "";
-  if (!file || !activeCategoryId) return;
+  if (!file) return;
+  if (!activeCategoryId) {
+    showStatus("galleryStatus", "error", "Agrega una categoría antes de subir una foto.");
+    return;
+  }
+  if (!file.type.startsWith("image/")) {
+    showStatus("galleryStatus", "error", `"${esc(file.name)}" no es una imagen. Sube un archivo JPG, PNG o similar.`);
+    return;
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    showStatus("galleryStatus", "error", `"${esc(file.name)}" es demasiado grande (máximo 25 MB). Prueba con otra foto o reduce su tamaño antes de subirla.`);
+    return;
+  }
   const cat = currentCategory();
   try {
     const dataUrl = await resizeImageFile(file);
@@ -913,12 +1001,18 @@ document.getElementById("saveGalleryBtn")?.addEventListener("click", async () =>
 
   const btn = document.getElementById("saveGalleryBtn");
   btn.disabled = true;
-  showStatus("galleryStatus", "info", `Subiendo ${pendingUploads.length} foto(s) y guardando cambios…`);
+  const toUpload = pendingUploads.filter((u) => !u._uploaded);
+  showStatus("galleryStatus", "info", `Subiendo ${toUpload.length} foto(s) y guardando cambios…`);
   try {
-    for (const upload of pendingUploads) {
+    // Si una foto anterior en este mismo intento ya se subió con éxito, no
+    // se vuelve a mandar en un reintento: así, si la conexión falla a la
+    // mitad, dar clic en "Guardar cambios" otra vez retoma donde se quedó
+    // en vez de repetir (y fallar) las fotos que ya están en GitHub.
+    for (const upload of toUpload) {
       await ghPutFile(upload.path, upload.base64, `Agrega foto de galería (panel interno, ${ghUsername})`);
+      upload._uploaded = true;
       const cat = workingGallery.categories.find((c) => c.id === upload.categoryId);
-      cat.images.push({ src: upload.path, alt: upload.alt || cat.label });
+      if (cat) cat.images.push({ src: upload.path, alt: upload.alt || cat.label });
     }
     workingGallery.updatedAt = new Date().toISOString().slice(0, 10);
     await ghSaveJson("data/gallery.json", workingGallery, `Actualiza galería (panel interno, ${ghUsername})`);
@@ -927,7 +1021,11 @@ document.getElementById("saveGalleryBtn")?.addEventListener("click", async () =>
     renderGalleryCats();
     renderGalleryThumbs();
   } catch (err) {
-    showStatus("galleryStatus", "error", err.message || "No se pudo guardar la galería.");
+    const uploadedNow = toUpload.filter((u) => u._uploaded).length;
+    pendingUploads = pendingUploads.filter((u) => !u._uploaded);
+    const extra = uploadedNow ? ` ${uploadedNow} foto(s) ya se subieron; presiona "Guardar cambios" de nuevo para terminar.` : "";
+    showStatus("galleryStatus", "error", (err.message || "No se pudo guardar la galería.") + extra);
+    renderGalleryThumbs();
   } finally {
     btn.disabled = false;
   }

@@ -179,6 +179,14 @@ body.dark-mode .help-box code { background: rgba(255,255,255,.08); }
 }
 .gallery-cat-btn.is-active { background: var(--brand-green-strong); border-color: var(--brand-green-strong); color: #06210f; }
 body.dark-mode .gallery-cat-btn.is-active { background: var(--brand-green); }
+.gallery-cat-editor { display: flex; flex-direction: column; gap: 8px; padding-top: 16px; border-top: 1px solid var(--border); }
+.cat-edit-row { display: flex; align-items: center; gap: 10px; }
+.cat-edit-row .cat-label-input { flex: 1; min-width: 0; }
+.cat-edit-row .cat-photo-count { flex: none; font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-soft); white-space: nowrap; }
+.cat-edit-row .cat-remove-btn { flex: none; }
+@media (max-width: 480px) {
+  .cat-edit-row .cat-photo-count { display: none; }
+}
 .gallery-thumb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
 .gallery-thumb { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-alt); position: relative; }
 .gallery-thumb .thumb-img { aspect-ratio: 4/3; overflow: hidden; }
