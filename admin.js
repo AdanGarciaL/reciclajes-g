@@ -584,6 +584,21 @@ function iconSelectHtml(currentIcon, inputClass) {
 function materialOptionsHtml(selectedId) {
   return workingPrices.materials.map((m) => `<option value="${esc(m.id)}" ${m.id === selectedId ? "selected" : ""}>${esc(m.name || m.id)}</option>`).join("");
 }
+// Usado en el editor de "Tipo" y "Ficha de otro material": conecta ese
+// elemento con una categoría real de la Galería, para que sus fotos
+// aparezcan en el carrusel del sitio público. Sin esto, un tipo o ficha
+// nuevo se queda con galleryCategory vacío — aunque se suban fotos a una
+// categoría con el mismo nombre en la pestaña Galería, el sitio no tiene
+// forma de saber que van juntos, y muestra una sola foto genérica en su
+// lugar.
+function galleryCategoryOptionsHtml(selectedId) {
+  const categories = workingGallery?.categories || [];
+  const options = categories.map((c) => {
+    const count = c.images.length;
+    return `<option value="${esc(c.id)}" ${c.id === selectedId ? "selected" : ""}>${esc(c.label)} (${count} foto${count === 1 ? "" : "s"})</option>`;
+  }).join("");
+  return `<option value="">Sin categoría (se muestra una foto genérica)</option>${options}`;
+}
 
 function showStatus(elId, kind, text) {
   const el = document.getElementById(elId);
@@ -795,9 +810,15 @@ function typeFormHtml(t) {
       <div class="field"><label>Mín. $/kg</label><input type="number" min="0" step="1" class="type-min" value="${t.min}" /></div>
       <div class="field"><label>Máx. $/kg</label><input type="number" min="0" step="1" class="type-max" value="${t.max}" /></div>
     </div>
-    <div class="field" style="margin-top:12px"><label>Material al que pertenece</label>
-      <select class="type-priceid">${materialOptionsHtml(t.priceId)}</select>
+    <div class="otm-row" style="margin-top:12px">
+      <div class="field"><label>Material al que pertenece</label>
+        <select class="type-priceid">${materialOptionsHtml(t.priceId)}</select>
+      </div>
+      <div class="field"><label>Categoría de fotos (Galería)</label>
+        <select class="type-gallerycat">${galleryCategoryOptionsHtml(t.galleryCategory)}</select>
+      </div>
     </div>
+    <p class="price-hint">Elige qué categoría de la pestaña "Galería" se muestra en el carrusel de fotos de este tipo. Si no eliges ninguna (o la categoría no tiene fotos), se muestra una foto genérica.</p>
     ${specsEditorHtml(t.specs)}`;
 }
 function applyTypeForm(t) {
@@ -811,6 +832,7 @@ function applyTypeForm(t) {
   t.min = min;
   t.max = max;
   t.priceId = itemModalBodyEl.querySelector(".type-priceid").value;
+  t.galleryCategory = itemModalBodyEl.querySelector(".type-gallerycat").value;
   t.specs = readSpecs(itemModalBodyEl);
 }
 function renderTypesList() {
@@ -870,10 +892,15 @@ function otmFormHtml(o) {
       <div class="field"><label>Etiqueta corta</label><input type="text" class="otm-eyebrow" value="${esc(o.eyebrow)}" /></div>
       <div class="field"><label>Título</label><input type="text" class="otm-title" value="${esc(o.title)}" /></div>
     </div>
-    <div class="field" style="margin-top:12px"><label>Material al que pertenece</label>
-      <select class="otm-priceid">${materialOptionsHtml(o.priceId)}</select>
+    <div class="otm-row" style="margin-top:12px">
+      <div class="field"><label>Material al que pertenece</label>
+        <select class="otm-priceid">${materialOptionsHtml(o.priceId)}</select>
+      </div>
+      <div class="field"><label>Categoría de fotos (Galería)</label>
+        <select class="otm-gallerycat">${galleryCategoryOptionsHtml(o.galleryCategory)}</select>
+      </div>
     </div>
-    <p class="price-hint">Precio actual: <strong>${priceLabel}</strong> — se edita en "Materiales".</p>
+    <p class="price-hint">Precio actual: <strong>${priceLabel}</strong> — se edita en "Materiales". La categoría de fotos elegida es la que se muestra en el carrusel de esta ficha; si no eliges ninguna, se muestra una foto genérica.</p>
     ${specsEditorHtml(o.specs)}`;
 }
 function applyOtmForm(o) {
@@ -882,6 +909,7 @@ function applyOtmForm(o) {
   o.eyebrow = itemModalBodyEl.querySelector(".otm-eyebrow").value.trim();
   o.title = title;
   o.priceId = itemModalBodyEl.querySelector(".otm-priceid").value;
+  o.galleryCategory = itemModalBodyEl.querySelector(".otm-gallerycat").value;
   o.specs = readSpecs(itemModalBodyEl);
 }
 function renderOtherMaterialsList() {
