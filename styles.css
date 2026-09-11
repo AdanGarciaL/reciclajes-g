@@ -184,19 +184,19 @@ h1, h2, h3, p { margin: 0; }
 .site-header.is-scrolled { box-shadow: var(--shadow-sm); }
 .nav {
   min-height: var(--header-h);
-  display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  display: flex; align-items: center; justify-content: space-between; gap: clamp(10px, 1.5vw, 20px);
 }
-.logo { display: inline-flex; align-items: center; gap: 11px; flex: 1 1 auto; min-width: 0; overflow: hidden; }
+.logo { display: inline-flex; align-items: center; gap: 11px; flex: 0 1 auto; min-width: 0; }
 .logo-mark { width: 40px; height: 40px; border-radius: 11px; overflow: hidden; flex: none; box-shadow: var(--shadow-sm); }
 .logo-mark img { width: 100%; height: 100%; object-fit: cover; }
-.logo-text-wrap { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow: hidden; }
-.logo-text { font-family: var(--font-display); font-weight: 900; font-size: 17px; line-height: 1; letter-spacing: -0.01em; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.logo-text-wrap { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.logo-text { font-family: var(--font-display); font-weight: 900; font-size: 17px; line-height: 1; letter-spacing: -0.01em; color: var(--ink); white-space: nowrap; }
 .logo-text .logo-kas { color: var(--brand-green-strong); }
 body.dark-mode .logo-text .logo-kas { color: var(--brand-green); }
-.logo-subtext { font-family: var(--font-display); font-weight: 600; font-size: 9px; letter-spacing: 0.25em; color: var(--ink-soft); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.logo-subtext { font-family: var(--font-display); font-weight: 600; font-size: 9px; letter-spacing: 0.22em; color: var(--ink-soft); text-transform: uppercase; white-space: nowrap; }
 
-.nav-links { display: flex; gap: 26px; flex-wrap: wrap; }
-.nav-links a { font-size: 14px; font-weight: 500; color: var(--ink-muted); padding: 6px 0; position: relative; transition: color 0.2s ease; }
+.nav-links { display: flex; gap: clamp(8px, 1.2vw, 16px); flex-wrap: nowrap; align-items: center; }
+.nav-links a { font-size: 13.5px; font-weight: 500; color: var(--ink-muted); padding: 6px 2px; position: relative; transition: color 0.2s ease; white-space: nowrap; }
 .nav-links a::after {
   content: ""; position: absolute; left: 0; right: 100%; bottom: -2px; height: 2px;
   background: var(--brand-green-strong); transition: right 0.25s ease;
@@ -212,6 +212,7 @@ body.dark-mode .nav-links a::after { background: var(--brand-green); }
 }
 
 .nav-actions { display: flex; align-items: center; gap: 10px; flex: none; }
+.nav-cta { padding: 9px 15px; font-size: 13.5px; }
 .theme-toggle {
   width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--border-strong);
   background: var(--surface); color: var(--ink); display: inline-flex; align-items: center;
@@ -331,10 +332,14 @@ body.dark-mode .hero-media-foot .foot-price { color: var(--brand-green); }
   border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; background: var(--surface);
   display: flex; flex-direction: column; gap: 10px; transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   overflow: hidden;
+  position: relative;
 }
 .price-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--border-strong); }
 .price-card-photo {
-  margin: -24px -24px 4px; aspect-ratio: 16/10; overflow: hidden; background: var(--surface-alt);
+  margin: -24px -24px 8px; aspect-ratio: 16/10; overflow: hidden; background: #ffffff;
+  display: flex; align-items: center; justify-content: center; padding: 10px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
 }
 /* contain, no cover: ver nota en .hero-media-frame img sobre por qué. Sin
    zoom al pasar el mouse por el mismo motivo que el hero: recortaría la
@@ -686,7 +691,7 @@ body.dark-mode .text-accent { color: var(--brand-green); }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* ---------- Responsive ---------- */
-@media (max-width: 880px) {
+@media (max-width: 1024px) {
   .nav-links {
     position: fixed; top: var(--header-total-h, calc(var(--header-h) + var(--topbar-h))); left: 0; right: 0; bottom: 0;
     background: var(--bg); flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 0;
@@ -813,11 +818,12 @@ body.dark-mode .calc-chip-btn.is-active {
   gap: 12px;
   flex-wrap: wrap;
 }
-/* Agrupa el bloque de kilos y el de gramos (agregado para poder cotizar
-   pesos más realistas, no solo kilos enteros) uno junto al otro. */
-.calc-weight-fields { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.calc-stepper-grams { padding-right: 10px; }
-.calc-number-input-sm { width: 46px; font-size: 17px; }
+.calc-weight-fields {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 .calc-stepper {
   display: inline-flex;
   align-items: center;
@@ -848,16 +854,23 @@ body.dark-mode .calc-chip-btn.is-active {
   color: #fff;
   transform: scale(1.05);
 }
+body.dark-mode .calc-step-btn:hover {
+  background: var(--brand-signal);
+  color: var(--brand-carbon);
+}
 .calc-number-input {
-  width: 54px;
+  width: 46px;
   border: none;
   background: transparent;
   color: var(--ink);
   font-family: var(--font-mono);
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 700;
   text-align: center;
   -moz-appearance: textfield;
+}
+.calc-number-input-grams {
+  width: 50px;
 }
 .calc-number-input::-webkit-outer-spin-button,
 .calc-number-input::-webkit-inner-spin-button {
@@ -1132,24 +1145,23 @@ body.dark-mode .benefit-item i {
 }
 .featured-price-badge {
   position: absolute;
-  top: -14px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 10px;
+  right: 10px;
   background: var(--brand-signal);
   color: var(--brand-carbon);
   font-family: var(--font-display);
   font-weight: 900;
   font-size: 11px;
-  letter-spacing: 0.06em;
-  padding: 4px 14px;
+  letter-spacing: 0.05em;
+  padding: 5px 12px;
   border-radius: 999px;
   text-transform: uppercase;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  box-shadow: 0 4px 12px rgba(63, 216, 106, 0.4);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
   white-space: nowrap;
-  z-index: 2;
+  z-index: 5;
 }
 
 /* ---------- Botón de WhatsApp por Sucursal ---------- */

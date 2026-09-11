@@ -336,6 +336,8 @@ function renderCalculator() {
   const weightRange = document.getElementById("calcWeightRange");
   const minusBtn = document.getElementById("calcMinusBtn");
   const plusBtn = document.getElementById("calcPlusBtn");
+  const minusGramsBtn = document.getElementById("calcMinusGramsBtn");
+  const plusGramsBtn = document.getElementById("calcPlusGramsBtn");
   const pillsContainer = document.getElementById("calcQuickPills");
   if (!chipsContainer || !selectEl || !weightInput) return;
 
@@ -366,16 +368,6 @@ function renderCalculator() {
     </option>
   `).join("");
 
-  // Nunca deja el lote en "0 kg 0 g": si alguien borra ambos campos, vuelve
-  // a poner un mínimo razonable en gramos en vez de mostrar una cotización
-  // de $0, que se leería como un error.
-  function ensureMinimumWeight() {
-    if (CALC_STATE.weight === 0 && CALC_STATE.grams === 0) {
-      CALC_STATE.grams = 100;
-      if (gramsInput) gramsInput.value = 100;
-    }
-  }
-
   function updateCalculation() {
     const item = items.find((it) => it.id === CALC_STATE.materialId) || items[0];
     const kg = CALC_STATE.weight;
@@ -393,20 +385,29 @@ function renderCalculator() {
     const waBtn = document.getElementById("calcWaBtn");
 
     if (titleEl) titleEl.textContent = item.name;
-    if (amountEl) amountEl.textContent = `${fmt(totalMin)} – ${fmt(totalMax)}`;
-    if (formulaEl) formulaEl.textContent = `Calculado para ${weightLabel} × (${fmt(item.min)} – ${fmt(item.max)} /kg)`;
 
-    if (waBtn) {
-      const msg = `Hola Ecológica García, coticé en su página web un lote de ${weightLabel} de ${item.name} con un estimado de ${fmt(totalMin)} a ${fmt(totalMax)} MXN. ¿Me podrían dar informes para entrega o recolección?`;
-      waBtn.href = waLink(msg);
+    if (totalKg <= 0) {
+      if (amountEl) amountEl.textContent = "$0 – $0";
+      if (formulaEl) formulaEl.textContent = "Ingresa los kilos o gramos de tu lote para cotizar";
+      if (waBtn) {
+        const msg = `Hola Ecológica García, quiero cotizar un lote de ${item.name}. ¿Me podrían dar informes para entrega o recolección?`;
+        waBtn.href = waLink(msg);
+      }
+    } else {
+      if (amountEl) amountEl.textContent = `${fmt(totalMin)} – ${fmt(totalMax)}`;
+      if (formulaEl) formulaEl.textContent = `Calculado para ${weightLabel} × (${fmt(item.min)} – ${fmt(item.max)} /kg)`;
+      if (waBtn) {
+        const msg = `Hola Ecológica García, coticé en su página web un lote de ${weightLabel} de ${item.name} con un estimado de ${fmt(totalMin)} a ${fmt(totalMax)} MXN. ¿Me podrían dar informes para entrega o recolección?`;
+        waBtn.href = waLink(msg);
+      }
     }
 
-    // Update active quick pill (solo coincide si los gramos están en cero:
-    // los accesos rápidos son valores redondos de kilos exactos)
+    // Update active quick pill
     if (pillsContainer) {
       pillsContainer.querySelectorAll(".quick-pill").forEach((pill) => {
-        const pillKg = Number(pill.dataset.kg);
-        pill.classList.toggle("is-active", pillKg === kg && g === 0);
+        const pKg = Number(pill.dataset.kg || 0);
+        const pG = Number(pill.dataset.g || 0);
+        pill.classList.toggle("is-active", pKg === kg && pG === g);
       });
     }
   }
@@ -418,55 +419,48 @@ function renderCalculator() {
     // Weight range slider
     if (weightRange) {
       weightRange.addEventListener("input", (e) => {
-        CALC_STATE.weight = Math.max(1, parseInt(e.target.value, 10) || 1);
+        CALC_STATE.weight = Math.max(0, parseInt(e.target.value, 10) || 0);
         weightInput.value = CALC_STATE.weight;
         updateCalculation();
       });
     }
 
-    // Weight number input (kilos enteros; puede llegar a 0 porque ahora el
-    // campo de gramos puede cargar el peso de un lote chico por sí solo)
+    // Weight number input (soporta enteros o decimales tipo 2.5)
     weightInput.addEventListener("input", (e) => {
-      let val = parseInt(e.target.value, 10);
-      if (isNaN(val) || val < 0) val = 0;
-      if (val > 1000) val = 1000;
-      CALC_STATE.weight = val;
-      if (weightRange && val <= 50) weightRange.value = Math.max(1, val);
-      ensureMinimumWeight();
+      const raw = e.target.value.trim();
+      if (raw === "") {
+        CALC_STATE.weight = 0;
+        updateCalculation();
+        return;
+      }
+      let num = parseFloat(raw);
+      if (isNaN(num) || num < 0) num = 0;
+      if (num > 1000) num = 1000;
+
+      // Si escribe decimales (ej. 2.5 kg), pasamos el remanente a gramos
+      if (!Number.isInteger(num)) {
+        const wholeKg = Math.floor(num);
+        const remG = Math.min(999, Math.round((num - wholeKg) * 1000));
+        CALC_STATE.weight = wholeKg;
+        CALC_STATE.grams = remG;
+        if (gramsInput) gramsInput.value = remG;
+      } else {
+        CALC_STATE.weight = Math.floor(num);
+      }
+      if (weightRange && CALC_STATE.weight <= 50) weightRange.value = Math.max(0, CALC_STATE.weight);
       updateCalculation();
     });
+    weightInput.addEventListener("blur", () => {
+      weightInput.value = CALC_STATE.weight;
+    });
 
-    // Gramos adicionales, para un peso más realista que solo kilos redondos
-    if (gramsInput) {
-      gramsInput.addEventListener("input", (e) => {
-        let val = parseInt(e.target.value, 10);
-        if (isNaN(val) || val < 0) val = 0;
-        // Si se pasa de 999 g, se convierte lo que sobre a kilos completos
-        // (escribir 1500 g se vuelve 1 kg 500 g), para no dejar un estado
-        // raro como "2 kg 1300 g".
-        if (val >= 1000) {
-          const extraKg = Math.floor(val / 1000);
-          CALC_STATE.weight = Math.min(1000, CALC_STATE.weight + extraKg);
-          val = val % 1000;
-          weightInput.value = CALC_STATE.weight;
-          if (weightRange && CALC_STATE.weight <= 50) weightRange.value = CALC_STATE.weight;
-        }
-        CALC_STATE.grams = val;
-        gramsInput.value = val;
-        ensureMinimumWeight();
-        updateCalculation();
-      });
-    }
-
-    // Plus and Minus buttons (solo tocan los kilos enteros; los gramos que
-    // ya se hayan puesto se quedan igual)
+    // Plus and Minus buttons (kilos)
     if (minusBtn) {
       minusBtn.addEventListener("click", () => {
         if (CALC_STATE.weight > 0) {
           CALC_STATE.weight -= 1;
           weightInput.value = CALC_STATE.weight;
-          if (weightRange && CALC_STATE.weight <= 50) weightRange.value = Math.max(1, CALC_STATE.weight);
-          ensureMinimumWeight();
+          if (weightRange && CALC_STATE.weight <= 50) weightRange.value = Math.max(0, CALC_STATE.weight);
           updateCalculation();
         }
       });
@@ -476,26 +470,82 @@ function renderCalculator() {
         if (CALC_STATE.weight < 1000) {
           CALC_STATE.weight += 1;
           weightInput.value = CALC_STATE.weight;
-          if (weightRange && CALC_STATE.weight <= 50) weightRange.value = CALC_STATE.weight;
+          if (weightRange && CALC_STATE.weight <= 50) weightRange.value = Math.min(50, CALC_STATE.weight);
           updateCalculation();
         }
       });
     }
 
-    // Quick pills: valores redondos exactos, por eso ponen los gramos en 0
+    // Gramos adicionales: input libre sin interrupciones de borrado
+    if (gramsInput) {
+      gramsInput.addEventListener("input", (e) => {
+        const raw = e.target.value.trim();
+        if (raw === "") {
+          CALC_STATE.grams = 0;
+          updateCalculation();
+          return;
+        }
+        let val = parseInt(raw, 10);
+        if (isNaN(val) || val < 0) val = 0;
+
+        // Si se pasa de 999 g, se acumulan los kilos correspondientes
+        if (val >= 1000) {
+          const extraKg = Math.floor(val / 1000);
+          CALC_STATE.weight = Math.min(1000, CALC_STATE.weight + extraKg);
+          val = val % 1000;
+          weightInput.value = CALC_STATE.weight;
+          gramsInput.value = val;
+          if (weightRange && CALC_STATE.weight <= 50) weightRange.value = CALC_STATE.weight;
+        }
+        CALC_STATE.grams = val;
+        updateCalculation();
+      });
+      gramsInput.addEventListener("blur", () => {
+        gramsInput.value = CALC_STATE.grams;
+      });
+    }
+
+    // Plus and Minus buttons (gramos en saltos de 50g)
+    if (minusGramsBtn) {
+      minusGramsBtn.addEventListener("click", () => {
+        if (CALC_STATE.grams >= 50) {
+          CALC_STATE.grams -= 50;
+        } else if (CALC_STATE.grams > 0) {
+          CALC_STATE.grams = 0;
+        }
+        if (gramsInput) gramsInput.value = CALC_STATE.grams;
+        updateCalculation();
+      });
+    }
+    if (plusGramsBtn) {
+      plusGramsBtn.addEventListener("click", () => {
+        const nextG = CALC_STATE.grams + 50;
+        if (nextG >= 1000) {
+          CALC_STATE.weight = Math.min(1000, CALC_STATE.weight + 1);
+          CALC_STATE.grams = nextG % 1000;
+          weightInput.value = CALC_STATE.weight;
+          if (weightRange && CALC_STATE.weight <= 50) weightRange.value = CALC_STATE.weight;
+        } else {
+          CALC_STATE.grams = nextG;
+        }
+        if (gramsInput) gramsInput.value = CALC_STATE.grams;
+        updateCalculation();
+      });
+    }
+
+    // Quick pills: soportan tanto kilos como gramos
     if (pillsContainer) {
       pillsContainer.addEventListener("click", (e) => {
         const pill = e.target.closest(".quick-pill");
         if (!pill) return;
-        const val = Number(pill.dataset.kg);
-        if (val) {
-          CALC_STATE.weight = val;
-          CALC_STATE.grams = 0;
-          weightInput.value = val;
-          if (gramsInput) gramsInput.value = 0;
-          if (weightRange) weightRange.value = Math.min(val, 50);
-          updateCalculation();
-        }
+        const pKg = Number(pill.dataset.kg || 0);
+        const pG = Number(pill.dataset.g || 0);
+        CALC_STATE.weight = pKg;
+        CALC_STATE.grams = pG;
+        weightInput.value = pKg;
+        if (gramsInput) gramsInput.value = pG;
+        if (weightRange) weightRange.value = Math.min(pKg, 50);
+        updateCalculation();
       });
     }
 
@@ -972,7 +1022,7 @@ function onScroll() {
 window.addEventListener("scroll", onScroll, { passive: true });
 onScroll();
 
-const sections = ["precios", "que-compramos", "equipo", "cobertura", "sucursales", "faq"];
+const sections = ["precios", "calculadora", "que-compramos", "equipo", "cobertura", "sucursales", "faq"];
 const navAnchors = Array.from(document.querySelectorAll('.nav-links a'));
 if ("IntersectionObserver" in window && navAnchors.length) {
   const navObserver = new IntersectionObserver((entries) => {
