@@ -279,6 +279,199 @@ function renderPrices() {
   });
 }
 
+/* ---------- Render: Calculadora de Ganancias (Cotizador Express) ---------- */
+let CALC_STATE = {
+  materialId: "tipo1",
+  weight: 3,
+  initialized: false
+};
+
+function getCalculatorItems() {
+  const items = [];
+  if (PRICES && PRICES.celularTypes) {
+    PRICES.celularTypes.forEach((t) => {
+      items.push({
+        id: t.id,
+        name: t.label || t.shortLabel,
+        min: Number(t.min) || 0,
+        max: Number(t.max) || 0,
+        icon: t.id === "tipo4" ? "🔋" : "📱"
+      });
+    });
+  }
+  if (PRICES && PRICES.materials) {
+    const extraIds = ["ram", "laptop", "teclado"];
+    extraIds.forEach((id) => {
+      const mat = PRICES.materials.find((m) => m.id === id);
+      if (mat && !items.some((it) => it.id === id)) {
+        items.push({
+          id: mat.id,
+          name: mat.name,
+          min: Number(mat.min) || 0,
+          max: Number(mat.max) || 0,
+          icon: mat.modalIcon || "🔧"
+        });
+      }
+    });
+  }
+  return items;
+}
+
+function renderCalculator() {
+  const chipsContainer = document.getElementById("calcMaterialChips");
+  const selectEl = document.getElementById("calcMaterialSelect");
+  const weightInput = document.getElementById("calcWeightInput");
+  const weightRange = document.getElementById("calcWeightRange");
+  const minusBtn = document.getElementById("calcMinusBtn");
+  const plusBtn = document.getElementById("calcPlusBtn");
+  const pillsContainer = document.getElementById("calcQuickPills");
+  if (!chipsContainer || !selectEl || !weightInput) return;
+
+  const items = getCalculatorItems();
+  if (!items.length) return;
+
+  if (!items.some((it) => it.id === CALC_STATE.materialId)) {
+    CALC_STATE.materialId = items[0].id;
+  }
+
+  // Render chips
+  chipsContainer.innerHTML = items.map((it) => {
+    const isActive = it.id === CALC_STATE.materialId;
+    const rate = formatPrice(it.min, it.max);
+    return `
+      <button type="button" class="calc-chip-btn ${isActive ? "is-active" : ""}" data-calc-id="${esc(it.id)}" role="radio" aria-checked="${isActive}">
+        <span class="calc-chip-icon">${it.icon}</span>
+        <span class="calc-chip-title">${esc(it.name)}</span>
+        <span class="calc-chip-rate">${rate}</span>
+      </button>
+    `;
+  }).join("");
+
+  // Render select options
+  selectEl.innerHTML = items.map((it) => `
+    <option value="${esc(it.id)}" ${it.id === CALC_STATE.materialId ? "selected" : ""}>
+      ${esc(it.name)} (${formatPrice(it.min, it.max)})
+    </option>
+  `).join("");
+
+  function updateCalculation() {
+    const item = items.find((it) => it.id === CALC_STATE.materialId) || items[0];
+    const kg = CALC_STATE.weight;
+    const fmt = (n) => `$${Number(n).toLocaleString("es-MX")}`;
+
+    const totalMin = Math.round(item.min * kg);
+    const totalMax = Math.round(item.max * kg);
+
+    const titleEl = document.getElementById("calcResultTitle");
+    const amountEl = document.getElementById("calcResultAmount");
+    const formulaEl = document.getElementById("calcResultFormula");
+    const waBtn = document.getElementById("calcWaBtn");
+
+    if (titleEl) titleEl.textContent = item.name;
+    if (amountEl) amountEl.textContent = `${fmt(totalMin)} – ${fmt(totalMax)}`;
+    if (formulaEl) formulaEl.textContent = `Calculado para ${kg} kg × (${fmt(item.min)} – ${fmt(item.max)} /kg)`;
+
+    if (waBtn) {
+      const msg = `Hola Ecológica García, coticé en su página web un lote de ${kg} kg de ${item.name} con un estimado de ${fmt(totalMin)} a ${fmt(totalMax)} MXN. ¿Me podrían dar informes para entrega o recolección?`;
+      waBtn.href = waLink(msg);
+    }
+
+    // Update active quick pill
+    if (pillsContainer) {
+      pillsContainer.querySelectorAll(".quick-pill").forEach((pill) => {
+        const pillKg = Number(pill.dataset.kg);
+        pill.classList.toggle("is-active", pillKg === kg);
+      });
+    }
+  }
+
+  // Bind events once
+  if (!CALC_STATE.initialized) {
+    CALC_STATE.initialized = true;
+
+    // Weight range slider
+    if (weightRange) {
+      weightRange.addEventListener("input", (e) => {
+        CALC_STATE.weight = Math.max(1, parseInt(e.target.value, 10) || 1);
+        weightInput.value = CALC_STATE.weight;
+        updateCalculation();
+      });
+    }
+
+    // Weight number input
+    weightInput.addEventListener("input", (e) => {
+      let val = parseInt(e.target.value, 10);
+      if (isNaN(val) || val < 1) val = 1;
+      if (val > 1000) val = 1000;
+      CALC_STATE.weight = val;
+      if (weightRange && val <= 50) weightRange.value = val;
+      updateCalculation();
+    });
+
+    // Plus and Minus buttons
+    if (minusBtn) {
+      minusBtn.addEventListener("click", () => {
+        if (CALC_STATE.weight > 1) {
+          CALC_STATE.weight -= 1;
+          weightInput.value = CALC_STATE.weight;
+          if (weightRange && CALC_STATE.weight <= 50) weightRange.value = CALC_STATE.weight;
+          updateCalculation();
+        }
+      });
+    }
+    if (plusBtn) {
+      plusBtn.addEventListener("click", () => {
+        if (CALC_STATE.weight < 1000) {
+          CALC_STATE.weight += 1;
+          weightInput.value = CALC_STATE.weight;
+          if (weightRange && CALC_STATE.weight <= 50) weightRange.value = CALC_STATE.weight;
+          updateCalculation();
+        }
+      });
+    }
+
+    // Quick pills
+    if (pillsContainer) {
+      pillsContainer.addEventListener("click", (e) => {
+        const pill = e.target.closest(".quick-pill");
+        if (!pill) return;
+        const val = Number(pill.dataset.kg);
+        if (val) {
+          CALC_STATE.weight = val;
+          weightInput.value = val;
+          if (weightRange) weightRange.value = Math.min(val, 50);
+          updateCalculation();
+        }
+      });
+    }
+
+    // Select dropdown
+    selectEl.addEventListener("change", (e) => {
+      CALC_STATE.materialId = e.target.value;
+      chipsContainer.querySelectorAll(".calc-chip-btn").forEach((chip) => {
+        chip.classList.toggle("is-active", chip.dataset.calcId === CALC_STATE.materialId);
+      });
+      updateCalculation();
+    });
+  }
+
+  // Event delegation on chips
+  chipsContainer.onclick = (e) => {
+    const chip = e.target.closest(".calc-chip-btn");
+    if (!chip) return;
+    CALC_STATE.materialId = chip.dataset.calcId;
+    chipsContainer.querySelectorAll(".calc-chip-btn").forEach((c) => {
+      const active = c.dataset.calcId === CALC_STATE.materialId;
+      c.classList.toggle("is-active", active);
+      c.setAttribute("aria-checked", active ? "true" : "false");
+    });
+    if (selectEl) selectEl.value = CALC_STATE.materialId;
+    updateCalculation();
+  };
+
+  updateCalculation();
+}
+
 /* ---------- Render: selector de material ----------
    Los botones salen directo de PRICES.materials (lo que edita el panel
    admin): un material nuevo aparece aquí solo, sin tocar código. "Otra
@@ -630,6 +823,7 @@ function applyWaLinks() {
 function renderEverything() {
   applyWaLinks();
   renderPrices();
+  renderCalculator();
   renderSelector();
   renderGalleryGeneral();
   renderBranches();

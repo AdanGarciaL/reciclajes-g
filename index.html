@@ -68,6 +68,7 @@
       <button class="menu-btn" id="menuBtn" aria-label="Abrir menú" aria-expanded="false">Menú</button>
       <ul class="nav-links" id="navLinks">
         <li><a href="#precios">Precios</a></li>
+        <li><a href="#calculadora">Calculadora</a></li>
         <li><a href="#que-compramos">Qué compramos</a></li>
         <li id="navTeamItem" hidden><a href="#equipo">Quiénes somos</a></li>
         <li><a href="#cobertura">Cobertura</a></li>
@@ -152,6 +153,82 @@
         <div style="margin-top:14px" class="reveal delay-2">
           <div class="price-table" id="priceTable">
             <div class="skeleton" style="height:260px"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CALCULADORA DE GANANCIAS -->
+    <section class="calc-section" id="calculadora">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <p class="eyebrow"><i class="bi bi-calculator"></i> Cotizador Express</p>
+            <h2>Calcula tus ganancias estimadas</h2>
+          </div>
+          <p>Selecciona tu tipo de material y la cantidad de kilos para calcular cuánto dinero en efectivo recibirás al momento.</p>
+        </div>
+
+        <div class="calc-wrapper reveal delay-1">
+          <div class="calc-inputs">
+            <div class="calc-field">
+              <label class="calc-label" for="calcMaterialSelect">1. Selecciona el tipo de material</label>
+              <div class="calc-material-chips" id="calcMaterialChips" role="radiogroup" aria-label="Tipos de material">
+                <div class="skeleton" style="height:44px;border-radius:10px"></div>
+                <div class="skeleton" style="height:44px;border-radius:10px"></div>
+                <div class="skeleton" style="height:44px;border-radius:10px"></div>
+              </div>
+              <select id="calcMaterialSelect" class="calc-select" aria-label="Seleccionar material en lista"></select>
+            </div>
+
+            <div class="calc-field">
+              <div class="calc-weight-header">
+                <label class="calc-label" for="calcWeightInput">2. Kilos aproximados de tu lote</label>
+                <div class="calc-stepper">
+                  <button type="button" class="calc-step-btn" id="calcMinusBtn" aria-label="Restar 1 kilo">−</button>
+                  <input type="number" id="calcWeightInput" class="calc-number-input" min="1" max="1000" value="3" step="1" inputmode="numeric" />
+                  <span class="calc-unit">kg</span>
+                  <button type="button" class="calc-step-btn" id="calcPlusBtn" aria-label="Sumar 1 kilo">+</button>
+                </div>
+              </div>
+              <input type="range" id="calcWeightRange" class="calc-slider" min="1" max="50" value="3" step="1" aria-label="Deslizar para ajustar kilos" />
+              <div class="calc-range-marks">
+                <span>1 kg</span>
+                <span>10 kg</span>
+                <span>25 kg</span>
+                <span>50+ kg</span>
+              </div>
+            </div>
+
+            <div class="calc-quick-pills" id="calcQuickPills">
+              <span class="quick-pill-label">Accesos rápidos:</span>
+              <button type="button" class="quick-pill" data-kg="1">1 kg</button>
+              <button type="button" class="quick-pill is-active" data-kg="3">3 kg</button>
+              <button type="button" class="quick-pill" data-kg="5">5 kg</button>
+              <button type="button" class="quick-pill" data-kg="10">10 kg</button>
+              <button type="button" class="quick-pill" data-kg="20">20 kg</button>
+            </div>
+          </div>
+
+          <div class="calc-result-card">
+            <div class="result-badge"><i class="bi bi-cash-stack"></i> Estimación de compra inmediata</div>
+            <p class="result-material-title" id="calcResultTitle">Cargando material…</p>
+            <div class="result-price-wrap">
+              <span class="result-currency">MXN</span>
+              <span class="result-amount" id="calcResultAmount">$0 – $0</span>
+            </div>
+            <p class="result-formula" id="calcResultFormula">Calculando según peso y tabulador vigente…</p>
+
+            <div class="result-benefits">
+              <div class="benefit-item"><i class="bi bi-check-circle-fill"></i> Pago inmediato en efectivo o transferencia</div>
+              <div class="benefit-item"><i class="bi bi-check-circle-fill"></i> Pesaje transparente en báscula calibrada</div>
+              <div class="benefit-item"><i class="bi bi-check-circle-fill"></i> En sucursal o recolección a domicilio</div>
+            </div>
+
+            <a class="btn btn-primary btn-block calc-cta-btn" id="calcWaBtn" href="https://wa.me/522227548704" target="_blank" rel="noopener">
+              <i class="bi bi-whatsapp"></i> Cotizar este lote por WhatsApp
+            </a>
+            <p class="calc-disclaimer">*El valor final se confirma al evaluar el lote físico (chip presente, estado y limpieza). Precios sujetos a actualización.</p>
           </div>
         </div>
       </div>
