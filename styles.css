@@ -9,30 +9,37 @@
   --font-mono: "IBM Plex Mono", "Consolas", monospace;
   --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
 
-  /* Marca oficial (muestreada de icons/icono.png y icons/logo-oficial.png) */
-  --brand-forest: #064528;
-  --brand-forest-dark: #043019;
-  --brand-green: #2bd567;
-  --brand-green-strong: #1fb859;
-  --brand-mid: #1b7f3a;
-  --brand-white: #f4f6f4;
+  /* Marca oficial (Manual de identidad 03 . PALETA) */
+  --brand-deep: #0B3B22;        /* Verde profundo: fondos, base de marca */
+  --brand-garcia: #1B7F3A;      /* Verde García: color institucional, una tinta */
+  --brand-signal: #3FD86A;      /* Verde señal: acento, precios, botones */
+  --brand-carbon: #0B1F13;      /* Carbón: titulares y panel oscuro */
+  --brand-bone: #F4F6F4;        /* Hueso: papel y fondo claro */
+
+  /* Compatibilidad con variables del sistema */
+  --brand-forest: var(--brand-deep);
+  --brand-forest-dark: #072516;
+  --brand-green: var(--brand-signal);
+  --brand-green-strong: var(--brand-garcia);
+  --brand-mid: var(--brand-garcia);
+  --brand-white: var(--brand-bone);
 
   /* Tema claro (por defecto) */
   --bg: #ffffff;
-  --bg-alt: #f3f9f4;
+  --bg-alt: #f1f8f3;
   --surface: #ffffff;
   --surface-alt: #eef6f0;
-  --surface-strong: #eaf3ec;
-  --ink: #0c2116;
-  --ink-muted: #4c5f54;
-  --ink-soft: #7c8f83;
-  --border: #e1ebe4;
-  --border-strong: #cddccf;
-  --accent: var(--brand-green-strong);
-  --accent-ink: var(--brand-forest);
-  --shadow-sm: 0 2px 10px rgba(6, 40, 22, 0.06);
-  --shadow-md: 0 12px 32px rgba(6, 40, 22, 0.1);
-  --shadow-lg: 0 24px 64px rgba(6, 40, 22, 0.16);
+  --surface-strong: #e5f2e8;
+  --ink: var(--brand-carbon);
+  --ink-muted: #3d5647;
+  --ink-soft: #668270;
+  --border: #dbe8de;
+  --border-strong: #c2d8c7;
+  --accent: var(--brand-signal);
+  --accent-ink: var(--brand-carbon);
+  --shadow-sm: 0 2px 10px rgba(11, 59, 34, 0.06);
+  --shadow-md: 0 12px 32px rgba(11, 59, 34, 0.1);
+  --shadow-lg: 0 24px 64px rgba(11, 59, 34, 0.16);
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;
@@ -43,21 +50,21 @@
 }
 
 body.dark-mode {
-  --bg: #06180f;
-  --bg-alt: #082013;
-  --surface: #0a2a19;
-  --surface-alt: #0d331e;
-  --surface-strong: #103c24;
-  --ink: #f2f8f4;
-  --ink-muted: #b8cabe;
-  --ink-soft: #82988a;
-  --border: rgba(244, 246, 244, 0.1);
-  --border-strong: rgba(244, 246, 244, 0.18);
-  --accent: var(--brand-green);
-  --accent-ink: #06210f;
-  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.5);
+  --bg: var(--brand-carbon);
+  --bg-alt: #07150c;
+  --surface: var(--brand-deep);
+  --surface-alt: #0e4428;
+  --surface-strong: #125532;
+  --ink: var(--brand-bone);
+  --ink-muted: #b8ccbf;
+  --ink-soft: #85a390;
+  --border: rgba(244, 246, 244, 0.12);
+  --border-strong: rgba(63, 216, 106, 0.28);
+  --accent: var(--brand-signal);
+  --accent-ink: var(--brand-carbon);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.6);
 
   color-scheme: dark;
 }
@@ -1060,4 +1067,142 @@ body.dark-mode .benefit-item i {
   .result-amount {
     font-size: 26px;
   }
+}
+
+/* ---------- Banda de Garantías (Trust Strip) ---------- */
+.trust-strip {
+  padding: 24px 0;
+  background: var(--surface-strong);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.trust-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.trust-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.trust-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: rgba(63, 216, 106, 0.15);
+  color: var(--brand-signal);
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(63, 216, 106, 0.3);
+}
+.trust-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.trust-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.trust-desc {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 0;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .trust-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+/* ---------- Tarjeta Destacada "MEJOR PAGADO" ---------- */
+.price-card.price-card-featured {
+  border: 2px solid var(--brand-signal);
+  box-shadow: 0 0 24px rgba(63, 216, 106, 0.28), var(--shadow-md);
+  position: relative;
+}
+.featured-price-badge {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--brand-signal);
+  color: var(--brand-carbon);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  padding: 4px 14px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 4px 12px rgba(63, 216, 106, 0.4);
+  white-space: nowrap;
+  z-index: 2;
+}
+
+/* ---------- Botón de WhatsApp por Sucursal ---------- */
+.sucursal-wa-btn {
+  margin-top: 10px;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 13.5px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--brand-signal);
+  color: var(--brand-carbon);
+  border: none;
+  box-shadow: 0 4px 12px rgba(63, 216, 106, 0.2);
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+.sucursal-wa-btn:hover {
+  background: #34c45d;
+  color: var(--brand-carbon);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(63, 216, 106, 0.35);
+}
+
+/* ---------- Enlaces de redes sociales en topbar ---------- */
+.topbar-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.topbar-social {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.topbar-social .social-link {
+  color: var(--ink-soft);
+  font-size: 15px;
+  transition: color 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+}
+.topbar-social .social-link:hover {
+  color: var(--brand-signal);
 }

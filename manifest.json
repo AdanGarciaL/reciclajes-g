@@ -1,0 +1,24 @@
+{
+  "name": "ECO LÓGICA García",
+  "short_name": "EcoLógica",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B3B22",
+  "theme_color": "#0B3B22",
+  "orientation": "portrait",
+  "description": "Compra de lógica de celular y componentes electrónicos para reciclaje responsable en México.",
+  "icons": [
+    {
+      "src": "icons/icono.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icono.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

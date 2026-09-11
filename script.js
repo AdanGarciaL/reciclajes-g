@@ -235,8 +235,10 @@ function renderPrices() {
   const quickItems = PRICES.materials.filter((m) => m.quick);
   quickGrid.innerHTML = quickItems.map((m, i) => {
     const photo = materialPhoto(m.id);
+    const isFeatured = m.id === "celular";
     return `
-    <article class="price-card reveal ${i ? "delay-" + Math.min(i, 3) : ""} show">
+    <article class="price-card ${isFeatured ? "price-card-featured" : ""} reveal ${i ? "delay-" + Math.min(i, 3) : ""} show">
+      ${isFeatured ? `<div class="featured-price-badge"><i class="bi bi-star-fill"></i> MEJOR PAGADO</div>` : ""}
       ${photo
         ? `<div class="price-card-photo"><img src="${esc(photo.src)}" alt="${esc(photo.alt || m.name)}" loading="lazy" /></div>`
         : ""}
@@ -244,7 +246,7 @@ function renderPrices() {
       <p class="price-tag">${esc(m.name)}</p>
       <p class="price-value">${formatPrice(m.min, m.max, m.unit)}</p>
       <p class="price-copy">${esc(m.quickCopy || m.note || "")}</p>
-      <button class="btn btn-ghost open-selector" data-preselect="${esc(m.id)}">${m.directContact ? "Preguntar por WhatsApp" : "Ver detalle"}</button>
+      <button class="btn ${isFeatured ? "btn-primary" : "btn-ghost"} open-selector" data-preselect="${esc(m.id)}">${m.directContact ? "Preguntar por WhatsApp" : "Ver detalle"}</button>
     </article>`;
   }).join("");
 
@@ -764,7 +766,8 @@ function renderBranches() {
         ${metaLine ? `<p class="sucursal-meta">${esc(metaLine)}</p>` : ""}
         ${isSucursal ? `<p class="sucursal-encargado">${esc(b.nombre || "Próximamente")}</p>` : ""}
         ${canWrite
-          ? `<a class="sucursal-tel is-link" href="${waLinkTo(b.whatsapp, "Hola, quiero vender material en " + title)}" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i>${esc(formatMexPhone(b.whatsapp))}</a>`
+          ? `<a class="sucursal-tel is-link" href="${waLinkTo(b.whatsapp, "Hola, tengo material para entregar en la sucursal de " + title)}" target="_blank" rel="noopener"><i class="bi bi-telephone-fill"></i> ${esc(formatMexPhone(b.whatsapp))}</a>
+             <a class="btn btn-sm sucursal-wa-btn" href="${waLinkTo(b.whatsapp, "Hola " + (b.nombre ? b.nombre + ", " : "") + "me interesa entregar o cotizar material en la sucursal de " + title)}" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Escribir a esta sucursal</a>`
           : `<p class="sucursal-tel"><i class="bi bi-whatsapp"></i>Próximamente</p>`}
       </div>
     </article>`;
