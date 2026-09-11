@@ -806,6 +806,11 @@ body.dark-mode .calc-chip-btn.is-active {
   gap: 12px;
   flex-wrap: wrap;
 }
+/* Agrupa el bloque de kilos y el de gramos (agregado para poder cotizar
+   pesos más realistas, no solo kilos enteros) uno junto al otro. */
+.calc-weight-fields { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.calc-stepper-grams { padding-right: 10px; }
+.calc-number-input-sm { width: 46px; font-size: 17px; }
 .calc-stepper {
   display: inline-flex;
   align-items: center;

@@ -282,9 +282,18 @@ function renderPrices() {
 /* ---------- Render: Calculadora de Ganancias (Cotizador Express) ---------- */
 let CALC_STATE = {
   materialId: "tipo1",
-  weight: 3,
+  weight: 3, // kilos enteros
+  grams: 0, // gramos adicionales (0-999), para un peso más realista que solo kilos redondos
   initialized: false
 };
+// "3 kg" o, si hay gramos, "3 kg 500 g" (o solo "500 g" si los kilos están
+// en cero) — se usa tanto en el texto del resultado como en el mensaje de
+// WhatsApp, para que ambos digan lo mismo que el admin realmente puso.
+function formatCalcWeight(kg, g) {
+  if (g > 0 && kg > 0) return `${kg} kg ${g} g`;
+  if (g > 0) return `${g} g`;
+  return `${kg} kg`;
+}
 
 function getCalculatorItems() {
   const items = [];
@@ -321,6 +330,7 @@ function renderCalculator() {
   const chipsContainer = document.getElementById("calcMaterialChips");
   const selectEl = document.getElementById("calcMaterialSelect");
   const weightInput = document.getElementById("calcWeightInput");
+  const gramsInput = document.getElementById("calcGramsInput");
   const weightRange = document.getElementById("calcWeightRange");
   const minusBtn = document.getElementById("calcMinusBtn");
   const plusBtn = document.getElementById("calcPlusBtn");
@@ -354,13 +364,26 @@ function renderCalculator() {
     </option>
   `).join("");
 
+  // Nunca deja el lote en "0 kg 0 g": si alguien borra ambos campos, vuelve
+  // a poner un mínimo razonable en gramos en vez de mostrar una cotización
+  // de $0, que se leería como un error.
+  function ensureMinimumWeight() {
+    if (CALC_STATE.weight === 0 && CALC_STATE.grams === 0) {
+      CALC_STATE.grams = 100;
+      if (gramsInput) gramsInput.value = 100;
+    }
+  }
+
   function updateCalculation() {
     const item = items.find((it) => it.id === CALC_STATE.materialId) || items[0];
     const kg = CALC_STATE.weight;
+    const g = CALC_STATE.grams;
+    const totalKg = kg + g / 1000;
     const fmt = (n) => `$${Number(n).toLocaleString("es-MX")}`;
 
-    const totalMin = Math.round(item.min * kg);
-    const totalMax = Math.round(item.max * kg);
+    const totalMin = Math.round(item.min * totalKg);
+    const totalMax = Math.round(item.max * totalKg);
+    const weightLabel = formatCalcWeight(kg, g);
 
     const titleEl = document.getElementById("calcResultTitle");
     const amountEl = document.getElementById("calcResultAmount");
@@ -369,18 +392,19 @@ function renderCalculator() {
 
     if (titleEl) titleEl.textContent = item.name;
     if (amountEl) amountEl.textContent = `${fmt(totalMin)} – ${fmt(totalMax)}`;
-    if (formulaEl) formulaEl.textContent = `Calculado para ${kg} kg × (${fmt(item.min)} – ${fmt(item.max)} /kg)`;
+    if (formulaEl) formulaEl.textContent = `Calculado para ${weightLabel} × (${fmt(item.min)} – ${fmt(item.max)} /kg)`;
 
     if (waBtn) {
-      const msg = `Hola Ecológica García, coticé en su página web un lote de ${kg} kg de ${item.name} con un estimado de ${fmt(totalMin)} a ${fmt(totalMax)} MXN. ¿Me podrían dar informes para entrega o recolección?`;
+      const msg = `Hola Ecológica García, coticé en su página web un lote de ${weightLabel} de ${item.name} con un estimado de ${fmt(totalMin)} a ${fmt(totalMax)} MXN. ¿Me podrían dar informes para entrega o recolección?`;
       waBtn.href = waLink(msg);
     }
 
-    // Update active quick pill
+    // Update active quick pill (solo coincide si los gramos están en cero:
+    // los accesos rápidos son valores redondos de kilos exactos)
     if (pillsContainer) {
       pillsContainer.querySelectorAll(".quick-pill").forEach((pill) => {
         const pillKg = Number(pill.dataset.kg);
-        pill.classList.toggle("is-active", pillKg === kg);
+        pill.classList.toggle("is-active", pillKg === kg && g === 0);
       });
     }
   }
@@ -398,23 +422,49 @@ function renderCalculator() {
       });
     }
 
-    // Weight number input
+    // Weight number input (kilos enteros; puede llegar a 0 porque ahora el
+    // campo de gramos puede cargar el peso de un lote chico por sí solo)
     weightInput.addEventListener("input", (e) => {
       let val = parseInt(e.target.value, 10);
-      if (isNaN(val) || val < 1) val = 1;
+      if (isNaN(val) || val < 0) val = 0;
       if (val > 1000) val = 1000;
       CALC_STATE.weight = val;
-      if (weightRange && val <= 50) weightRange.value = val;
+      if (weightRange && val <= 50) weightRange.value = Math.max(1, val);
+      ensureMinimumWeight();
       updateCalculation();
     });
 
-    // Plus and Minus buttons
-    if (minusBtn) {
-      minusBtn.addEventListener("click", () => {
-        if (CALC_STATE.weight > 1) {
-          CALC_STATE.weight -= 1;
+    // Gramos adicionales, para un peso más realista que solo kilos redondos
+    if (gramsInput) {
+      gramsInput.addEventListener("input", (e) => {
+        let val = parseInt(e.target.value, 10);
+        if (isNaN(val) || val < 0) val = 0;
+        // Si se pasa de 999 g, se convierte lo que sobre a kilos completos
+        // (escribir 1500 g se vuelve 1 kg 500 g), para no dejar un estado
+        // raro como "2 kg 1300 g".
+        if (val >= 1000) {
+          const extraKg = Math.floor(val / 1000);
+          CALC_STATE.weight = Math.min(1000, CALC_STATE.weight + extraKg);
+          val = val % 1000;
           weightInput.value = CALC_STATE.weight;
           if (weightRange && CALC_STATE.weight <= 50) weightRange.value = CALC_STATE.weight;
+        }
+        CALC_STATE.grams = val;
+        gramsInput.value = val;
+        ensureMinimumWeight();
+        updateCalculation();
+      });
+    }
+
+    // Plus and Minus buttons (solo tocan los kilos enteros; los gramos que
+    // ya se hayan puesto se quedan igual)
+    if (minusBtn) {
+      minusBtn.addEventListener("click", () => {
+        if (CALC_STATE.weight > 0) {
+          CALC_STATE.weight -= 1;
+          weightInput.value = CALC_STATE.weight;
+          if (weightRange && CALC_STATE.weight <= 50) weightRange.value = Math.max(1, CALC_STATE.weight);
+          ensureMinimumWeight();
           updateCalculation();
         }
       });
@@ -430,7 +480,7 @@ function renderCalculator() {
       });
     }
 
-    // Quick pills
+    // Quick pills: valores redondos exactos, por eso ponen los gramos en 0
     if (pillsContainer) {
       pillsContainer.addEventListener("click", (e) => {
         const pill = e.target.closest(".quick-pill");
@@ -438,7 +488,9 @@ function renderCalculator() {
         const val = Number(pill.dataset.kg);
         if (val) {
           CALC_STATE.weight = val;
+          CALC_STATE.grams = 0;
           weightInput.value = val;
+          if (gramsInput) gramsInput.value = 0;
           if (weightRange) weightRange.value = Math.min(val, 50);
           updateCalculation();
         }
@@ -664,12 +716,14 @@ function closeDetail() {
   materialDetail.classList.remove("active");
   if (carouselTimer) clearInterval(carouselTimer);
 }
-document.getElementById("detailBack")?.addEventListener("click", () => { closeDetail(); showSelector(); });
-// El botón de abajo ("Elegir otro") ya no reabre el selector — ahora es un
-// enlace directo de WhatsApp (.js-wa-link, ver applyWaLinks) con un mensaje
-// genérico para quien tiene un material que no coincide con lo que está
-// viendo. El enlace para "volver a elegir" sigue disponible arriba
-// (#detailBack), así que no se perdió esa opción, solo se movió.
+// Ni el enlace de arriba ("← Elegir otro material") ni el botón de abajo
+// reabren ya el selector: para un admin/visitante que ya está viendo un
+// detalle, esa ventana emergente resultaba un paso extra sin valor. Arriba
+// simplemente se cierra el detalle (vuelve a la sección de precios); abajo
+// es un enlace directo de WhatsApp (.js-wa-link, ver applyWaLinks) con un
+// mensaje genérico para quien tiene un material que no coincide con lo que
+// está viendo.
+document.getElementById("detailBack")?.addEventListener("click", () => { closeDetail(); });
 
 /* ---------- Galería general ---------- */
 function renderGalleryGeneral() {

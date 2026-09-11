@@ -183,12 +183,18 @@
 
             <div class="calc-field">
               <div class="calc-weight-header">
-                <label class="calc-label" for="calcWeightInput">2. Kilos aproximados de tu lote</label>
-                <div class="calc-stepper">
-                  <button type="button" class="calc-step-btn" id="calcMinusBtn" aria-label="Restar 1 kilo">−</button>
-                  <input type="number" id="calcWeightInput" class="calc-number-input" min="1" max="1000" value="3" step="1" inputmode="numeric" />
-                  <span class="calc-unit">kg</span>
-                  <button type="button" class="calc-step-btn" id="calcPlusBtn" aria-label="Sumar 1 kilo">+</button>
+                <label class="calc-label" for="calcWeightInput">2. Peso aproximado de tu lote</label>
+                <div class="calc-weight-fields">
+                  <div class="calc-stepper">
+                    <button type="button" class="calc-step-btn" id="calcMinusBtn" aria-label="Restar 1 kilo">−</button>
+                    <input type="number" id="calcWeightInput" class="calc-number-input" min="0" max="1000" value="3" step="1" inputmode="numeric" />
+                    <span class="calc-unit">kg</span>
+                    <button type="button" class="calc-step-btn" id="calcPlusBtn" aria-label="Sumar 1 kilo">+</button>
+                  </div>
+                  <div class="calc-stepper calc-stepper-grams">
+                    <input type="number" id="calcGramsInput" class="calc-number-input calc-number-input-sm" min="0" max="999" value="0" step="10" inputmode="numeric" aria-label="Gramos adicionales, para un peso más exacto" />
+                    <span class="calc-unit">g</span>
+                  </div>
                 </div>
               </div>
               <input type="range" id="calcWeightRange" class="calc-slider" min="1" max="50" value="3" step="1" aria-label="Deslizar para ajustar kilos" />
