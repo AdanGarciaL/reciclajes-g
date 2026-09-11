@@ -174,7 +174,44 @@
       "id": "nueva-categoria",
       "label": "Teclas o Grande",
       "folder": "Galeria/nueva-categoria",
-      "images": []
+      "images": [
+        {
+          "src": "Galeria/nueva-categoria/6-1789096119666-6c5e.jpg",
+          "alt": "Teclas o Grande"
+        },
+        {
+          "src": "Galeria/nueva-categoria/5-1789096119677-c548.jpg",
+          "alt": "Teclas o Grande"
+        },
+        {
+          "src": "Galeria/nueva-categoria/4-1789096119683-cdee.jpg",
+          "alt": "Teclas o Grande"
+        },
+        {
+          "src": "Galeria/nueva-categoria/3-1789096119692-01b6.jpg",
+          "alt": "Teclas o Grande"
+        },
+        {
+          "src": "Galeria/nueva-categoria/2-1789096119698-40ec.jpg",
+          "alt": "Teclas o Grande"
+        },
+        {
+          "src": "Galeria/nueva-categoria/1-1789096119705-eaa8.jpg",
+          "alt": "Teclas o Grande"
+        },
+        {
+          "src": "Galeria/nueva-categoria/9-png-1789096119736-6cf5.jpg",
+          "alt": "Teclas o Grande"
+        },
+        {
+          "src": "Galeria/nueva-categoria/7-1789096119748-1971.jpg",
+          "alt": "Teclas o Grande"
+        },
+        {
+          "src": "Galeria/nueva-categoria/8-1789096119756-6d69.jpg",
+          "alt": "Teclas o Grande"
+        }
+      ]
     }
   ]
 }
