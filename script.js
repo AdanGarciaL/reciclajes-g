@@ -665,7 +665,11 @@ function closeDetail() {
   if (carouselTimer) clearInterval(carouselTimer);
 }
 document.getElementById("detailBack")?.addEventListener("click", () => { closeDetail(); showSelector(); });
-document.getElementById("detailBack2")?.addEventListener("click", () => { closeDetail(); showSelector(); });
+// El botón de abajo ("Elegir otro") ya no reabre el selector — ahora es un
+// enlace directo de WhatsApp (.js-wa-link, ver applyWaLinks) con un mensaje
+// genérico para quien tiene un material que no coincide con lo que está
+// viendo. El enlace para "volver a elegir" sigue disponible arriba
+// (#detailBack), así que no se perdió esa opción, solo se movió.
 
 /* ---------- Galería general ---------- */
 function renderGalleryGeneral() {
