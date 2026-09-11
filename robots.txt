@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /admin.html
 
-Sitemap: https://adangarcial.github.io/reciclajes-g/sitemap.xml
+Sitemap: https://ecologicagarcia.com/sitemap.xml
