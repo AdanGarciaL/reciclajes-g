@@ -264,7 +264,7 @@ function renderPrices() {
     </article>`;
   }).join("");
 
-  table.innerHTML = PRICES.materials.map((m) => `
+  table.innerHTML = (PRICES?.materials || []).map((m) => `
     <div class="price-row">
       <div class="row-name">
         <span class="row-icon"><i class="bi ${esc(m.icon)}"></i></span>
@@ -280,13 +280,13 @@ function renderPrices() {
     </div>
   `;
 
-  const tipo1 = PRICES.celularTypes.find((t) => t.id === "tipo1");
+  const tipo1 = (PRICES?.celularTypes || []).find((t) => t.id === "tipo1");
   const heroBest = document.getElementById("heroBestPrice");
   if (heroBest && tipo1) heroBest.textContent = formatPrice(tipo1.min, tipo1.max);
   const mobileSticky = document.getElementById("mobileStickyPrice");
   if (mobileSticky && tipo1) mobileSticky.textContent = `${formatPrice(tipo1.min, tipo1.max)}/kg`;
   const heroStatMaterials = document.getElementById("heroStatMaterials");
-  if (heroStatMaterials) heroStatMaterials.textContent = PRICES.materials.length;
+  if (heroStatMaterials) heroStatMaterials.textContent = (PRICES?.materials || []).length;
 
   quickGrid.querySelectorAll(".open-selector").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -358,7 +358,16 @@ function renderCalculator() {
   if (!chipsContainer || !selectEl || !weightInput) return;
 
   const items = getCalculatorItems();
-  if (!items.length) return;
+  if (!items.length) {
+    // Sin materiales configurados no hay nada que calcular; sin esto, el
+    // texto de "Cargando…" del HTML se quedaba fijo para siempre.
+    chipsContainer.innerHTML = `<p class="price-hint" style="margin:0">Todavía no hay materiales configurados para cotizar.</p>`;
+    const titleEl = document.getElementById("calcResultTitle");
+    const formulaEl = document.getElementById("calcResultFormula");
+    if (titleEl) titleEl.textContent = "Sin materiales disponibles";
+    if (formulaEl) formulaEl.textContent = "Agrega materiales desde el panel para poder cotizar.";
+    return;
+  }
 
   if (!items.some((it) => it.id === CALC_STATE.materialId)) {
     CALC_STATE.materialId = items[0].id;
@@ -600,7 +609,7 @@ function renderCalculator() {
 function renderSelector() {
   const grid = document.getElementById("selectorGrid");
   if (!grid) return;
-  const items = PRICES.materials.filter((m) => m.showInSelector !== false);
+  const items = (PRICES?.materials || []).filter((m) => m.showInSelector !== false);
   grid.innerHTML = items.map((m) => {
     const photo = materialPhoto(m.id);
     return `
@@ -627,18 +636,26 @@ const selectorModal = document.getElementById("selectorModal");
 const selectorOverlay = document.getElementById("selectorOverlay");
 const selectorClose = document.getElementById("selectorClose");
 
+// Recuerda qué elemento tenía el foco antes de abrir el modal, para
+// devolvérselo al cerrar — sin esto, alguien navegando con teclado perdía
+// su lugar en la página cada vez que cerraba el selector.
+let selectorLastFocused = null;
 function showSelector() {
   if (!selectorModal) return;
+  selectorLastFocused = document.activeElement;
   selectorModal.classList.add("active");
   selectorModal.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
   applySelectorMode("all");
+  selectorClose?.focus();
 }
 function hideSelector() {
   if (!selectorModal) return;
   selectorModal.classList.remove("active");
   selectorModal.setAttribute("aria-hidden", "true");
   document.body.style.overflow = "";
+  if (selectorLastFocused && document.contains(selectorLastFocused)) selectorLastFocused.focus();
+  selectorLastFocused = null;
 }
 selectorOverlay && selectorOverlay.addEventListener("click", hideSelector);
 selectorClose && selectorClose.addEventListener("click", hideSelector);
@@ -653,18 +670,56 @@ document.querySelectorAll(".mode-btn").forEach((btn) => {
   btn.addEventListener("click", () => applySelectorMode(btn.dataset.mode));
 });
 function applySelectorMode(mode) {
-  document.querySelectorAll(".mode-btn").forEach((b) => b.classList.toggle("is-active", b.dataset.mode === mode));
+  document.querySelectorAll(".mode-btn").forEach((b) => {
+    const active = b.dataset.mode === mode;
+    b.classList.toggle("is-active", active);
+    b.setAttribute("aria-selected", active ? "true" : "false");
+  });
   document.querySelectorAll(".selector-btn").forEach((b) => {
     const show = mode === "all" || b.dataset.group === mode;
     b.classList.toggle("is-hidden", !show);
   });
 }
+// Patrón de teclado APG para grupos de pestañas (role="tablist"): con el
+// foco en una pestaña, las flechas mueven el foco Y activan la vecina
+// (Home/End van a la primera/última). Se usa aquí y en el filtro de
+// sucursales por estado — antes los botones tenían role="tab" pero no
+// respondían a las flechas, solo a Tab+Enter/Espacio.
+function wireTablistArrowKeys(tablistEl) {
+  if (!tablistEl) return;
+  tablistEl.addEventListener("keydown", (e) => {
+    const tabs = Array.from(tablistEl.querySelectorAll('[role="tab"]'));
+    const currentIndex = tabs.indexOf(document.activeElement);
+    if (currentIndex === -1) return;
+    let nextIndex = null;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") nextIndex = (currentIndex + 1) % tabs.length;
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+    else if (e.key === "Home") nextIndex = 0;
+    else if (e.key === "End") nextIndex = tabs.length - 1;
+    if (nextIndex === null) return;
+    e.preventDefault();
+    tabs[nextIndex].focus();
+    tabs[nextIndex].click();
+  });
+}
+wireTablistArrowKeys(document.querySelector(".selector-modes"));
 
 /* ---------- Detalle de material (unifica tipos de celular + otros materiales) ---------- */
 const materialDetail = document.getElementById("materialDetail");
 let carouselImages = [];
 let carouselIndex = 0;
 let carouselTimer = null;
+// Recuerda el foco solo en la apertura real (no en cada cambio de pestaña
+// DENTRO del detalle ya abierto, como Tipo 1 -> Tipo 2): así "Elegir otro
+// material"/Escape regresan el foco a donde estaba antes de entrar aquí,
+// sin importar cuántas pestañas se hayan tocado mientras tanto.
+let detailLastFocused = null;
+function openMaterialDetailPanel() {
+  const wasActive = materialDetail.classList.contains("active");
+  if (!wasActive) detailLastFocused = document.activeElement;
+  materialDetail.classList.add("active");
+  if (!wasActive) document.getElementById("detailBack")?.focus();
+}
 
 function selectMaterial(materialId) {
   if (materialId === "otro") {
@@ -691,13 +746,15 @@ function selectMaterial(materialId) {
 
 function showCelularTypes(typeId) {
   const tabsWrap = document.getElementById("detailTabs");
-  const type = PRICES.celularTypes.find((t) => t.id === typeId) || PRICES.celularTypes[0];
+  const celularTypes = PRICES?.celularTypes || [];
+  const type = celularTypes.find((t) => t.id === typeId) || celularTypes[0];
+  if (!type) return; // sin tipos configurados, no hay nada que mostrar
 
   document.getElementById("detailEyebrow").textContent = "Lógica de celular";
   document.getElementById("detailTitle").textContent = "Tipos y precios según características";
 
   tabsWrap.hidden = false;
-  tabsWrap.innerHTML = PRICES.celularTypes.map((t) => `
+  tabsWrap.innerHTML = celularTypes.map((t) => `
     <button type="button" class="type-tab ${t.id === type.id ? "is-active" : ""}" data-type="${esc(t.id)}">
       <span class="tab-label">${esc(t.label)}</span>
       <span class="tab-price">${formatPrice(t.min, t.max)}</span>
@@ -714,11 +771,11 @@ function showCelularTypes(typeId) {
   document.getElementById("detailWaLink").href = waLink(`Hola, tengo lógica de celular (${type.shortLabel}) para vender.`);
 
   setCarousel(getGalleryImages(type.galleryCategory));
-  materialDetail.classList.add("active");
+  openMaterialDetailPanel();
 }
 
 function showOtherMaterial(materialId) {
-  const data = PRICES.otherMaterials.find((o) => o.id === materialId);
+  const data = (PRICES?.otherMaterials || []).find((o) => o.id === materialId);
   const price = getMaterial(data ? data.priceId : materialId);
   if (!data || !price) return;
 
@@ -734,7 +791,7 @@ function showOtherMaterial(materialId) {
   document.getElementById("detailWaLink").href = waLink(`Hola, tengo ${data.eyebrow.toLowerCase()} para vender.`);
 
   setCarousel(getGalleryImages(data.galleryCategory));
-  materialDetail.classList.add("active");
+  openMaterialDetailPanel();
 }
 
 function setCarousel(images) {
@@ -783,6 +840,8 @@ if (carouselViewport) {
 function closeDetail() {
   materialDetail.classList.remove("active");
   if (carouselTimer) clearInterval(carouselTimer);
+  if (detailLastFocused && document.contains(detailLastFocused)) detailLastFocused.focus();
+  detailLastFocused = null;
 }
 // Ni el enlace de arriba ("← Elegir otro material") ni el botón de abajo
 // reabren ya el selector: para un admin/visitante que ya está viendo un
@@ -837,7 +896,10 @@ function renderBranches() {
     const metaLine = isSucursal ? (b.ubicacion || "") : (b.cobertura || "");
     const canWrite = b.activo !== false && b.whatsapp;
     const portadaSrc = BRANCH_PORTADAS[b.estado] || "icons/portadas/portada-comunidad.jpg";
-    const groupLink = b.grupoUrl
+    // isSafeHttpUrl() bloquea esquemas peligrosos (javascript:, data:, etc.)
+    // — sin esto, un enlace de grupo guardado con ese esquema se ejecutaría
+    // al hacer clic cualquier visitante del sitio.
+    const groupLink = b.grupoUrl && isSafeHttpUrl(b.grupoUrl)
       ? esc(b.grupoUrl)
       : (b.whatsapp ? waLinkTo(b.whatsapp, "Hola " + (b.nombre ? b.nombre + ", " : "") + "me interesa unirme al grupo oficial de WhatsApp de " + title) : "");
     return `
@@ -870,6 +932,7 @@ function initSucursalesFilter() {
   const filterBar = document.getElementById("sucursalesFilterBar");
   if (!filterBar || filterBar.dataset.bound === "true") return;
   filterBar.dataset.bound = "true";
+  wireTablistArrowKeys(filterBar);
   filterBar.addEventListener("click", (e) => {
     const btn = e.target.closest(".sucursal-filter-chip");
     if (!btn) return;
@@ -910,7 +973,7 @@ function renderTeam() {
   grid.innerHTML = members.map((m, i) => `
     <article class="team-card reveal ${i ? "delay-" + Math.min(i, 3) : ""}">
       <div class="team-photo">${m.photo ? `<img src="${esc(m.photo)}" alt="${esc(m.name)}" loading="lazy" />` : `<span class="team-photo-fallback">${esc(initials(m.name))}</span>`}</div>
-      <p class="team-name">${esc(m.name)}</p>
+      <h3 class="team-name">${esc(m.name)}</h3>
       <p class="team-role">${esc(m.role || "")}</p>
       <div class="team-contacts">
         ${m.whatsapp ? `<a class="team-contact-link" href="${waLinkTo(m.whatsapp, "Hola, quiero contactarte por Eco Lógica García")}" target="_blank" rel="noopener" aria-label="WhatsApp de ${esc(m.name)}"><i class="bi bi-whatsapp"></i></a>` : ""}
@@ -958,11 +1021,11 @@ function renderFAQ() {
   if (!list) return;
   list.innerHTML = FAQ_DATA.map((f, i) => `
     <div class="faq-item" data-index="${i}">
-      <button class="faq-q" type="button">
+      <button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-panel-${i}">
         <span>${f.q}</span>
-        <i class="bi bi-plus-lg"></i>
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
       </button>
-      <div class="faq-a"><p>${f.a}</p></div>
+      <div class="faq-a" id="faq-panel-${i}"><p>${f.a}</p></div>
     </div>
   `).join("");
   list.querySelectorAll(".faq-item").forEach((item) => {
@@ -974,11 +1037,13 @@ function renderFAQ() {
         other.classList.remove("is-open");
         other.querySelector(".faq-a").style.maxHeight = null;
         other.querySelector(".faq-q i").className = "bi bi-plus-lg";
+        other.querySelector(".faq-q").setAttribute("aria-expanded", "false");
       });
       if (!isOpen) {
         item.classList.add("is-open");
         a.style.maxHeight = a.scrollHeight + 24 + "px";
         q.querySelector("i").className = "bi bi-dash-lg";
+        q.setAttribute("aria-expanded", "true");
       }
     });
   });
@@ -994,17 +1059,30 @@ function applyWaLinks() {
 }
 
 /* ---------- Orquesta el render inicial ---------- */
+// Si una sección falla al renderizar (por ejemplo, un data/*.json con una
+// forma inesperada), que solo se rompa ESA sección y no toda la página: sin
+// esto, un solo error sin atrapar en cualquiera de las llamadas de abajo
+// detenía renderEverything() a la mitad y dejaba el resto del sitio (precios,
+// galería, sucursales, etc.) sin renderizar, con la página en blanco.
+function safeRender(label, fn) {
+  try {
+    fn();
+  } catch (err) {
+    console.error(`[render] Falló "${label}":`, err);
+  }
+}
+
 function renderEverything() {
-  applyWaLinks();
-  renderPrices();
-  renderCalculator();
-  renderSelector();
-  renderGalleryGeneral();
-  renderBranches();
-  renderTeam();
-  renderSocial();
-  renderCoverageStats();
-  renderFAQ();
+  safeRender("applyWaLinks", applyWaLinks);
+  safeRender("renderPrices", renderPrices);
+  safeRender("renderCalculator", renderCalculator);
+  safeRender("renderSelector", renderSelector);
+  safeRender("renderGalleryGeneral", renderGalleryGeneral);
+  safeRender("renderBranches", renderBranches);
+  safeRender("renderTeam", renderTeam);
+  safeRender("renderSocial", renderSocial);
+  safeRender("renderCoverageStats", renderCoverageStats);
+  safeRender("renderFAQ", renderFAQ);
   observeReveals();
 
   // Selecciona un material si viene por query string, ej. index.html?material=ram
@@ -1085,7 +1163,11 @@ function onScroll() {
 window.addEventListener("scroll", onScroll, { passive: true });
 onScroll();
 
-const sections = ["inicio", "precios", "calculadora", "proceso", "sucursales", "cobertura", "galeria", "faq"];
+// "equipo" está oculta con [hidden] hasta que haya datos de equipo que
+// mostrar (ver renderTeam) — igual se observa desde ahora: el elemento ya
+// existe en el DOM, así que en cuanto se revele, el resaltado de "Quiénes
+// somos" en el menú empieza a funcionar solo, sin nada más que hacer aquí.
+const sections = ["inicio", "precios", "calculadora", "proceso", "equipo", "sucursales", "cobertura", "galeria", "faq"];
 const navAnchors = Array.from(document.querySelectorAll('.nav-links a'));
 if ("IntersectionObserver" in window && navAnchors.length) {
   const navObserver = new IntersectionObserver((entries) => {
@@ -1144,6 +1226,25 @@ if (!prefersReducedMotion) {
 /* ---------- Mapa de cobertura (Leaflet) ---------- */
 let coverageMapInstance = null;
 
+// leaflet.css ya no se carga en el <head> (bloqueaba el primer render de
+// toda la página por un mapa que vive hasta abajo del sitio); se inyecta
+// aquí, justo antes de crear el mapa, la primera vez que el visitante
+// llega a esa sección.
+function ensureLeafletCss() {
+  if (document.getElementById("leafletCssLink")) return Promise.resolve();
+  return new Promise((resolve) => {
+    const link = document.createElement("link");
+    link.id = "leafletCssLink";
+    link.rel = "stylesheet";
+    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+    link.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=";
+    link.crossOrigin = "";
+    link.onload = () => resolve();
+    link.onerror = () => resolve(); // si falla, initCoverageMap ya tiene su propio aviso de respaldo
+    document.head.appendChild(link);
+  });
+}
+
 function initCoverageMap() {
   const mapContainer = document.getElementById("coverageMap");
   if (!mapContainer || coverageMapInstance) return;
@@ -1178,7 +1279,11 @@ if ("IntersectionObserver" in window) {
   const coverageSection = document.getElementById("cobertura");
   if (coverageSection) {
     const mapObserver = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => { if (entry.isIntersecting) { initCoverageMap(); mapObserver.disconnect(); } });
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        ensureLeafletCss().then(() => initCoverageMap());
+        mapObserver.disconnect();
+      });
     }, { threshold: 0.2 });
     mapObserver.observe(coverageSection);
   }

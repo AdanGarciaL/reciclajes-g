@@ -45,7 +45,7 @@
         <div class="app-brand">
           <img src="icons/icono.png" alt="" />
           <div>
-            <strong>ECO LÓGICA García</strong>
+            <h1>ECO LÓGICA García</h1>
             <span>Panel interno</span>
           </div>
         </div>
@@ -54,18 +54,18 @@
             <span class="gh-dot" id="ghDot"></span>
             <span id="connPillText">Guardado: revisando…</span>
           </button>
-          <button class="theme-toggle" id="themeToggle" aria-label="Cambiar tema"><i class="bi bi-moon-fill" id="themeIcon"></i></button>
+          <button class="theme-toggle" id="themeToggle" aria-label="Cambiar tema"><i class="bi bi-moon-fill" id="themeIcon" aria-hidden="true"></i></button>
           <p class="who">Hola, <strong id="whoAmI">—</strong></p>
-          <button class="btn btn-ghost btn-sm" id="logoutBtn"><i class="bi bi-box-arrow-right"></i> Salir</button>
-          <a class="btn btn-ghost btn-sm" href="index.html" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> Ver sitio</a>
+          <button class="btn btn-ghost btn-sm" id="logoutBtn"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Salir</button>
+          <a class="btn btn-ghost btn-sm" href="index.html" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Ver sitio</a>
         </div>
       </div>
       <div class="container app-tabs">
-        <button class="app-tab is-active" data-tab="precios"><i class="bi bi-tags"></i> Precios y tipos</button>
-        <button class="app-tab" data-tab="galeria"><i class="bi bi-images"></i> Galería</button>
-        <button class="app-tab" data-tab="equipo"><i class="bi bi-people"></i> Quiénes somos</button>
-        <button class="app-tab" data-tab="sucursales"><i class="bi bi-shop"></i> Sucursales y contacto</button>
-        <button class="app-tab" data-tab="cobertura"><i class="bi bi-geo-alt"></i> Cobertura y redes</button>
+        <button class="app-tab is-active" data-tab="precios"><i class="bi bi-tags" aria-hidden="true"></i> Precios y tipos</button>
+        <button class="app-tab" data-tab="galeria"><i class="bi bi-images" aria-hidden="true"></i> Galería</button>
+        <button class="app-tab" data-tab="equipo"><i class="bi bi-people" aria-hidden="true"></i> Quiénes somos</button>
+        <button class="app-tab" data-tab="sucursales"><i class="bi bi-shop" aria-hidden="true"></i> Sucursales y contacto</button>
+        <button class="app-tab" data-tab="cobertura"><i class="bi bi-geo-alt" aria-hidden="true"></i> Cobertura y redes</button>
       </div>
     </header>
 
@@ -73,7 +73,7 @@
 
       <!-- Aviso solo visible si todavía no se configuró el guardado en esta computadora -->
       <p class="connect-banner" id="connectBanner" hidden>
-        <i class="bi bi-exclamation-triangle"></i>
+        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
         Esta computadora todavía no está lista para guardar cambios.
         <button type="button" id="connectBannerBtn">Configurar guardado</button>
         (esto se hace una sola vez).
@@ -82,7 +82,7 @@
       <!-- Aviso solo visible si no se pudo cargar la información actual (por ejemplo, si
            esta página se abrió haciendo doble clic en el archivo en vez de por internet) -->
       <p class="connect-banner is-danger" id="dataUnavailableBanner" hidden>
-        <i class="bi bi-exclamation-octagon"></i>
+        <i class="bi bi-exclamation-octagon" aria-hidden="true"></i>
         No se pudo cargar la información actual del sitio, así que por ahora no se puede editar ni guardar nada.
         Es probable que esta página se haya abierto desde el archivo directamente: ábrela desde
         <a href="https://ecologicagarcia.com/admin.html" target="_blank" rel="noopener">el panel publicado</a>
@@ -96,42 +96,42 @@
           <div class="section-block-head">
             <span class="section-num">1</span>
             <div>
-              <p class="card-title">Materiales</p>
+              <h2 class="card-title">Materiales</h2>
               <p class="card-sub">Da clic en "Editar" para abrir cada uno en una ventana aparte. Un material nuevo, mientras no tenga tipos o ficha propia (abajo), puede marcarse como "Sin ficha propia" para que mande mensaje directo por WhatsApp en vez de abrir una página vacía.</p>
             </div>
           </div>
           <div class="card">
             <div id="materialsForm"></div>
           </div>
-          <button type="button" class="btn btn-ghost btn-sm" id="addMaterialBtn" style="margin-top:14px"><i class="bi bi-plus-lg"></i> Agregar material</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="addMaterialBtn" style="margin-top:14px"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar material</button>
         </div>
 
         <div class="section-block">
           <div class="section-block-head">
             <span class="section-num">2</span>
             <div>
-              <p class="card-title">Tipos de tarjeta de celular</p>
+              <h2 class="card-title">Tipos de tarjeta de celular</h2>
               <p class="card-sub">Tipo 1, Tipo 2, Tipo 3, sin pila/tapa, o cualquier otro que agregues. Da clic en "Editar" para cambiar su nombre, precio, material al que pertenece o sus características.</p>
             </div>
           </div>
           <div class="card" id="typesForm"></div>
-          <button type="button" class="btn btn-ghost btn-sm" id="addTypeBtn" style="margin-top:14px"><i class="bi bi-plus-lg"></i> Agregar tipo</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="addTypeBtn" style="margin-top:14px"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar tipo</button>
         </div>
 
         <div class="section-block">
           <div class="section-block-head">
             <span class="section-num">3</span>
             <div>
-              <p class="card-title">Ficha de otros materiales</p>
+              <h2 class="card-title">Ficha de otros materiales</h2>
               <p class="card-sub">El título y las características que se muestran al elegir RAM, laptop, tablet, celular de teclado o cualquier ficha que agregues. El precio de cada una se edita arriba, en "Materiales".</p>
             </div>
           </div>
           <div class="card" id="otherMaterialsForm"></div>
-          <button type="button" class="btn btn-ghost btn-sm" id="addOtherMaterialBtn" style="margin-top:14px"><i class="bi bi-plus-lg"></i> Agregar ficha</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="addOtherMaterialBtn" style="margin-top:14px"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar ficha</button>
         </div>
 
         <div class="actions-row">
-          <button class="btn btn-primary" id="savePricesBtn"><i class="bi bi-cloud-arrow-up"></i> Guardar cambios</button>
+          <button class="btn btn-primary" id="savePricesBtn"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> Guardar cambios</button>
           <button class="btn btn-ghost" id="resetPricesBtn">Descartar cambios</button>
         </div>
         <p class="status-msg" id="pricesStatus"></p>
@@ -143,14 +143,14 @@
           <div class="section-block-head">
             <span class="section-num">1</span>
             <div>
-              <p class="card-title">Categorías</p>
+              <h2 class="card-title">Categorías</h2>
               <p class="card-sub">Cada categoría son las fotos que aparecen al elegir ese tipo de material en el sitio. Da clic en una para ver o editar sus fotos abajo; renombra o quita una categoría en la lista de más abajo.</p>
             </div>
           </div>
           <div class="card">
             <div class="gallery-cats" id="galleryCats"></div>
             <div class="gallery-cat-editor" id="galleryCatEditor"></div>
-            <button type="button" class="btn btn-ghost btn-sm" id="addCategoryBtn" style="margin-top:14px"><i class="bi bi-plus-lg"></i> Agregar categoría</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="addCategoryBtn" style="margin-top:14px"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar categoría</button>
           </div>
         </div>
 
@@ -158,14 +158,14 @@
           <div class="section-block-head">
             <span class="section-num">2</span>
             <div>
-              <p class="card-title">Fotos de esta categoría</p>
+              <h2 class="card-title">Fotos de esta categoría</h2>
               <p class="card-sub">"Quitar" retira la foto de la página, sin borrar el archivo. Escribe una descripción corta de cada foto.</p>
             </div>
           </div>
           <div class="card">
             <div class="gallery-thumb-grid" id="galleryThumbs"></div>
             <div class="add-photo-box" id="addPhotoBox">
-              <i class="bi bi-cloud-arrow-up"></i>
+              <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i>
               <p style="margin:0;font-size:13px;color:var(--ink-muted)">Arrastra una o varias fotos aquí, o da clic para elegirlas</p>
               <label class="btn btn-ghost btn-sm add-photo-pick">
                 Elegir fotos
@@ -177,7 +177,7 @@
         </div>
 
         <div class="actions-row">
-          <button class="btn btn-primary" id="saveGalleryBtn"><i class="bi bi-cloud-arrow-up"></i> Guardar cambios</button>
+          <button class="btn btn-primary" id="saveGalleryBtn"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> Guardar cambios</button>
           <button class="btn btn-ghost" id="resetGalleryBtn">Descartar cambios</button>
         </div>
         <p class="status-msg" id="galleryStatus"></p>
@@ -189,15 +189,15 @@
           <div class="section-block-head">
             <span class="section-num">1</span>
             <div>
-              <p class="card-title">Quiénes somos</p>
+              <h2 class="card-title">Quiénes somos</h2>
               <p class="card-sub">Da clic en "Editar" para abrir a cada persona en una ventana aparte: nombre, foto, contacto y sus redes sociales. Una persona solo aparece en el sitio público cuando su nombre no está vacío.</p>
             </div>
           </div>
           <div class="card" id="teamForm"></div>
-          <button type="button" class="btn btn-ghost btn-sm" id="addTeamMemberBtn" style="margin-top:14px"><i class="bi bi-plus-lg"></i> Agregar persona</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="addTeamMemberBtn" style="margin-top:14px"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar persona</button>
         </div>
         <div class="actions-row">
-          <button class="btn btn-primary" id="saveTeamBtn"><i class="bi bi-cloud-arrow-up"></i> Guardar cambios</button>
+          <button class="btn btn-primary" id="saveTeamBtn"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> Guardar cambios</button>
           <button class="btn btn-ghost" id="resetTeamBtn">Descartar cambios</button>
         </div>
         <p class="status-msg" id="teamStatus"></p>
@@ -209,15 +209,15 @@
           <div class="section-block-head">
             <span class="section-num">1</span>
             <div>
-              <p class="card-title">Sucursales y contacto directo</p>
+              <h2 class="card-title">Sucursales y contacto directo</h2>
               <p class="card-sub">Da clic en "Editar" para abrir cada una en una ventana aparte. "Sucursal" es un local con dirección fija (y número de local, si aplica); "Contacto directo" es una persona que atiende una zona o estado sin local fijo. Marca "Número principal" en el contacto que debe usarse en los botones generales de WhatsApp de todo el sitio (solo puede haber uno).</p>
             </div>
           </div>
           <div class="card" id="branchesForm"></div>
-          <button type="button" class="btn btn-ghost btn-sm" id="addBranchBtn" style="margin-top:14px"><i class="bi bi-plus-lg"></i> Agregar sucursal o contacto</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="addBranchBtn" style="margin-top:14px"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar sucursal o contacto</button>
         </div>
         <div class="actions-row">
-          <button class="btn btn-primary" id="saveBranchesBtn"><i class="bi bi-cloud-arrow-up"></i> Guardar cambios</button>
+          <button class="btn btn-primary" id="saveBranchesBtn"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> Guardar cambios</button>
           <button class="btn btn-ghost" id="resetBranchesBtn">Descartar cambios</button>
         </div>
         <p class="status-msg" id="branchesStatus"></p>
@@ -229,14 +229,14 @@
           <div class="section-block-head">
             <span class="section-num">1</span>
             <div>
-              <p class="card-title">Estados con cobertura activa</p>
+              <h2 class="card-title">Estados con cobertura activa</h2>
               <p class="card-sub">Estos estados aparecen marcados en el mapa de la página principal. El resto del país se cuenta solo (32 menos los activos), con la política de recolección desde 10 kg.</p>
             </div>
           </div>
           <div class="card">
             <div class="coverage-add-row">
               <div class="field"><label>Agregar estado</label><select id="stateSelect"></select></div>
-              <button type="button" class="btn btn-primary btn-sm" id="addStateBtn"><i class="bi bi-plus-lg"></i> Agregar</button>
+              <button type="button" class="btn btn-primary btn-sm" id="addStateBtn"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar</button>
             </div>
             <div class="state-chip-list" id="stateChipList"></div>
             <p class="price-hint" id="coverageCountHint"></p>
@@ -247,16 +247,16 @@
           <div class="section-block-head">
             <span class="section-num">2</span>
             <div>
-              <p class="card-title">Redes sociales</p>
+              <h2 class="card-title">Redes sociales</h2>
               <p class="card-sub">Enlaces que aparecen en el pie de página del sitio (Facebook, Instagram, etc.).</p>
             </div>
           </div>
           <div class="card" id="socialForm"></div>
-          <button type="button" class="btn btn-ghost btn-sm" id="addSocialBtn" style="margin-top:14px"><i class="bi bi-plus-lg"></i> Agregar red social</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="addSocialBtn" style="margin-top:14px"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar red social</button>
         </div>
 
         <div class="actions-row">
-          <button class="btn btn-primary" id="saveCoverageBtn"><i class="bi bi-cloud-arrow-up"></i> Guardar cambios</button>
+          <button class="btn btn-primary" id="saveCoverageBtn"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> Guardar cambios</button>
           <button class="btn btn-ghost" id="resetCoverageBtn">Descartar cambios</button>
         </div>
         <p class="status-msg" id="coverageStatus"></p>
@@ -275,7 +275,7 @@
       <div id="itemModalBody"></div>
       <p class="status-msg" id="itemModalStatus"></p>
       <div class="actions-row">
-        <button class="btn btn-primary" id="itemModalSaveBtn"><i class="bi bi-check-lg"></i> Aplicar a la lista</button>
+        <button class="btn btn-primary" id="itemModalSaveBtn"><i class="bi bi-check-lg" aria-hidden="true"></i> Aplicar a la lista</button>
         <button class="btn btn-ghost" id="itemModalCancelBtn">Cancelar</button>
       </div>
       <p class="price-hint" style="margin-top:14px">Esto actualiza la lista de abajo. No olvides presionar "Guardar cambios" para publicarlo en el sitio.</p>
@@ -287,7 +287,7 @@
     <div class="settings-overlay" id="settingsOverlay"></div>
     <div class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
       <button class="selector-close" id="settingsClose" aria-label="Cerrar">×</button>
-      <h2 id="settingsTitle"><i class="bi bi-gear"></i> Ajustes de guardado</h2>
+      <h2 id="settingsTitle"><i class="bi bi-gear" aria-hidden="true"></i> Ajustes de guardado</h2>
       <p class="card-sub">
         Este sitio no usa un servidor propio ni base de datos: cuando guardas cambios, se escriben directamente
         en el repositorio del sitio. Para eso, esta computadora necesita conectarse una sola vez con una

@@ -1,4 +1,10 @@
 :root {
+  /* Mismas tipografías que el resto del sitio (styles.css/admin.css): las
+     páginas legales deben leerse como parte de la misma marca, no como un
+     sitio aparte. */
+  --font-display: "Archivo", "Segoe UI", sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+
   --legal-bg: #eef7ef;
   --legal-bg-accent: rgba(53, 168, 83, 0.12);
   --legal-paper: rgba(255, 255, 255, 0.86);
@@ -7,9 +13,14 @@
   --legal-muted: #4d6656;
   --legal-line: rgba(32, 74, 44, 0.14);
   --legal-primary: #1b7f3a;
-  --legal-primary-2: #13907f;
+  /* Antes un teal (#13907f) ajeno a la paleta oficial; ahora el verde
+     señal de marca (--brand-signal en styles.css), para el degradado de
+     botones y encabezados. */
+  --legal-primary-2: #3FD86A;
   --legal-shadow: 0 20px 48px rgba(16, 36, 22, 0.12);
-  --legal-radius: 28px;
+  /* 20px, igual al --radius-lg máximo del sistema de diseño (antes 28px,
+     más grande que cualquier otro radio del sitio). */
+  --legal-radius: 20px;
 }
 
 html {
@@ -19,12 +30,12 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: "Manrope", sans-serif;
+  font-family: var(--font-body);
   line-height: 1.65;
   color: var(--legal-ink);
   background:
     radial-gradient(circle at 12% 8%, var(--legal-bg-accent) 0%, transparent 28%),
-    radial-gradient(circle at 88% 12%, rgba(20, 160, 143, 0.1) 0%, transparent 26%),
+    radial-gradient(circle at 88% 12%, rgba(63, 216, 106, 0.1) 0%, transparent 26%),
     linear-gradient(160deg, var(--legal-bg) 0%, #f8fcf8 48%, #edf6ee 100%);
 }
 
@@ -37,11 +48,11 @@ body.legal-dark-mode {
   --legal-muted: #b1c8ba;
   --legal-line: rgba(153, 208, 170, 0.16);
   --legal-primary: #59d67a;
-  --legal-primary-2: #4ed0bf;
+  --legal-primary-2: #3FD86A;
   --legal-shadow: 0 22px 54px rgba(0, 0, 0, 0.38);
   background:
     radial-gradient(circle at 12% 8%, rgba(53, 168, 83, 0.18) 0%, transparent 28%),
-    radial-gradient(circle at 88% 12%, rgba(20, 160, 143, 0.14) 0%, transparent 26%),
+    radial-gradient(circle at 88% 12%, rgba(63, 216, 106, 0.14) 0%, transparent 26%),
     linear-gradient(160deg, #08120d 0%, #0d1812 48%, #111d16 100%);
 }
 
@@ -65,18 +76,19 @@ body.legal-dark-mode {
 
 .legal-header {
   border: 1px solid var(--legal-line);
-  border-radius: 28px;
+  border-radius: var(--legal-radius);
   background:
-    linear-gradient(135deg, rgba(53, 168, 83, 0.16) 0%, rgba(255, 255, 255, 0.78) 45%, rgba(20, 160, 143, 0.1) 100%),
+    linear-gradient(135deg, rgba(53, 168, 83, 0.16) 0%, rgba(255, 255, 255, 0.78) 45%, rgba(63, 216, 106, 0.1) 100%),
     var(--legal-paper);
   box-shadow: var(--legal-shadow);
   padding: 1.15rem 1.2rem;
   backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 body.legal-dark-mode .legal-header {
   background:
-    linear-gradient(135deg, rgba(53, 168, 83, 0.18) 0%, rgba(20, 160, 143, 0.08) 100%),
+    linear-gradient(135deg, rgba(53, 168, 83, 0.18) 0%, rgba(63, 216, 106, 0.08) 100%),
     var(--legal-paper);
 }
 
@@ -108,7 +120,8 @@ body.legal-dark-mode .legal-header {
 
 .legal-brand-copy strong {
   display: block;
-  font-family: "Archivo Black", sans-serif;
+  font-family: var(--font-display);
+  font-weight: 900;
   letter-spacing: 0.02em;
   font-size: 1rem;
 }
@@ -197,7 +210,8 @@ body.legal-dark-mode .legal-hero-stat {
 
 .legal-hero-stat strong {
   display: block;
-  font-family: "Archivo Black", sans-serif;
+  font-family: var(--font-display);
+  font-weight: 900;
   font-size: 1rem;
   color: var(--legal-ink);
 }
@@ -220,7 +234,8 @@ body.legal-dark-mode .legal-hero-stat {
 
 .legal-hero h1 {
   margin: 0;
-  font-family: "Archivo Black", sans-serif;
+  font-family: var(--font-display);
+  font-weight: 900;
   font-size: clamp(2rem, 4.6vw, 3.4rem);
   line-height: 0.98;
   letter-spacing: -0.03em;
@@ -360,7 +375,7 @@ body.legal-dark-mode .legal-quicklink {
 .legal-aside-card {
   border: 1px solid var(--legal-line);
   border-radius: 22px;
-  background: linear-gradient(145deg, rgba(53, 168, 83, 0.08) 0%, rgba(20, 160, 143, 0.04) 100%);
+  background: linear-gradient(145deg, rgba(53, 168, 83, 0.08) 0%, rgba(63, 216, 106, 0.04) 100%);
   padding: 0.95rem;
 }
 

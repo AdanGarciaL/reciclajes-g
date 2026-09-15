@@ -32,7 +32,9 @@
   --surface-strong: #e5f2e8;
   --ink: var(--brand-carbon);
   --ink-muted: #3d5647;
-  --ink-soft: #668270;
+  /* Oscurecido de #668270 (antes fallaba AA 4.5:1 en texto normal sobre
+     blanco y sobre --surface-alt); ahora pasa en ambos fondos. */
+  --ink-soft: #527060;
   --border: #dbe8de;
   --border-strong: #c2d8c7;
   --accent: var(--brand-signal);
@@ -177,8 +179,13 @@ h1, h2, h3, p { margin: 0; }
    lo que rompería su anclaje al viewport. */
 .site-header::before {
   content: ""; position: absolute; inset: 0; z-index: -1;
+  /* Respaldo sólido antes de color-mix(): en un navegador que no soporte
+     color-mix(), esa línea se ignora y queda esta, así el encabezado nunca
+     se queda transparente/invisible sobre el contenido que tiene detrás. */
+  background: var(--bg);
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   transition: background-color 0.35s ease;
 }
 .site-header.is-scrolled { box-shadow: var(--shadow-sm); }
@@ -314,7 +321,7 @@ body.dark-mode .hero-stats .stat-number { color: var(--brand-green); }
 .hero-media-tag {
   position: absolute; left: 18px; top: 18px; z-index: 2; display: inline-flex; align-items: center; gap: 8px;
   background: rgba(6, 32, 18, 0.78); border: 1px solid rgba(43, 213, 103, 0.4); border-radius: 7px;
-  padding: 7px 12px; backdrop-filter: blur(6px);
+  padding: 7px 12px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
 .hero-media-tag span.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand-green); }
 .hero-media-tag span.label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #cdeed8; }
@@ -337,7 +344,7 @@ body.dark-mode .hero-media-foot .foot-price { color: var(--brand-green); }
 }
 .price-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--border-strong); }
 .price-card-photo {
-  margin: -24px -24px 8px; aspect-ratio: 16/10; overflow: hidden; background: #ffffff;
+  margin: -24px -24px 8px; aspect-ratio: 16/10; overflow: hidden; background: var(--surface-alt);
   display: flex; align-items: center; justify-content: center; padding: 10px;
   border-bottom: 1px solid var(--border);
   position: relative;
@@ -389,29 +396,12 @@ body.dark-mode .price-table-foot a { color: var(--brand-green); }
   .price-row .row-price { text-align: left; }
 }
 
-/* ---------- Qué compramos ---------- */
-.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
-.material-card {
-  border: 1px solid var(--border); border-radius: var(--radius-md); padding: 22px; background: var(--surface);
-  display: flex; flex-direction: column; gap: 11px; transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-.material-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
-.material-card .card-top { display: flex; align-items: center; justify-content: space-between; }
-.material-card .card-icon {
-  width: 34px; height: 34px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center;
-  background: var(--surface-alt); border: 1px solid var(--border); color: var(--brand-green-strong); font-size: 15px;
-}
-body.dark-mode .material-card .card-icon { color: var(--brand-green); }
-.material-card .card-code { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.14em; color: var(--ink-soft); }
-.material-card h3 { font-family: var(--font-display); font-weight: 700; font-size: 16.5px; color: var(--ink); }
-.material-card p.copy { font-size: 13.5px; line-height: 1.6; color: var(--ink-soft); }
-
 /* ---------- Selector de material (modal) ---------- */
 .selector-modal {
   position: fixed; inset: 0; z-index: 300; display: none; align-items: center; justify-content: center; padding: 20px;
 }
 .selector-modal.active { display: flex; }
-.selector-overlay { position: absolute; inset: 0; background: rgba(4, 16, 9, 0.6); backdrop-filter: blur(3px); opacity: 0; transition: opacity 0.3s ease; }
+.selector-overlay { position: absolute; inset: 0; background: rgba(4, 16, 9, 0.6); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); opacity: 0; transition: opacity 0.3s ease; }
 .selector-modal.active .selector-overlay { opacity: 1; }
 .selector-panel {
   position: relative; z-index: 1; width: min(720px, 100%); max-height: 88vh; overflow-y: auto;
@@ -461,7 +451,9 @@ body.dark-mode .selector-btn .sel-price { color: var(--brand-green); }
   text-align: left; border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-md);
   padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; transition: all 0.2s ease;
 }
-.type-tab.is-active { border-color: var(--brand-green-strong); background: color-mix(in srgb, var(--brand-green) 10%, var(--surface)); }
+/* Respaldo antes de color-mix(): sin él, un navegador que no lo soporte
+   descarta la declaración entera y el tab activo queda igual al inactivo. */
+.type-tab.is-active { border-color: var(--brand-green-strong); background: rgba(63, 216, 106, 0.12); background: color-mix(in srgb, var(--brand-green) 10%, var(--surface)); }
 .type-tab .tab-label { font-family: var(--font-display); font-weight: 700; font-size: 14.5px; color: var(--ink); }
 .type-tab .tab-price { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-soft); }
 .type-tab.is-active .tab-price { color: var(--brand-green-strong); }
@@ -479,7 +471,7 @@ body.dark-mode .type-tab.is-active .tab-price { color: var(--brand-green); }
 .carousel-nav {
   position: absolute; top: 50%; translate: 0 -50%; width: 34px; height: 34px; border-radius: 50%;
   background: rgba(6, 24, 15, 0.55); color: #fff; border: none; font-size: 15px; display: inline-flex;
-  align-items: center; justify-content: center; backdrop-filter: blur(3px); transition: background-color 0.2s ease;
+  align-items: center; justify-content: center; backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); transition: background-color 0.2s ease;
 }
 .carousel-nav:hover { background: rgba(6, 24, 15, 0.8); }
 .carousel-prev { left: 12px; } .carousel-next { right: 12px; }
@@ -596,26 +588,6 @@ body.dark-mode .team-photo-fallback { color: var(--brand-green); }
 .team-contact-link:hover { border-color: var(--brand-green-strong); transform: translateY(-2px); }
 body.dark-mode .team-contact-link { color: var(--brand-green); }
 
-/* ---------- Contacto ---------- */
-.contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: clamp(28px, 4vw, 50px); align-items: start; }
-.guarantee-list { display: flex; flex-direction: column; gap: 14px; margin-top: 6px; }
-.guarantee-item { display: flex; gap: 12px; align-items: flex-start; }
-.guarantee-item i { color: var(--brand-green-strong); font-size: 17px; line-height: 1.4; flex: none; }
-body.dark-mode .guarantee-item i { color: var(--brand-green); }
-.guarantee-item .g-title { font-family: var(--font-display); font-weight: 700; font-size: 14.5px; color: var(--ink); }
-.guarantee-item .g-copy { margin-top: 3px; font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); }
-
-.contact-card { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: clamp(22px, 3vw, 32px); background: var(--surface); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 22px; }
-.contact-card-label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); }
-.contact-wa-link { display: flex; align-items: center; gap: 12px; font-family: var(--font-mono); font-weight: 600; font-size: clamp(20px, 3vw, 27px); color: var(--brand-green-strong); margin-top: 8px; }
-body.dark-mode .contact-wa-link { color: var(--brand-green); }
-.contact-wa-link:hover { color: var(--brand-mid); }
-.send-list { display: flex; flex-direction: column; gap: 11px; }
-.send-list li { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.55; color: var(--ink-muted); }
-.send-list li i { color: var(--brand-green-strong); font-size: 14px; line-height: 1.5; flex: none; }
-body.dark-mode .send-list li i { color: var(--brand-green); }
-.contact-fine { margin: 0; font-family: var(--font-mono); font-size: 11.5px; line-height: 1.6; color: var(--ink-soft); }
-
 /* ---------- FAQ ---------- */
 .faq-wrap { max-width: 900px; margin: 0 auto; }
 .faq-list { border-top: 1px solid var(--border); }
@@ -720,8 +692,11 @@ body.dark-mode .text-accent { color: var(--brand-green); }
 
 /* ---------- Calculadora de Ganancias ---------- */
 .calc-section {
-  padding: 64px 0;
-  border-top: 1px solid var(--border);
+  /* Mismo padding responsivo que el resto de las secciones (antes 64px
+     fijo); sin border-top propio: la sección anterior ya aporta ese borde
+     con su border-bottom, así que tenerlo aquí también dibujaba una línea
+     doble justo en este límite y en ningún otro del sitio. */
+  padding: clamp(34px, 4vw, 54px) 0;
   background: var(--bg-alt);
 }
 .calc-wrapper {
@@ -852,7 +827,7 @@ body.dark-mode .calc-chip-btn.is-active {
 }
 .calc-step-btn:hover {
   background: var(--brand-green-strong);
-  color: #fff;
+  color: #06210f;
   transform: scale(1.05);
 }
 body.dark-mode .calc-step-btn:hover {
@@ -894,6 +869,12 @@ body.dark-mode .calc-step-btn:hover {
   cursor: pointer;
   accent-color: var(--brand-green-strong);
 }
+/* El outline:none de arriba quita también el foco por teclado; se repone
+   aquí para que quien navegue con Tab vea dónde está parado. */
+.calc-slider:focus-visible {
+  outline: 2px solid var(--brand-green-strong);
+  outline-offset: 3px;
+}
 .calc-range-marks {
   display: flex;
   justify-content: space-between;
@@ -930,15 +911,18 @@ body.dark-mode .calc-step-btn:hover {
   border-color: var(--brand-green-strong);
   background: var(--surface-strong);
 }
+/* Mismo verde de marca que el resto de los controles "activos" del sitio
+   (.mode-btn.is-active, .sucursal-filter-chip.is-active, .calc-chip-btn.is-active)
+   — antes usaba negro/blanco aquí, la única excepción del sitio. */
 .quick-pill.is-active {
-  background: var(--ink);
-  color: var(--bg);
-  border-color: var(--ink);
+  background: var(--brand-green-strong);
+  color: #06210f;
+  border-color: var(--brand-green-strong);
 }
 body.dark-mode .quick-pill.is-active {
-  background: var(--accent);
-  color: var(--accent-ink);
-  border-color: var(--accent);
+  background: var(--brand-green);
+  color: #06210f;
+  border-color: var(--brand-green);
 }
 
 /* Tarjeta de resultado */
@@ -1105,7 +1089,9 @@ body.dark-mode .benefit-item i {
 .trust-strip {
   padding: 24px 0;
   background: var(--surface-strong);
-  border-top: 1px solid var(--border);
+  /* Sin border-top propio: .hero ya aporta ese borde con el border-bottom
+     genérico de "section", así que tenerlo aquí también dibujaba una línea
+     doble justo en este límite. */
   border-bottom: 1px solid var(--border);
 }
 .trust-grid {

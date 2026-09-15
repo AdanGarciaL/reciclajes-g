@@ -44,7 +44,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <!-- leaflet.css se carga solo cuando hace falta (ver ensureLeafletCss en
+       script.js): el mapa vive hasta abajo, en "Cobertura", y no tenía
+       sentido bloquear el primer render de toda la página por un CSS que
+       tal vez el visitante nunca llegue a necesitar si no baja tanto. -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -82,9 +85,9 @@
       </ul>
       <div class="nav-actions">
         <button class="theme-toggle" id="themeToggle" aria-label="Cambiar tema" title="Cambiar tema">
-          <i class="bi bi-moon-fill" id="themeIcon"></i>
+          <i class="bi bi-moon-fill" id="themeIcon" aria-hidden="true"></i>
         </button>
-        <a class="btn btn-primary nav-cta js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Escríbenos</a>
+        <a class="btn btn-primary nav-cta js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp" aria-hidden="true"></i> Escríbenos</a>
       </div>
     </nav>
   </header>
@@ -109,7 +112,7 @@
             sin formularios ni registros.
           </p>
           <div class="hero-cta reveal delay-3">
-            <a class="btn btn-primary js-wa-link" data-wa-msg="Hola, tengo material para reciclar y quiero una cotización" href="https://wa.me/522227548704?text=Hola%2C%20tengo%20material%20para%20reciclar%20y%20quiero%20una%20cotizaci%C3%B3n" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Pregunta por tu material</a>
+            <a class="btn btn-primary js-wa-link" data-wa-msg="Hola, tengo material para reciclar y quiero una cotización" href="https://wa.me/522227548704?text=Hola%2C%20tengo%20material%20para%20reciclar%20y%20quiero%20una%20cotizaci%C3%B3n" target="_blank" rel="noopener"><i class="bi bi-whatsapp" aria-hidden="true"></i> Pregunta por tu material</a>
             <a class="btn btn-ghost" href="#precios">Ver precios de hoy</a>
           </div>
           <p class="hero-note reveal delay-4">
@@ -144,28 +147,28 @@
       <div class="container">
         <div class="trust-grid reveal">
           <div class="trust-card">
-            <span class="trust-icon"><i class="bi bi-camera-video-fill"></i></span>
+            <span class="trust-icon"><i class="bi bi-camera-video-fill" aria-hidden="true"></i></span>
             <div class="trust-info">
               <strong class="trust-title">Pesaje transparente en vivo</strong>
               <p class="trust-desc">Báscula calibrada frente a ti o en video para envíos foráneos. Cero sorpresas en tus kilos.</p>
             </div>
           </div>
           <div class="trust-card">
-            <span class="trust-icon"><i class="bi bi-cash-coin"></i></span>
+            <span class="trust-icon"><i class="bi bi-cash-coin" aria-hidden="true"></i></span>
             <div class="trust-info">
               <strong class="trust-title">Pago inmediato en mano</strong>
               <p class="trust-desc">Efectivo o transferencia SPEI al momento de entregar tu material antes de retirarte.</p>
             </div>
           </div>
           <div class="trust-card">
-            <span class="trust-icon"><i class="bi bi-shield-check"></i></span>
+            <span class="trust-icon"><i class="bi bi-shield-check" aria-hidden="true"></i></span>
             <div class="trust-info">
               <strong class="trust-title">Trato directo sin intermediarios</strong>
               <p class="trust-desc">Somos recicladores directos: tabulador honesto y el mejor precio por kilo del mercado.</p>
             </div>
           </div>
           <div class="trust-card">
-            <span class="trust-icon"><i class="bi bi-geo-alt-fill"></i></span>
+            <span class="trust-icon"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i></span>
             <div class="trust-info">
               <strong class="trust-title">7 plazas y envíos nacionales</strong>
               <p class="trust-desc">Entrega en tu sucursal más cercana o coordinamos recolección en toda la República desde 10 kg.</p>
@@ -208,7 +211,7 @@
       <div class="container">
         <div class="section-head reveal">
           <div>
-            <p class="eyebrow"><i class="bi bi-calculator"></i> Cotizador Express</p>
+            <p class="eyebrow"><i class="bi bi-calculator" aria-hidden="true"></i> Cotizador Express</p>
             <h2>Calcula tus ganancias estimadas</h2>
           </div>
           <p>Selecciona tu tipo de material y la cantidad de kilos para calcular cuánto dinero en efectivo recibirás al momento.</p>
@@ -266,7 +269,7 @@
           </div>
 
           <div class="calc-result-card">
-            <div class="result-badge"><span class="live-pulse-dot"></span> <i class="bi bi-cash-stack"></i> Estimación de compra inmediata</div>
+            <div class="result-badge"><span class="live-pulse-dot"></span> <i class="bi bi-cash-stack" aria-hidden="true"></i> Estimación de compra inmediata</div>
             <p class="result-material-title" id="calcResultTitle">Cargando material…</p>
             <div class="result-price-wrap">
               <span class="result-currency">MXN</span>
@@ -275,14 +278,14 @@
             <p class="result-formula" id="calcResultFormula">Calculando según peso y tabulador vigente…</p>
 
             <div class="result-benefits">
-              <div class="benefit-item"><i class="bi bi-check-circle-fill"></i> Pago inmediato en efectivo o transferencia</div>
-              <div class="benefit-item"><i class="bi bi-camera-video-fill"></i> Báscula calibrada y pesaje en video/en vivo frente a ti</div>
-              <div class="benefit-item"><i class="bi bi-shield-check"></i> Cero intermediarios ni descuentos sorpresa</div>
-              <div class="benefit-item"><i class="bi bi-geo-alt-fill"></i> En sucursal o recolección a domicilio</div>
+              <div class="benefit-item"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Pago inmediato en efectivo o transferencia</div>
+              <div class="benefit-item"><i class="bi bi-camera-video-fill" aria-hidden="true"></i> Báscula calibrada y pesaje en video/en vivo frente a ti</div>
+              <div class="benefit-item"><i class="bi bi-shield-check" aria-hidden="true"></i> Cero intermediarios ni descuentos sorpresa</div>
+              <div class="benefit-item"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> En sucursal o recolección a domicilio</div>
             </div>
 
             <a class="btn btn-primary btn-block calc-cta-btn" id="calcWaBtn" href="https://wa.me/522227548704" target="_blank" rel="noopener">
-              <i class="bi bi-whatsapp"></i> Cotizar este lote por WhatsApp
+              <i class="bi bi-whatsapp" aria-hidden="true"></i> Cotizar este lote por WhatsApp
             </a>
             <p class="calc-disclaimer">*El valor final se confirma al evaluar el lote físico (chip presente, estado y limpieza). Precios sujetos a actualización.</p>
           </div>
@@ -316,9 +319,9 @@
         </div>
         <p class="selector-step-label">1. Elige categoría</p>
         <div class="selector-modes" role="tablist" aria-label="Categoría de material">
-          <button class="mode-btn is-active" type="button" data-mode="all">Ver todos</button>
-          <button class="mode-btn" type="button" data-mode="celular">Solo celular</button>
-          <button class="mode-btn" type="button" data-mode="otros">Otros tipos</button>
+          <button class="mode-btn is-active" type="button" role="tab" aria-selected="true" data-mode="all">Ver todos</button>
+          <button class="mode-btn" type="button" role="tab" aria-selected="false" data-mode="celular">Solo celular</button>
+          <button class="mode-btn" type="button" role="tab" aria-selected="false" data-mode="otros">Otros tipos</button>
         </div>
         <p class="selector-step-label">2. Selecciona material</p>
         <div class="selector-grid" id="selectorGrid">
@@ -333,7 +336,7 @@
     <section class="material-detail" id="materialDetail">
       <div class="container">
         <div class="section-head-solo reveal">
-          <button class="back-link" id="detailBack"><i class="bi bi-arrow-left"></i> Elegir otro material</button>
+          <button class="back-link" id="detailBack"><i class="bi bi-arrow-left" aria-hidden="true"></i> Elegir otro material</button>
           <p class="eyebrow" id="detailEyebrow">Lógica de celular</p>
           <h2 id="detailTitle">Tipos y precios según características</h2>
         </div>
@@ -360,8 +363,8 @@
             </div>
             <ul class="spec-list" id="detailSpecs"></ul>
             <div class="detail-actions">
-              <a class="btn btn-primary" id="detailWaLink" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Tengo este material</a>
-              <a class="btn btn-ghost js-wa-link" id="detailOtherBtn" data-wa-msg="Hola, tengo otro tipo de material para vender que no veo en su lista de precios." href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Tengo otro tipo de material</a>
+              <a class="btn btn-primary" id="detailWaLink" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp" aria-hidden="true"></i> Tengo este material</a>
+              <a class="btn btn-ghost js-wa-link" id="detailOtherBtn" data-wa-msg="Hola, tengo otro tipo de material para vender que no veo en su lista de precios." href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp" aria-hidden="true"></i> Tengo otro tipo de material</a>
             </div>
           </div>
         </div>
@@ -398,7 +401,7 @@
 
         <!-- Filtros rápidos por estado -->
         <div class="sucursales-filter-bar reveal delay-1" id="sucursalesFilterBar" role="tablist" aria-label="Filtrar sucursales por estado">
-          <button type="button" class="sucursal-filter-chip is-active" data-filter="all" role="tab" aria-selected="true"><i class="bi bi-grid-fill"></i> Todos (7)</button>
+          <button type="button" class="sucursal-filter-chip is-active" data-filter="all" role="tab" aria-selected="true"><i class="bi bi-grid-fill" aria-hidden="true"></i> Todos (7)</button>
           <button type="button" class="sucursal-filter-chip" data-filter="puebla" role="tab" aria-selected="false">Puebla</button>
           <button type="button" class="sucursal-filter-chip" data-filter="cdmx" role="tab" aria-selected="false">CDMX</button>
           <button type="button" class="sucursal-filter-chip" data-filter="mexico" role="tab" aria-selected="false">EdoMéx</button>
@@ -410,8 +413,8 @@
 
         <div class="sucursales-grid" id="sucursalesGrid"></div>
         <div class="sucursal-tip-strip reveal">
-          <p><i class="bi bi-info-circle-fill"></i> <strong>Para cotizar más rápido por WhatsApp:</strong> Envía fotos claras de tu lote, tipo de tarjeta, kilos aproximados y tu ciudad.</p>
-          <a class="btn btn-sm btn-ghost js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Chat general de atención</a>
+          <p><i class="bi bi-info-circle-fill" aria-hidden="true"></i> <strong>Para cotizar más rápido por WhatsApp:</strong> Envía fotos claras de tu lote, tipo de tarjeta, kilos aproximados y tu ciudad.</p>
+          <a class="btn btn-sm btn-ghost js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp" aria-hidden="true"></i> Chat general de atención</a>
         </div>
       </div>
     </section>
@@ -499,16 +502,16 @@
           <h2>Tu lógica también tiene valor</h2>
           <p>Pregunta sin compromiso. Te decimos el rango de precio antes de que muevas el material.</p>
           <div class="cta-band-actions">
-            <a class="btn btn-primary js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Escribir por WhatsApp</a>
-            <a class="btn btn-ghost" href="#sucursales"><i class="bi bi-geo-alt"></i> Ver sucursales</a>
+            <a class="btn btn-primary js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp" aria-hidden="true"></i> Escribir por WhatsApp</a>
+            <a class="btn btn-ghost" href="#sucursales"><i class="bi bi-geo-alt" aria-hidden="true"></i> Ver sucursales</a>
           </div>
         </div>
       </div>
     </section>
   </main>
 
-  <a class="floating-whatsapp js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp"><i class="bi bi-whatsapp"></i></a>
-  <button class="back-to-top" id="backToTop" type="button" aria-label="Volver arriba" hidden><i class="bi bi-arrow-up"></i></button>
+  <a class="floating-whatsapp js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp"><i class="bi bi-whatsapp" aria-hidden="true"></i></a>
+  <button class="back-to-top" id="backToTop" type="button" aria-label="Volver arriba" hidden><i class="bi bi-arrow-up" aria-hidden="true"></i></button>
 
   <footer class="site-footer">
     <div class="container footer-grid">
@@ -556,11 +559,11 @@
   <aside class="mobile-sticky-bar" id="mobileStickyBar" aria-label="Cotización rápida en móvil">
     <div class="mobile-sticky-inner">
       <div class="mobile-sticky-info">
-        <span class="mobile-sticky-tag"><i class="bi bi-lightning-fill"></i> Celular Tipo 1</span>
+        <span class="mobile-sticky-tag"><i class="bi bi-lightning-fill" aria-hidden="true"></i> Celular Tipo 1</span>
         <div class="mobile-sticky-price" id="mobileStickyPrice">$900 – $1,300/kg</div>
       </div>
       <a href="https://wa.me/522227548704?text=Hola%2C%20quiero%20cotizar%20un%20lote%20de%20tarjetas%20con%20Eco%20L%C3%B3gica%20Garc%C3%ADa" class="btn btn-sm btn-primary mobile-sticky-cta js-wa-link" target="_blank" rel="noopener" data-wa-msg="Hola, quiero cotizar un lote de tarjetas con Eco Lógica García">
-        <i class="bi bi-whatsapp"></i> Cotizar WhatsApp
+        <i class="bi bi-whatsapp" aria-hidden="true"></i> Cotizar WhatsApp
       </a>
     </div>
   </aside>

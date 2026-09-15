@@ -41,6 +41,18 @@ function normalizeWhatsapp(raw) {
   if (d.length === 10) d = "52" + d;
   return d;
 }
+// Valida el número TAL COMO lo escribió el admin (antes de anteponerle el
+// 52 de México): debe tener exactamente 10 dígitos, o quedar vacío. Antes
+// se guardaba cualquier cantidad de dígitos sin avisar, y normalizeWhatsapp
+// solo antepone "52" cuando son exactamente 10 — un número con menos o más
+// dígitos se guardaba tal cual, roto, sin que nadie se enterara hasta que
+// un cliente intentara escribirle.
+function validateWhatsappDigits(raw) {
+  const digits = String(raw || "").replace(/\D/g, "");
+  if (!digits) return null; // vacío es válido donde el campo es opcional
+  if (digits.length !== 10) return `El WhatsApp "${esc(raw)}" debe tener exactamente 10 dígitos (sin el 52 de México).`;
+  return null;
+}
 function initials(name) {
   return String(name || "").trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() || "").join("");
 }
@@ -169,11 +181,17 @@ async function enterApp(username) {
   // fetch local falla (ver fetchJsonOrFromGitHub), ya hay una llave lista
   // para leerlos directo de la API de GitHub en el primer intento.
   await initGitHubConnection();
-  loadPricesIntoForm();
-  loadGalleryIntoUI();
-  loadTeamIntoForm();
-  loadBranchesIntoForm();
-  loadCoverageAndSocialIntoForm();
+  // Las 5 secciones cargan en paralelo (cada una es independiente), a
+  // propósito sin esperar una a otra. .catch() aquí es solo una red de
+  // seguridad: si alguna truena por un error que no se haya previsto (no el
+  // camino ya manejado de "no se pudo cargar"), que quede en la consola en
+  // vez de perderse como una promesa rechazada sin atrapar, y que las demás
+  // secciones sigan cargando normal.
+  loadPricesIntoForm().catch((err) => console.error("[admin] loadPricesIntoForm falló:", err));
+  loadGalleryIntoUI().catch((err) => console.error("[admin] loadGalleryIntoUI falló:", err));
+  loadTeamIntoForm().catch((err) => console.error("[admin] loadTeamIntoForm falló:", err));
+  loadBranchesIntoForm().catch((err) => console.error("[admin] loadBranchesIntoForm falló:", err));
+  loadCoverageAndSocialIntoForm().catch((err) => console.error("[admin] loadCoverageAndSocialIntoForm falló:", err));
 }
 
 (function checkExistingSession() {
@@ -285,13 +303,18 @@ function disconnectGitHub() {
 
 /* ---------- Modal de Ajustes ---------- */
 const settingsModal = document.getElementById("settingsModal");
+let settingsLastFocused = null;
 function openSettings() {
+  settingsLastFocused = document.activeElement;
   settingsModal?.classList.add("active");
   settingsModal?.setAttribute("aria-hidden", "false");
+  document.getElementById("ghToken")?.focus();
 }
 function closeSettings() {
   settingsModal?.classList.remove("active");
   settingsModal?.setAttribute("aria-hidden", "true");
+  if (settingsLastFocused && document.contains(settingsLastFocused)) settingsLastFocused.focus();
+  settingsLastFocused = null;
 }
 
 // Devuelve una promesa: los formularios esperan a que esto termine antes de
@@ -358,7 +381,9 @@ async function ghPutFile(path, base64Content, message, sha) {
   });
   if (!res.ok) {
     const errBody = await res.json().catch(() => ({}));
-    throw new Error(errBody.message || `No se pudo guardar ${path} (${res.status}).`);
+    const err = new Error(errBody.message || `No se pudo guardar ${path} (${res.status}).`);
+    err.status = res.status; // para que ghSaveJson sepa si vale la pena reintentar
+    throw err;
   }
   return res.json();
 }
@@ -391,6 +416,11 @@ async function ghSaveJson(path, dataObject, message) {
   try {
     return await ghPutFile(path, content, message, existing ? existing.sha : undefined);
   } catch (err) {
+    // Solo reintenta si de verdad fue un conflicto de sha (alguien más
+    // guardó justo antes): para cualquier otro error (sin conexión, token
+    // vencido, límite de peticiones de GitHub, error del servidor) reintentar
+    // no soluciona nada, solo repite el mismo fallo — mejor avisar de una vez.
+    if (err?.status !== 409 && err?.status !== 422) throw err;
     const fresh = await ghGetFile(path);
     return ghPutFile(path, content, message, fresh ? fresh.sha : undefined);
   }
@@ -424,22 +454,38 @@ function guardDataLoaded(statusElId) {
   }
   return true;
 }
+// Guarda el motivo técnico del último intento fallido de
+// fetchJsonOrFromGitHub, para que unavailableNoticeHtml() pueda mostrar algo
+// más útil que "no se pudo cargar" a secas — antes los dos catch de abajo
+// descartaban el error por completo, así que el admin siempre veía el mismo
+// mensaje genérico sin importar si el problema era estar desconectado, un
+// token vencido, un límite de peticiones de GitHub, o un archivo corrupto.
+let lastLoadErrorDetail = "";
 async function fetchJsonOrFromGitHub(path) {
+  let detail = "";
   try {
     const res = await fetch(`${path}?t=${Date.now()}`, { cache: "no-store" });
-    if (res.ok) return await res.json();
-  } catch (_err) { /* probablemente file://: sigue con el respaldo de GitHub */ }
+    if (res.ok) { lastLoadErrorDetail = ""; return await res.json(); }
+    detail = `el sitio respondió con un error (${res.status}) al pedir ${path}`;
+  } catch (_err) {
+    detail = "no se pudo conectar (sin internet, o el archivo no está disponible así en este servidor)";
+  }
 
   if (ghToken) {
     try {
       const file = await ghGetFile(path);
-      if (file) return JSON.parse(base64ToUtf8(file.content));
-    } catch (_err) { /* sigue al mensaje de error */ }
+      if (file) { lastLoadErrorDetail = ""; return JSON.parse(base64ToUtf8(file.content)); }
+      detail = `${path} no existe en el repositorio de GitHub`;
+    } catch (err) {
+      detail = err?.message || "no se pudo leer desde GitHub";
+    }
   }
+  lastLoadErrorDetail = detail;
   return null;
 }
 function unavailableNoticeHtml(label) {
-  return `<p class="price-hint" style="margin:0">No se pudo cargar "${esc(label)}". Conéctate en Ajustes y recarga la página, o abre este panel desde el sitio publicado en vez de abrir el archivo directamente.</p>`;
+  const detail = lastLoadErrorDetail ? ` — ${esc(lastLoadErrorDetail)}` : "";
+  return `<p class="price-hint" style="margin:0">No se pudo cargar "${esc(label)}"${detail}. Conéctate en Ajustes y recarga la página, o abre este panel desde el sitio publicado en vez de abrir el archivo directamente.</p>`;
 }
 
 /* =========================================================
@@ -463,7 +509,9 @@ let itemModalApplyHandler = null; // () => string de error, o null/undefined si 
 let itemModalCancelHandler = null;
 let currentModalDraft = null; // el objeto (material/tipo/ficha/persona/sucursal) que se edita ahora mismo
 
+let itemModalLastFocused = null;
 function openItemModal(title, bodyHtml, onApply, onCancel) {
+  itemModalLastFocused = document.activeElement;
   document.getElementById("itemModalTitle").textContent = title;
   itemModalBodyEl.innerHTML = bodyHtml;
   hideStatus("itemModalStatus");
@@ -481,6 +529,8 @@ function closeItemModal() {
   currentModalDraft = null;
   itemModalBodyEl.innerHTML = "";
   delete itemModalBodyEl.dataset.itemType;
+  if (itemModalLastFocused && document.contains(itemModalLastFocused)) itemModalLastFocused.focus();
+  itemModalLastFocused = null;
 }
 function cancelItemModal() {
   itemModalCancelHandler?.();
@@ -506,7 +556,12 @@ let workingPrices = null;
 
 async function loadPricesIntoForm() {
   const data = await fetchJsonOrFromGitHub("data/prices.json");
-  if (!data) {
+  // Si data/prices.json existe pero no tiene la forma esperada (por ejemplo,
+  // alguien lo editó a mano y algún campo quedó null o no es un arreglo), se
+  // trata igual que "no se pudo cargar": mejor avisar y bloquear el guardado
+  // que dejar que el panel truene al intentar dibujar la lista.
+  const hasValidShape = data && Array.isArray(data.materials) && Array.isArray(data.celularTypes) && Array.isArray(data.otherMaterials);
+  if (!hasValidShape) {
     showDataUnavailableBanner();
     workingPrices = { materials: [], celularTypes: [], otherMaterials: [] };
     document.getElementById("materialsForm").innerHTML = unavailableNoticeHtml("Materiales");
@@ -523,9 +578,9 @@ async function loadPricesIntoForm() {
 function specsListHtml(specs) {
   return (specs || []).map((s) => `
     <div class="spec-row">
-      <i class="bi bi-check2"></i>
-      <input type="text" class="spec-input" value="${esc(s)}" placeholder="Característica" />
-      <button type="button" class="spec-remove" aria-label="Quitar característica"><i class="bi bi-x-lg"></i></button>
+      <i class="bi bi-check2" aria-hidden="true"></i>
+      <input type="text" class="spec-input" value="${esc(s)}" placeholder="Característica" aria-label="Característica" />
+      <button type="button" class="spec-remove" aria-label="Quitar característica"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
     </div>
   `).join("");
 }
@@ -551,7 +606,7 @@ function wireSpecsEditors(containerEl) {
       const list = addBtn.parentElement.querySelector(".specs-list");
       const row = document.createElement("div");
       row.className = "spec-row";
-      row.innerHTML = `<i class="bi bi-check2"></i><input type="text" class="spec-input" placeholder="Característica" /><button type="button" class="spec-remove" aria-label="Quitar característica"><i class="bi bi-x-lg"></i></button>`;
+      row.innerHTML = `<i class="bi bi-check2" aria-hidden="true"></i><input type="text" class="spec-input" placeholder="Característica" aria-label="Característica" /><button type="button" class="spec-remove" aria-label="Quitar característica"><i class="bi bi-x-lg" aria-hidden="true"></i></button>`;
       list.appendChild(row);
       row.querySelector("input").focus();
       return;
@@ -576,10 +631,11 @@ const MATERIAL_ICON_PRESETS = [
   { value: "bi-usb-plug", label: "Cable / USB" },
   { value: "bi-tools", label: "Otro (genérico)" },
 ];
-function iconSelectHtml(currentIcon, inputClass) {
+function iconSelectHtml(currentIcon, inputClass, inputId) {
   const hasPreset = MATERIAL_ICON_PRESETS.some((p) => p.value === currentIcon);
   const extra = !hasPreset && currentIcon ? `<option value="${esc(currentIcon)}" selected>${esc(currentIcon)}</option>` : "";
-  return `<select class="${inputClass}">${extra}${MATERIAL_ICON_PRESETS.map((p) => `<option value="${p.value}" ${p.value === currentIcon ? "selected" : ""}>${p.label}</option>`).join("")}</select>`;
+  const idAttr = inputId ? ` id="${esc(inputId)}"` : "";
+  return `<select${idAttr} class="${inputClass}">${extra}${MATERIAL_ICON_PRESETS.map((p) => `<option value="${p.value}" ${p.value === currentIcon ? "selected" : ""}>${p.label}</option>`).join("")}</select>`;
 }
 function materialOptionsHtml(selectedId) {
   return workingPrices.materials.map((m) => `<option value="${esc(m.id)}" ${m.id === selectedId ? "selected" : ""}>${esc(m.name || m.id)}</option>`).join("");
@@ -621,6 +677,15 @@ function setSectionLocked(ids, locked) {
     const el = document.getElementById(id);
     if (el) el.classList.toggle("is-saving-locked", locked);
   });
+}
+// Confirmación nativa antes de quitar algo de una lista (material, tipo,
+// ficha, categoría, foto ya guardada, persona, sucursal, red social): antes
+// ningún "Quitar" pedía confirmar, así que un clic de más borraba algo sin
+// aviso (esto solo quita el elemento de la lista en memoria — sigue
+// haciendo falta presionar "Guardar cambios" para que sea definitivo, pero
+// vale la pena frenar el clic accidental de todos modos).
+function confirmRemove(message) {
+  return window.confirm(message);
 }
 
 // ---------- Avisa antes de cerrar/recargar si hay cambios sin guardar ----------
@@ -687,21 +752,24 @@ function materialRowHtml(m, i) {
     </div>`;
 }
 function materialFormHtml(m) {
+  // Los id son fijos (no por índice) porque este formulario solo vive
+  // dentro de la ventana modal compartida: nunca hay dos a la vez en la
+  // página, así que no hay riesgo de id duplicado.
   return `
     <div class="price-edit-row">
-      <div class="field"><label>Nombre</label><input type="text" class="mat-name" value="${esc(m.name)}" /></div>
-      <div class="field"><label>Mín. $/kg</label><input type="number" min="0" step="1" class="mat-min" value="${m.min}" /></div>
-      <div class="field"><label>Máx. $/kg</label><input type="number" min="0" step="1" class="mat-max" value="${m.max}" /></div>
-      <div class="field"><label>Nota que se muestra en el sitio</label><input type="text" class="mat-note" value="${esc(m.note || "")}" /></div>
+      <div class="field"><label for="mat-name">Nombre</label><input id="mat-name" type="text" class="mat-name" value="${esc(m.name)}" /></div>
+      <div class="field"><label for="mat-min">Mín. $/kg</label><input id="mat-min" type="number" min="0" step="1" class="mat-min" value="${m.min}" /></div>
+      <div class="field"><label for="mat-max">Máx. $/kg</label><input id="mat-max" type="number" min="0" step="1" class="mat-max" value="${m.max}" /></div>
+      <div class="field"><label for="mat-note">Nota que se muestra en el sitio</label><input id="mat-note" type="text" class="mat-note" value="${esc(m.note || "")}" /></div>
     </div>
     <div class="otm-row" style="margin-top:12px">
-      <div class="field"><label>Categoría (para filtrar en el selector)</label>
-        <select class="mat-group">
+      <div class="field"><label for="mat-group">Categoría (para filtrar en el selector)</label>
+        <select id="mat-group" class="mat-group">
           <option value="celular" ${m.group === "celular" ? "selected" : ""}>Celular</option>
           <option value="otros" ${m.group !== "celular" ? "selected" : ""}>Otros tipos</option>
         </select>
       </div>
-      <div class="field"><label>Ícono</label>${iconSelectHtml(m.icon, "mat-icon")}</div>
+      <div class="field"><label for="mat-icon">Ícono</label>${iconSelectHtml(m.icon, "mat-icon", "mat-icon")}</div>
     </div>
     <div class="branch-toggles">
       <label class="check-inline"><input type="checkbox" class="mat-show-selector" ${m.showInSelector !== false ? "checked" : ""} /> Aparece en el selector de materiales</label>
@@ -709,8 +777,8 @@ function materialFormHtml(m) {
       <label class="check-inline"><input type="checkbox" class="mat-quick" ${m.quick ? "checked" : ""} /> Destacar en "Precios rápidos" (portada)</label>
     </div>
     <div class="field mat-quickcopy-field" style="margin-top:12px" ${m.quick ? "" : "hidden"}>
-      <label>Texto corto para la tarjeta destacada</label>
-      <input type="text" class="mat-quickcopy" value="${esc(m.quickCopy || "")}" />
+      <label for="mat-quickcopy">Texto corto para la tarjeta destacada</label>
+      <input id="mat-quickcopy" type="text" class="mat-quickcopy" value="${esc(m.quickCopy || "")}" />
     </div>`;
 }
 function applyMaterialForm(m) {
@@ -767,6 +835,7 @@ document.getElementById("materialsForm")?.addEventListener("click", (e) => {
   if (!removeBtn) return;
   const i = Number(removeBtn.closest(".item-row").dataset.materialIndex);
   const removed = workingPrices.materials[i];
+  if (!confirmRemove(`¿Quitar el material "${removed.name || removed.id}"? Los tipos o fichas que lo usaban se reasignarán a otro material.`)) return;
   workingPrices.materials.splice(i, 1);
   // Un tipo o ficha que mostraba el precio de este material se queda sin a
   // qué apuntar; se reasigna al primer material que quede (en vez de dejarlo
@@ -806,16 +875,16 @@ function typeRowHtml(t, i) {
 function typeFormHtml(t) {
   return `
     <div class="price-edit-row cols-3">
-      <div class="field"><label>Nombre del tipo</label><input type="text" class="type-label" value="${esc(t.label)}" /></div>
-      <div class="field"><label>Mín. $/kg</label><input type="number" min="0" step="1" class="type-min" value="${t.min}" /></div>
-      <div class="field"><label>Máx. $/kg</label><input type="number" min="0" step="1" class="type-max" value="${t.max}" /></div>
+      <div class="field"><label for="type-label">Nombre del tipo</label><input id="type-label" type="text" class="type-label" value="${esc(t.label)}" /></div>
+      <div class="field"><label for="type-min">Mín. $/kg</label><input id="type-min" type="number" min="0" step="1" class="type-min" value="${t.min}" /></div>
+      <div class="field"><label for="type-max">Máx. $/kg</label><input id="type-max" type="number" min="0" step="1" class="type-max" value="${t.max}" /></div>
     </div>
     <div class="otm-row" style="margin-top:12px">
-      <div class="field"><label>Material al que pertenece</label>
-        <select class="type-priceid">${materialOptionsHtml(t.priceId)}</select>
+      <div class="field"><label for="type-priceid">Material al que pertenece</label>
+        <select id="type-priceid" class="type-priceid">${materialOptionsHtml(t.priceId)}</select>
       </div>
-      <div class="field"><label>Categoría de fotos (Galería)</label>
-        <select class="type-gallerycat">${galleryCategoryOptionsHtml(t.galleryCategory)}</select>
+      <div class="field"><label for="type-gallerycat">Categoría de fotos (Galería)</label>
+        <select id="type-gallerycat" class="type-gallerycat">${galleryCategoryOptionsHtml(t.galleryCategory)}</select>
       </div>
     </div>
     <p class="price-hint">Elige qué categoría de la pestaña "Galería" se muestra en el carrusel de fotos de este tipo. Si no eliges ninguna (o la categoría no tiene fotos), se muestra una foto genérica.</p>
@@ -863,7 +932,10 @@ document.getElementById("typesForm")?.addEventListener("click", (e) => {
   }
   const removeBtn = e.target.closest(".type-remove-btn");
   if (!removeBtn) return;
-  workingPrices.celularTypes.splice(Number(removeBtn.closest(".item-row").dataset.typeIndex), 1);
+  const ti = Number(removeBtn.closest(".item-row").dataset.typeIndex);
+  const removedType = workingPrices.celularTypes[ti];
+  if (!confirmRemove(`¿Quitar el tipo "${removedType.label || removedType.id}"?`)) return;
+  workingPrices.celularTypes.splice(ti, 1);
   renderTypesList();
 });
 
@@ -889,15 +961,15 @@ function otmFormHtml(o) {
   const priceLabel = price ? `$${price.min.toLocaleString("es-MX")} – $${price.max.toLocaleString("es-MX")} /kg (${esc(price.name)})` : "—";
   return `
     <div class="otm-row">
-      <div class="field"><label>Etiqueta corta</label><input type="text" class="otm-eyebrow" value="${esc(o.eyebrow)}" /></div>
-      <div class="field"><label>Título</label><input type="text" class="otm-title" value="${esc(o.title)}" /></div>
+      <div class="field"><label for="otm-eyebrow">Etiqueta corta</label><input id="otm-eyebrow" type="text" class="otm-eyebrow" value="${esc(o.eyebrow)}" /></div>
+      <div class="field"><label for="otm-title">Título</label><input id="otm-title" type="text" class="otm-title" value="${esc(o.title)}" /></div>
     </div>
     <div class="otm-row" style="margin-top:12px">
-      <div class="field"><label>Material al que pertenece</label>
-        <select class="otm-priceid">${materialOptionsHtml(o.priceId)}</select>
+      <div class="field"><label for="otm-priceid">Material al que pertenece</label>
+        <select id="otm-priceid" class="otm-priceid">${materialOptionsHtml(o.priceId)}</select>
       </div>
-      <div class="field"><label>Categoría de fotos (Galería)</label>
-        <select class="otm-gallerycat">${galleryCategoryOptionsHtml(o.galleryCategory)}</select>
+      <div class="field"><label for="otm-gallerycat">Categoría de fotos (Galería)</label>
+        <select id="otm-gallerycat" class="otm-gallerycat">${galleryCategoryOptionsHtml(o.galleryCategory)}</select>
       </div>
     </div>
     <p class="price-hint">Precio actual: <strong>${priceLabel}</strong> — se edita en "Materiales". La categoría de fotos elegida es la que se muestra en el carrusel de esta ficha; si no eliges ninguna, se muestra una foto genérica.</p>
@@ -940,7 +1012,10 @@ document.getElementById("otherMaterialsForm")?.addEventListener("click", (e) => 
   }
   const removeBtn = e.target.closest(".otm-remove-btn");
   if (!removeBtn) return;
-  workingPrices.otherMaterials.splice(Number(removeBtn.closest(".item-row").dataset.otmIndex), 1);
+  const oi = Number(removeBtn.closest(".item-row").dataset.otmIndex);
+  const removedOtm = workingPrices.otherMaterials[oi];
+  if (!confirmRemove(`¿Quitar la ficha "${removedOtm.title || removedOtm.id}"?`)) return;
+  workingPrices.otherMaterials.splice(oi, 1);
   renderOtherMaterialsList();
 });
 
@@ -1000,7 +1075,7 @@ async function loadGalleryIntoUI() {
   const data = await fetchJsonOrFromGitHub("data/gallery.json");
   pendingUploads = [];
   pendingGalleryDeletions = [];
-  if (!data) {
+  if (!data || !Array.isArray(data.categories)) {
     showDataUnavailableBanner();
     workingGallery = { categories: [] };
     activeCategoryId = null;
@@ -1024,7 +1099,13 @@ function renderGalleryCats() {
     : `<p class="price-hint" style="margin:0">Todavía no hay categorías. Agrega una para poder subir fotos.</p>`;
   wrap.querySelectorAll(".gallery-cat-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      syncGalleryCatLabels();
+      // readGalleryAltEdits() también sincroniza las etiquetas de categoría
+      // (llama a syncGalleryCatLabels() por dentro), así que guarda TODO lo
+      // escrito hasta ahora — incluidas las descripciones ("alt") de las
+      // fotos de la categoría que se está por abandonar. Antes solo se
+      // guardaban los nombres de categoría, y esas descripciones se perdían
+      // en silencio al cambiar de categoría sin haber guardado primero.
+      readGalleryAltEdits();
       activeCategoryId = btn.dataset.cat;
       renderGalleryCats();
       renderGalleryThumbs();
@@ -1076,6 +1157,9 @@ document.getElementById("galleryCatEditor")?.addEventListener("click", (e) => {
   syncGalleryCatLabels();
   const i = Number(removeBtn.closest(".cat-edit-row").dataset.catIndex);
   const removed = workingGallery.categories[i];
+  const photoCount = removed.images.length;
+  const warnPhotos = photoCount ? ` Sus ${photoCount} foto(s) también se borrarán del repositorio al guardar.` : "";
+  if (!confirmRemove(`¿Quitar la categoría "${removed.label || removed.id}"?${warnPhotos}`)) return;
   workingGallery.categories.splice(i, 1);
   pendingUploads = pendingUploads.filter((p) => p.categoryId !== removed.id);
   // Quitar la categoría entera también agenda el borrado de todas sus fotos
@@ -1140,8 +1224,11 @@ function renderGalleryThumbs() {
 
   grid.querySelectorAll("[data-existing-index] .thumb-remove").forEach((btn) => {
     btn.addEventListener("click", () => {
-      readGalleryAltEdits();
       const idx = Number(btn.closest(".gallery-thumb").dataset.existingIndex);
+      const toRemove = cat.images[idx];
+      const photoLabel = toRemove?.alt ? `"${toRemove.alt}"` : "esta foto";
+      if (!confirmRemove(`¿Quitar ${photoLabel} de "${cat.label}"? Se borrará del repositorio al guardar cambios.`)) return;
+      readGalleryAltEdits();
       const [removed] = cat.images.splice(idx, 1);
       // Se agenda el borrado del archivo real; se ejecuta al guardar (no
       // aquí mismo), para que "Descartar cambios" pueda deshacerlo sin
@@ -1396,7 +1483,7 @@ let pendingTeamPhotoDeletions = [];
 async function loadTeamIntoForm() {
   const data = await fetchJsonOrFromGitHub("data/team.json");
   pendingTeamPhotoDeletions = [];
-  if (!data) {
+  if (!data || !Array.isArray(data.members)) {
     showDataUnavailableBanner();
     workingTeam = { members: [] };
     document.getElementById("teamForm").innerHTML = unavailableNoticeHtml("Quiénes somos");
@@ -1417,7 +1504,7 @@ function teamPhotoEditHtml(m) {
   return `
     <div class="team-photo-preview">${teamPhotoPreviewHtml(m)}</div>
     <label class="btn btn-ghost btn-sm team-photo-pick">
-      <i class="bi bi-camera"></i> Cambiar foto
+      <i class="bi bi-camera" aria-hidden="true"></i> Cambiar foto
       <input type="file" accept="image/*" class="team-photo-input" hidden />
     </label>
     ${(m.photo || m._pendingPhoto) && !m._removePhoto ? `<button type="button" class="btn btn-ghost btn-sm team-photo-remove">Quitar foto</button>` : ""}`;
@@ -1425,9 +1512,9 @@ function teamPhotoEditHtml(m) {
 function teamSocialRowHtml(s) {
   return `
     <div class="team-social-row">
-      <select class="team-social-network">${SOCIAL_NETWORKS.map((n) => `<option value="${n.value}" ${s.network === n.value ? "selected" : ""}>${n.label}</option>`).join("")}</select>
-      <input type="url" class="team-social-url" value="${esc(s.url || "")}" placeholder="https://..." />
-      <button type="button" class="team-social-remove" aria-label="Quitar red social"><i class="bi bi-x-lg"></i></button>
+      <select class="team-social-network" aria-label="Red social">${SOCIAL_NETWORKS.map((n) => `<option value="${n.value}" ${s.network === n.value ? "selected" : ""}>${n.label}</option>`).join("")}</select>
+      <input type="url" class="team-social-url" value="${esc(s.url || "")}" placeholder="https://..." aria-label="Enlace de la red social" />
+      <button type="button" class="team-social-remove" aria-label="Quitar red social"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
     </div>`;
 }
 function teamFormHtml(m) {
@@ -1435,22 +1522,24 @@ function teamFormHtml(m) {
     <div class="team-edit-top">
       <div class="team-photo-edit">${teamPhotoEditHtml(m)}</div>
       <div class="team-edit-fields">
-        <div class="field"><label>Nombre</label><input type="text" class="team-name-input" value="${esc(m.name)}" placeholder="Nombre completo" /></div>
-        <div class="field"><label>Puesto</label><input type="text" class="team-role-input" value="${esc(m.role || "")}" placeholder="Ej. Director General" /></div>
-        <div class="field"><label>WhatsApp (10 dígitos, opcional)</label><input type="text" class="team-wa-input" value="${esc(stripCountry(m.whatsapp))}" placeholder="2221234567" /></div>
-        <div class="field"><label>Correo (opcional)</label><input type="email" class="team-email-input" value="${esc(m.email || "")}" placeholder="correo@ejemplo.com" /></div>
+        <div class="field"><label for="team-name-input">Nombre</label><input id="team-name-input" type="text" class="team-name-input" value="${esc(m.name)}" placeholder="Nombre completo" /></div>
+        <div class="field"><label for="team-role-input">Puesto</label><input id="team-role-input" type="text" class="team-role-input" value="${esc(m.role || "")}" placeholder="Ej. Director General" /></div>
+        <div class="field"><label for="team-wa-input">WhatsApp (10 dígitos, opcional)</label><input id="team-wa-input" type="text" class="team-wa-input" value="${esc(stripCountry(m.whatsapp))}" placeholder="2221234567" /></div>
+        <div class="field"><label for="team-email-input">Correo (opcional)</label><input id="team-email-input" type="email" class="team-email-input" value="${esc(m.email || "")}" placeholder="correo@ejemplo.com" /></div>
       </div>
     </div>
     <div class="specs-editor">
-      <label>Redes sociales de esta persona (opcional)</label>
-      <div class="team-social-list">${(m.social || []).map((s) => teamSocialRowHtml(s)).join("")}</div>
-      <button type="button" class="btn btn-ghost btn-sm team-social-add-btn"><i class="bi bi-plus-lg"></i> Agregar red social</button>
+      <label id="team-social-label">Redes sociales de esta persona (opcional)</label>
+      <div class="team-social-list" role="group" aria-labelledby="team-social-label">${(m.social || []).map((s) => teamSocialRowHtml(s)).join("")}</div>
+      <button type="button" class="btn btn-ghost btn-sm team-social-add-btn"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar red social</button>
     </div>`;
 }
 function applyTeamForm(m) {
   m.name = itemModalBodyEl.querySelector(".team-name-input").value.trim();
   m.role = itemModalBodyEl.querySelector(".team-role-input").value.trim();
   const wa = itemModalBodyEl.querySelector(".team-wa-input").value.trim();
+  const waError = validateWhatsappDigits(wa);
+  if (waError) return waError;
   m.whatsapp = wa ? normalizeWhatsapp(wa) : "";
   m.email = itemModalBodyEl.querySelector(".team-email-input").value.trim();
   const social = Array.from(itemModalBodyEl.querySelectorAll(".team-social-row"))
@@ -1517,7 +1606,10 @@ document.getElementById("teamForm")?.addEventListener("click", (e) => {
   }
   const removeBtn = e.target.closest(".team-remove-btn");
   if (!removeBtn) return;
-  const [removed] = workingTeam.members.splice(Number(removeBtn.closest(".item-row").dataset.teamIndex), 1);
+  const teamIdx = Number(removeBtn.closest(".item-row").dataset.teamIndex);
+  const toRemoveMember = workingTeam.members[teamIdx];
+  if (!confirmRemove(`¿Quitar a "${toRemoveMember.name || "esta persona"}" de "Quiénes somos"?`)) return;
+  const [removed] = workingTeam.members.splice(teamIdx, 1);
   // Quitar a la persona completa también agenda el borrado de su foto (si
   // tenía una guardada); si no, se quedaría huérfana en icons/equipo/.
   if (removed?.photo) pendingTeamPhotoDeletions.push(removed.photo);
@@ -1647,7 +1739,7 @@ let workingBranches = null;
 
 async function loadBranchesIntoForm() {
   const data = await fetchJsonOrFromGitHub("data/branches.json");
-  if (!data) {
+  if (!data || !Array.isArray(data.branches)) {
     showDataUnavailableBanner();
     workingBranches = { branches: [] };
     document.getElementById("branchesForm").innerHTML = unavailableNoticeHtml("Sucursales y contacto");
@@ -1681,32 +1773,32 @@ function branchFormHtml(b) {
       </div>
     </div>
     <div class="otm-row">
-      <div class="field"><label>Tipo</label>
-        <select class="branch-kind-input">
+      <div class="field"><label for="branch-kind-input">Tipo</label>
+        <select id="branch-kind-input" class="branch-kind-input">
           <option value="sucursal" ${isSucursal ? "selected" : ""}>Sucursal (local fijo)</option>
           <option value="directo" ${!isSucursal ? "selected" : ""}>Contacto directo (sin local)</option>
         </select>
       </div>
-      <div class="field"><label>Estado</label>
-        <select class="branch-estado-input">${stateOptions}</select>
+      <div class="field"><label for="branch-estado-input">Estado</label>
+        <select id="branch-estado-input" class="branch-estado-input">${stateOptions}</select>
       </div>
     </div>
     <p class="price-hint">El estado es el título de la tarjeta en el sitio; abajo se muestra "Sucursal" o el nombre de quien atiende, según el tipo.</p>
     <div class="otm-row" style="margin-top:12px">
-      <div class="field"><label>Nombre de quien atiende</label><input type="text" class="branch-nombre-input" value="${esc(b.nombre || "")}" placeholder="Nombre" /></div>
-      <div class="field"><label>WhatsApp (10 dígitos)</label><input type="text" class="branch-wa-input" value="${esc(stripCountry(b.whatsapp))}" placeholder="2221234567" /></div>
+      <div class="field"><label for="branch-nombre-input">Nombre de quien atiende</label><input id="branch-nombre-input" type="text" class="branch-nombre-input" value="${esc(b.nombre || "")}" placeholder="Nombre" /></div>
+      <div class="field"><label for="branch-wa-input">WhatsApp (10 dígitos)</label><input id="branch-wa-input" type="text" class="branch-wa-input" value="${esc(stripCountry(b.whatsapp))}" placeholder="2221234567" /></div>
     </div>
     <div class="otm-row branch-fields-sucursal" style="margin-top:12px" ${isSucursal ? "" : "hidden"}>
-      <div class="field"><label>Ubicación (plaza o dirección)</label><input type="text" class="branch-ubicacion-input" value="${esc(b.ubicacion || "")}" placeholder="Ej. Plaza de la Tecnología" /></div>
-      <div class="field"><label>Número de local (opcional)</label><input type="text" class="branch-local-input" value="${esc(b.local || "")}" placeholder="Ej. Local 83" /></div>
+      <div class="field"><label for="branch-ubicacion-input">Ubicación (plaza o dirección)</label><input id="branch-ubicacion-input" type="text" class="branch-ubicacion-input" value="${esc(b.ubicacion || "")}" placeholder="Ej. Plaza de la Tecnología" /></div>
+      <div class="field"><label for="branch-local-input">Número de local (opcional)</label><input id="branch-local-input" type="text" class="branch-local-input" value="${esc(b.local || "")}" placeholder="Ej. Local 83" /></div>
     </div>
     <div class="field branch-fields-directo" style="margin-top:12px" ${isSucursal ? "hidden" : ""}>
-      <label>Detalle de cobertura (se muestra debajo del título)</label>
-      <input type="text" class="branch-cobertura-input" value="${esc(b.cobertura || "")}" placeholder="Ej. Coatzacoalcos y alrededores" />
+      <label for="branch-cobertura-input">Detalle de cobertura (se muestra debajo del título)</label>
+      <input id="branch-cobertura-input" type="text" class="branch-cobertura-input" value="${esc(b.cobertura || "")}" placeholder="Ej. Coatzacoalcos y alrededores" />
     </div>
     <div class="field" style="margin-top:12px">
-      <label>Enlace al grupo de WhatsApp del estado (opcional)</label>
-      <input type="text" class="branch-grupourl-input" value="${esc(b.grupoUrl || "")}" placeholder="Ej. https://chat.whatsapp.com/..." />
+      <label for="branch-grupourl-input">Enlace al grupo de WhatsApp del estado (opcional)</label>
+      <input id="branch-grupourl-input" type="text" class="branch-grupourl-input" value="${esc(b.grupoUrl || "")}" placeholder="Ej. https://chat.whatsapp.com/..." />
     </div>
     <div class="branch-toggles">
       <label class="check-inline"><input type="checkbox" class="branch-activo-input" ${b.activo !== false ? "checked" : ""} /> Activo (si no, se muestra "Próximamente")</label>
@@ -1722,8 +1814,18 @@ function applyBranchForm(b) {
   b.estado = itemModalBodyEl.querySelector(".branch-estado-input").value;
   b.nombre = itemModalBodyEl.querySelector(".branch-nombre-input").value.trim();
   const wa = itemModalBodyEl.querySelector(".branch-wa-input").value.trim();
+  const waError = validateWhatsappDigits(wa);
+  if (waError) return waError;
   b.whatsapp = wa ? normalizeWhatsapp(wa) : "";
-  b.grupoUrl = itemModalBodyEl.querySelector(".branch-grupourl-input") ? itemModalBodyEl.querySelector(".branch-grupourl-input").value.trim() : "";
+  const grupoUrlInput = itemModalBodyEl.querySelector(".branch-grupourl-input");
+  const grupoUrlRaw = grupoUrlInput ? grupoUrlInput.value.trim() : "";
+  // Igual que las redes sociales: solo se acepta http(s), para no poder
+  // guardar un esquema como javascript: que se ejecutaría al hacer clic
+  // cualquier visitante del sitio público.
+  if (grupoUrlRaw && !isSafeHttpUrl(grupoUrlRaw)) {
+    return `Ese enlace de grupo de WhatsApp no es válido: "${esc(grupoUrlRaw)}". Debe empezar con http:// o https://`;
+  }
+  b.grupoUrl = grupoUrlRaw;
   b.ubicacion = itemModalBodyEl.querySelector(".branch-ubicacion-input").value.trim();
   b.local = itemModalBodyEl.querySelector(".branch-local-input").value.trim();
   b.cobertura = itemModalBodyEl.querySelector(".branch-cobertura-input").value.trim();
@@ -1780,7 +1882,8 @@ function openBranchEditor(i) {
   const b = workingBranches.branches[i];
   itemModalBodyEl.dataset.itemType = "branch";
   openItemModal("Editar sucursal o contacto", branchFormHtml(b), () => {
-    applyBranchForm(b);
+    const err = applyBranchForm(b);
+    if (err) return err;
     ensureOnePrimaryBranch();
     renderBranchesList();
   });
@@ -1793,7 +1896,11 @@ document.getElementById("branchesForm")?.addEventListener("click", (e) => {
   }
   const removeBtn = e.target.closest(".branch-remove-btn");
   if (!removeBtn) return;
-  workingBranches.branches.splice(Number(removeBtn.closest(".item-row").dataset.branchIndex), 1);
+  const bi = Number(removeBtn.closest(".item-row").dataset.branchIndex);
+  const toRemoveBranch = workingBranches.branches[bi];
+  const branchLabel = toRemoveBranch.nombre || (MEXICO_STATES.find((s) => s.id === toRemoveBranch.estado)?.name) || "este contacto";
+  if (!confirmRemove(`¿Quitar "${branchLabel}"?`)) return;
+  workingBranches.branches.splice(bi, 1);
   ensureOnePrimaryBranch();
   renderBranchesList();
 });
@@ -1801,7 +1908,8 @@ document.getElementById("addBranchBtn")?.addEventListener("click", () => {
   const draft = { id: `contacto-${Date.now()}`, kind: "sucursal", estado: MEXICO_STATES[0].id, nombre: "", cobertura: "", ubicacion: "", local: "", whatsapp: "", grupoUrl: "", primary: false, activo: true };
   itemModalBodyEl.dataset.itemType = "branch";
   openItemModal("Agregar sucursal o contacto", branchFormHtml(draft), () => {
-    applyBranchForm(draft);
+    const err = applyBranchForm(draft);
+    if (err) return err;
     workingBranches.branches.push(draft);
     ensureOnePrimaryBranch();
     renderBranchesList();
@@ -1833,6 +1941,10 @@ itemModalBodyEl.addEventListener("change", (e) => {
 function validateBranches() {
   const problems = [];
   if (!workingBranches.branches.some((b) => b.whatsapp)) problems.push("Agrega al menos un número de WhatsApp.");
+  // Defensa adicional (además del chequeo en applyBranchForm): por si un
+  // grupoUrl inseguro llegara aquí por otro camino, nunca se guarda.
+  const unsafeGroup = workingBranches.branches.find((b) => b.grupoUrl && !isSafeHttpUrl(b.grupoUrl));
+  if (unsafeGroup) problems.push(`El enlace de grupo de "${esc(unsafeGroup.nombre || unsafeGroup.estado || "una sucursal")}" no es válido. Debe empezar con http:// o https://`);
   return problems;
 }
 
@@ -1872,10 +1984,15 @@ const SOCIAL_NETWORKS = [
 ];
 
 async function loadCoverageAndSocialIntoForm() {
-  const [covData, socData] = await Promise.all([
+  const [covDataRaw, socDataRaw] = await Promise.all([
     fetchJsonOrFromGitHub("data/coverage.json"),
     fetchJsonOrFromGitHub("data/social.json"),
   ]);
+  // Si el archivo existe pero no tiene la forma esperada (p. ej. le falta
+  // el arreglo), se trata igual que "no se pudo cargar" — si no, más abajo
+  // se guardaría un objeto vacío sin avisar, pisando los datos reales.
+  const covData = (covDataRaw && Array.isArray(covDataRaw.activeStateIds)) ? covDataRaw : null;
+  const socData = (socDataRaw && Array.isArray(socDataRaw.links)) ? socDataRaw : null;
   workingCoverage = JSON.parse(JSON.stringify(covData || { activeStateIds: [] }));
   workingSocial = JSON.parse(JSON.stringify(socData || { links: [] }));
   if (covData) markSectionSaved("coverage", workingCoverage);
@@ -1934,18 +2051,21 @@ document.getElementById("stateChipList")?.addEventListener("click", (e) => {
 
 function renderSocialForm() {
   const wrap = document.getElementById("socialForm");
+  // ids por índice (no fijos, a diferencia de los formularios de un solo
+  // elemento en el modal): aquí SÍ puede haber varias filas a la vez en la
+  // página, así que cada una necesita su propio id único.
   wrap.innerHTML = workingSocial.links.length
     ? workingSocial.links.map((l, i) => `
       <div class="social-edit-card" data-social-index="${i}">
         <div class="otm-row">
-          <div class="field"><label>Red social</label>
-            <select class="social-network-input">
+          <div class="field"><label for="social-network-${i}">Red social</label>
+            <select id="social-network-${i}" class="social-network-input">
               ${SOCIAL_NETWORKS.map((n) => `<option value="${n.value}" ${l.network === n.value ? "selected" : ""}>${n.label}</option>`).join("")}
             </select>
           </div>
-          <div class="field"><label>Enlace (URL completa)</label><input type="url" class="social-url-input" value="${esc(l.url || "")}" placeholder="https://..." /></div>
+          <div class="field"><label for="social-url-${i}">Enlace (URL completa)</label><input id="social-url-${i}" type="url" class="social-url-input" value="${esc(l.url || "")}" placeholder="https://..." /></div>
         </div>
-        <button type="button" class="btn btn-danger btn-sm social-remove-btn"><i class="bi bi-trash"></i> Quitar</button>
+        <button type="button" class="btn btn-danger btn-sm social-remove-btn"><i class="bi bi-trash" aria-hidden="true"></i> Quitar</button>
       </div>
     `).join("")
     : `<p class="price-hint" style="margin:0">Todavía no hay redes sociales agregadas.</p>`;
@@ -1955,6 +2075,8 @@ document.getElementById("socialForm")?.addEventListener("click", (e) => {
   if (!removeBtn) return;
   syncSocialFormFields();
   const i = Number(removeBtn.closest(".social-edit-card").dataset.socialIndex);
+  const linkLabel = SOCIAL_NETWORKS.find((n) => n.value === workingSocial.links[i]?.network)?.label || "esta red social";
+  if (!confirmRemove(`¿Quitar ${linkLabel} de las redes sociales del sitio?`)) return;
   workingSocial.links.splice(i, 1);
   renderSocialForm();
 });
