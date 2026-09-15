@@ -1686,6 +1686,10 @@ function branchFormHtml(b) {
       <label>Detalle de cobertura (se muestra debajo del título)</label>
       <input type="text" class="branch-cobertura-input" value="${esc(b.cobertura || "")}" placeholder="Ej. Coatzacoalcos y alrededores" />
     </div>
+    <div class="field" style="margin-top:12px">
+      <label>Enlace al grupo de WhatsApp del estado (opcional)</label>
+      <input type="text" class="branch-grupourl-input" value="${esc(b.grupoUrl || "")}" placeholder="Ej. https://chat.whatsapp.com/..." />
+    </div>
     <div class="branch-toggles">
       <label class="check-inline"><input type="checkbox" class="branch-activo-input" ${b.activo !== false ? "checked" : ""} /> Activo (si no, se muestra "Próximamente")</label>
       <label class="check-inline"><input type="checkbox" class="branch-primary-input" ${b.primary ? "checked" : ""} /> Número principal de WhatsApp del sitio</label>
@@ -1701,6 +1705,7 @@ function applyBranchForm(b) {
   b.nombre = itemModalBodyEl.querySelector(".branch-nombre-input").value.trim();
   const wa = itemModalBodyEl.querySelector(".branch-wa-input").value.trim();
   b.whatsapp = wa ? normalizeWhatsapp(wa) : "";
+  b.grupoUrl = itemModalBodyEl.querySelector(".branch-grupourl-input") ? itemModalBodyEl.querySelector(".branch-grupourl-input").value.trim() : "";
   b.ubicacion = itemModalBodyEl.querySelector(".branch-ubicacion-input").value.trim();
   b.local = itemModalBodyEl.querySelector(".branch-local-input").value.trim();
   b.cobertura = itemModalBodyEl.querySelector(".branch-cobertura-input").value.trim();

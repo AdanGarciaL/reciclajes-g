@@ -251,7 +251,8 @@ body.dark-mode .eyebrow { color: var(--brand-green); }
 .section-head h2 { font-family: var(--font-display); font-weight: 800; font-size: clamp(26px, 3.4vw, 40px); line-height: 1.08; letter-spacing: -0.02em; color: var(--ink); margin-top: 8px; }
 .section-head > p { margin: 0; max-width: 40ch; font-size: 14.5px; line-height: 1.6; color: var(--ink-soft); }
 
-section { padding: clamp(40px, 5vw, 68px) 0; border-bottom: 1px solid var(--border); }
+section { padding: clamp(34px, 4vw, 54px) 0; border-bottom: 1px solid var(--border); }
+section[id] { scroll-margin-top: 76px; }
 section.bg-alt { background: var(--bg-alt); }
 section.no-border { border-bottom: none; }
 
@@ -1164,9 +1165,14 @@ body.dark-mode .benefit-item i {
   z-index: 5;
 }
 
-/* ---------- Botón de WhatsApp por Sucursal ---------- */
-.sucursal-wa-btn {
+/* ---------- Botones de WhatsApp y Grupos por Sucursal ---------- */
+.sucursal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin-top: 10px;
+}
+.sucursal-wa-btn {
   width: 100%;
   display: inline-flex;
   align-items: center;
@@ -1189,6 +1195,65 @@ body.dark-mode .benefit-item i {
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(63, 216, 106, 0.35);
 }
+.sucursal-group-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 12.5px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+  color: var(--brand-deep);
+  border: 1px solid var(--border-strong);
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+.sucursal-group-btn:hover {
+  background: var(--surface-strong);
+  border-color: var(--brand-garcia);
+  color: var(--brand-garcia);
+  transform: translateY(-2px);
+}
+body.dark-mode .sucursal-group-btn {
+  background: rgba(63, 216, 106, 0.08);
+  border-color: rgba(63, 216, 106, 0.25);
+  color: var(--brand-signal);
+}
+body.dark-mode .sucursal-group-btn:hover {
+  background: rgba(63, 216, 106, 0.16);
+  border-color: var(--brand-signal);
+}
+
+.community-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(63, 216, 106, 0.12), rgba(27, 127, 58, 0.08));
+  border: 1px solid rgba(63, 216, 106, 0.3);
+  color: var(--ink);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.community-banner i {
+  font-size: 22px;
+  color: var(--brand-garcia);
+  flex-shrink: 0;
+}
+body.dark-mode .community-banner {
+  background: linear-gradient(135deg, rgba(63, 216, 106, 0.08), rgba(11, 59, 34, 0.3));
+  border-color: rgba(63, 216, 106, 0.25);
+  color: #e6f4ea;
+}
+body.dark-mode .community-banner i {
+  color: var(--brand-signal);
+}
+
 
 /* ---------- Enlaces de redes sociales en topbar ---------- */
 .topbar-inner {
@@ -1218,3 +1283,59 @@ body.dark-mode .benefit-item i {
 .topbar-social .social-link:hover {
   color: var(--brand-signal);
 }
+
+/* ---------- Precios y Sucursales helpers ---------- */
+.precios-extra-hint {
+  margin-top: 24px;
+  padding: 16px 20px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+  border: 1px dashed var(--border-strong);
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: center;
+  color: var(--ink-soft);
+}
+.btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.btn-link:hover {
+  text-decoration: none;
+}
+
+.sucursal-tip-strip {
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px 22px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.sucursal-tip-strip p {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--ink-muted);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sucursal-tip-strip i {
+  font-size: 18px;
+  color: var(--brand-garcia);
+}
+body.dark-mode .sucursal-tip-strip {
+  background: var(--surface-strong);
+}
+body.dark-mode .sucursal-tip-strip i {
+  color: var(--brand-signal);
+}
+

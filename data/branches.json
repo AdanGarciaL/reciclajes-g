@@ -9,6 +9,7 @@
       "ubicacion": "",
       "local": "",
       "whatsapp": "522227548704",
+      "grupoUrl": "",
       "primary": true,
       "activo": true
     },
@@ -21,6 +22,7 @@
       "ubicacion": "Plaza de la Tecnología",
       "local": "Local 83",
       "whatsapp": "522213815164",
+      "grupoUrl": "",
       "primary": false,
       "activo": true
     },
@@ -33,6 +35,7 @@
       "ubicacion": "",
       "local": "",
       "whatsapp": "522214102306",
+      "grupoUrl": "",
       "primary": false,
       "activo": true
     },
@@ -45,6 +48,7 @@
       "ubicacion": "",
       "local": "",
       "whatsapp": "522222932290",
+      "grupoUrl": "",
       "primary": false,
       "activo": true
     },
@@ -57,9 +61,37 @@
       "ubicacion": "Plaza de la Tecnología",
       "local": "Local 144",
       "whatsapp": "522215855199",
+      "grupoUrl": "",
+      "primary": false,
+      "activo": true
+    },
+    {
+      "id": "cdmx",
+      "kind": "directo",
+      "estado": "cdmx",
+      "nombre": "José Luis G.",
+      "cobertura": "En toda la CDMX y área metropolitana",
+      "ubicacion": "",
+      "local": "",
+      "whatsapp": "522225012131",
+      "grupoUrl": "",
+      "primary": false,
+      "activo": true
+    },
+    {
+      "id": "mexico",
+      "kind": "directo",
+      "estado": "mexico",
+      "nombre": "Armando",
+      "cobertura": "Toluca y municipios del Estado de México",
+      "ubicacion": "",
+      "local": "",
+      "whatsapp": "522221828545",
+      "grupoUrl": "",
       "primary": false,
       "activo": true
     }
   ],
-  "updatedAt": "2026-09-11"
+  "updatedAt": "2026-09-14"
 }
+

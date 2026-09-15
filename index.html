@@ -73,11 +73,12 @@
       <ul class="nav-links" id="navLinks">
         <li><a href="#precios">Precios</a></li>
         <li><a href="#calculadora">Calculadora</a></li>
-        <li><a href="#que-compramos">Qué compramos</a></li>
-        <li id="navTeamItem" hidden><a href="#equipo">Quiénes somos</a></li>
+        <li><a href="#proceso">Cómo funciona</a></li>
+        <li><a href="#sucursales">Sucursales y Grupos</a></li>
         <li><a href="#cobertura">Cobertura</a></li>
-        <li><a href="#sucursales">Sucursales</a></li>
+        <li><a href="#galeria">Galería</a></li>
         <li><a href="#faq">Preguntas</a></li>
+        <li id="navTeamItem" hidden><a href="#equipo">Quiénes somos</a></li>
       </ul>
       <div class="nav-actions">
         <button class="theme-toggle" id="themeToggle" aria-label="Cambiar tema" title="Cambiar tema">
@@ -100,7 +101,7 @@
     <section class="hero" id="inicio">
       <div class="container hero-grid">
         <div class="hero-copy">
-          <p class="hero-badge-pill reveal"><span class="dot"></span>Cobertura activa en <span id="coverageActiveInline">5</span> estados · recolección en toda la República desde 10 kg</p>
+          <p class="hero-badge-pill reveal"><span class="dot"></span>Cobertura activa en <span id="coverageActiveInline">10</span> estados · recolección en toda la República desde 10 kg</p>
           <h1 class="reveal delay-1">Compramos tu lógica de celular al precio justo por kilo</h1>
           <p class="lede reveal delay-2">
             Trabajamos con técnicos, talleres, chatarreros y negocios. Damos precio por tipo, peso y estado
@@ -109,7 +110,7 @@
           </p>
           <div class="hero-cta reveal delay-3">
             <a class="btn btn-primary js-wa-link" data-wa-msg="Hola, tengo material para reciclar y quiero una cotización" href="https://wa.me/522227548704?text=Hola%2C%20tengo%20material%20para%20reciclar%20y%20quiero%20una%20cotizaci%C3%B3n" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Pregunta por tu material</a>
-            <a class="btn btn-ghost" href="#que-compramos">Ver tipos y precios</a>
+            <a class="btn btn-ghost" href="#precios">Ver precios de hoy</a>
           </div>
           <p class="hero-note reveal delay-4">
             <strong>Importante:</strong> el material se compra para destrucción y desguace, por eso el precio
@@ -187,6 +188,10 @@
           <div class="price-table" id="priceTable">
             <div class="skeleton" style="height:260px"></div>
           </div>
+        </div>
+
+        <div class="precios-extra-hint reveal delay-3">
+          <p>¿Tienes otro tipo de tarjeta o material? <button type="button" class="btn-link text-accent open-material-selector" style="font-weight:700">Explora el catálogo completo con fotos</button> o <a class="text-accent js-wa-link" style="font-weight:700" data-wa-msg="Hola, tengo material para reciclar que no veo en la lista, ¿me pueden cotizar?" href="https://wa.me/522227548704" target="_blank" rel="noopener">pregúntanos por WhatsApp</a>.</p>
         </div>
       </div>
     </section>
@@ -277,48 +282,18 @@
       </div>
     </section>
 
-    <!-- QUE COMPRAMOS -->
-    <section class="bg-alt" id="que-compramos">
+    <!-- PROCESO: COMO FUNCIONA -->
+    <section class="bg-alt" id="proceso">
       <div class="container">
         <div class="section-head-solo reveal">
-          <p class="eyebrow">Materiales</p>
-          <h2>Qué compramos</h2>
+          <p class="eyebrow">Proceso transparente</p>
+          <h2>Cómo funciona la compra en 3 pasos</h2>
         </div>
-        <div class="card-grid">
-          <article class="material-card reveal">
-            <div class="card-top"><span class="card-icon"><i class="bi bi-phone"></i></span><span class="card-code">CELL</span></div>
-            <h3>Lógicas de celular</h3>
-            <p class="copy">Tarjetas madre de equipos móviles, funcionales o dañadas.</p>
-          </article>
-          <article class="material-card reveal delay-1">
-            <div class="card-top"><span class="card-icon"><i class="bi bi-tablet-landscape"></i></span><span class="card-code">TAB</span></div>
-            <h3>Lógicas de tablet</h3>
-            <p class="copy">Tarjetas de tabletas viejas, inservibles o para descarte.</p>
-          </article>
-          <article class="material-card reveal delay-2">
-            <div class="card-top"><span class="card-icon"><i class="bi bi-laptop"></i></span><span class="card-code">LAP</span></div>
-            <h3>Lógicas de laptop</h3>
-            <p class="copy">Motherboards y placas de portátiles en cualquier condición.</p>
-          </article>
-          <article class="material-card reveal delay-1">
-            <div class="card-top"><span class="card-icon"><i class="bi bi-memory"></i></span><span class="card-code">RAM</span></div>
-            <h3>Memorias RAM</h3>
-            <p class="copy">Módulos DDR de escritorio o laptop, nuevos o usados.</p>
-          </article>
-          <article class="material-card reveal delay-2">
-            <div class="card-top"><span class="card-icon"><i class="bi bi-cpu"></i></span><span class="card-code">CPU</span></div>
-            <h3>Procesadores</h3>
-            <p class="copy">CPUs de diferentes generaciones y marcas.</p>
-          </article>
-          <article class="material-card reveal delay-3">
-            <div class="card-top"><span class="card-icon"><i class="bi bi-router"></i></span><span class="card-code">NET</span></div>
-            <h3>Módems y tarjetas</h3>
-            <p class="copy">Equipos de red, placas y otros componentes electrónicos.</p>
-          </article>
+        <div class="steps">
+          <article class="step reveal"><span class="step-n">01</span><h3>Nos escribes</h3><p>Manda fotos por WhatsApp de tu material, tipo de tarjeta y kilos aproximados.</p></article>
+          <article class="step reveal delay-1"><span class="step-n">02</span><h3>Te damos cotización</h3><p>Revisamos tipo, peso y componentes para confirmarte el rango de precio exacto.</p></article>
+          <article class="step reveal delay-2"><span class="step-n">03</span><h3>Pago al instante</h3><p>Cerramos el trato con entrega en sucursal o recolección a domicilio y pago inmediato.</p></article>
         </div>
-        <p class="reveal delay-3" style="margin-top:18px;font-size:13.5px;color:var(--ink-soft)">
-          ¿Tienes otro tipo de componente? <a class="text-accent js-wa-link" style="font-weight:600" data-wa-msg="Hola, tengo otro tipo de material, ¿me pueden cotizar?" href="https://wa.me/522227548704?text=Hola%2C%20tengo%20otro%20tipo%20de%20material%2C%20%C2%BFme%20pueden%20cotizar%3F" target="_blank" rel="noopener">Pregúntanos por WhatsApp</a>, seguramente también lo compramos.
-        </p>
       </div>
     </section>
 
@@ -385,21 +360,6 @@
       </div>
     </section>
 
-    <!-- PROCESO -->
-    <section class="bg-alt" id="proceso">
-      <div class="container">
-        <div class="section-head-solo reveal">
-          <p class="eyebrow">Proceso</p>
-          <h2>Cómo funciona</h2>
-        </div>
-        <div class="steps">
-          <article class="step reveal"><span class="step-n">01</span><h3>Nos escribes</h3><p>Por WhatsApp, con fotos del material, el tipo y los kilos aproximados.</p></article>
-          <article class="step reveal delay-1"><span class="step-n">02</span><h3>Te damos precio</h3><p>Revisamos tipo, peso y estado del lote y te decimos el rango.</p></article>
-          <article class="step reveal delay-2"><span class="step-n">03</span><h3>Cerramos la compra</h3><p>Definimos entrega en sucursal, envío o recolección a domicilio.</p></article>
-        </div>
-      </div>
-    </section>
-
     <!-- QUIENES SOMOS -->
     <section class="bg-alt" id="equipo" hidden>
       <div class="container">
@@ -408,6 +368,30 @@
           <h2>El equipo detrás de Eco Lógica García</h2>
         </div>
         <div class="team-grid" id="teamGrid"></div>
+      </div>
+    </section>
+
+    <!-- SUCURSALES -->
+    <section id="sucursales">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <p class="eyebrow">Dónde estamos</p>
+            <h2>Sucursales y contacto directo</h2>
+          </div>
+          <p>Escribe por WhatsApp a tu encargado más cercano o únete al grupo oficial de tu estado.</p>
+        </div>
+        <div class="community-banner reveal">
+          <i class="bi bi-people-fill"></i>
+          <div>
+            <strong>Comunidad y Grupos Oficiales de WhatsApp por Estado:</strong> Únete al grupo de tu región para recibir avisos de cambios de precios, listas actualizadas y coordinar recolecciones de material (grupos moderados, estrictamente cero spam).
+          </div>
+        </div>
+        <div class="sucursales-grid" id="sucursalesGrid"></div>
+        <div class="sucursal-tip-strip reveal">
+          <p><i class="bi bi-info-circle-fill"></i> <strong>Para cotizar más rápido por WhatsApp:</strong> Envía fotos claras de tu lote, tipo de tarjeta, kilos aproximados y tu ciudad.</p>
+          <a class="btn btn-sm btn-ghost js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Chat general de atención</a>
+        </div>
       </div>
     </section>
 
@@ -430,17 +414,22 @@
           </div>
           <div class="coverage-side">
             <div class="coverage-block">
-              <div class="coverage-block-head"><p class="title">Cobertura activa</p><p class="kpi" id="coverageActiveKpi">5</p></div>
+              <div class="coverage-block-head"><p class="title">Cobertura activa</p><p class="kpi" id="coverageActiveKpi">10</p></div>
               <div class="chip-row" id="coverageActiveChips">
                 <span class="chip chip-active">Puebla</span>
                 <span class="chip chip-active">CDMX</span>
                 <span class="chip chip-active">Estado de México</span>
                 <span class="chip chip-active">Veracruz</span>
                 <span class="chip chip-active">Hidalgo</span>
+                <span class="chip chip-active">Tlaxcala</span>
+                <span class="chip chip-active">Aguascalientes</span>
+                <span class="chip chip-active">Guanajuato</span>
+                <span class="chip chip-active">Tamaulipas</span>
+                <span class="chip chip-active">Guerrero</span>
               </div>
             </div>
             <div class="coverage-block">
-              <div class="coverage-block-head"><p class="title">Estados con recolección</p><p class="kpi" id="coverageRestKpi">32</p></div>
+              <div class="coverage-block-head"><p class="title">Estados con recolección</p><p class="kpi" id="coverageRestKpi">22</p></div>
               <p class="coverage-block-copy">En cualquier estado de la República consideramos la recolección si el lote es de 10 kg o más.</p>
               <div class="chip-row">
                 <span class="chip chip-min10">Toda la República</span>
@@ -467,55 +456,6 @@
           <div class="skeleton" style="aspect-ratio:4/3"></div>
           <div class="skeleton" style="aspect-ratio:4/3"></div>
           <div class="skeleton" style="aspect-ratio:4/3"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- SUCURSALES -->
-    <section id="sucursales">
-      <div class="container">
-        <div class="section-head reveal">
-          <div>
-            <p class="eyebrow">Dónde estamos</p>
-            <h2>Sucursales y contacto directo</h2>
-          </div>
-          <p>Escribe por WhatsApp a la plaza más cercana o pide recolección a domicilio.</p>
-        </div>
-        <div class="sucursales-grid" id="sucursalesGrid"></div>
-      </div>
-    </section>
-
-    <!-- CONTACTO -->
-    <section class="bg-alt" id="contacto">
-      <div class="container contact-grid">
-        <div class="reveal">
-          <p class="eyebrow">Contacto</p>
-          <h2 style="margin-top:8px">Escríbenos por WhatsApp</h2>
-          <p class="lede" style="margin-top:16px">Mándanos fotos del material, los kilos aproximados y tu ciudad. Te contestamos con el rango de precio y las condiciones de entrega.</p>
-          <div class="guarantee-list">
-            <div class="guarantee-item"><i class="bi bi-shield-check"></i><div><p class="g-title">Compra segura</p><p class="g-copy">Condiciones y forma de pago acordadas antes de mover el material.</p></div></div>
-            <div class="guarantee-item"><i class="bi bi-arrow-repeat"></i><div><p class="g-title">Reciclaje responsable</p><p class="g-copy">El material se destina a destrucción y recuperación de componentes.</p></div></div>
-            <div class="guarantee-item"><i class="bi bi-clock-history"></i><div><p class="g-title">Respuesta rápida</p><p class="g-copy">Meta de 24 horas para contestar por WhatsApp, incluidos lotes grandes.</p></div></div>
-          </div>
-        </div>
-
-        <div class="contact-card reveal delay-1">
-          <div>
-            <p class="contact-card-label">Atención general</p>
-            <a class="contact-wa-link js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i><span class="js-wa-text">222 754 8704</span></a>
-            <p style="margin-top:8px;font-size:13.5px;color:var(--ink-soft)">Recolección a domicilio en todo el estado de Puebla.</p>
-          </div>
-          <div style="border-top:1px solid var(--border);padding-top:20px">
-            <p class="contact-card-label" style="margin-bottom:14px">Qué mandar en el mensaje</p>
-            <ul class="send-list">
-              <li><i class="bi bi-check2"></i>Fotos del material, de frente y con buena luz</li>
-              <li><i class="bi bi-check2"></i>Tipo de lógica y kilos aproximados</li>
-              <li><i class="bi bi-check2"></i>Ciudad o estado donde está el lote</li>
-              <li><i class="bi bi-check2"></i>Si necesitas recolección o entregas en sucursal</li>
-            </ul>
-          </div>
-          <a class="btn btn-primary btn-block js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Abrir chat de WhatsApp</a>
-          <p class="contact-fine">Este sitio no guarda ni registra datos personales. Toda la atención es por WhatsApp o en sucursal.</p>
         </div>
       </div>
     </section>
@@ -563,12 +503,13 @@
         <div class="footer-social js-social-links" hidden></div>
       </div>
       <div class="footer-col">
-        <p class="footer-col-title">Sitio</p>
-        <a href="#precios">Precios por kilo</a>
-        <a href="#que-compramos">Qué compramos</a>
-        <a href="#equipo">Quiénes somos</a>
+        <p class="footer-col-title">Secciones</p>
+        <a href="#precios">Precios y catálogo</a>
+        <a href="#calculadora">Calculadora</a>
+        <a href="#proceso">Cómo funciona</a>
+        <a href="#sucursales">Sucursales y WhatsApp</a>
         <a href="#cobertura">Cobertura</a>
-        <a href="#contacto">Contacto</a>
+        <a href="#faq">Preguntas</a>
       </div>
       <div class="footer-col">
         <p class="footer-col-title">Legales</p>

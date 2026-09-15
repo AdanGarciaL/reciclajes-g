@@ -133,11 +133,13 @@ const FAQ_DATA = [
 
 const FALLBACK_BRANCHES = {
   branches: [
-    { id: "puebla-domicilio", kind: "directo", estado: "puebla", nombre: "José G.", cobertura: "En todo el estado de Puebla", ubicacion: "", local: "", whatsapp: "522227548704", primary: true, activo: true },
-    { id: "aguascalientes", kind: "sucursal", estado: "aguascalientes", nombre: "Mari G.", cobertura: "", ubicacion: "Plaza de la Tecnología", local: "Local 83", whatsapp: "522213815164", primary: false, activo: true },
-    { id: "coatzacoalcos", kind: "directo", estado: "veracruz", nombre: "Adán G.", cobertura: "Coatzacoalcos y alrededores", ubicacion: "", local: "", whatsapp: "522214102306", primary: false, activo: true },
-    { id: "guanajuato", kind: "directo", estado: "guanajuato", nombre: "Luis G.", cobertura: "Guanajuato y alrededores", ubicacion: "", local: "", whatsapp: "522222932290", primary: false, activo: true },
-    { id: "acapulco", kind: "sucursal", estado: "guerrero", nombre: "", cobertura: "", ubicacion: "Plaza de la Tecnología", local: "", whatsapp: "", primary: false, activo: false }
+    { id: "puebla-domicilio", kind: "directo", estado: "puebla", nombre: "Karla G.", cobertura: "En todo el estado de Puebla", ubicacion: "", local: "", whatsapp: "522227548704", grupoUrl: "", primary: true, activo: true },
+    { id: "aguascalientes", kind: "sucursal", estado: "aguascalientes", nombre: "Mari G.", cobertura: "", ubicacion: "Plaza de la Tecnología", local: "Local 83", whatsapp: "522213815164", grupoUrl: "", primary: false, activo: true },
+    { id: "coatzacoalcos", kind: "directo", estado: "veracruz", nombre: "Adán G.", cobertura: "Coatzacoalcos y alrededores", ubicacion: "", local: "", whatsapp: "522214102306", grupoUrl: "", primary: false, activo: true },
+    { id: "guanajuato", kind: "directo", estado: "guanajuato", nombre: "Luis G.", cobertura: "Guanajuato y alrededores", ubicacion: "", local: "", whatsapp: "522222932290", grupoUrl: "", primary: false, activo: true },
+    { id: "acapulco", kind: "sucursal", estado: "guerrero", nombre: "José Santos G.", cobertura: "", ubicacion: "Plaza de la Tecnología", local: "Local 144", whatsapp: "522215855199", grupoUrl: "", primary: false, activo: true },
+    { id: "cdmx", kind: "directo", estado: "cdmx", nombre: "José Luis G.", cobertura: "En toda la CDMX y área metropolitana", ubicacion: "", local: "", whatsapp: "522225012131", grupoUrl: "", primary: false, activo: true },
+    { id: "mexico", kind: "directo", estado: "mexico", nombre: "Armando", cobertura: "Toluca y municipios del Estado de México", ubicacion: "", local: "", whatsapp: "522221828545", grupoUrl: "", primary: false, activo: true }
   ]
 };
 
@@ -148,7 +150,7 @@ const FALLBACK_TEAM = {
   ]
 };
 
-const FALLBACK_COVERAGE = { activeStateIds: ["puebla", "cdmx", "mexico", "veracruz", "hidalgo"] };
+const FALLBACK_COVERAGE = { activeStateIds: ["puebla", "cdmx", "mexico", "veracruz", "hidalgo", "tlaxcala", "aguascalientes", "guanajuato", "tamaulipas", "guerrero"] };
 
 const FALLBACK_SOCIAL = {
   links: [
@@ -179,24 +181,36 @@ async function fetchJson(path, fallback) {
 }
 
 async function loadData() {
-  [PRICES, GALLERY, TEAM, COVERAGE, BRANCHES, SOCIAL] = await Promise.all([
-    fetchJson("data/prices.json", FALLBACK_PRICES),
-    fetchJson("data/gallery.json", FALLBACK_GALLERY),
-    fetchJson("data/team.json", FALLBACK_TEAM),
-    fetchJson("data/coverage.json", FALLBACK_COVERAGE),
-    fetchJson("data/branches.json", FALLBACK_BRANCHES),
-    fetchJson("data/social.json", FALLBACK_SOCIAL),
-  ]);
+  try {
+    [PRICES, GALLERY, TEAM, COVERAGE, BRANCHES, SOCIAL] = await Promise.all([
+      fetchJson("data/prices.json", FALLBACK_PRICES),
+      fetchJson("data/gallery.json", FALLBACK_GALLERY),
+      fetchJson("data/team.json", FALLBACK_TEAM),
+      fetchJson("data/coverage.json", FALLBACK_COVERAGE),
+      fetchJson("data/branches.json", FALLBACK_BRANCHES),
+      fetchJson("data/social.json", FALLBACK_SOCIAL),
+    ]);
+  } catch (err) {
+    console.warn("Fallo en fetchJson, usando datos de respaldo:", err);
+    PRICES = PRICES || FALLBACK_PRICES;
+    GALLERY = GALLERY || FALLBACK_GALLERY;
+    TEAM = TEAM || FALLBACK_TEAM;
+    COVERAGE = COVERAGE || FALLBACK_COVERAGE;
+    BRANCHES = BRANCHES || FALLBACK_BRANCHES;
+    SOCIAL = SOCIAL || FALLBACK_SOCIAL;
+  }
+
   // El número de WhatsApp que usan los botones generales del sitio es el
   // contacto marcado como "principal" en Sucursales y contacto (panel admin),
   // no un valor fijo en el código.
-  const primary = BRANCHES.branches.find((b) => b.primary && b.whatsapp) || BRANCHES.branches.find((b) => b.whatsapp);
-  if (primary) WA_NUMBER = primary.whatsapp;
+  const branchList = (BRANCHES && Array.isArray(BRANCHES.branches)) ? BRANCHES.branches : (FALLBACK_BRANCHES.branches || []);
+  const primary = branchList.find((b) => b.primary && b.whatsapp) || branchList.find((b) => b.whatsapp);
+  if (primary && primary.whatsapp) WA_NUMBER = primary.whatsapp;
   renderEverything();
 }
 
 function getActiveStates() {
-  const ids = (COVERAGE && COVERAGE.activeStateIds) || [];
+  const ids = (COVERAGE && Array.isArray(COVERAGE.activeStateIds)) ? COVERAGE.activeStateIds : (FALLBACK_COVERAGE.activeStateIds || []);
   return ids.map((id) => MEXICO_STATES.find((s) => s.id === id)).filter(Boolean);
 }
 function getStateName(id) {
@@ -204,20 +218,20 @@ function getStateName(id) {
 }
 
 function getMaterial(id) {
-  return PRICES.materials.find((m) => m.id === id) || null;
+  return (PRICES?.materials || []).find((m) => m.id === id) || null;
 }
 function getGalleryImages(categoryId) {
-  const cat = (GALLERY.categories || []).find((c) => c.id === categoryId);
-  return cat ? cat.images : [];
+  const cat = (GALLERY?.categories || []).find((c) => c.id === categoryId);
+  return (cat && Array.isArray(cat.images)) ? cat.images : [];
 }
 /* Los materiales de la lista de precios no traen su propia categoría de
    galería (solo los tipos de celular y "otros materiales" la tienen), así
    que la buscamos por su priceId: así una foto real aparece desde la
    tarjeta de precio, sin tener que entrar al detalle para verla. */
 function materialGalleryCategory(materialId) {
-  const type = PRICES.celularTypes.find((t) => t.priceId === materialId);
+  const type = (PRICES?.celularTypes || []).find((t) => t.priceId === materialId);
   if (type) return type.galleryCategory;
-  const other = PRICES.otherMaterials.find((o) => o.priceId === materialId);
+  const other = (PRICES?.otherMaterials || []).find((o) => o.priceId === materialId);
   return other ? other.galleryCategory : null;
 }
 function materialPhoto(materialId) {
@@ -232,7 +246,7 @@ function renderPrices() {
   const table = document.getElementById("priceTable");
   if (!quickGrid || !table) return;
 
-  const quickItems = PRICES.materials.filter((m) => m.quick);
+  const quickItems = (PRICES?.materials || []).filter((m) => m.quick);
   quickGrid.innerHTML = quickItems.map((m, i) => {
     const photo = materialPhoto(m.id);
     const isFeatured = m.id === "celular";
@@ -240,9 +254,9 @@ function renderPrices() {
     <article class="price-card ${isFeatured ? "price-card-featured" : ""} reveal ${i ? "delay-" + Math.min(i, 3) : ""} show">
       ${isFeatured ? `<div class="featured-price-badge"><i class="bi bi-star-fill"></i> MEJOR PAGADO</div>` : ""}
       ${photo
-        ? `<div class="price-card-photo"><img src="${esc(photo.src)}" alt="${esc(photo.alt || m.name)}" loading="lazy" /></div>`
+        ? `<div class="price-card-photo"><img src="${esc(photo.src)}" alt="${esc(photo.alt || m.name)}" loading="lazy" onerror="this.parentElement.style.display='none'" /></div>`
         : ""}
-      <span class="price-icon"><i class="bi ${esc(m.icon)}"></i></span>
+      <span class="price-icon"><i class="bi ${esc(m.icon || "bi-cpu")}"></i></span>
       <p class="price-tag">${esc(m.name)}</p>
       <p class="price-value">${formatPrice(m.min, m.max, m.unit)}</p>
       <p class="price-copy">${esc(m.quickCopy || m.note || "")}</p>
@@ -369,14 +383,14 @@ function renderCalculator() {
   `).join("");
 
   function updateCalculation() {
-    const item = items.find((it) => it.id === CALC_STATE.materialId) || items[0];
-    const kg = CALC_STATE.weight;
-    const g = CALC_STATE.grams;
-    const totalKg = kg + g / 1000;
-    const fmt = (n) => `$${Number(n).toLocaleString("es-MX")}`;
+    const item = items.find((it) => it.id === CALC_STATE.materialId) || items[0] || { name: "Material", min: 0, max: 0 };
+    const kg = Math.max(0, Number(CALC_STATE.weight) || 0);
+    const g = Math.max(0, Math.min(999, Number(CALC_STATE.grams) || 0));
+    const totalKg = Math.max(0, kg + g / 1000);
+    const fmt = (n) => `$${(Number(n) || 0).toLocaleString("es-MX")}`;
 
-    const totalMin = Math.round(item.min * totalKg);
-    const totalMax = Math.round(item.max * totalKg);
+    const totalMin = Math.round((Number(item.min) || 0) * totalKg);
+    const totalMax = Math.round((Number(item.max) || 0) * totalKg);
     const weightLabel = formatCalcWeight(kg, g);
 
     const titleEl = document.getElementById("calcResultTitle");
@@ -782,9 +796,13 @@ function renderGalleryGeneral() {
   const grid = document.getElementById("galleryGeneral");
   if (!grid) return;
   const images = getGalleryImages("operacion");
+  if (!images.length) {
+    grid.innerHTML = `<p style="grid-column:1/-1;text-align:center;padding:24px;color:var(--ink-soft);">Fotos de lotes recibidos próximamente.</p>`;
+    return;
+  }
   grid.innerHTML = images.map((img, i) => `
     <article class="gallery-card reveal ${i ? "delay-" + Math.min(i, 3) : ""}">
-      <img src="${esc(img.src)}" alt="${esc(img.alt || "")}" loading="lazy" />
+      <img src="${esc(img.src)}" alt="${esc(img.alt || "Lote recibido")}" loading="lazy" onerror="this.parentElement.style.display='none'" />
     </article>
   `).join("");
   observeReveals();
@@ -806,6 +824,9 @@ function renderBranches() {
     const icon = isSucursal ? "bi-shop" : "bi-geo-alt";
     const metaLine = isSucursal ? (b.ubicacion || "") : (b.cobertura || "");
     const canWrite = b.activo !== false && b.whatsapp;
+    const groupLink = b.grupoUrl
+      ? esc(b.grupoUrl)
+      : (b.whatsapp ? waLinkTo(b.whatsapp, "Hola " + (b.nombre ? b.nombre + ", " : "") + "me interesa unirme al grupo oficial de WhatsApp de " + title) : "");
     return `
     <article class="sucursal-card reveal ${i ? "delay-" + Math.min(i, 3) : ""} ${b.primary ? "is-primary" : ""}">
       <div class="sucursal-top">
@@ -817,7 +838,10 @@ function renderBranches() {
         ${isSucursal ? `<p class="sucursal-encargado">${esc(b.nombre || "Próximamente")}</p>` : ""}
         ${canWrite
           ? `<a class="sucursal-tel is-link" href="${waLinkTo(b.whatsapp, "Hola, tengo material para entregar en la sucursal de " + title)}" target="_blank" rel="noopener"><i class="bi bi-telephone-fill"></i> ${esc(formatMexPhone(b.whatsapp))}</a>
-             <a class="btn btn-sm sucursal-wa-btn" href="${waLinkTo(b.whatsapp, "Hola " + (b.nombre ? b.nombre + ", " : "") + "me interesa entregar o cotizar material en la sucursal de " + title)}" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Escribir a esta sucursal</a>`
+             <div class="sucursal-actions">
+               <a class="btn btn-sm sucursal-wa-btn" href="${waLinkTo(b.whatsapp, "Hola " + (b.nombre ? b.nombre + ", " : "") + "me interesa entregar o cotizar material en la sucursal de " + title)}" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Escribir a encargado</a>
+               <a class="btn btn-sm sucursal-group-btn" href="${groupLink}" target="_blank" rel="noopener"><i class="bi bi-people-fill"></i> Grupo de WhatsApp · ${esc(title)}</a>
+             </div>`
           : `<p class="sucursal-tel"><i class="bi bi-whatsapp"></i>Próximamente</p>`}
       </div>
     </article>`;
@@ -1022,7 +1046,7 @@ function onScroll() {
 window.addEventListener("scroll", onScroll, { passive: true });
 onScroll();
 
-const sections = ["precios", "calculadora", "que-compramos", "equipo", "cobertura", "sucursales", "faq"];
+const sections = ["inicio", "precios", "calculadora", "proceso", "sucursales", "cobertura", "galeria", "faq"];
 const navAnchors = Array.from(document.querySelectorAll('.nav-links a'));
 if ("IntersectionObserver" in window && navAnchors.length) {
   const navObserver = new IntersectionObserver((entries) => {
