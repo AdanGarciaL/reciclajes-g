@@ -283,6 +283,8 @@ function renderPrices() {
   const tipo1 = PRICES.celularTypes.find((t) => t.id === "tipo1");
   const heroBest = document.getElementById("heroBestPrice");
   if (heroBest && tipo1) heroBest.textContent = formatPrice(tipo1.min, tipo1.max);
+  const mobileSticky = document.getElementById("mobileStickyPrice");
+  if (mobileSticky && tipo1) mobileSticky.textContent = `${formatPrice(tipo1.min, tipo1.max)}/kg`;
   const heroStatMaterials = document.getElementById("heroStatMaterials");
   if (heroStatMaterials) heroStatMaterials.textContent = PRICES.materials.length;
 
@@ -808,6 +810,16 @@ function renderGalleryGeneral() {
   observeReveals();
 }
 
+const BRANCH_PORTADAS = {
+  puebla: "icons/portadas/portada-puebla.jpg",
+  aguascalientes: "icons/portadas/portada-aguascalientes.jpg",
+  veracruz: "icons/portadas/portada-veracruz.jpg",
+  guanajuato: "icons/portadas/portada-guanajuato.jpg",
+  guerrero: "icons/portadas/portada-acapulco.jpg",
+  cdmx: "icons/portadas/portada-cdmx.jpg",
+  mexico: "icons/portadas/portada-edomex.jpg"
+};
+
 /* ---------- Sucursales y contacto directo ----------
    El título de cada tarjeta es el ESTADO; debajo, según el tipo, se muestra
    "Sucursal" (+ local si aplica) o el nombre de la persona que atiende esa
@@ -824,14 +836,18 @@ function renderBranches() {
     const icon = isSucursal ? "bi-shop" : "bi-geo-alt";
     const metaLine = isSucursal ? (b.ubicacion || "") : (b.cobertura || "");
     const canWrite = b.activo !== false && b.whatsapp;
+    const portadaSrc = BRANCH_PORTADAS[b.estado] || "icons/portadas/portada-comunidad.jpg";
     const groupLink = b.grupoUrl
       ? esc(b.grupoUrl)
       : (b.whatsapp ? waLinkTo(b.whatsapp, "Hola " + (b.nombre ? b.nombre + ", " : "") + "me interesa unirme al grupo oficial de WhatsApp de " + title) : "");
     return `
-    <article class="sucursal-card reveal ${i ? "delay-" + Math.min(i, 3) : ""} ${b.primary ? "is-primary" : ""}">
+    <article class="sucursal-card reveal ${i ? "delay-" + Math.min(i, 3) : ""} ${b.primary ? "is-primary" : ""}" data-estado="${esc(b.estado || "")}">
       <div class="sucursal-top">
         <div><h3>${esc(title)}</h3><p>${esc(subtitle)}</p></div>
-        <span class="sucursal-icon"><i class="bi ${icon}"></i></span>
+        <div class="sucursal-badge-wrap" title="Plaza oficial ${esc(title)}">
+          <img src="${portadaSrc}" alt="${esc(title)}" class="sucursal-badge-img" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';" />
+          <span class="sucursal-icon" style="display:none;"><i class="bi ${icon}"></i></span>
+        </div>
       </div>
       <div class="sucursal-bottom">
         ${metaLine ? `<p class="sucursal-meta">${esc(metaLine)}</p>` : ""}
@@ -846,7 +862,30 @@ function renderBranches() {
       </div>
     </article>`;
   }).join("");
+  initSucursalesFilter();
   observeReveals();
+}
+
+function initSucursalesFilter() {
+  const filterBar = document.getElementById("sucursalesFilterBar");
+  if (!filterBar || filterBar.dataset.bound === "true") return;
+  filterBar.dataset.bound = "true";
+  filterBar.addEventListener("click", (e) => {
+    const btn = e.target.closest(".sucursal-filter-chip");
+    if (!btn) return;
+    filterBar.querySelectorAll(".sucursal-filter-chip").forEach((b) => {
+      const active = b === btn;
+      b.classList.toggle("is-active", active);
+      b.setAttribute("aria-selected", active ? "true" : "false");
+    });
+    const filter = btn.dataset.filter || "all";
+    const cards = document.querySelectorAll(".sucursal-card");
+    cards.forEach((card) => {
+      const estado = card.dataset.estado;
+      const match = filter === "all" || estado === filter;
+      card.style.display = match ? "" : "none";
+    });
+  });
 }
 
 /* ---------- Quiénes somos ---------- */

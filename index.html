@@ -144,24 +144,31 @@
       <div class="container">
         <div class="trust-grid reveal">
           <div class="trust-card">
-            <span class="trust-icon"><i class="bi bi-shield-check"></i></span>
+            <span class="trust-icon"><i class="bi bi-camera-video-fill"></i></span>
             <div class="trust-info">
-              <strong class="trust-title">Pesaje transparente</strong>
-              <p class="trust-desc">Báscula calibrada a la vista de todos. Pesamos tu lote frente a ti sin sorpresas.</p>
+              <strong class="trust-title">Pesaje transparente en vivo</strong>
+              <p class="trust-desc">Báscula calibrada frente a ti o en video para envíos foráneos. Cero sorpresas en tus kilos.</p>
             </div>
           </div>
           <div class="trust-card">
             <span class="trust-icon"><i class="bi bi-cash-coin"></i></span>
             <div class="trust-info">
               <strong class="trust-title">Pago inmediato en mano</strong>
-              <p class="trust-desc">Efectivo o transferencia al instante antes de salir de la sucursal.</p>
+              <p class="trust-desc">Efectivo o transferencia SPEI al momento de entregar tu material antes de retirarte.</p>
             </div>
           </div>
           <div class="trust-card">
-            <span class="trust-icon"><i class="bi bi-award"></i></span>
+            <span class="trust-icon"><i class="bi bi-shield-check"></i></span>
             <div class="trust-info">
-              <strong class="trust-title">Trato directo</strong>
-              <p class="trust-desc">Somos compradores y recicladores directos, garantizando el mejor precio por kilo.</p>
+              <strong class="trust-title">Trato directo sin intermediarios</strong>
+              <p class="trust-desc">Somos recicladores directos: tabulador honesto y el mejor precio por kilo del mercado.</p>
+            </div>
+          </div>
+          <div class="trust-card">
+            <span class="trust-icon"><i class="bi bi-geo-alt-fill"></i></span>
+            <div class="trust-info">
+              <strong class="trust-title">7 plazas y envíos nacionales</strong>
+              <p class="trust-desc">Entrega en tu sucursal más cercana o coordinamos recolección en toda la República desde 10 kg.</p>
             </div>
           </div>
         </div>
@@ -259,7 +266,7 @@
           </div>
 
           <div class="calc-result-card">
-            <div class="result-badge"><i class="bi bi-cash-stack"></i> Estimación de compra inmediata</div>
+            <div class="result-badge"><span class="live-pulse-dot"></span> <i class="bi bi-cash-stack"></i> Estimación de compra inmediata</div>
             <p class="result-material-title" id="calcResultTitle">Cargando material…</p>
             <div class="result-price-wrap">
               <span class="result-currency">MXN</span>
@@ -269,8 +276,9 @@
 
             <div class="result-benefits">
               <div class="benefit-item"><i class="bi bi-check-circle-fill"></i> Pago inmediato en efectivo o transferencia</div>
-              <div class="benefit-item"><i class="bi bi-check-circle-fill"></i> Pesaje transparente en báscula calibrada</div>
-              <div class="benefit-item"><i class="bi bi-check-circle-fill"></i> En sucursal o recolección a domicilio</div>
+              <div class="benefit-item"><i class="bi bi-camera-video-fill"></i> Báscula calibrada y pesaje en video/en vivo frente a ti</div>
+              <div class="benefit-item"><i class="bi bi-shield-check"></i> Cero intermediarios ni descuentos sorpresa</div>
+              <div class="benefit-item"><i class="bi bi-geo-alt-fill"></i> En sucursal o recolección a domicilio</div>
             </div>
 
             <a class="btn btn-primary btn-block calc-cta-btn" id="calcWaBtn" href="https://wa.me/522227548704" target="_blank" rel="noopener">
@@ -382,11 +390,24 @@
           <p>Escribe por WhatsApp a tu encargado más cercano o únete al grupo oficial de tu estado.</p>
         </div>
         <div class="community-banner reveal">
-          <i class="bi bi-people-fill"></i>
+          <img src="icons/portadas/portada-comunidad.jpg" alt="Comunidad Oficial Eco Lógica García" class="community-banner-thumb" loading="lazy" onerror="this.style.display='none'" />
           <div>
             <strong>Comunidad y Grupos Oficiales de WhatsApp por Estado:</strong> Únete al grupo de tu región para recibir avisos de cambios de precios, listas actualizadas y coordinar recolecciones de material (grupos moderados, estrictamente cero spam).
           </div>
         </div>
+
+        <!-- Filtros rápidos por estado -->
+        <div class="sucursales-filter-bar reveal delay-1" id="sucursalesFilterBar" role="tablist" aria-label="Filtrar sucursales por estado">
+          <button type="button" class="sucursal-filter-chip is-active" data-filter="all" role="tab" aria-selected="true"><i class="bi bi-grid-fill"></i> Todos (7)</button>
+          <button type="button" class="sucursal-filter-chip" data-filter="puebla" role="tab" aria-selected="false">Puebla</button>
+          <button type="button" class="sucursal-filter-chip" data-filter="cdmx" role="tab" aria-selected="false">CDMX</button>
+          <button type="button" class="sucursal-filter-chip" data-filter="mexico" role="tab" aria-selected="false">EdoMéx</button>
+          <button type="button" class="sucursal-filter-chip" data-filter="veracruz" role="tab" aria-selected="false">Veracruz</button>
+          <button type="button" class="sucursal-filter-chip" data-filter="aguascalientes" role="tab" aria-selected="false">Aguascalientes</button>
+          <button type="button" class="sucursal-filter-chip" data-filter="guanajuato" role="tab" aria-selected="false">Guanajuato</button>
+          <button type="button" class="sucursal-filter-chip" data-filter="guerrero" role="tab" aria-selected="false">Acapulco</button>
+        </div>
+
         <div class="sucursales-grid" id="sucursalesGrid"></div>
         <div class="sucursal-tip-strip reveal">
           <p><i class="bi bi-info-circle-fill"></i> <strong>Para cotizar más rápido por WhatsApp:</strong> Envía fotos claras de tu lote, tipo de tarjeta, kilos aproximados y tu ciudad.</p>
@@ -530,6 +551,19 @@
       </div>
     </div>
   </footer>
+
+  <!-- BARRA FIJA INFERIOR MÓVIL (<=768px) -->
+  <aside class="mobile-sticky-bar" id="mobileStickyBar" aria-label="Cotización rápida en móvil">
+    <div class="mobile-sticky-inner">
+      <div class="mobile-sticky-info">
+        <span class="mobile-sticky-tag"><i class="bi bi-lightning-fill"></i> Celular Tipo 1</span>
+        <div class="mobile-sticky-price" id="mobileStickyPrice">$900 – $1,300/kg</div>
+      </div>
+      <a href="https://wa.me/522227548704?text=Hola%2C%20quiero%20cotizar%20un%20lote%20de%20tarjetas%20con%20Eco%20L%C3%B3gica%20Garc%C3%ADa" class="btn btn-sm btn-primary mobile-sticky-cta js-wa-link" target="_blank" rel="noopener" data-wa-msg="Hola, quiero cotizar un lote de tarjetas con Eco Lógica García">
+        <i class="bi bi-whatsapp"></i> Cotizar WhatsApp
+      </a>
+    </div>
+  </aside>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="script.js"></script>
