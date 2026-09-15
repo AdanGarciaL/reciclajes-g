@@ -1658,10 +1658,28 @@ async function loadBranchesIntoForm() {
   renderBranchesList();
 }
 
+const BRANCH_PORTADAS = {
+  puebla: "icons/portadas/portada-puebla.jpg",
+  aguascalientes: "icons/portadas/portada-aguascalientes.jpg",
+  veracruz: "icons/portadas/portada-veracruz.jpg",
+  guanajuato: "icons/portadas/portada-guanajuato.jpg",
+  guerrero: "icons/portadas/portada-acapulco.jpg",
+  cdmx: "icons/portadas/portada-cdmx.jpg",
+  mexico: "icons/portadas/portada-edomex.jpg"
+};
+
 function branchFormHtml(b) {
   const isSucursal = b.kind !== "directo";
   const stateOptions = MEXICO_STATES.map((s) => `<option value="${s.id}" ${b.estado === s.id ? "selected" : ""}>${esc(s.name)}</option>`).join("");
+  const portadaSrc = BRANCH_PORTADAS[b.estado] || "icons/portadas/portada-comunidad.jpg";
   return `
+    <div class="branch-modal-header-preview">
+      <img src="${portadaSrc}" alt="${esc(b.estado || "")}" class="branch-modal-badge-img" onerror="this.style.display='none'" />
+      <div>
+        <p class="branch-modal-badge-title">Portada oficial de plaza</p>
+        <p class="branch-modal-badge-sub">Se muestra en la tarjeta del sitio público y en la comunidad de WhatsApp</p>
+      </div>
+    </div>
     <div class="otm-row">
       <div class="field"><label>Tipo</label>
         <select class="branch-kind-input">
@@ -1726,16 +1744,21 @@ function ensureOnePrimaryBranch() {
 function branchRowHtml(b, i) {
   const isSucursal = b.kind !== "directo";
   const stateName = MEXICO_STATES.find((s) => s.id === b.estado)?.name || b.estado || "(Sin estado)";
+  const portadaSrc = BRANCH_PORTADAS[b.estado] || "icons/portadas/portada-comunidad.jpg";
   const subParts = [
     isSucursal ? "Sucursal" : (b.nombre || "Contacto directo"),
     b.whatsapp ? formatMexPhone(b.whatsapp) : "sin WhatsApp",
+    b.grupoUrl ? "Grupo WA configurado" : "Sin grupo WA",
     b.activo === false ? "Próximamente" : null,
     b.primary ? "Número principal" : null,
   ].filter(Boolean);
   return `
     <div class="item-row" data-branch-index="${i}">
       <div class="item-row-main">
-        <span class="item-row-icon"><i class="bi ${isSucursal ? "bi-shop" : "bi-person-lines-fill"}"></i></span>
+        <span class="item-row-icon branch-badge-thumb">
+          <img src="${portadaSrc}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';" />
+          <i class="bi ${isSucursal ? "bi-shop" : "bi-person-lines-fill"}" style="display:none"></i>
+        </span>
         <div class="item-row-text">
           <p class="item-row-title">${esc(stateName)}</p>
           <p class="item-row-sub">${esc(subParts.join(" · "))}</p>
@@ -1775,7 +1798,7 @@ document.getElementById("branchesForm")?.addEventListener("click", (e) => {
   renderBranchesList();
 });
 document.getElementById("addBranchBtn")?.addEventListener("click", () => {
-  const draft = { id: `contacto-${Date.now()}`, kind: "sucursal", estado: MEXICO_STATES[0].id, nombre: "", cobertura: "", ubicacion: "", local: "", whatsapp: "", primary: false, activo: true };
+  const draft = { id: `contacto-${Date.now()}`, kind: "sucursal", estado: MEXICO_STATES[0].id, nombre: "", cobertura: "", ubicacion: "", local: "", whatsapp: "", grupoUrl: "", primary: false, activo: true };
   itemModalBodyEl.dataset.itemType = "branch";
   openItemModal("Agregar sucursal o contacto", branchFormHtml(draft), () => {
     applyBranchForm(draft);
@@ -1786,16 +1809,25 @@ document.getElementById("addBranchBtn")?.addEventListener("click", () => {
 });
 document.getElementById("resetBranchesBtn")?.addEventListener("click", loadBranchesIntoForm);
 
-// El selector de tipo (sucursal/contacto directo) solo existe dentro de la
-// ventana de edición ahora; el listener queda sobre itemModalBodyEl,
-// activo únicamente mientras se edita una sucursal (dataset.itemType).
+// El selector de tipo (sucursal/contacto directo) y de estado dentro de la
+// ventana de edición: actualiza campos visibles y la miniatura de la portada.
 itemModalBodyEl.addEventListener("change", (e) => {
   if (itemModalBodyEl.dataset.itemType !== "branch") return;
   const kindSelect = e.target.closest(".branch-kind-input");
-  if (!kindSelect) return;
-  const isSucursal = kindSelect.value === "sucursal";
-  itemModalBodyEl.querySelector(".branch-fields-sucursal").hidden = !isSucursal;
-  itemModalBodyEl.querySelector(".branch-fields-directo").hidden = isSucursal;
+  if (kindSelect) {
+    const isSucursal = kindSelect.value === "sucursal";
+    itemModalBodyEl.querySelector(".branch-fields-sucursal").hidden = !isSucursal;
+    itemModalBodyEl.querySelector(".branch-fields-directo").hidden = isSucursal;
+  }
+  const estadoSelect = e.target.closest(".branch-estado-input");
+  if (estadoSelect) {
+    const badgeImg = itemModalBodyEl.querySelector(".branch-modal-badge-img");
+    if (badgeImg) {
+      const src = BRANCH_PORTADAS[estadoSelect.value] || "icons/portadas/portada-comunidad.jpg";
+      badgeImg.src = src;
+      badgeImg.style.display = "";
+    }
+  }
 });
 
 function validateBranches() {
