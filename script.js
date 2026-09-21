@@ -7,24 +7,7 @@
 
 // data/prices.json y data/gallery.json se editan desde el panel admin, así
 // que su texto (notas, descripciones de fotos) se escapa antes de insertarse
-// como HTML: evita que una nota o un "alt" con caracteres especiales rompa el
-// render o, en el peor caso, inyecte HTML/script en el sitio público.
-const ESCAPE_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-function esc(value) {
-  return String(value ?? "").replace(/[&<>"']/g, (ch) => ESCAPE_MAP[ch]);
-}
-// esc() solo protege contra HTML/inyección de etiquetas, no contra un
-// esquema peligroso (javascript:, data:, etc.) guardado como URL de una red
-// social. Cualquier enlace admin-editable que se use como href pasa primero
-// por aquí; si no es http(s), se ignora en vez de crear un enlace real.
-function isSafeHttpUrl(url) {
-  try {
-    const u = new URL(String(url || "").trim(), window.location.href);
-    return u.protocol === "http:" || u.protocol === "https:";
-  } catch (_e) {
-    return false;
-  }
-}
+// como HTML usando esc() de js/utils.js
 
 // Número de respaldo (por si aún no cargan los datos de sucursales); en cuanto
 // carga data/branches.json se reemplaza por el contacto marcado como "principal".
@@ -36,127 +19,6 @@ function waLinkTo(number, message) {
 function waLink(message) {
   return waLinkTo(WA_NUMBER, message);
 }
-function formatMexPhone(rawDigits) {
-  let d = String(rawDigits || "").replace(/\D/g, "");
-  if (d.length === 12 && d.startsWith("52")) d = d.slice(2);
-  return d.length === 10 ? `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}` : d;
-}
-
-/* Los 32 estados de la República: catálogo fijo (id, nombre y coordenadas
-   aproximadas de su capital) que usan tanto el mapa de cobertura como el
-   selector del panel admin. Cuáles están "activos" sí es editable desde el
-   panel (data/coverage.json); este catálogo de geografía no cambia. */
-const MEXICO_STATES = [
-  { id: "aguascalientes", name: "Aguascalientes", lat: 21.8853, lng: -102.2916 },
-  { id: "baja-california", name: "Baja California", lat: 32.6245, lng: -115.4523 },
-  { id: "baja-california-sur", name: "Baja California Sur", lat: 24.1426, lng: -110.3128 },
-  { id: "campeche", name: "Campeche", lat: 19.8301, lng: -90.5349 },
-  { id: "chiapas", name: "Chiapas", lat: 16.7569, lng: -93.1292 },
-  { id: "chihuahua", name: "Chihuahua", lat: 28.6353, lng: -106.0889 },
-  { id: "cdmx", name: "Ciudad de México", lat: 19.4326, lng: -99.1332 },
-  { id: "coahuila", name: "Coahuila", lat: 25.4260, lng: -101.0053 },
-  { id: "colima", name: "Colima", lat: 19.2452, lng: -103.7241 },
-  { id: "durango", name: "Durango", lat: 24.0277, lng: -104.6532 },
-  { id: "guanajuato", name: "Guanajuato", lat: 21.0190, lng: -101.2574 },
-  { id: "guerrero", name: "Guerrero", lat: 17.5515, lng: -99.5058 },
-  { id: "hidalgo", name: "Hidalgo", lat: 20.1011, lng: -98.7591 },
-  { id: "jalisco", name: "Jalisco", lat: 20.6597, lng: -103.3496 },
-  { id: "mexico", name: "Estado de México", lat: 19.2826, lng: -99.6557 },
-  { id: "michoacan", name: "Michoacán", lat: 19.7008, lng: -101.1844 },
-  { id: "morelos", name: "Morelos", lat: 18.9242, lng: -99.2216 },
-  { id: "nayarit", name: "Nayarit", lat: 21.5041, lng: -104.8946 },
-  { id: "nuevo-leon", name: "Nuevo León", lat: 25.6866, lng: -100.3161 },
-  { id: "oaxaca", name: "Oaxaca", lat: 17.0732, lng: -96.7266 },
-  { id: "puebla", name: "Puebla", lat: 19.0414, lng: -98.2063 },
-  { id: "queretaro", name: "Querétaro", lat: 20.5888, lng: -100.3899 },
-  { id: "quintana-roo", name: "Quintana Roo", lat: 18.5036, lng: -88.3055 },
-  { id: "san-luis-potosi", name: "San Luis Potosí", lat: 22.1565, lng: -100.9855 },
-  { id: "sinaloa", name: "Sinaloa", lat: 24.8091, lng: -107.4022 },
-  { id: "sonora", name: "Sonora", lat: 29.0729, lng: -110.9559 },
-  { id: "tabasco", name: "Tabasco", lat: 17.9892, lng: -92.9475 },
-  { id: "tamaulipas", name: "Tamaulipas", lat: 23.7369, lng: -99.1411 },
-  { id: "tlaxcala", name: "Tlaxcala", lat: 19.3139, lng: -98.2404 },
-  { id: "veracruz", name: "Veracruz", lat: 19.1738, lng: -96.1342 },
-  { id: "yucatan", name: "Yucatán", lat: 20.9674, lng: -89.5926 },
-  { id: "zacatecas", name: "Zacatecas", lat: 22.7709, lng: -102.5832 },
-];
-const TOTAL_MEXICO_STATES = MEXICO_STATES.length;
-
-/* ---------- Datos de respaldo (por si falla el fetch, ej. file://) ---------- */
-const FALLBACK_PRICES = {
-  materials: [
-    { id: "celular", name: "Lógica de celular", icon: "bi-phone", modalIcon: "📱", group: "celular", min: 100, max: 1300, unit: "/kg", note: "El Tipo 1 alcanza el precio máximo del catálogo.", quick: true, quickCopy: "Rango completo según tipo, estado y material. El Tipo 1 alcanza el precio máximo.", showInSelector: true, directContact: false },
-    { id: "teclado", name: "Celular de teclado", icon: "bi-keyboard", modalIcon: "⌨️", group: "celular", min: 100, max: 150, unit: "/kg", note: "Placas de teléfonos antiguos con teclado mecánico.", quick: false, quickCopy: "", showInSelector: true, directContact: false },
-    { id: "tablet", name: "Lógica de tablet", icon: "bi-tablet-landscape", modalIcon: "📲", group: "otros", min: 100, max: 150, unit: "/kg", note: "Placas de iPad, Samsung, Lenovo y similares.", quick: false, quickCopy: "", showInSelector: true, directContact: false },
-    { id: "ram", name: "Memorias RAM", icon: "bi-memory", modalIcon: "🖬", group: "otros", min: 300, max: 450, unit: "/kg", note: "DDR a DDR5, cualquier capacidad, funcionales o defectuosas.", quick: true, quickCopy: "Aceptamos módulos de varias generaciones y capacidades.", showInSelector: true, directContact: false },
-    { id: "laptop", name: "Lógica de laptop", icon: "bi-laptop", modalIcon: "💻", group: "otros", min: 90, max: 150, unit: "/kg", note: "Motherboards de laptop y netbook, cualquier marca.", quick: true, quickCopy: "Placas de laptop en diferentes condiciones y modelos.", showInSelector: true, directContact: false },
-    { id: "sinpila", name: "Sin pila ni tapa", icon: "bi-battery", modalIcon: "🔋", group: "celular", min: 70, max: 100, unit: "/kg", note: "Celulares completos sin desmontar, sin batería.", quick: false, quickCopy: "", showInSelector: false, directContact: false }
-  ],
-  celularTypes: [
-    { id: "tipo1", priceId: "celular", label: "Tipo 1", shortLabel: "Tipo 1 · Premium", min: 900, max: 1300, specs: ["Sin flex ni tiras", "Sin cámaras", "Debe tener su chip", "Celulares de gama media a alta", "Condición variable aceptable mientras el chip esté presente"], galleryCategory: "celular-tipo-1" },
-    { id: "tipo2", priceId: "celular", label: "Tipo 2", shortLabel: "Tipo 2 · Placas grandes", min: 220, max: 350, specs: ["Placas grandes que cubren el celular", "Si no entra en Tipo 1 pasa a Tipo 2: sin chip integrado o roto", "Pueden estar quemadas o ensambladas", "Cualquier marca o modelo", "Celulares antiguos o de gama baja"], galleryCategory: "celular-tipo-2" },
-    { id: "tipo3", priceId: "celular", label: "Tipo 3", shortLabel: "Tipo 3 · Teclado y tablet", min: 100, max: 150, specs: ["Placas de teléfonos con teclado", "Placas de tablet", "Ambas categorías tienen el mismo precio", "Cualquier marca o modelo", "Condición variable aceptable"], galleryCategory: "celular-tipo-3" },
-    { id: "tipo4", priceId: "sinpila", label: "Sin pila/tapa", shortLabel: "Sin pila ni tapa", min: 70, max: 100, specs: ["Celulares completos sin desmontar", "Sin pila: se debe retirar la batería", "Sin tapa: se puede dejar como venga", "Para clientes sin tiempo de desarmado", "Ideal para lotes grandes y descarte"], galleryCategory: "sin-pila-tapa" }
-  ],
-  otherMaterials: [
-    { id: "laptop", priceId: "laptop", eyebrow: "Lógica de laptop", title: "Motherboards y placas de laptop", specs: ["Placas madre de laptops y netbooks", "Cualquier condición, funcionales o dañadas", "Cualquier marca (Dell, HP, Lenovo, etc.)", "Con o sin procesador integrado", "Ideal para reciclaje"], galleryCategory: "laptop" },
-    { id: "ram", priceId: "ram", eyebrow: "Memorias RAM", title: "Módulos de memoria RAM DDR / DDR2 / DDR3 / DDR4", specs: ["Memorias RAM de cualquier generación", "DDR, DDR2, DDR3, DDR4, DDR5", "Cualquier capacidad (256 MB a 32 GB+)", "Funcionales o defectuosas aceptadas", "Alto valor por peso, excelente para reciclar"], galleryCategory: "ram" },
-    { id: "teclado", priceId: "teclado", eyebrow: "Teléfonos con teclado", title: "Lógicas de teléfonos con teclado mecánico", specs: ["Placas de teléfonos antiguos con teclado", "BlackBerry, HTC y otros modelos", "Cualquier estado, rotos o funcionales", "Demanda consistente en reciclaje"], galleryCategory: "celular-tipo-3" },
-    { id: "tablet", priceId: "tablet", eyebrow: "Placas de tablet", title: "Motherboards y lógicas de tablets", specs: ["Placas de tablets iPad, Samsung, Lenovo, etc.", "Cualquier tamaño, de 7\" a 12\"", "Funcionales o para descarte", "Condición variable aceptable mientras el chip esté presente", "Aceptamos grandes volúmenes"], galleryCategory: "celular-tipo-3" }
-  ]
-};
-
-const FALLBACK_GALLERY = {
-  categories: [
-    { id: "celular-tipo-1", label: "Celular Tipo 1", images: [{ src: "Galeria/Celular Tipo 1/logica_celular12.jpg", alt: "Lógica de celular Tipo 1" }] },
-    { id: "celular-tipo-2", label: "Celular Tipo 2", images: [{ src: "Galeria/Celular Tipo 2/logica_celular2.jpg", alt: "Lógica de celular Tipo 2" }] },
-    { id: "celular-tipo-3", label: "Celular y Tablet Tipo 3", images: [{ src: "Galeria/Celular y Tablet Tipo 3/logica_celular31.jpg", alt: "Lógica de celular Tipo 3" }] },
-    { id: "sin-pila-tapa", label: "Sin pila y tapa Tipo 4", images: [{ src: "Galeria/Sin Pila y Tapa Tipo 4/sin_pila_y_tapa.jpg", alt: "Celular sin pila ni tapa" }] },
-    { id: "laptop", label: "Laptop", images: [{ src: "Galeria/Laptop/Laptop.jpg", alt: "Lógica de laptop" }] },
-    { id: "ram", label: "RAM", images: [{ src: "Galeria/RAM/RAM.jpg", alt: "Módulos de memoria RAM" }] },
-    { id: "operacion", label: "Galería general", images: [
-      { src: "Galeria/logica_celular.jpg", alt: "Lógicas de celular para reciclaje" },
-      { src: "Galeria/logica_lapcpu.jpg", alt: "Lógicas de laptop y CPU para reciclaje" },
-      { src: "Galeria/logica_ram.jpg", alt: "Módulos RAM y componentes electrónicos" }
-    ] }
-  ]
-};
-
-const FAQ_DATA = [
-  { q: "¿Por qué el precio es más bajo que una pieza funcional?", a: "El material se compra para destrucción y desguace, no para reventa como refacción. El valor está en los metales y componentes que se recuperan, por eso el precio va por kilo y no por pieza." },
-  { q: "¿El sitio guarda mis datos?", a: "No. Esta página solo informa precios, tipos de material y contactos. No hay formularios ni registros: toda la atención es por WhatsApp o directamente en sucursal." },
-  { q: "¿Cómo sé en qué tipo entra mi lógica?", a: "Revisa la sección de tipos: el Tipo 1 requiere chip presente, sin flex, tiras ni cámaras. Si no cumple, baja a Tipo 2. Las placas de teclado y tablet son Tipo 3. Si tienes duda, manda fotos al WhatsApp de tu plaza." },
-  { q: "Estoy en un estado sin cobertura activa, ¿me pueden comprar?", a: "Sí. En cualquier estado de la República consideramos la recolección si el lote es de 10 kg o más. En Puebla además hacemos recolección a domicilio sin ese mínimo." },
-  { q: "¿El precio que aparece en el sitio es final?", a: "No. Son rangos referenciales. El precio se confirma después de revisar el lote, según el tipo de material, los kilos y el estado físico." },
-  { q: "¿Cómo se hace el pago?", a: "Se define antes de cerrar el trato, junto con la forma de entrega o envío. Nunca movemos material sin que las condiciones estén acordadas." }
-];
-
-const FALLBACK_BRANCHES = {
-  branches: [
-    { id: "puebla-domicilio", kind: "directo", estado: "puebla", nombre: "Karla G.", cobertura: "En todo el estado de Puebla", ubicacion: "", local: "", whatsapp: "522227548704", grupoUrl: "", primary: true, activo: true },
-    { id: "aguascalientes", kind: "sucursal", estado: "aguascalientes", nombre: "Mari G.", cobertura: "", ubicacion: "Plaza de la Tecnología", local: "Local 83", whatsapp: "522213815164", grupoUrl: "", primary: false, activo: true },
-    { id: "coatzacoalcos", kind: "directo", estado: "veracruz", nombre: "Adán G.", cobertura: "Coatzacoalcos y alrededores", ubicacion: "", local: "", whatsapp: "522214102306", grupoUrl: "", primary: false, activo: true },
-    { id: "guanajuato", kind: "directo", estado: "guanajuato", nombre: "Luis G.", cobertura: "Guanajuato y alrededores", ubicacion: "", local: "", whatsapp: "522222932290", grupoUrl: "", primary: false, activo: true },
-    { id: "acapulco", kind: "sucursal", estado: "guerrero", nombre: "José Santos G.", cobertura: "", ubicacion: "Plaza de la Tecnología", local: "Local 144", whatsapp: "522215855199", grupoUrl: "", primary: false, activo: true },
-    { id: "cdmx", kind: "directo", estado: "cdmx", nombre: "José Luis G.", cobertura: "En toda la CDMX y área metropolitana", ubicacion: "", local: "", whatsapp: "522225012131", grupoUrl: "", primary: false, activo: true },
-    { id: "mexico", kind: "directo", estado: "mexico", nombre: "Armando", cobertura: "Toluca y municipios del Estado de México", ubicacion: "", local: "", whatsapp: "522221828545", grupoUrl: "", primary: false, activo: true }
-  ]
-};
-
-const FALLBACK_TEAM = {
-  members: [
-    { id: "ceo", role: "Director General", name: "", photo: "", whatsapp: "", email: "", social: [] },
-    { id: "dev", role: "Desarrollador web", name: "", photo: "", whatsapp: "", email: "", social: [] }
-  ]
-};
-
-const FALLBACK_COVERAGE = { activeStateIds: ["puebla", "cdmx", "mexico", "veracruz", "hidalgo", "tlaxcala", "aguascalientes", "guanajuato", "tamaulipas", "guerrero"] };
-
-const FALLBACK_SOCIAL = {
-  links: [
-    { id: "facebook", network: "facebook", label: "Facebook", url: "https://www.facebook.com/profile.php?id=100063747836703" }
-  ]
-};
 
 function formatPrice(min, max, unit = "/kg") {
   const fmt = (n) => `$${Number(n).toLocaleString("es-MX")}`;
@@ -986,7 +848,7 @@ function renderTeam() {
 }
 
 /* ---------- Redes sociales ---------- */
-const SOCIAL_ICONS = { facebook: "bi-facebook", instagram: "bi-instagram", tiktok: "bi-tiktok", youtube: "bi-youtube", x: "bi-twitter-x", other: "bi-globe2" };
+const SOCIAL_ICONS = { facebook: "bi-facebook", whatsapp: "bi-whatsapp", instagram: "bi-instagram", tiktok: "bi-tiktok", youtube: "bi-youtube", x: "bi-twitter-x", other: "bi-globe2" };
 function renderSocial() {
   const links = ((SOCIAL && SOCIAL.links) || []).filter((l) => isSafeHttpUrl(l.url));
   document.querySelectorAll(".js-social-links").forEach((wrap) => {

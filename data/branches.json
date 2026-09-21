@@ -9,7 +9,7 @@
       "ubicacion": "",
       "local": "",
       "whatsapp": "522227548704",
-      "grupoUrl": "",
+      "grupoUrl": "https://chat.whatsapp.com/Bd9NvuDYmgM709AcZs6pRH",
       "primary": true,
       "activo": true
     },
@@ -22,7 +22,7 @@
       "ubicacion": "Plaza de la Tecnología",
       "local": "Local 83",
       "whatsapp": "522213815164",
-      "grupoUrl": "",
+      "grupoUrl": "https://chat.whatsapp.com/HNpmj48nMbkLnoQzo0cWMQ",
       "primary": false,
       "activo": true
     },
@@ -35,7 +35,7 @@
       "ubicacion": "",
       "local": "",
       "whatsapp": "522214102306",
-      "grupoUrl": "",
+      "grupoUrl": "https://chat.whatsapp.com/FYfvNUEP2BeFaWtFCkJfun",
       "primary": false,
       "activo": true
     },
@@ -48,7 +48,7 @@
       "ubicacion": "",
       "local": "",
       "whatsapp": "522222932290",
-      "grupoUrl": "",
+      "grupoUrl": "https://chat.whatsapp.com/BfaYmaMSoqlHNBgINDIUL9",
       "primary": false,
       "activo": true
     },
@@ -61,7 +61,7 @@
       "ubicacion": "Plaza de la Tecnología",
       "local": "Local 144",
       "whatsapp": "522215855199",
-      "grupoUrl": "",
+      "grupoUrl": "https://chat.whatsapp.com/IwcerzNiBqyL0Zc21Xukw4",
       "primary": false,
       "activo": true
     },
@@ -73,8 +73,8 @@
       "cobertura": "En toda la CDMX y área metropolitana",
       "ubicacion": "",
       "local": "",
-      "whatsapp": "522225012131",
-      "grupoUrl": "",
+      "whatsapp": "52225012131",
+      "grupoUrl": "https://chat.whatsapp.com/Ksv3q1YxYyT0eUcjSostMQ",
       "primary": false,
       "activo": true
     },
@@ -87,11 +87,37 @@
       "ubicacion": "",
       "local": "",
       "whatsapp": "522221828545",
-      "grupoUrl": "",
+      "grupoUrl": "https://chat.whatsapp.com/D1ujCUyq1TzCfALXtgVsb5",
+      "primary": false,
+      "activo": true
+    },
+    {
+      "id": "tlaxcala",
+      "kind": "directo",
+      "estado": "tlaxcala",
+      "nombre": "Karla G.",
+      "cobertura": "Tlaxcala Centro, Apizaco, Chiautempan y alrededores",
+      "ubicacion": "",
+      "local": "",
+      "whatsapp": "522227548704",
+      "grupoUrl": "https://chat.whatsapp.com/E4XhZydgkpcK9Dm8USfWcb",
+      "primary": false,
+      "activo": true
+    },
+    {
+      "id": "chilpancingo",
+      "kind": "directo",
+      "estado": "guerrero",
+      "nombre": "José Santos G.",
+      "cobertura": "Chilpancingo, Zumpango del Río, Tixtla y alrededores",
+      "ubicacion": "",
+      "local": "",
+      "whatsapp": "522215855199",
+      "grupoUrl": "https://chat.whatsapp.com/KAgXSrea19jC8tzUM375Mz",
       "primary": false,
       "activo": true
     }
   ],
-  "updatedAt": "2026-09-14"
+  "updatedAt": "2026-09-21"
 }
 

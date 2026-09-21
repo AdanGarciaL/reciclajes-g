@@ -8,30 +8,9 @@
    token de GitHub que cada persona conecta en su sesión.
    ========================================================= */
 
-// Escapa texto antes de insertarlo como HTML (nombres, notas, alt de fotos).
-// Aunque este panel es solo para el equipo, así un caracter especial nunca
-// rompe el render ni termina interpretándose como HTML.
-const ESCAPE_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-function esc(value) {
-  return String(value ?? "").replace(/[&<>"']/g, (ch) => ESCAPE_MAP[ch]);
-}
-// Mismo chequeo que en script.js: un enlace de red social solo se guarda si
-// es http/https. Bloquea guardar un "javascript:..." pegado por error (o a
-// propósito) antes de que llegue a convertirse en un enlace real del sitio.
-function isSafeHttpUrl(url) {
-  try {
-    const u = new URL(String(url || "").trim(), window.location.href);
-    return u.protocol === "http:" || u.protocol === "https:";
-  } catch (_e) {
-    return false;
-  }
-}
+// Utilidades como esc(), isSafeHttpUrl(), formatMexPhone() y MEXICO_STATES
+// ahora se cargan globalmente desde js/utils.js
 
-function formatMexPhone(rawDigits) {
-  let d = String(rawDigits || "").replace(/\D/g, "");
-  if (d.length === 12 && d.startsWith("52")) d = d.slice(2);
-  return d.length === 10 ? `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}` : d;
-}
 function stripCountry(rawDigits) {
   const d = String(rawDigits || "").replace(/\D/g, "");
   return d.length === 12 && d.startsWith("52") ? d.slice(2) : d;
@@ -56,46 +35,6 @@ function validateWhatsappDigits(raw) {
 function initials(name) {
   return String(name || "").trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() || "").join("");
 }
-
-/* Los 32 estados de la República: mismo catálogo fijo que usa el sitio
-   público (script.js) para el mapa. Aquí solo sirve para llenar el selector
-   de "agregar estado" — cuáles están activos vive en data/coverage.json. */
-const MEXICO_STATES = [
-  { id: "aguascalientes", name: "Aguascalientes" },
-  { id: "baja-california", name: "Baja California" },
-  { id: "baja-california-sur", name: "Baja California Sur" },
-  { id: "campeche", name: "Campeche" },
-  { id: "chiapas", name: "Chiapas" },
-  { id: "chihuahua", name: "Chihuahua" },
-  { id: "cdmx", name: "Ciudad de México" },
-  { id: "coahuila", name: "Coahuila" },
-  { id: "colima", name: "Colima" },
-  { id: "durango", name: "Durango" },
-  { id: "guanajuato", name: "Guanajuato" },
-  { id: "guerrero", name: "Guerrero" },
-  { id: "hidalgo", name: "Hidalgo" },
-  { id: "jalisco", name: "Jalisco" },
-  { id: "mexico", name: "Estado de México" },
-  { id: "michoacan", name: "Michoacán" },
-  { id: "morelos", name: "Morelos" },
-  { id: "nayarit", name: "Nayarit" },
-  { id: "nuevo-leon", name: "Nuevo León" },
-  { id: "oaxaca", name: "Oaxaca" },
-  { id: "puebla", name: "Puebla" },
-  { id: "queretaro", name: "Querétaro" },
-  { id: "quintana-roo", name: "Quintana Roo" },
-  { id: "san-luis-potosi", name: "San Luis Potosí" },
-  { id: "sinaloa", name: "Sinaloa" },
-  { id: "sonora", name: "Sonora" },
-  { id: "tabasco", name: "Tabasco" },
-  { id: "tamaulipas", name: "Tamaulipas" },
-  { id: "tlaxcala", name: "Tlaxcala" },
-  { id: "veracruz", name: "Veracruz" },
-  { id: "yucatan", name: "Yucatán" },
-  { id: "zacatecas", name: "Zacatecas" },
-];
-const TOTAL_MEXICO_STATES = MEXICO_STATES.length;
-
 const REPO_OWNER = "AdanGarciaL";
 const REPO_NAME = "reciclajes-g";
 const REPO_BRANCH = "main";
@@ -1976,6 +1915,7 @@ let workingCoverage = null;
 let workingSocial = null;
 const SOCIAL_NETWORKS = [
   { value: "facebook", label: "Facebook" },
+  { value: "whatsapp", label: "WhatsApp" },
   { value: "instagram", label: "Instagram" },
   { value: "tiktok", label: "TikTok" },
   { value: "youtube", label: "YouTube" },

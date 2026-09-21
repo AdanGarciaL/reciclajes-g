@@ -5,7 +5,13 @@
       "network": "facebook",
       "label": "Facebook",
       "url": "https://www.facebook.com/profile.php?id=100063747836703"
+    },
+    {
+      "id": "whatsapp-comunidad",
+      "network": "whatsapp",
+      "label": "Comunidad Oficial de WhatsApp",
+      "url": "https://chat.whatsapp.com/FqxcY8FG4lCIPCalAgIXZZ"
     }
   ],
-  "updatedAt": "2026-09-10"
+  "updatedAt": "2026-09-21"
 }

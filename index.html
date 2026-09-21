@@ -48,6 +48,7 @@
        script.js): el mapa vive hasta abajo, en "Cobertura", y no tenía
        sentido bloquear el primer render de toda la página por un CSS que
        tal vez el visitante nunca llegue a necesitar si no baja tanto. -->
+  <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -394,21 +395,25 @@
         </div>
         <div class="community-banner reveal">
           <img src="icons/portadas/portada-comunidad.jpg" alt="Comunidad Oficial Eco Lógica García" class="community-banner-thumb" loading="lazy" onerror="this.style.display='none'" />
-          <div>
-            <strong>Comunidad y Grupos Oficiales de WhatsApp por Estado:</strong> Únete al grupo de tu región para recibir avisos de cambios de precios, listas actualizadas y coordinar recolecciones de material (grupos moderados, estrictamente cero spam).
+          <div class="community-banner-text">
+            <strong>Comunidad y Grupos Oficiales de WhatsApp por Estado:</strong> Únete a nuestra comunidad oficial o entra directamente al grupo de tu región para recibir avisos de cambios de precios, listas actualizadas y coordinar recolecciones de material (grupos moderados, estrictamente cero spam).
           </div>
+          <a class="btn btn-primary btn-sm community-banner-btn" href="https://chat.whatsapp.com/FqxcY8FG4lCIPCalAgIXZZ" target="_blank" rel="noopener">
+            <i class="bi bi-whatsapp" aria-hidden="true"></i> Unirme a la Comunidad
+          </a>
         </div>
 
         <!-- Filtros rápidos por estado -->
         <div class="sucursales-filter-bar reveal delay-1" id="sucursalesFilterBar" role="tablist" aria-label="Filtrar sucursales por estado">
-          <button type="button" class="sucursal-filter-chip is-active" data-filter="all" role="tab" aria-selected="true"><i class="bi bi-grid-fill" aria-hidden="true"></i> Todos (7)</button>
+          <button type="button" class="sucursal-filter-chip is-active" data-filter="all" role="tab" aria-selected="true"><i class="bi bi-grid-fill" aria-hidden="true"></i> Todos</button>
           <button type="button" class="sucursal-filter-chip" data-filter="puebla" role="tab" aria-selected="false">Puebla</button>
+          <button type="button" class="sucursal-filter-chip" data-filter="tlaxcala" role="tab" aria-selected="false">Tlaxcala</button>
           <button type="button" class="sucursal-filter-chip" data-filter="cdmx" role="tab" aria-selected="false">CDMX</button>
           <button type="button" class="sucursal-filter-chip" data-filter="mexico" role="tab" aria-selected="false">EdoMéx</button>
           <button type="button" class="sucursal-filter-chip" data-filter="veracruz" role="tab" aria-selected="false">Veracruz</button>
           <button type="button" class="sucursal-filter-chip" data-filter="aguascalientes" role="tab" aria-selected="false">Aguascalientes</button>
           <button type="button" class="sucursal-filter-chip" data-filter="guanajuato" role="tab" aria-selected="false">Guanajuato</button>
-          <button type="button" class="sucursal-filter-chip" data-filter="guerrero" role="tab" aria-selected="false">Acapulco</button>
+          <button type="button" class="sucursal-filter-chip" data-filter="guerrero" role="tab" aria-selected="false">Guerrero</button>
         </div>
 
         <div class="sucursales-grid" id="sucursalesGrid"></div>
@@ -569,6 +574,8 @@
   </aside>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="js/utils.js"></script>
+  <script src="js/fallbacks.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
