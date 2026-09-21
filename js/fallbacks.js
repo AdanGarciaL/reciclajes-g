@@ -28,16 +28,16 @@ const FALLBACK_PRICES = {
 
 const FALLBACK_GALLERY = {
   categories: [
-    { id: "celular-tipo-1", label: "Celular Tipo 1", images: [{ src: "Galeria/Celular Tipo 1/logica_celular12.jpg", alt: "Lógica de celular Tipo 1" }] },
-    { id: "celular-tipo-2", label: "Celular Tipo 2", images: [{ src: "Galeria/Celular Tipo 2/logica_celular2.jpg", alt: "Lógica de celular Tipo 2" }] },
-    { id: "celular-tipo-3", label: "Celular y Tablet Tipo 3", images: [{ src: "Galeria/Celular y Tablet Tipo 3/logica_celular31.jpg", alt: "Lógica de celular Tipo 3" }] },
-    { id: "sin-pila-tapa", label: "Sin pila y tapa Tipo 4", images: [{ src: "Galeria/Sin Pila y Tapa Tipo 4/sin_pila_y_tapa.jpg", alt: "Celular sin pila ni tapa" }] },
-    { id: "laptop", label: "Laptop", images: [{ src: "Galeria/Laptop/Laptop.jpg", alt: "Lógica de laptop" }] },
-    { id: "ram", label: "RAM", images: [{ src: "Galeria/RAM/RAM.jpg", alt: "Módulos de memoria RAM" }] },
+    { id: "celular-tipo-1", label: "Celular Tipo 1", images: [{ src: "Galeria/Celular Tipo 1/logica_celular12.webp", alt: "Lógica de celular Tipo 1" }] },
+    { id: "celular-tipo-2", label: "Celular Tipo 2", images: [{ src: "Galeria/Celular Tipo 2/logica_celular2.webp", alt: "Lógica de celular Tipo 2" }] },
+    { id: "celular-tipo-3", label: "Celular y Tablet Tipo 3", images: [{ src: "Galeria/Celular y Tablet Tipo 3/logica_celular31.webp", alt: "Lógica de celular Tipo 3" }] },
+    { id: "sin-pila-tapa", label: "Sin pila y tapa Tipo 4", images: [{ src: "Galeria/Sin Pila y Tapa Tipo 4/sin_pila_y_tapa.webp", alt: "Celular sin pila ni tapa" }] },
+    { id: "laptop", label: "Laptop", images: [{ src: "Galeria/Laptop/Laptop.webp", alt: "Lógica de laptop" }] },
+    { id: "ram", label: "RAM", images: [{ src: "Galeria/RAM/RAM.webp", alt: "Módulos de memoria RAM" }] },
     { id: "operacion", label: "Galería general", images: [
-      { src: "Galeria/logica_celular.jpg", alt: "Lógicas de celular para reciclaje" },
-      { src: "Galeria/logica_lapcpu.jpg", alt: "Lógicas de laptop y CPU para reciclaje" },
-      { src: "Galeria/logica_ram.jpg", alt: "Módulos RAM y componentes electrónicos" }
+      { src: "Galeria/logica_celular.webp", alt: "Lógicas de celular para reciclaje" },
+      { src: "Galeria/logica_lapcpu.webp", alt: "Lógicas de laptop y CPU para reciclaje" },
+      { src: "Galeria/logica_ram.webp", alt: "Módulos RAM y componentes electrónicos" }
     ] }
   ]
 };

@@ -657,7 +657,7 @@ function showOtherMaterial(materialId) {
 }
 
 function setCarousel(images) {
-  carouselImages = images && images.length ? images : [{ src: "Galeria/logica_celular.jpg", alt: "Referencia" }];
+  carouselImages = images && images.length ? images : [{ src: "Galeria/logica_celular.webp", alt: "Referencia" }];
   carouselIndex = 0;
   const track = document.getElementById("carouselTrack");
   const dots = document.getElementById("carouselDots");
