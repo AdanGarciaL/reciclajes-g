@@ -437,7 +437,10 @@ body.legal-dark-mode .legal-check {
   color: var(--legal-ink);
 }
 
-.legal-check span {
+/* Solo las descripciones (dentro del div). Como ".legal-check span" también
+   alcanzaba al círculo numerado, le ganaba a .legal-badge y el número
+   quedaba en la esquina y en gris sobre verde. */
+.legal-check div > span {
   display: block;
   color: var(--legal-muted);
   font-size: 0.9rem;
@@ -571,4 +574,45 @@ body.legal-dark-mode .legal-footer a {
    palabras. */
 @media (max-width: 640px) {
   .legal-hero-card { grid-template-columns: 1fr; }
+}
+
+/* ---------- Contenido legal: subtítulos, nota y tabla ---------- */
+.legal-section h3 {
+  margin: 0.9rem 0 0.2rem;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--legal-ink);
+}
+.legal-section a { color: var(--legal-primary); font-weight: 600; }
+.legal-section code {
+  font-size: 0.85em; padding: 0.1em 0.4em; border-radius: 6px;
+  background: var(--legal-bg-accent); color: var(--legal-ink);
+}
+.legal-nota {
+  margin-top: 0.75rem; padding: 0.8rem 1rem; border-radius: 12px;
+  border-left: 3px solid var(--legal-primary); background: var(--legal-bg-accent);
+}
+.legal-tabla-wrap { overflow-x: auto; margin: 0.6rem 0; border: 1px solid var(--legal-line); border-radius: 12px; }
+.legal-tabla { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.legal-tabla th, .legal-tabla td { padding: 0.55rem 0.8rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--legal-line); }
+.legal-tabla th { font-family: var(--font-display); color: var(--legal-ink); background: var(--legal-bg-accent); white-space: nowrap; }
+.legal-tabla td { color: var(--legal-muted); }
+.legal-tabla tr:last-child td { border-bottom: 0; }
+.legal-footer a { color: var(--legal-primary); font-weight: 600; }
+/* Un elemento de grid no se encoge por debajo del ancho mínimo de su
+   contenido: sin esto, la tabla de proveedores ensanchaba la columna y la
+   página se desplazaba de lado en el teléfono. Con min-width:0 la tabla
+   se desliza dentro de su recuadro. */
+.legal-card, .legal-aside { min-width: 0; }
+/* En el teléfono la tabla se apila: una ficha por proveedor, sin
+   desplazamiento lateral (antes había que deslizarla de lado). */
+@media (max-width: 560px) {
+  .legal-tabla thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .legal-tabla, .legal-tabla tbody, .legal-tabla tr, .legal-tabla td { display: block; width: 100%; }
+  .legal-tabla tr { padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--legal-line); }
+  .legal-tabla tr:last-child { border-bottom: 0; }
+  .legal-tabla td { padding: 0.1rem 0; border: 0; }
+  .legal-tabla td::before { content: attr(data-label) ": "; font-weight: 600; color: var(--legal-ink); }
+  .legal-tabla td:first-child { font-family: var(--font-display); font-weight: 700; color: var(--legal-ink); }
+  .legal-tabla td:first-child::before { content: none; }
 }
