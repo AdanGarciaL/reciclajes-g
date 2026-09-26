@@ -72,7 +72,8 @@ python -m http.server 8080
 
 **Configuración inicial (una sola vez, por computadora, la hace quien administra el repositorio):**
 
-1. Abre `admin.html` (enlace discreto al final del sitio público) e inicia sesión.
+1. Abre `https://www.ecologicagarcia.com/admin.html` (ya no hay enlace público en el sitio: guárdalo en
+   favoritos) e inicia sesión.
 2. Haz clic en "Configurar guardado" (arriba a la izquierda) para abrir **Ajustes**.
 3. Pega ahí un token de acceso de GitHub con permiso de escritura sobre este repositorio
    (instrucciones dentro del mismo cuadro de Ajustes).
@@ -114,14 +115,20 @@ contraseña del panel no expone el repositorio por sí solo.
   las fotos que se suben desde "Quiénes somos".
 - `aviso-privacidad.html`, `terminos.html`, `legal.css`, `legal.js`: páginas legales.
 
-## Respaldo de datos (`js/fallbacks.js`)
+## Archivos generados (no se editan a mano)
 
-Si falla la descarga de `data/*.json`, el sitio usa `js/fallbacks.js`. Ese archivo es un espejo de
-los datos y **no se edita a mano**: después de cambiar cualquier `data/*.json` (a mano o, de vez en
-cuando, después de varios guardados desde el panel), regenéralo con:
+| Archivo | Qué es | Cómo se regenera |
+|---|---|---|
+| `js/fallbacks.js` | Respaldo de `data/*.json` si falla su descarga | `node scripts/generar-fallbacks.js` |
+| `Galeria/_mini/` | Miniaturas de 640 px de cada foto (rejilla, precios, selector) | `node scripts/generar-miniaturas.js` |
+| `css/iconos.css` + `fonts/iconos.woff2` | Solo los iconos de Bootstrap Icons que usa el sitio (~10 KB en vez de ~216 KB) | `node scripts/generar-iconos.js` |
+
+Las dos primeras se regeneran **solas** en GitHub (`.github/workflows/respaldo.yml`) cada vez que el
+panel guarda datos o fotos. Los iconos solo hay que regenerarlos si se usa un icono nuevo en el código
+o en la lista de iconos del panel. Para correr cualquiera a mano, primero una sola vez:
 
 ```bash
-node scripts/generar-fallbacks.js
+npm install --prefix scripts
 ```
 
 ## Cómo se guardan los cambios (sin base de datos)

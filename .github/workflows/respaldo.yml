@@ -1,0 +1,56 @@
+# Mantiene al día, sin que nadie tenga que acordarse:
+#  - js/fallbacks.js (respaldo de data/*.json que usa el sitio si falla la carga)
+#  - Galeria/_mini/ (miniaturas de 640 px de cada foto de la galería)
+#
+# Se ejecuta cuando el panel interno (o cualquiera) cambia datos o fotos en
+# la rama main. Si no hay nada nuevo que generar, no hace ningún commit.
+name: Respaldo de datos y miniaturas
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "data/**"
+      - "Galeria/**"
+      - "scripts/generar-fallbacks.js"
+      - "scripts/generar-miniaturas.js"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: respaldo
+  cancel-in-progress: false
+
+jobs:
+  generar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar herramientas
+        run: npm install --prefix scripts --no-audit --no-fund
+
+      - name: Regenerar respaldo de datos
+        run: node scripts/generar-fallbacks.js
+
+      - name: Generar miniaturas nuevas
+        run: node scripts/generar-miniaturas.js
+
+      - name: Guardar cambios (si hay)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add js/fallbacks.js Galeria/_mini
+          if git diff --cached --quiet; then
+            echo "Nada que actualizar."
+          else
+            git commit -m "Actualiza respaldo de datos y miniaturas (automático)"
+            git pull --rebase origin main
+            git push
+          fi

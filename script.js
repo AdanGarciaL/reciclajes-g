@@ -30,6 +30,25 @@ function formatPrice(min, max, unit = "/kg") {
   return `${fmt(min)} – ${fmt(max)} ${unit}`;
 }
 
+/* ---------- Miniaturas de la galería ----------
+   Galeria/_mini/ guarda una versión de 640 px de cada foto (la genera
+   scripts/generar-miniaturas.js). Se usan donde la foto se ve chica
+   (rejilla, tarjetas de precio, selector): ~47 % menos peso. */
+function miniatura(src) {
+  const s = String(src || "");
+  if (!s.startsWith("Galeria/") || s.startsWith("Galeria/_mini/")) return s;
+  return "Galeria/_mini/" + s.slice("Galeria/".length).replace(/\.(png|jpe?g|webp)$/i, ".webp");
+}
+// Si una miniatura todavía no existe (foto recién subida desde el panel),
+// se carga la original; si tampoco carga, se esconde su contenedor.
+document.addEventListener("error", (e) => {
+  const img = e.target;
+  if (!(img instanceof HTMLImageElement) || !img.dataset.full) return;
+  if (!img.dataset.fallo) { img.dataset.fallo = "1"; img.src = img.dataset.full; return; }
+  const caja = img.closest("[data-ocultar-si-falla]");
+  if (caja) caja.style.display = "none";
+}, true);
+
 /* ---------- Estado cargado ---------- */
 let PRICES = null;
 let GALLERY = null;
@@ -136,7 +155,7 @@ function renderPrices() {
     <article class="price-card brillo-borde ${isFeatured ? "price-card-featured brillo-fijo" : ""} reveal ${i ? "delay-" + Math.min(i, 3) : ""}">
       ${isFeatured ? `<div class="featured-price-badge"><i class="bi bi-star-fill" aria-hidden="true"></i> MEJOR PAGADO</div>` : ""}
       ${photo
-        ? `<div class="price-card-photo"><img src="${esc(photo.src)}" alt="${esc(photo.alt || m.name)}" loading="lazy" onerror="this.parentElement.style.display='none'" /></div>`
+        ? `<div class="price-card-photo" data-ocultar-si-falla><img src="${esc(miniatura(photo.src))}" data-full="${esc(photo.src)}" alt="${esc(photo.alt || m.name)}" loading="lazy" decoding="async" /></div>`
         : ""}
       <span class="price-icon"><i class="bi ${esc(m.icon || "bi-cpu")}" aria-hidden="true"></i></span>
       <p class="price-tag">${esc(m.name)}</p>
@@ -436,7 +455,7 @@ function renderSelector() {
     return `
       <button class="selector-btn" type="button" data-material="${esc(m.id)}" data-group="${esc(m.group)}">
         ${photo
-          ? `<span class="sel-photo"><img src="${esc(photo.src)}" alt="" loading="lazy" /></span>`
+          ? `<span class="sel-photo" data-ocultar-si-falla><img src="${esc(miniatura(photo.src))}" data-full="${esc(photo.src)}" alt="" loading="lazy" decoding="async" /></span>`
           : `<span class="sel-icon"><i class="bi ${esc(m.icon || "bi-cpu")}" aria-hidden="true"></i></span>`}
         <span class="sel-name">${esc(m.name)}</span>
         <span class="sel-price">${esc(formatPrice(m.min, m.max, m.unit))}</span>
@@ -884,9 +903,9 @@ function galeriaPaso() {
 }
 function tarjetaGaleria(img, i) {
   return `
-    <article class="gallery-card brillo-borde reveal ${i % 4 ? "delay-" + Math.min(i % 4, 3) : ""}">
+    <article class="gallery-card brillo-borde reveal ${i % 4 ? "delay-" + Math.min(i % 4, 3) : ""}" data-ocultar-si-falla>
       <button type="button" class="gallery-open" data-i="${i}" aria-label="Ver en grande: ${esc(img.alt)}">
-        <img src="${esc(img.src)}" alt="${esc(img.alt)}" loading="lazy" decoding="async" onerror="this.closest('.gallery-card').style.display='none'" />
+        <img src="${esc(miniatura(img.src))}" data-full="${esc(img.src)}" alt="${esc(img.alt)}" loading="lazy" decoding="async" />
         <span class="gallery-zoom" aria-hidden="true"><i class="bi bi-arrows-fullscreen"></i></span>
       </button>
       <span class="gallery-cat-tag">${esc(img.categoriaNombre)}</span>

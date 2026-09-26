@@ -1,0 +1,10 @@
+{
+  "name": "ecologica-herramientas",
+  "private": true,
+  "description": "Herramientas locales del sitio (no se publican: ver .vercelignore). Instalar con: npm install --prefix scripts",
+  "devDependencies": {
+    "bootstrap-icons": "1.11.3",
+    "sharp": "^0.33.5",
+    "subset-font": "^2.3.0"
+  }
+}

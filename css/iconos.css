@@ -1,0 +1,87 @@
+/* =========================================================
+   Iconos del sitio — recorte de Bootstrap Icons 1.11.3 (MIT).
+   ARCHIVO GENERADO por scripts/generar-iconos.js: no lo edites
+   a mano. Incluye solo los 63 iconos que usa el sitio.
+   ========================================================= */
+@font-face {
+  font-display: block;
+  font-family: "bootstrap-icons";
+  src: url("../fonts/iconos.woff2?v=f2354e09") format("woff2");
+}
+.bi::before,
+[class^="bi-"]::before,
+[class*=" bi-"]::before {
+  display: inline-block;
+  font-family: bootstrap-icons !important;
+  font-style: normal;
+  font-weight: normal !important;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  vertical-align: -.125em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.bi-arrow-left::before { content: "\f12f"; }
+.bi-arrow-up::before { content: "\f148"; }
+.bi-arrows-fullscreen::before { content: "\f14d"; }
+.bi-battery::before { content: "\f188"; }
+.bi-box-arrow-right::before { content: "\f1c3"; }
+.bi-box-arrow-up-right::before { content: "\f1c5"; }
+.bi-calculator::before { content: "\f1e0"; }
+.bi-camera::before { content: "\f220"; }
+.bi-camera-video-fill::before { content: "\f21c"; }
+.bi-card-text::before { content: "\f228"; }
+.bi-cash-coin::before { content: "\f632"; }
+.bi-cash-stack::before { content: "\f246"; }
+.bi-check-circle-fill::before { content: "\f26a"; }
+.bi-check-lg::before { content: "\f633"; }
+.bi-check2::before { content: "\f272"; }
+.bi-chevron-left::before { content: "\f284"; }
+.bi-chevron-right::before { content: "\f285"; }
+.bi-cloud-arrow-up::before { content: "\f297"; }
+.bi-cpu::before { content: "\f2d6"; }
+.bi-dash-lg::before { content: "\f63b"; }
+.bi-envelope::before { content: "\f32f"; }
+.bi-exclamation-octagon::before { content: "\f337"; }
+.bi-exclamation-triangle::before { content: "\f33b"; }
+.bi-facebook::before { content: "\f344"; }
+.bi-gear::before { content: "\f3e5"; }
+.bi-geo-alt::before { content: "\f3e8"; }
+.bi-geo-alt-fill::before { content: "\f3e7"; }
+.bi-globe2::before { content: "\f3ef"; }
+.bi-grid-fill::before { content: "\f3fb"; }
+.bi-hdd::before { content: "\f412"; }
+.bi-hourglass-split::before { content: "\f41f"; }
+.bi-images::before { content: "\f42b"; }
+.bi-info-circle-fill::before { content: "\f430"; }
+.bi-instagram::before { content: "\f437"; }
+.bi-keyboard::before { content: "\f451"; }
+.bi-laptop::before { content: "\f456"; }
+.bi-lightning-fill::before { content: "\f46e"; }
+.bi-memory::before { content: "\f6e3"; }
+.bi-moon-fill::before { content: "\f494"; }
+.bi-pencil::before { content: "\f4cb"; }
+.bi-people::before { content: "\f4d0"; }
+.bi-person-lines-fill::before { content: "\f4db"; }
+.bi-phone::before { content: "\f4e7"; }
+.bi-plus-lg::before { content: "\f64d"; }
+.bi-question-circle::before { content: "\f505"; }
+.bi-router::before { content: "\f6ec"; }
+.bi-shield-check::before { content: "\f52f"; }
+.bi-shop::before { content: "\f543"; }
+.bi-shop-window::before { content: "\f542"; }
+.bi-signpost-2::before { content: "\f546"; }
+.bi-star-fill::before { content: "\f586"; }
+.bi-sun-fill::before { content: "\f5a1"; }
+.bi-tablet-landscape::before { content: "\f5ad"; }
+.bi-tag::before { content: "\f5b0"; }
+.bi-tags::before { content: "\f5b2"; }
+.bi-tiktok::before { content: "\f6cc"; }
+.bi-tools::before { content: "\f5db"; }
+.bi-trash::before { content: "\f5de"; }
+.bi-twitter-x::before { content: "\f8db"; }
+.bi-usb-plug::before { content: "\f6dc"; }
+.bi-whatsapp::before { content: "\f618"; }
+.bi-x-lg::before { content: "\f659"; }
+.bi-youtube::before { content: "\f62b"; }

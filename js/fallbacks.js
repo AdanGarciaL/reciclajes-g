@@ -22,12 +22,12 @@ const FALLBACK_PRICES = {
     {"id":"tipo2","priceId":"celular","label":"Tipo 2 (Segunda)","shortLabel":"Tipo 2 (Segunda)","min":2000,"max":5000,"specs":["Sin flex ni tiras","Si no entra en Tipo 1 pasa a Tipo 2","Condición variable aceptable mientras el chip esté presente","Cualquier marca o modelo","64 GB en adelante"],"galleryCategory":"celular-tipo-2"},
     {"id":"tipo3","priceId":"celular","label":"Tipo 3 (Tercera)","shortLabel":"Tipo 3 (Tercera)","min":1000,"max":1800,"specs":["Placas tipo L","Si no entra en Tipo 1 ni en Tipo 2, pasa a Tipo 3","Condición variable aceptable mientras el chip esté presente","Cualquier marca o modelo","32 GB en adelante"],"galleryCategory":"celular-tipo-3"},
     {"id":"tipo4","priceId":"sinpila","label":"Sin pila/tapa","shortLabel":"Sin pila/tapa","min":250,"max":400,"specs":["Celulares completos sin desmontar","Sin pila: se debe retirar la batería","Sin tapa: se puede dejar como venga","Para clientes sin tiempo de desarmado","Ideal para lotes grandes y descarte","Celular de teclas o touch pero que tenga 1 cámara $250 el kilo","Celular de teclas o touch pero que tenga 2, 3 y 4 cámaras $400 el kilo"],"galleryCategory":"sin-pila-tapa"},
-    {"id":"tipo-1789065008140","priceId":"celular","label":"Teclas o Grande","shortLabel":"Teclas o Grande","min":250,"max":500,"specs":["Placas con teclado o que sean completas","Celulares de gama baja","Condición variable aceptable mientras el chip esté presente","Cualquier marca o modelo","8 GB en adelante","Si no entra en Tipo 1, 2 ni 3, pasa a Teclas o Grande"],"galleryCategory":"nueva-categoria"}
+    {"id":"tipo-1789065008140","priceId":"celular","label":"Teclas o Grande","shortLabel":"Teclas o Grande","min":250,"max":500,"specs":["Placas con teclado o que sean completas","Celulares de gama baja","Condición variable aceptable mientras el chip esté presente","Cualquier marca o modelo","8 GB en adelante","Si no entra en Tipo 1, 2 ni 3, pasa a Teclas o Grande"],"galleryCategory":"teclas-o-grande"}
   ],
   otherMaterials: [
     {"id":"laptop","priceId":"laptop","eyebrow":"Lógica de laptop","title":"Motherboards y placas de laptop","specs":["Placas madre de laptops y netbooks","Cualquier condición, funcionales o dañadas","Cualquier marca (Dell, HP, Lenovo, etc.)","Con o sin procesador integrado","Ideal para reciclaje"],"galleryCategory":"laptop"},
     {"id":"ram","priceId":"ram","eyebrow":"Memorias RAM","title":"Módulos de memoria RAM, de DDR a DDR5","specs":["Memorias RAM de cualquier generación","DDR, DDR2, DDR3, DDR4, DDR5","Cualquier capacidad (256 MB a 32 GB+)","Funcionales o defectuosas aceptadas","Alto valor por peso, excelente para reciclar"],"galleryCategory":"ram"},
-    {"id":"teclado","priceId":"teclado","eyebrow":"Teléfonos con teclado","title":"Lógicas de teléfonos con teclado mecánico","specs":["Placas de teléfonos antiguos con teclado","BlackBerry, HTC y otros modelos","Cualquier estado, rotos o funcionales","Demanda consistente en reciclaje"],"galleryCategory":"nueva-categoria"},
+    {"id":"teclado","priceId":"teclado","eyebrow":"Teléfonos con teclado","title":"Lógicas de teléfonos con teclado mecánico","specs":["Placas de teléfonos antiguos con teclado","BlackBerry, HTC y otros modelos","Cualquier estado, rotos o funcionales","Demanda consistente en reciclaje"],"galleryCategory":"teclas-o-grande"},
     {"id":"tablet","priceId":"tablet","eyebrow":"Placas de tablet","title":"Motherboards y lógicas de tablets","specs":["Placas de tablets iPad, Samsung, Lenovo, etc.","Cualquier tamaño, de 7\" a 12\"","Funcionales o para descarte","Condición variable aceptable mientras el chip esté presente","Aceptamos grandes volúmenes"],"galleryCategory":""}
   ]
 };
@@ -41,7 +41,7 @@ const FALLBACK_GALLERY = {
     {"id":"laptop","label":"Laptop","folder":"Galeria/Laptop","images":[{"src":"Galeria/Laptop/Laptop.webp","alt":"Lógica de laptop"}]},
     {"id":"ram","label":"RAM","folder":"Galeria/RAM","images":[{"src":"Galeria/RAM/RAM.webp","alt":"Módulos de memoria RAM"}]},
     {"id":"operacion","label":"Galería general","folder":"Galeria","images":[{"src":"Galeria/logica_celular.webp","alt":"Lógicas de celular para reciclaje"}]},
-    {"id":"nueva-categoria","label":"Teclas o Grande","folder":"Galeria/nueva-categoria","images":[{"src":"Galeria/nueva-categoria/6-1789096119666-6c5e.webp","alt":"Teclas o Grande"}]}
+    {"id":"teclas-o-grande","label":"Teclas o Grande","folder":"Galeria/teclas-o-grande","images":[{"src":"Galeria/teclas-o-grande/6-1789096119666-6c5e.webp","alt":"Teclas o Grande"}]}
   ]
 };
 
@@ -58,10 +58,10 @@ const FAQ_DATA = [
 const FALLBACK_BRANCHES = {
   branches: [
     {"id":"puebla-domicilio","kind":"directo","estado":"puebla","nombre":"Karla G.","cobertura":"En todo el estado de Puebla","ubicacion":"","local":"","whatsapp":"522227548704","grupoUrl":"https://chat.whatsapp.com/Bd9NvuDYmgM709AcZs6pRH","primary":true,"activo":true},
-    {"id":"aguascalientes","kind":"sucursal","estado":"aguascalientes","nombre":"Mari G.","cobertura":"","ubicacion":"Plaza de la Tecnología","local":"Local 83","whatsapp":"522213815164","grupoUrl":"https://chat.whatsapp.com/HNpmj48nMbkLnoQzo0cWMQ","primary":false,"activo":true},
+    {"id":"aguascalientes","kind":"sucursal","estado":"aguascalientes","nombre":"Mari G.","cobertura":"","ubicacion":"Plaza de la Tecnología, Aguascalientes","local":"Local 83","whatsapp":"522213815164","grupoUrl":"https://chat.whatsapp.com/HNpmj48nMbkLnoQzo0cWMQ","primary":false,"activo":true},
     {"id":"coatzacoalcos","kind":"directo","estado":"veracruz","nombre":"Adán G.","cobertura":"Coatzacoalcos y alrededores","ubicacion":"","local":"","whatsapp":"522214102306","grupoUrl":"https://chat.whatsapp.com/FYfvNUEP2BeFaWtFCkJfun","primary":false,"activo":true},
     {"id":"guanajuato","kind":"directo","estado":"guanajuato","nombre":"Luis G.","cobertura":"Guanajuato y alrededores","ubicacion":"","local":"","whatsapp":"522222932290","grupoUrl":"https://chat.whatsapp.com/BfaYmaMSoqlHNBgINDIUL9","primary":false,"activo":true},
-    {"id":"acapulco","kind":"sucursal","estado":"guerrero","nombre":"José Santos G.","cobertura":"","ubicacion":"Plaza de la Tecnología","local":"Local 144","whatsapp":"522215855199","grupoUrl":"https://chat.whatsapp.com/IwcerzNiBqyL0Zc21Xukw4","primary":false,"activo":true},
+    {"id":"acapulco","kind":"sucursal","estado":"guerrero","nombre":"José Santos G.","cobertura":"","ubicacion":"Plaza de la Tecnología, Acapulco","local":"Local 144","whatsapp":"522215855199","grupoUrl":"https://chat.whatsapp.com/IwcerzNiBqyL0Zc21Xukw4","primary":false,"activo":true},
     {"id":"cdmx","kind":"directo","estado":"cdmx","nombre":"José Luis G.","cobertura":"En toda la CDMX y área metropolitana","ubicacion":"","local":"","whatsapp":"522225012131","grupoUrl":"https://chat.whatsapp.com/Ksv3q1YxYyT0eUcjSostMQ","primary":false,"activo":true},
     {"id":"mexico","kind":"directo","estado":"mexico","nombre":"Armando","cobertura":"Toluca y municipios del Estado de México","ubicacion":"","local":"","whatsapp":"522221828545","grupoUrl":"https://chat.whatsapp.com/D1ujCUyq1TzCfALXtgVsb5","primary":false,"activo":true},
     {"id":"tlaxcala","kind":"directo","estado":"tlaxcala","nombre":"Karla G.","cobertura":"Tlaxcala Centro, Apizaco, Chiautempan y alrededores","ubicacion":"","local":"","whatsapp":"522227548704","grupoUrl":"https://chat.whatsapp.com/E4XhZydgkpcK9Dm8USfWcb","primary":false,"activo":true},
@@ -71,8 +71,8 @@ const FALLBACK_BRANCHES = {
 
 const FALLBACK_TEAM = {
   members: [
-    {"id":"ceo","role":"Programador","name":"Adan Garcia","photo":"icons/equipo/ceo-1789015870434.jpg","whatsapp":"522214102306","email":"adan_rostro_@hotmail.com","social":[{"network":"facebook","url":"https://www.facebook.com/adan.garcia.79656/"}]},
-    {"id":"dev","role":"CEO","name":"Karla Garcia","photo":"icons/equipo/dev-1789016156434.jpg","whatsapp":"522227548704","email":"","social":[{"network":"facebook","url":"https://www.facebook.com/karla.garcialima"}]}
+    {"id":"dev","role":"CEO","name":"Karla García","photo":"icons/equipo/dev-1789016156434.jpg","whatsapp":"522227548704","email":"","social":[{"network":"facebook","url":"https://www.facebook.com/karla.garcialima"}]},
+    {"id":"ceo","role":"Programador","name":"Adán García","photo":"icons/equipo/ceo-1789015870434.jpg","whatsapp":"522214102306","email":"adan_rostro_@hotmail.com","social":[{"network":"facebook","url":"https://www.facebook.com/adan.garcia.79656/"}]}
   ]
 };
 

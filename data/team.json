@@ -1,23 +1,9 @@
 {
   "members": [
     {
-      "id": "ceo",
-      "role": "Programador",
-      "name": "Adan Garcia",
-      "photo": "icons/equipo/ceo-1789015870434.jpg",
-      "whatsapp": "522214102306",
-      "email": "adan_rostro_@hotmail.com",
-      "social": [
-        {
-          "network": "facebook",
-          "url": "https://www.facebook.com/adan.garcia.79656/"
-        }
-      ]
-    },
-    {
       "id": "dev",
       "role": "CEO",
-      "name": "Karla Garcia",
+      "name": "Karla García",
       "photo": "icons/equipo/dev-1789016156434.jpg",
       "whatsapp": "522227548704",
       "email": "",
@@ -27,7 +13,21 @@
           "url": "https://www.facebook.com/karla.garcialima"
         }
       ]
+    },
+    {
+      "id": "ceo",
+      "role": "Programador",
+      "name": "Adán García",
+      "photo": "icons/equipo/ceo-1789015870434.jpg",
+      "whatsapp": "522214102306",
+      "email": "adan_rostro_@hotmail.com",
+      "social": [
+        {
+          "network": "facebook",
+          "url": "https://www.facebook.com/adan.garcia.79656/"
+        }
+      ]
     }
   ],
-  "updatedAt": "2026-09-10"
+  "updatedAt": "2026-09-25"
 }

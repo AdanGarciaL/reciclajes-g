@@ -19,7 +19,7 @@
       "estado": "aguascalientes",
       "nombre": "Mari G.",
       "cobertura": "",
-      "ubicacion": "Plaza de la Tecnología",
+      "ubicacion": "Plaza de la Tecnología, Aguascalientes",
       "local": "Local 83",
       "whatsapp": "522213815164",
       "grupoUrl": "https://chat.whatsapp.com/HNpmj48nMbkLnoQzo0cWMQ",
@@ -58,7 +58,7 @@
       "estado": "guerrero",
       "nombre": "José Santos G.",
       "cobertura": "",
-      "ubicacion": "Plaza de la Tecnología",
+      "ubicacion": "Plaza de la Tecnología, Acapulco",
       "local": "Local 144",
       "whatsapp": "522215855199",
       "grupoUrl": "https://chat.whatsapp.com/IwcerzNiBqyL0Zc21Xukw4",
@@ -120,4 +120,3 @@
   ],
   "updatedAt": "2026-09-21"
 }
-

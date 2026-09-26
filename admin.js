@@ -1194,11 +1194,34 @@ function renderGalleryCatEditor() {
 }
 // Sin filtrar ni tocar id/folder: solo guarda el texto ya escrito en cada
 // nombre antes de agregar/quitar otra categoría, para no perderlo.
+// Categorías creadas en esta sesión que todavía no tienen fotos: mientras
+// no tengan ninguna, su id y su carpeta siguen al nombre que se les
+// escriba. Antes todas quedaban para siempre como "nueva-categoria"
+// (carpeta Galeria/nueva-categoria) aunque se llamaran "Teclas o Grande".
+const categoriasNuevas = new Set();
+function renombrarCategoriaNueva(cat) {
+  if (!categoriasNuevas.has(cat.id) || cat.images.length) return;
+  if (pendingUploads.some((p) => p.categoryId === cat.id)) return;
+  const base = slugify(cat.label) || "categoria";
+  if (base === cat.id) return;
+  const existentes = new Set(workingGallery.categories.filter((c) => c !== cat).map((c) => c.id));
+  let id = base, n = 2;
+  while (existentes.has(id)) id = `${base}-${n++}`;
+  categoriasNuevas.delete(cat.id);
+  categoriasNuevas.add(id);
+  if (activeCategoryId === cat.id) activeCategoryId = id;
+  cat.id = id;
+  cat.folder = `Galeria/${id}`;
+}
 function syncGalleryCatLabels() {
   document.querySelectorAll("#galleryCatEditor .cat-edit-row").forEach((row) => {
     const i = Number(row.dataset.catIndex);
     const label = row.querySelector(".cat-label-input").value.trim();
-    if (label && workingGallery.categories[i]) workingGallery.categories[i].label = label;
+    const cat = workingGallery.categories[i];
+    if (label && cat) {
+      cat.label = label;
+      renombrarCategoriaNueva(cat);
+    }
   });
 }
 
@@ -1210,7 +1233,19 @@ document.getElementById("addCategoryBtn")?.addEventListener("click", () => {
   let suffix = 2;
   while (existingIds.has(id)) { id = `${slugify(label) || "categoria"}-${suffix++}`; }
   workingGallery.categories.push({ id, label, folder: `Galeria/${id}`, images: [] });
+  categoriasNuevas.add(id);
   activeCategoryId = id;
+  renderGalleryCats();
+  renderGalleryThumbs();
+  // El cursor va directo al nombre, para bautizarla antes de subir fotos.
+  const inputs = document.querySelectorAll("#galleryCatEditor .cat-label-input");
+  const ultimo = inputs[inputs.length - 1];
+  if (ultimo) { ultimo.focus(); ultimo.select(); }
+});
+// Al terminar de escribir el nombre, la categoría toma su id/carpeta.
+document.getElementById("galleryCatEditor")?.addEventListener("change", (e) => {
+  if (!e.target.closest(".cat-label-input")) return;
+  syncGalleryCatLabels();
   renderGalleryCats();
   renderGalleryThumbs();
 });
