@@ -1,0 +1,894 @@
+/* =========================================================
+   ECO LÓGICA García — kit visual
+
+   Las piezas de interfaz que comparten la portada, el panel interno y
+   las páginas legales: fondos con aurora, tarjetas con borde que brilla
+   siguiendo al cursor, botones magnéticos, navegación con foco móvil,
+   rejillas tipo bento y superficies de vidrio.
+
+   LÍMITE DE MARCA, INVIOLABLE:
+   aquí NO se define ni un color nuevo, ni una familia tipográfica, ni un
+   tamaño de letra. Todo sale de las variables de css/base.css
+   (--brand-deep, --brand-garcia, --brand-signal, --brand-carbon,
+   --brand-bone) y de las fuentes Archivo / IBM Plex. Si algún día hace
+   falta un tono intermedio, se deriva con color-mix() de la paleta
+   oficial — nunca se escribe un hexadecimal suelto.
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   0. Variables derivadas
+   Tonos translúcidos calculados a partir de la paleta oficial, para no
+   repetir rgba() a mano por todo el archivo (el proyecto tenía 23
+   valores rgba escritos a mano con dos verdes que ya no existen).
+   --------------------------------------------------------- */
+/* ":root, body" y no solo ":root": una propiedad que usa var() se
+   resuelve en el elemento donde se declara y se hereda YA resuelta. Los
+   temas oscuros (body.dark-mode, body.legal-dark-mode) redefinen --surface
+   y --border en <body>, así que declarado solo en :root el puente se
+   quedaba con los valores del tema claro: en modo oscuro los filtros de
+   la galería salían como píldoras blancas con texto a 2.74:1. */
+:root, body {
+  /* PUENTE DE TOKENS.
+     Este kit se carga en las cuatro páginas, y no todas comparten la
+     misma hoja de tokens: la portada y el panel usan css/base.css
+     (--brand-*, --surface, --border), mientras que términos y el aviso
+     de privacidad tienen los suyos en legal.css (--legal-*).
+     Aquí se resuelve con una cadena de respaldo, así que el kit no
+     necesita saber en qué página está. Los dos orígenes son la MISMA
+     paleta oficial: --legal-primary-2 ya es el verde señal #3FD86A. */
+  --kit-señal: var(--brand-signal, var(--legal-primary-2));
+  --kit-verde: var(--brand-garcia, var(--legal-primary));
+  --kit-profundo: var(--brand-deep, var(--legal-ink));
+  --kit-hueso: var(--brand-bone, var(--legal-paper-strong));
+  --kit-superficie: var(--surface, var(--legal-paper));
+  --kit-borde: var(--border, var(--legal-line));
+  --kit-radio: var(--radius-md, var(--legal-radius));
+
+  --señal-08: color-mix(in srgb, var(--kit-señal) 8%, transparent);
+  --señal-14: color-mix(in srgb, var(--kit-señal) 14%, transparent);
+  --señal-24: color-mix(in srgb, var(--kit-señal) 24%, transparent);
+  --señal-40: color-mix(in srgb, var(--kit-señal) 40%, transparent);
+  --vidrio: color-mix(in srgb, var(--kit-superficie) 72%, transparent);
+  --vidrio-fuerte: color-mix(in srgb, var(--kit-superficie) 88%, transparent);
+
+  /* Posición del cursor dentro de la pieza que lo está recibiendo.
+     js/ui.js las actualiza; si el JS no corre se quedan en el centro y
+     los efectos simplemente no se mueven, que es una degradación válida. */
+  --mx: 50%;
+  --my: 50%;
+}
+
+/* ---------------------------------------------------------
+   1. Fondo con aurora
+   Una capa con tres degradados radiales en los verdes de marca, que se
+   desplaza muy despacio. Es el "Aurora Hero" de las referencias, pero
+   SIN filter: blur() — ver la nota de .aurora-capa, ahí está el porqué
+   y la medición.
+   --------------------------------------------------------- */
+.aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+/* SIN filter: blur(). Este es el cambio más importante de todo el fondo.
+   Antes eran tres círculos de ~880 px con blur(90px) encima. Medido con
+   rasterizado por software (que es lo que deja ver el coste real de
+   pintado, porque headless con GPU simulada se lo salta): el hero daba
+   25 fps mientras el resto de la página iba a 60 — justo el síntoma de
+   "solo se traba arriba". Quitando ÚNICAMENTE el desenfoque subía a 57.
+   No era el tamaño ni la animación: era el desenfoque.
+
+   Un degradado radial ES una mancha difusa, pero se rasteriza una sola
+   vez como parte del fondo de la capa, así que moverla después no cuesta
+   nada. Se ve prácticamente igual. */
+.aurora-capa {
+  position: absolute;
+  /* Más grande que el hero para que pueda desplazarse sin descubrir los
+     bordes. */
+  inset: -22%;
+  background:
+    radial-gradient(38% 42% at 18% 14%, color-mix(in srgb, var(--kit-verde) 55%, transparent), transparent 68%),
+    radial-gradient(32% 34% at 84% 20%, color-mix(in srgb, var(--kit-señal) 26%, transparent), transparent 66%),
+    radial-gradient(34% 36% at 52% 92%, color-mix(in srgb, var(--kit-profundo) 60%, transparent), transparent 68%);
+  will-change: transform;
+}
+body.dark-mode .aurora-capa { opacity: 0.72; }
+
+/* Rejilla en perspectiva: el "suelo" que se aleja al fondo. Se dibuja
+   con dos degradados repetidos, sin ninguna imagen. */
+.rejilla-fuga {
+  position: absolute;
+  left: -25%; right: -25%; bottom: 0;
+  height: 46%;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, var(--señal-14) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--señal-14) 1px, transparent 1px);
+  background-size: 64px 64px;
+  transform: perspective(420px) rotateX(64deg);
+  transform-origin: center bottom;
+  /* Se desvanece hacia arriba para que no haya un corte recto donde
+     termina la rejilla. */
+  -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 78%);
+  mask-image: linear-gradient(to top, #000 0%, transparent 78%);
+  opacity: 0.7;
+}
+
+/* ---------- Líneas de luz cayendo ----------
+   Pistas finas que bajan a distinta velocidad, como las de un circuito
+   impreso (que es justo lo que dibuja el logotipo de la marca).
+   Cada línea es un degradado vertical que se desvanece por los dos
+   extremos, así que entra y sale sin cortes.
+   Solo se anima transform: lo resuelve el compositor, sin tocar el hilo
+   principal, y por eso puede quedarse encendido también en móvil. */
+.lineas-luz {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.lineas-luz i {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--kit-señal) 45%,
+    var(--kit-señal) 55%,
+    transparent
+  );
+  animation-name: caerLinea;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+@keyframes caerLinea {
+  from { transform: translateY(-120%); }
+  to   { transform: translateY(1100%); }
+}
+/* En pantallas chicas se dejan solo unas cuantas: con quince líneas de
+   1 px sobre un fondo angosto el efecto se ve apelmazado, y además son
+   quince capas que el compositor tiene que mover. */
+@media (max-width: 900px) {
+  .lineas-luz i:nth-child(even) { display: none; }
+}
+
+/* Grano fino sobre el fondo: rompe las bandas que salen al desenfocar
+   degradados grandes y da textura de impresión. Es un SVG en línea, sin
+   petición de red. */
+/* SIN mix-blend-mode. Un modo de mezcla obliga al compositor a combinar
+   esta capa con TODO lo que tiene debajo en cada cuadro, y rompe el
+   cacheo de las capas de abajo. Cubriendo el hero entero, eso se nota:
+   quitarlo daba +18 fps en la medición con rasterizado por software.
+   A opacidad 0.035 la diferencia visual entre mezclar y no mezclar es
+   imperceptible, así que se paga cero por lo mismo. */
+.grano {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* En móvil se quitan además la rejilla en perspectiva y el grano: la
+   primera lleva una máscara y un transform 3D, el segundo es otra capa a
+   pantalla completa, y ninguno de los dos se aprecia en una pantalla de
+   teléfono. La capa de aurora sí se queda: al no llevar desenfoque, es
+   tan barata como el fondo del contenedor. */
+@media (max-width: 900px) {
+  .rejilla-fuga,
+  /* El grano también sale: mix-blend-mode obliga al compositor a mezclar
+     esta capa con todo lo que tiene debajo en cada cuadro, y cubre la
+     pantalla entera. Su textura casi no se aprecia en un móvil. */
+  .grano {
+    display: none;
+  }
+}
+
+/* Cualquier contenido que vaya encima del fondo necesita su propia capa. */
+.sobre-fondo { position: relative; z-index: 1; }
+
+/* La portada tiene que ser el ancla de su aurora: sin esto, las manchas
+   se posicionarían respecto al viewport y se quedarían fijas al bajar. */
+.hero { position: relative; }
+
+/* ---------------------------------------------------------
+   1b. La marca en grande, que se encoge al bajar
+
+   --marca-p va de 0 (arriba del todo) a 1 (ya pasaste la transición), y
+   la escribe onScroll() en script.js. Todo lo de aquí se interpola con
+   esa sola variable: sin JS de animación, sin GSAP, y por tanto igual de
+   fluido en un teléfono que en un monitor.
+
+   Si el JS no llegara a correr, --marca-p no existe y los "fallback" de
+   var() dejan la marca grande visible y el logotipo de la barra también:
+   se ven los dos, que es feo pero nunca deja nada escondido.
+   --------------------------------------------------------- */
+.marca-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  /* Compacto a propósito. Con el tamaño anterior el bloque medía 285 px y
+     empujaba los botones de "Pregunta por tu material" FUERA de la
+     primera pantalla en 1920, 1440 y 1366 — y a 1366 ni siquiera cabía el
+     titular. En una página cuyo objetivo es que la gente escriba por
+     WhatsApp, dejar el botón bajo el pliegue por un adorno es caro.
+     Ahora ronda los 160 px: sigue siendo la marca en grande, pero entra
+     junto al titular y su llamada a la acción. */
+  padding: clamp(10px, 1.6vw, 20px) 24px clamp(6px, 1vw, 12px);
+  text-align: center;
+  transform-origin: center top;
+  /* Encoge y sube conforme avanza el scroll. */
+  transform:
+    translateY(calc(var(--marca-p, 0) * -26px))
+    scale(calc(1 - var(--marca-p, 0) * 0.42));
+  opacity: calc(1 - var(--marca-p, 0));
+  /* Cuando ya se fue del todo deja de recibir el puntero. */
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.marca-intro-mark {
+  width: clamp(60px, 7vw, 86px);
+  height: clamp(60px, 7vw, 86px);
+  border-radius: clamp(16px, 2vw, 22px);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+.marca-intro-mark img { width: 100%; height: 100%; object-fit: cover; }
+.marca-intro-texto {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(26px, 3.6vw, 40px);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.marca-intro-sub {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(10px, 1.2vw, 12px);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* El logotipo de la barra hace el camino contrario: arranca invisible y
+   aparece justo cuando el grande termina de irse. Tener los dos a la vez
+   se vería como un error de maquetación.
+   Se resuelve con una CLASE en <body> y no con la variable: así el JS no
+   tiene que escribir nada en :root, que invalidaría el estilo de todo el
+   documento en cada cuadro de scroll. */
+/* Solo se esconde si "marca-activa" confirma que el JS está vivo y va a
+   volver a mostrarlo. Sin esa guarda, un fallo del script dejaría el
+   logotipo de la barra invisible para siempre. */
+body.marca-activa:not(.marca-fuera) .site-header .logo {
+  opacity: 0;
+  pointer-events: none;
+}
+.site-header .logo {
+  opacity: 1;
+  transition: opacity 0.35s ease;
+}
+
+/* OJO: --marca-p se declara SOLO en :root (lo escribe script.js). Llegó a
+   estar también en .hero, y eso la sombreaba para todo lo de dentro: la
+   marca grande se quedaba fija en 0 y no se encogía nunca. */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Sin transición: la marca grande no se muestra y el logotipo de la
+     barra se queda fijo, que es lo que espera quien pide menos
+     movimiento. El selector repite el de arriba para ganarle en
+     especificidad: con ".site-header .logo" a secas perdía contra
+     body.marca-activa:not(.marca-fuera) y arriba no se veía NINGÚN logo. */
+  .marca-intro { display: none; }
+  body.marca-activa:not(.marca-fuera) .site-header .logo,
+  .site-header .logo { opacity: 1; pointer-events: auto; }
+}
+/* Con teclado el logotipo escondido sigue en el orden de tabulación:
+   si recibe el foco se muestra, para que el anillo no quede invisible. */
+body.marca-activa:not(.marca-fuera) .site-header .logo:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ---------------------------------------------------------
+   2. Tarjeta con borde que brilla
+   El borde se dibuja con un degradado radial anclado al cursor y se
+   recorta con una máscara para que solo se vea en el contorno. Es la
+   técnica de "Glow Border Card".
+   --------------------------------------------------------- */
+.brillo-borde {
+  position: relative;
+  isolation: isolate;
+}
+.brillo-borde::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: radial-gradient(
+    420px circle at var(--mx) var(--my),
+    var(--kit-señal),
+    transparent 42%
+  );
+  /* Dos capas iguales compuestas en XOR: queda solo el anillo del
+     padding, es decir, el borde. */
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+.brillo-borde::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    380px circle at var(--mx) var(--my),
+    var(--señal-08),
+    transparent 40%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: -1;
+}
+.brillo-borde:hover::before,
+.brillo-borde:focus-within::before,
+.brillo-borde:hover::after,
+.brillo-borde:focus-within::after {
+  opacity: 1;
+}
+
+/* Variante siempre encendida, para la tarjeta destacada del catálogo.
+   El brillo gira solo en vez de seguir al cursor. */
+.brillo-fijo::before {
+  opacity: 0.85;
+  background: conic-gradient(
+    from var(--giro, 0deg),
+    transparent 0deg,
+    var(--kit-señal) 60deg,
+    transparent 140deg,
+    transparent 360deg
+  );
+  animation: giroBorde 6s linear infinite;
+}
+@keyframes giroBorde {
+  to { --giro: 360deg; }
+}
+/* @property permite animar un ángulo de verdad; sin él, el navegador
+   ignora la animación y el borde se queda quieto y encendido, que
+   sigue viéndose bien. */
+@property --giro {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+/* ---------------------------------------------------------
+   3. Botones
+   El "Radial Glow Button": un halo que nace donde está el cursor y una
+   lámina de luz que barre la superficie al pasar por encima.
+   --------------------------------------------------------- */
+.btn-kit {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.btn-kit::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    120px circle at var(--mx) var(--my),
+    color-mix(in srgb, var(--kit-hueso) 28%, transparent),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+  z-index: -1;
+}
+.btn-kit:hover::before { opacity: 1; }
+
+/* Lámina de luz que cruza el botón. Se mueve por transform, no por
+   background-position, para que la resuelva el compositor. */
+.btn-kit::after {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 45%;
+  left: -60%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    color-mix(in srgb, var(--kit-hueso) 26%, transparent),
+    transparent
+  );
+  transform: skewX(-18deg);
+  pointer-events: none;
+  z-index: -1;
+}
+.btn-kit:hover::after {
+  animation: barrido 0.85s ease;
+}
+@keyframes barrido {
+  to { left: 130%; }
+}
+
+/* Los botones magnéticos los mueve js/ui.js; aquí solo se declara que
+   el desplazamiento es suave al soltar. */
+.magnetico {
+  transition: transform 0.35s cubic-bezier(.2,.7,.2,1);
+}
+
+/* ---------------------------------------------------------
+   4. Enlaces con subrayado que se despliega
+   El "Line Hover Link": una línea que crece desde la izquierda y, al
+   salir, se va por la derecha en vez de deshacer el camino.
+   --------------------------------------------------------- */
+.enlace-linea {
+  position: relative;
+  display: inline-block;
+}
+.enlace-linea::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -3px;
+  height: 1.5px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 0.4s cubic-bezier(.2,.7,.2,1);
+}
+.enlace-linea:hover::after,
+.enlace-linea:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left center;
+}
+
+/* ---------------------------------------------------------
+   5. Navegación con foco móvil
+   El "Spotlight Navbar": un recuadro que se desliza hasta el enlace
+   sobre el que está el cursor. Lo posiciona js/ui.js con variables.
+   --------------------------------------------------------- */
+.nav-foco {
+  position: absolute;
+  top: var(--foco-y, 0);
+  left: var(--foco-x, 0);
+  width: var(--foco-w, 0);
+  height: var(--foco-h, 0);
+  border-radius: 9px;
+  background: var(--señal-14);
+  border: 1px solid var(--señal-24);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.38s cubic-bezier(.2,.7,.2,1),
+              width 0.38s cubic-bezier(.2,.7,.2,1),
+              left 0.38s cubic-bezier(.2,.7,.2,1),
+              opacity 0.25s ease;
+  z-index: 0;
+}
+.nav-foco.visible { opacity: 1; }
+/* Los enlaces tienen que quedar por encima del recuadro. */
+.nav-links li { position: relative; z-index: 1; }
+/* El recuadro se posiciona respecto a la lista SOLO cuando el menú es
+   horizontal. js/ui.js le ponía position:relative en línea a #navLinks
+   sin importar el ancho, y eso pisaba el position:fixed del menú
+   desplegable (≤1024 px): en una laptop con ventana angosta el header
+   crecía a ~494 px y el menú se abría como una columna flotante. */
+@media (min-width: 1025px) {
+  .nav-links { position: relative; }
+}
+
+/* ---------------------------------------------------------
+   6. Rejilla bento
+   Celdas de distinto tamaño en vez de una fila de tarjetas iguales.
+   En móvil se desarma en una sola columna.
+   --------------------------------------------------------- */
+.bento {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.bento > * { grid-column: span 1; }
+.bento .bento-ancho { grid-column: span 2; }
+.bento .bento-alto { grid-row: span 2; }
+
+@media (max-width: 900px) {
+  .bento { grid-template-columns: repeat(2, 1fr); }
+  .bento .bento-ancho { grid-column: span 2; }
+  .bento .bento-alto { grid-row: span 1; }
+}
+@media (max-width: 560px) {
+  .bento { grid-template-columns: 1fr; }
+  .bento .bento-ancho { grid-column: span 1; }
+}
+
+/* ---------------------------------------------------------
+   7. Superficies de vidrio
+   --------------------------------------------------------- */
+.vidrio {
+  background: var(--vidrio);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  border: 1px solid var(--kit-borde);
+}
+/* Respaldo sólido para navegadores sin backdrop-filter: sin esto el
+   panel se vería transparente encima del contenido. */
+@supports not (backdrop-filter: blur(1px)) {
+  @supports not (-webkit-backdrop-filter: blur(1px)) {
+    .vidrio { background: var(--kit-superficie); }
+  }
+}
+
+/* ---------------------------------------------------------
+   8. Etiqueta de sección con línea
+   El "eyebrow" de cada sección con una raya que se extiende al entrar.
+   --------------------------------------------------------- */
+.eyebrow-linea {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.eyebrow-linea::after {
+  content: "";
+  width: clamp(28px, 6vw, 72px);
+  height: 1px;
+  background: currentColor;
+  opacity: 0.45;
+  transform: scaleX(var(--linea, 1));
+  transform-origin: left center;
+}
+
+/* ---------------------------------------------------------
+   9. Numeración grande de fondo
+   El número de paso en marca de agua, como en las fichas de proceso de
+   las referencias.
+   --------------------------------------------------------- */
+.num-fantasma {
+  position: absolute;
+  right: 14px;
+  bottom: -6px;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(64px, 9vw, 116px);
+  line-height: 1;
+  color: var(--kit-señal);
+  opacity: 0.07;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ---------------------------------------------------------
+   10. Aplicación al sitio
+   Los pocos ajustes que necesitan las piezas existentes para recibir
+   el kit. Nada de esto cambia color ni tipografía: son anclajes de
+   posición y recortes.
+   --------------------------------------------------------- */
+
+/* Los pasos de "Cómo funciona" alojan su número en marca de agua. */
+.step {
+  position: relative;
+  overflow: hidden;
+}
+
+/* LA PÍLDORA DE COBERTURA DE LA PORTADA.
+   Era inline-flex con gap, y en un contenedor flex CADA trozo de texto
+   suelto se convierte en un elemento independiente. Como la frase lleva
+   un <span> con el número en medio ("Cobertura activa en [10] estados ·
+   recolección..."), quedaba partida en tres bloques que se repartían el
+   ancho y se envolvían cada uno por su cuenta: en un teléfono se leía
+   como tres columnas desordenadas.
+   Con display normal el texto vuelve a ser una sola frase que fluye y se
+   corta por donde toca; el punto se coloca en línea delante. */
+.hero-badge-pill {
+  display: block;
+  width: auto;
+  text-wrap: pretty;
+}
+.hero-badge-pill .dot {
+  display: inline-block;
+  margin-right: 9px;
+  vertical-align: middle;
+}
+
+/* La tarjeta destacada del catálogo ya trae su insignia "MEJOR PAGADO"
+   posicionada; el borde giratorio no debe taparla. */
+.price-card-featured .featured-price-badge { z-index: 3; }
+
+/* El borde que brilla se dibuja sobre el contorno, así que las piezas
+   que lo llevan necesitan un radio propio para que el anillo lo siga. */
+.trust-card,
+.price-card,
+.sucursal-card,
+.gallery-card,
+.team-card,
+.step,
+.cta-band-inner {
+  border-radius: var(--kit-radio);
+}
+
+/* El pie de página hereda los enlaces con subrayado desplegable. */
+.footer-col a { position: relative; display: inline-block; }
+
+/* Panel interno: la pantalla de acceso ancla su propia aurora y recorta
+   las manchas que se salen. */
+.login-screen {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Páginas legales: el encabezado ancla la suya. El contenido ya viene
+   con su z-index desde legal.css, así que solo hace falta el anclaje. */
+.legal-header { position: relative; }
+.legal-header > *:not(.aurora) { position: relative; z-index: 1; }
+
+/* ---------------------------------------------------------
+   11. Ahorro de GPU en móvil
+   El desenfoque de fondo (backdrop-filter) obliga al navegador a
+   recomponer lo que hay DETRÁS del elemento en cada cuadro. Con el
+   encabezado fijo y la barra de cotización siempre en pantalla, eso son
+   dos recomposiciones constantes mientras se hace scroll.
+   En móvil se baja el radio y se sube la opacidad del fondo: el
+   resultado se ve casi igual y cuesta mucho menos.
+   --------------------------------------------------------- */
+@media (max-width: 900px) {
+  .site-header::before,
+  .mobile-sticky-bar,
+  .legal-header,
+  .vidrio {
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  /* Al desenfocar menos, el fondo tiene que tapar más para que el texto
+     de debajo no se transparente. */
+  .site-header::before {
+    background: color-mix(in srgb, var(--bg) 96%, transparent);
+  }
+}
+
+/* ---------------------------------------------------------
+   11b. Filtros de la galería
+   Mismo lenguaje que los filtros de sucursales, para que se lean como
+   el mismo control y no como dos inventos distintos.
+   --------------------------------------------------------- */
+.galeria-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.galeria-filtro {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--kit-borde);
+  background: var(--kit-superficie);
+  color: var(--ink-soft);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+.galeria-filtro:hover {
+  border-color: var(--kit-verde);
+  color: var(--ink);
+}
+.galeria-filtro.is-active {
+  background: var(--accent-fill, var(--kit-verde));
+  border-color: var(--accent-fill, var(--kit-verde));
+  color: var(--on-accent-fill, #fff);
+}
+.galeria-cuenta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  opacity: 0.75;
+}
+/* En un chip activo (galería o sucursales) el número va a opacidad
+   completa: a 0.9 sobre Verde García quedaba en 4.42:1 (AA pide 4.5). */
+.is-active > .galeria-cuenta { opacity: 1; }
+
+/* En el teléfono la galería va a DOS columnas. Con una sola, las 39 fotos
+   que hay cargadas hacían una tira de casi 10.000 px: nadie recorre eso.
+   Son miniaturas de reconocimiento, no fotos de detalle, así que a media
+   pantalla siguen leyéndose perfectamente. */
+@media (max-width: 700px) {
+  .gallery-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
+
+/* Etiqueta con el tipo de material sobre cada foto: al mezclar todas las
+   categorías hay que poder saber qué se está viendo. */
+.gallery-card { position: relative; }
+.gallery-cat-tag {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 2;
+  padding: 5px 10px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--brand-carbon) 78%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid var(--señal-24);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--brand-bone);
+  pointer-events: none;
+  /* Se recorta al ancho de su tarjeta. Sin esto, con la galería a dos
+     columnas en el teléfono, una etiqueta larga como "CELULAR TIPO 1
+     (PRIMERA)" se partía en dos líneas y se salía por la derecha,
+     encimándose con la foto de al lado. */
+  max-width: calc(100% - 20px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 700px) {
+  .gallery-cat-tag { font-size: 11px; left: 8px; bottom: 8px; max-width: calc(100% - 16px); padding: 4px 8px; }
+}
+
+/* Cuando ya se filtró por una categoría concreta, la etiqueta repite en
+   cada foto lo que el botón activo ya dice: solo añade ruido encima de
+   la imagen. Solo tiene sentido en "Todas", que es cuando se mezclan. */
+.gallery-grid.filtrada .gallery-cat-tag { display: none; }
+
+/* ---------------------------------------------------------
+   12. Comodidad táctil
+   En una pantalla táctil el dedo necesita un objetivo de unos 44 px;
+   por debajo de eso la gente falla el toque y vuelve a intentarlo.
+   Se aplica solo donde el puntero es grueso (dedo), no con ratón,
+   para no engordar la interfaz de escritorio sin motivo.
+   --------------------------------------------------------- */
+@media (pointer: coarse) {
+  .menu-btn,
+  .theme-toggle,
+  .calc-step-btn,
+  .social-link,
+  .topbar-social a,
+  .mode-btn,
+  .sucursal-filter-chip,
+  .galeria-filtro,
+  .app-tab,
+  .gallery-cat-btn,
+  .legal-chip,
+  .carousel-nav,
+  .quick-pill,
+  .calc-quick-pills button,
+  .nav-links a,
+  .footer-col a,
+  .sucursal-actions .btn,
+  .team-contact-link,
+  .leaflet-control-zoom a,
+  /* En el pie de las páginas legales el enlace es el único contenido de
+     su párrafo: navegación suelta, no un enlace dentro de una frase. */
+  .legal-footer a,
+  .legal-quicklink {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .legal-footer a {
+    display: inline-flex;
+    align-items: center;
+  }
+  /* Estos llevan texto y hay que centrarlo dentro del alto nuevo. */
+  .sucursal-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .sucursal-actions .btn { justify-content: center; }
+  /* Las que llevan texto necesitan además centrarlo, o el alto mínimo
+     deja la etiqueta pegada arriba. */
+  .quick-pill,
+  .calc-quick-pills button,
+  .sucursal-filter-chip,
+  .mode-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* El control deslizante de kilos medía 8 px de alto: imposible de
+     agarrar con el dedo. Se le da alto de sobra para el toque sin tocar
+     su apariencia: el navegador dibuja la pista y el tirador nativos
+     centrados dentro, conservando el accent-color de marca (por eso NO
+     se usa appearance:none ni se redefine el tirador a mano). */
+  /* El elemento mide 44 px para que el dedo lo agarre, pero la pista se
+     sigue viendo de 8 px: styles.css la dibuja con
+     ::-webkit-slider-runnable-track, que se centra sola dentro del alto.
+     El fondo del propio elemento se quita para que no se vea una banda
+     gruesa detrás. El tirador también crece, que es lo que se arrastra. */
+  .calc-slider {
+    height: 44px;
+    background: transparent;
+  }
+  .calc-slider::-webkit-slider-thumb {
+    width: 26px;
+    height: 26px;
+    margin-top: -11px;
+  }
+  .calc-slider::-moz-range-thumb {
+    width: 26px;
+    height: 26px;
+  }
+
+  /* Los campos numéricos de la calculadora: además del alto, el tipo de
+     letra tiene que llegar a 16 px. Por debajo de esa medida, Safari en
+     iPhone hace zoom automático al tocar el campo y descoloca la página
+     entera, y el visitante tiene que volver a alejar con dos dedos. */
+  .calc-number-input,
+  input[type="text"],
+  input[type="password"],
+  input[type="number"],
+  input[type="email"],
+  input[type="url"],
+  input[type="search"],
+  select,
+  textarea {
+    min-height: 44px;
+    font-size: max(16px, 1em);
+  }
+
+  /* El área táctil de los puntos del carrusel se agranda con un
+     pseudo-elemento invisible, para no deformar el punto en sí. */
+  .carousel-dot {
+    position: relative;
+  }
+  .carousel-dot::after {
+    content: "";
+    position: absolute;
+    inset: -14px;
+  }
+}
+
+/* ---------------------------------------------------------
+   13. Tamaño mínimo de texto en móvil
+   Varias etiquetas quedaban en 10.5 px: legibles en un monitor, no en un
+   teléfono con luz de día. Se suben solo en pantallas chicas, sin tocar
+   la tipografía ni la jerarquía.
+   --------------------------------------------------------- */
+@media (max-width: 900px) {
+  /* Cada selector repite el del original (.hero-media-foot .foot-label y
+     no solo .foot-label): con uno más corto la regla de arriba ganaba por
+     especificidad y el texto se quedaba en 10.5 px. */
+  .hero-media-tag span.label,
+  .hero-media-foot .foot-label,
+  .detail-info .detail-eyebrow,
+  .legend-item,
+  .footer-col-title,
+  .mobile-sticky-tag,
+  .app-brand span,
+  .marca-intro-sub,
+  .eyebrow {
+    font-size: 12px;
+  }
+}
+
+/* ---------------------------------------------------------
+   14. Menos movimiento
+   --------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-capa { animation: none !important; }
+  .brillo-fijo::before { animation: none; }
+  .btn-kit:hover::after { animation: none; }
+  .enlace-linea::after { transition: none; }
+  .nav-foco { transition: opacity 0.2s ease; }
+}

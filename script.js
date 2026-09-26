@@ -20,9 +20,14 @@ function waLink(message) {
   return waLinkTo(WA_NUMBER, message);
 }
 
+// Devuelve TEXTO plano: quien lo meta en innerHTML lo pasa por esc().
+// Espacios no separables antes del guion y antes de la unidad: la línea
+// solo puede cortarse DESPUÉS del guion ("$5,000 –⏎$10,000 /kg"), nunca
+// dejando "/kg" solo en el renglón de abajo como pasaba en la barra
+// fija del móvil y en los chips de la calculadora.
 function formatPrice(min, max, unit = "/kg") {
-  const fmt = (n) => `$${Number(n).toLocaleString("es-MX")}`;
-  return `${fmt(min)} – ${fmt(max)} ${unit}`;
+  const fmt = (n) => `$${(Number(n) || 0).toLocaleString("es-MX")}`;
+  return `${fmt(min)} – ${fmt(max)} ${unit}`;
 }
 
 /* ---------- Estado cargado ---------- */
@@ -33,41 +38,51 @@ let COVERAGE = null;
 let BRANCHES = null;
 let SOCIAL = null;
 
-async function fetchJson(path, fallback) {
+// Sin tiempo límite, una sola petición atorada en una red móvil dejaba la
+// página esperando indefinidamente. A los 6 s se usa el respaldo.
+const FETCH_TIMEOUT_MS = 6000;
+
+// "no-cache" y no "no-store": igual pregunta siempre al servidor (los
+// cambios del panel se ven al momento), pero si el archivo no cambió el
+// servidor responde 304 y no se vuelve a descargar entero en cada visita.
+// El respaldo también se usa si el JSON llega con una forma inesperada
+// (por ejemplo, sin la lista que la página espera).
+async function fetchJson(path, fallback, isValid) {
+  const ctrl = typeof AbortController === "function" ? new AbortController() : null;
+  const timer = ctrl ? setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS) : null;
   try {
-    const res = await fetch(path, { cache: "no-store" });
-    return res.ok ? await res.json() : fallback;
+    const res = await fetch(path, { cache: "no-cache", signal: ctrl ? ctrl.signal : undefined });
+    if (!res.ok) return fallback;
+    const data = await res.json();
+    return (!isValid || isValid(data)) ? data : fallback;
   } catch (_err) {
     return fallback;
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 
+const hasList = (key) => (data) => !!data && Array.isArray(data[key]);
+
 async function loadData() {
-  try {
-    [PRICES, GALLERY, TEAM, COVERAGE, BRANCHES, SOCIAL] = await Promise.all([
-      fetchJson("data/prices.json", FALLBACK_PRICES),
-      fetchJson("data/gallery.json", FALLBACK_GALLERY),
-      fetchJson("data/team.json", FALLBACK_TEAM),
-      fetchJson("data/coverage.json", FALLBACK_COVERAGE),
-      fetchJson("data/branches.json", FALLBACK_BRANCHES),
-      fetchJson("data/social.json", FALLBACK_SOCIAL),
-    ]);
-  } catch (err) {
-    console.warn("Fallo en fetchJson, usando datos de respaldo:", err);
-    PRICES = PRICES || FALLBACK_PRICES;
-    GALLERY = GALLERY || FALLBACK_GALLERY;
-    TEAM = TEAM || FALLBACK_TEAM;
-    COVERAGE = COVERAGE || FALLBACK_COVERAGE;
-    BRANCHES = BRANCHES || FALLBACK_BRANCHES;
-    SOCIAL = SOCIAL || FALLBACK_SOCIAL;
-  }
+  // fetchJson nunca lanza (cada fallo cae en su respaldo), así que
+  // Promise.all siempre resuelve y no hace falta un catch aquí.
+  [PRICES, GALLERY, TEAM, COVERAGE, BRANCHES, SOCIAL] = await Promise.all([
+    fetchJson("data/prices.json", FALLBACK_PRICES, hasList("materials")),
+    fetchJson("data/gallery.json", FALLBACK_GALLERY, hasList("categories")),
+    fetchJson("data/team.json", FALLBACK_TEAM, hasList("members")),
+    fetchJson("data/coverage.json", FALLBACK_COVERAGE, hasList("activeStateIds")),
+    fetchJson("data/branches.json", FALLBACK_BRANCHES, hasList("branches")),
+    fetchJson("data/social.json", FALLBACK_SOCIAL, hasList("links")),
+  ]);
 
   // El número de WhatsApp que usan los botones generales del sitio es el
   // contacto marcado como "principal" en Sucursales y contacto (panel admin),
-  // no un valor fijo en el código.
-  const branchList = (BRANCHES && Array.isArray(BRANCHES.branches)) ? BRANCHES.branches : (FALLBACK_BRANCHES.branches || []);
-  const primary = branchList.find((b) => b.primary && b.whatsapp) || branchList.find((b) => b.whatsapp);
-  if (primary && primary.whatsapp) WA_NUMBER = primary.whatsapp;
+  // no un valor fijo en el código. Solo se acepta un número bien formado:
+  // uno mal capturado rompería TODOS los botones de WhatsApp del sitio.
+  const branchList = BRANCHES.branches;
+  const primary = branchList.find((b) => b.primary && isWaNumber(b.whatsapp)) || branchList.find((b) => isWaNumber(b.whatsapp));
+  if (primary) WA_NUMBER = primary.whatsapp;
   renderEverything();
 }
 
@@ -102,6 +117,11 @@ function materialPhoto(materialId) {
   return images[0] || null;
 }
 
+function bestCelularType() {
+  const types = (PRICES?.celularTypes || []).filter((t) => Number(t.max) > 0);
+  return types.find((t) => t.id === "tipo1") || types.sort((a, b) => Number(b.max) - Number(a.max))[0] || null;
+}
+
 /* ---------- Render: precios rápidos + tabla ---------- */
 function renderPrices() {
   const quickGrid = document.getElementById("quickPricesGrid");
@@ -113,114 +133,119 @@ function renderPrices() {
     const photo = materialPhoto(m.id);
     const isFeatured = m.id === "celular";
     return `
-    <article class="price-card ${isFeatured ? "price-card-featured" : ""} reveal ${i ? "delay-" + Math.min(i, 3) : ""} show">
-      ${isFeatured ? `<div class="featured-price-badge"><i class="bi bi-star-fill"></i> MEJOR PAGADO</div>` : ""}
+    <article class="price-card brillo-borde ${isFeatured ? "price-card-featured brillo-fijo" : ""} reveal ${i ? "delay-" + Math.min(i, 3) : ""}">
+      ${isFeatured ? `<div class="featured-price-badge"><i class="bi bi-star-fill" aria-hidden="true"></i> MEJOR PAGADO</div>` : ""}
       ${photo
         ? `<div class="price-card-photo"><img src="${esc(photo.src)}" alt="${esc(photo.alt || m.name)}" loading="lazy" onerror="this.parentElement.style.display='none'" /></div>`
         : ""}
-      <span class="price-icon"><i class="bi ${esc(m.icon || "bi-cpu")}"></i></span>
+      <span class="price-icon"><i class="bi ${esc(m.icon || "bi-cpu")}" aria-hidden="true"></i></span>
       <p class="price-tag">${esc(m.name)}</p>
-      <p class="price-value">${formatPrice(m.min, m.max, m.unit)}</p>
+      <p class="price-value">${esc(formatPrice(m.min, m.max, m.unit))}</p>
       <p class="price-copy">${esc(m.quickCopy || m.note || "")}</p>
-      <button class="btn ${isFeatured ? "btn-primary" : "btn-ghost"} open-selector" data-preselect="${esc(m.id)}">${m.directContact ? "Preguntar por WhatsApp" : "Ver detalle"}</button>
+      <button type="button" class="btn ${isFeatured ? "btn-primary" : "btn-ghost"} open-selector" data-preselect="${esc(m.id)}">${m.directContact ? "Preguntar por WhatsApp" : "Ver detalle"}</button>
     </article>`;
   }).join("");
 
-  table.innerHTML = (PRICES?.materials || []).map((m) => `
+  table.innerHTML = (PRICES?.materials || []).filter(m => !m.quick).map((m) => `
     <div class="price-row">
       <div class="row-name">
-        <span class="row-icon"><i class="bi ${esc(m.icon)}"></i></span>
+        <span class="row-icon"><i class="bi ${esc(m.icon || "bi-cpu")}" aria-hidden="true"></i></span>
         <span class="row-title">${esc(m.name)}</span>
       </div>
       <p class="row-note">${esc(m.note || "")}</p>
-      <p class="row-price">${formatPrice(m.min, m.max, m.unit)}</p>
+      <p class="row-price">${esc(formatPrice(m.min, m.max, m.unit))}</p>
     </div>
-  `).join("") + `
-    <div class="price-table-foot">
-      <p>El material se compra para destrucción y desguace, por eso el precio es menor que una pieza funcional de reventa.</p>
-      <a href="${waLink("Hola, quiero preguntar por el precio de mi lote")}" target="_blank" rel="noopener">Preguntar por mi lote →</a>
-    </div>
-  `;
+  `).join("");
+  // (La nota "el material se compra para destrucción…" ya está en el
+  // recuadro de abajo; aquí se repetía palabra por palabra.)
 
-  const tipo1 = (PRICES?.celularTypes || []).find((t) => t.id === "tipo1");
-  const heroBest = document.getElementById("heroBestPrice");
-  if (heroBest && tipo1) heroBest.textContent = formatPrice(tipo1.min, tipo1.max);
-  const mobileSticky = document.getElementById("mobileStickyPrice");
-  if (mobileSticky && tipo1) mobileSticky.textContent = `${formatPrice(tipo1.min, tipo1.max)}/kg`;
+  // El "mejor precio" del hero y de la barra fija del móvil sale del tipo
+  // de celular mejor pagado, no de un id fijo: si el panel recrea o
+  // renombra "tipo1", antes se quedaba el precio viejo del HTML.
+  const best = bestCelularType();
+  if (best) {
+    const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+    // Sin "/kg" extra: formatPrice() ya lo añade por defecto.
+    setText("heroBestPrice", formatPrice(best.min, best.max));
+    setText("mobileStickyPrice", formatPrice(best.min, best.max));
+    // "Tipo 1 (Primera)" → "Tipo 1": en la barra del móvil no cabe más.
+    const corto = String(best.shortLabel || best.label || "").replace(/\s*\(.*\)\s*$/, "");
+    setText("heroBestLabel", `Lógica de celular · ${corto}`);
+    setText("mobileStickyLabel", `Celular ${corto}`);
+  }
   const heroStatMaterials = document.getElementById("heroStatMaterials");
   if (heroStatMaterials) heroStatMaterials.textContent = (PRICES?.materials || []).length;
 
+  // Directo al material: antes abría el modal para cerrarlo en el mismo
+  // instante (y dejaba una entrada de más en el historial).
   quickGrid.querySelectorAll(".open-selector").forEach((btn) => {
     btn.addEventListener("click", () => {
-      showSelector();
-      const preselect = btn.dataset.preselect;
-      if (preselect) selectMaterial(preselect);
+      if (btn.dataset.preselect) selectMaterial(btn.dataset.preselect);
+      else showSelector();
     });
   });
 }
 
-/* ---------- Render: Calculadora de Ganancias (Cotizador Express) ---------- */
-let CALC_STATE = {
+/* ---------- Render: Calculadora de Ganancias (Cotizador Express) ----------
+   El peso vive en UN solo número: gramos totales (CALC.totalG). Los dos
+   campos (kg y g), el deslizador y las píldoras de acceso rápido son solo
+   formas de mostrarlo o cambiarlo, y todos se sincronizan desde
+   syncWeightUI(). Antes cada control guardaba su parte por separado y se
+   desfasaban: el deslizador se quedaba en 10 kg mientras se calculaba
+   con 100, "+50 g" en el tope bajaba el peso, etc. */
+const CALC_MAX_G = 1000 * 1000; // 1000 kg
+const CALC = {
   materialId: "tipo1",
-  weight: 3, // kilos enteros
-  grams: 0, // gramos adicionales (0-999), para un peso más realista que solo kilos redondos
-  initialized: false
+  totalG: 3000,
+  items: [],
+  bound: false,
 };
-// "3 kg" o, si hay gramos, "3 kg 500 g" (o solo "500 g" si los kilos están
-// en cero) — se usa tanto en el texto del resultado como en el mensaje de
-// WhatsApp, para que ambos digan lo mismo que el admin realmente puso.
-function formatCalcWeight(kg, g) {
+
+// "3 kg", "3 kg 500 g" o "500 g": el texto del resultado y el mensaje de
+// WhatsApp dicen exactamente lo mismo.
+function formatCalcWeight(totalG) {
+  const kg = Math.floor(totalG / 1000);
+  const g = totalG % 1000;
   if (g > 0 && kg > 0) return `${kg} kg ${g} g`;
   if (g > 0) return `${g} g`;
   return `${kg} kg`;
 }
 
+// Materiales que se pueden cotizar, sacados de los datos: los tipos de
+// celular y cada material de la lista que no sea el genérico "celular" ni
+// uno que ya esté representado por un tipo (como "sin pila"). Un material
+// nuevo del panel aparece solo; para ocultarlo, "calc": false en el JSON.
 function getCalculatorItems() {
-  const items = [];
-  if (PRICES && PRICES.celularTypes) {
-    PRICES.celularTypes.forEach((t) => {
-      items.push({
-        id: t.id,
-        name: t.label || t.shortLabel,
-        min: Number(t.min) || 0,
-        max: Number(t.max) || 0,
-        icon: t.id === "tipo4" ? "🔋" : "📱"
-      });
-    });
-  }
-  if (PRICES && PRICES.materials) {
-    const extraIds = ["ram", "laptop", "teclado"];
-    extraIds.forEach((id) => {
-      const mat = PRICES.materials.find((m) => m.id === id);
-      if (mat && !items.some((it) => it.id === id)) {
-        items.push({
-          id: mat.id,
-          name: mat.name,
-          min: Number(mat.min) || 0,
-          max: Number(mat.max) || 0,
-          icon: mat.modalIcon || "🔧"
-        });
-      }
-    });
-  }
-  return items;
+  const types = PRICES?.celularTypes || [];
+  const materials = PRICES?.materials || [];
+  const iconOf = (id) => (materials.find((m) => m.id === id) || {}).icon;
+  const items = types.map((t) => ({
+    id: t.id,
+    name: t.label || t.shortLabel || t.id,
+    min: Number(t.min) || 0,
+    max: Number(t.max) || 0,
+    icon: iconOf(t.priceId) || "bi-phone",
+  }));
+  const coveredByTypes = new Set(types.map((t) => t.priceId));
+  materials
+    .filter((m) => m.calc !== false && !coveredByTypes.has(m.id) && !items.some((it) => it.id === m.id))
+    .forEach((m) => items.push({
+      id: m.id,
+      name: m.name,
+      min: Number(m.min) || 0,
+      max: Number(m.max) || 0,
+      icon: m.icon || "bi-cpu",
+    }));
+  return items.filter((it) => it.max > 0);
 }
 
 function renderCalculator() {
   const chipsContainer = document.getElementById("calcMaterialChips");
   const selectEl = document.getElementById("calcMaterialSelect");
-  const weightInput = document.getElementById("calcWeightInput");
-  const gramsInput = document.getElementById("calcGramsInput");
-  const weightRange = document.getElementById("calcWeightRange");
-  const minusBtn = document.getElementById("calcMinusBtn");
-  const plusBtn = document.getElementById("calcPlusBtn");
-  const minusGramsBtn = document.getElementById("calcMinusGramsBtn");
-  const plusGramsBtn = document.getElementById("calcPlusGramsBtn");
-  const pillsContainer = document.getElementById("calcQuickPills");
-  if (!chipsContainer || !selectEl || !weightInput) return;
+  if (!chipsContainer || !selectEl || !document.getElementById("calcWeightInput")) return;
 
-  const items = getCalculatorItems();
-  if (!items.length) {
+  CALC.items = getCalculatorItems();
+  if (!CALC.items.length) {
     // Sin materiales configurados no hay nada que calcular; sin esto, el
     // texto de "Cargando…" del HTML se quedaba fijo para siempre.
     chipsContainer.innerHTML = `<p class="price-hint" style="margin:0">Todavía no hay materiales configurados para cotizar.</p>`;
@@ -230,237 +255,171 @@ function renderCalculator() {
     if (formulaEl) formulaEl.textContent = "Agrega materiales desde el panel para poder cotizar.";
     return;
   }
+  if (!CALC.items.some((it) => it.id === CALC.materialId)) CALC.materialId = CALC.items[0].id;
 
-  if (!items.some((it) => it.id === CALC_STATE.materialId)) {
-    CALC_STATE.materialId = items[0].id;
-  }
-
-  // Render chips
-  chipsContainer.innerHTML = items.map((it) => {
-    const isActive = it.id === CALC_STATE.materialId;
-    const rate = formatPrice(it.min, it.max);
+  chipsContainer.innerHTML = CALC.items.map((it) => {
+    const isActive = it.id === CALC.materialId;
     return `
-      <button type="button" class="calc-chip-btn ${isActive ? "is-active" : ""}" data-calc-id="${esc(it.id)}" role="radio" aria-checked="${isActive}">
-        <span class="calc-chip-icon">${it.icon}</span>
+      <button type="button" class="calc-chip-btn ${isActive ? "is-active" : ""}" data-calc-id="${esc(it.id)}" role="radio" aria-checked="${isActive}" tabindex="${isActive ? 0 : -1}">
+        <span class="calc-chip-icon"><i class="bi ${esc(it.icon)}" aria-hidden="true"></i></span>
         <span class="calc-chip-title">${esc(it.name)}</span>
-        <span class="calc-chip-rate">${rate}</span>
-      </button>
-    `;
+        <span class="calc-chip-rate">${esc(formatPrice(it.min, it.max))}</span>
+      </button>`;
   }).join("");
 
-  // Render select options
-  selectEl.innerHTML = items.map((it) => `
-    <option value="${esc(it.id)}" ${it.id === CALC_STATE.materialId ? "selected" : ""}>
-      ${esc(it.name)} (${formatPrice(it.min, it.max)})
-    </option>
+  selectEl.innerHTML = CALC.items.map((it) => `
+    <option value="${esc(it.id)}" ${it.id === CALC.materialId ? "selected" : ""}>${esc(it.name)}</option>
   `).join("");
 
-  function updateCalculation() {
-    const item = items.find((it) => it.id === CALC_STATE.materialId) || items[0] || { name: "Material", min: 0, max: 0 };
-    const kg = Math.max(0, Number(CALC_STATE.weight) || 0);
-    const g = Math.max(0, Math.min(999, Number(CALC_STATE.grams) || 0));
-    const totalKg = Math.max(0, kg + g / 1000);
-    const fmt = (n) => `$${(Number(n) || 0).toLocaleString("es-MX")}`;
-
-    const totalMin = Math.round((Number(item.min) || 0) * totalKg);
-    const totalMax = Math.round((Number(item.max) || 0) * totalKg);
-    const weightLabel = formatCalcWeight(kg, g);
-
-    const titleEl = document.getElementById("calcResultTitle");
-    const amountEl = document.getElementById("calcResultAmount");
-    const formulaEl = document.getElementById("calcResultFormula");
-    const waBtn = document.getElementById("calcWaBtn");
-
-    if (titleEl) titleEl.textContent = item.name;
-
-    if (totalKg <= 0) {
-      if (amountEl) amountEl.textContent = "$0 – $0";
-      if (formulaEl) formulaEl.textContent = "Ingresa los kilos o gramos de tu lote para cotizar";
-      if (waBtn) {
-        const msg = `Hola Ecológica García, quiero cotizar un lote de ${item.name}. ¿Me podrían dar informes para entrega o recolección?`;
-        waBtn.href = waLink(msg);
-      }
-    } else {
-      if (amountEl) amountEl.textContent = `${fmt(totalMin)} – ${fmt(totalMax)}`;
-      if (formulaEl) formulaEl.textContent = `Calculado para ${weightLabel} × (${fmt(item.min)} – ${fmt(item.max)} /kg)`;
-      if (waBtn) {
-        const msg = `Hola Ecológica García, coticé en su página web un lote de ${weightLabel} de ${item.name} con un estimado de ${fmt(totalMin)} a ${fmt(totalMax)} MXN. ¿Me podrían dar informes para entrega o recolección?`;
-        waBtn.href = waLink(msg);
-      }
-    }
-
-    // Update active quick pill
-    if (pillsContainer) {
-      pillsContainer.querySelectorAll(".quick-pill").forEach((pill) => {
-        const pKg = Number(pill.dataset.kg || 0);
-        const pG = Number(pill.dataset.g || 0);
-        pill.classList.toggle("is-active", pKg === kg && pG === g);
-      });
-    }
-  }
-
-  // Bind events once
-  if (!CALC_STATE.initialized) {
-    CALC_STATE.initialized = true;
-
-    // Weight range slider
-    if (weightRange) {
-      weightRange.addEventListener("input", (e) => {
-        CALC_STATE.weight = Math.max(0, parseInt(e.target.value, 10) || 0);
-        weightInput.value = CALC_STATE.weight;
-        updateCalculation();
-      });
-    }
-
-    // Weight number input (soporta enteros o decimales tipo 2.5)
-    weightInput.addEventListener("input", (e) => {
-      const raw = e.target.value.trim();
-      if (raw === "") {
-        CALC_STATE.weight = 0;
-        updateCalculation();
-        return;
-      }
-      let num = parseFloat(raw);
-      if (isNaN(num) || num < 0) num = 0;
-      if (num > 1000) num = 1000;
-
-      // Si escribe decimales (ej. 2.5 kg), pasamos el remanente a gramos
-      if (!Number.isInteger(num)) {
-        const wholeKg = Math.floor(num);
-        const remG = Math.min(999, Math.round((num - wholeKg) * 1000));
-        CALC_STATE.weight = wholeKg;
-        CALC_STATE.grams = remG;
-        if (gramsInput) gramsInput.value = remG;
-      } else {
-        CALC_STATE.weight = Math.floor(num);
-      }
-      if (weightRange && CALC_STATE.weight <= 50) weightRange.value = Math.max(0, CALC_STATE.weight);
-      updateCalculation();
-    });
-    weightInput.addEventListener("blur", () => {
-      weightInput.value = CALC_STATE.weight;
-    });
-
-    // Plus and Minus buttons (kilos)
-    if (minusBtn) {
-      minusBtn.addEventListener("click", () => {
-        if (CALC_STATE.weight > 0) {
-          CALC_STATE.weight -= 1;
-          weightInput.value = CALC_STATE.weight;
-          if (weightRange && CALC_STATE.weight <= 50) weightRange.value = Math.max(0, CALC_STATE.weight);
-          updateCalculation();
-        }
-      });
-    }
-    if (plusBtn) {
-      plusBtn.addEventListener("click", () => {
-        if (CALC_STATE.weight < 1000) {
-          CALC_STATE.weight += 1;
-          weightInput.value = CALC_STATE.weight;
-          if (weightRange && CALC_STATE.weight <= 50) weightRange.value = Math.min(50, CALC_STATE.weight);
-          updateCalculation();
-        }
-      });
-    }
-
-    // Gramos adicionales: input libre sin interrupciones de borrado
-    if (gramsInput) {
-      gramsInput.addEventListener("input", (e) => {
-        const raw = e.target.value.trim();
-        if (raw === "") {
-          CALC_STATE.grams = 0;
-          updateCalculation();
-          return;
-        }
-        let val = parseInt(raw, 10);
-        if (isNaN(val) || val < 0) val = 0;
-
-        // Si se pasa de 999 g, se acumulan los kilos correspondientes
-        if (val >= 1000) {
-          const extraKg = Math.floor(val / 1000);
-          CALC_STATE.weight = Math.min(1000, CALC_STATE.weight + extraKg);
-          val = val % 1000;
-          weightInput.value = CALC_STATE.weight;
-          gramsInput.value = val;
-          if (weightRange && CALC_STATE.weight <= 50) weightRange.value = CALC_STATE.weight;
-        }
-        CALC_STATE.grams = val;
-        updateCalculation();
-      });
-      gramsInput.addEventListener("blur", () => {
-        gramsInput.value = CALC_STATE.grams;
-      });
-    }
-
-    // Plus and Minus buttons (gramos en saltos de 50g)
-    if (minusGramsBtn) {
-      minusGramsBtn.addEventListener("click", () => {
-        if (CALC_STATE.grams >= 50) {
-          CALC_STATE.grams -= 50;
-        } else if (CALC_STATE.grams > 0) {
-          CALC_STATE.grams = 0;
-        }
-        if (gramsInput) gramsInput.value = CALC_STATE.grams;
-        updateCalculation();
-      });
-    }
-    if (plusGramsBtn) {
-      plusGramsBtn.addEventListener("click", () => {
-        const nextG = CALC_STATE.grams + 50;
-        if (nextG >= 1000) {
-          CALC_STATE.weight = Math.min(1000, CALC_STATE.weight + 1);
-          CALC_STATE.grams = nextG % 1000;
-          weightInput.value = CALC_STATE.weight;
-          if (weightRange && CALC_STATE.weight <= 50) weightRange.value = CALC_STATE.weight;
-        } else {
-          CALC_STATE.grams = nextG;
-        }
-        if (gramsInput) gramsInput.value = CALC_STATE.grams;
-        updateCalculation();
-      });
-    }
-
-    // Quick pills: soportan tanto kilos como gramos
-    if (pillsContainer) {
-      pillsContainer.addEventListener("click", (e) => {
-        const pill = e.target.closest(".quick-pill");
-        if (!pill) return;
-        const pKg = Number(pill.dataset.kg || 0);
-        const pG = Number(pill.dataset.g || 0);
-        CALC_STATE.weight = pKg;
-        CALC_STATE.grams = pG;
-        weightInput.value = pKg;
-        if (gramsInput) gramsInput.value = pG;
-        if (weightRange) weightRange.value = Math.min(pKg, 50);
-        updateCalculation();
-      });
-    }
-
-    // Select dropdown
-    selectEl.addEventListener("change", (e) => {
-      CALC_STATE.materialId = e.target.value;
-      chipsContainer.querySelectorAll(".calc-chip-btn").forEach((chip) => {
-        chip.classList.toggle("is-active", chip.dataset.calcId === CALC_STATE.materialId);
-      });
-      updateCalculation();
-    });
-  }
-
-  // Event delegation on chips
-  chipsContainer.onclick = (e) => {
-    const chip = e.target.closest(".calc-chip-btn");
-    if (!chip) return;
-    CALC_STATE.materialId = chip.dataset.calcId;
-    chipsContainer.querySelectorAll(".calc-chip-btn").forEach((c) => {
-      const active = c.dataset.calcId === CALC_STATE.materialId;
-      c.classList.toggle("is-active", active);
-      c.setAttribute("aria-checked", active ? "true" : "false");
-    });
-    if (selectEl) selectEl.value = CALC_STATE.materialId;
-    updateCalculation();
-  };
-
+  bindCalculatorOnce();
+  syncWeightUI();
   updateCalculation();
+}
+
+function setCalcMaterial(id, { focus = false } = {}) {
+  if (!CALC.items.some((it) => it.id === id)) return;
+  CALC.materialId = id;
+  document.querySelectorAll("#calcMaterialChips .calc-chip-btn").forEach((chip) => {
+    const active = chip.dataset.calcId === id;
+    chip.classList.toggle("is-active", active);
+    chip.setAttribute("aria-checked", active ? "true" : "false");
+    // Un solo chip en el orden de Tab (patrón radiogroup): las flechas
+    // mueven entre ellos.
+    chip.tabIndex = active ? 0 : -1;
+    if (active && focus) chip.focus();
+  });
+  const selectEl = document.getElementById("calcMaterialSelect");
+  if (selectEl) selectEl.value = id;
+  updateCalculation();
+}
+
+// Cambia el peso total y refleja el valor en todos los controles, menos en
+// el que el usuario está escribiendo (para no moverle el cursor).
+function setCalcWeight(totalG, { except = null } = {}) {
+  CALC.totalG = Math.max(0, Math.min(CALC_MAX_G, Math.round(Number(totalG) || 0)));
+  syncWeightUI(except);
+  updateCalculation();
+}
+
+function syncWeightUI(except = null) {
+  const skip = (el) => el && (Array.isArray(except) ? except.includes(el) : except === el);
+  const kg = Math.floor(CALC.totalG / 1000);
+  const g = CALC.totalG % 1000;
+  const weightInput = document.getElementById("calcWeightInput");
+  const gramsInput = document.getElementById("calcGramsInput");
+  const weightRange = document.getElementById("calcWeightRange");
+  if (weightInput && !skip(weightInput)) weightInput.value = kg;
+  if (gramsInput && !skip(gramsInput)) gramsInput.value = g;
+  if (weightRange && !skip(weightRange)) weightRange.value = Math.min(Number(weightRange.max) || 50, kg);
+  document.querySelectorAll("#calcQuickPills .quick-pill").forEach((pill) => {
+    const pillG = Number(pill.dataset.kg || 0) * 1000 + Number(pill.dataset.g || 0);
+    const active = pillG === CALC.totalG;
+    pill.classList.toggle("is-active", active);
+    pill.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+}
+
+function updateCalculation() {
+  const item = CALC.items.find((it) => it.id === CALC.materialId) || CALC.items[0];
+  if (!item) return;
+  const totalKg = CALC.totalG / 1000;
+  const fmt = (n) => `$${(Number(n) || 0).toLocaleString("es-MX")}`;
+  const totalMin = Math.round(item.min * totalKg);
+  const totalMax = Math.round(item.max * totalKg);
+  const weightLabel = formatCalcWeight(CALC.totalG);
+
+  const titleEl = document.getElementById("calcResultTitle");
+  const amountEl = document.getElementById("calcResultAmount");
+  const formulaEl = document.getElementById("calcResultFormula");
+  const waBtn = document.getElementById("calcWaBtn");
+
+  if (titleEl) titleEl.textContent = item.name;
+  if (CALC.totalG <= 0) {
+    if (amountEl) amountEl.textContent = "$0 – $0";
+    if (formulaEl) formulaEl.textContent = "Ingresa los kilos o gramos de tu lote para cotizar";
+    if (waBtn) waBtn.href = waLink(`Hola Eco Lógica García, quiero cotizar un lote de ${item.name}. ¿Me podrían dar informes para entrega o recolección?`);
+  } else {
+    if (amountEl) amountEl.textContent = `${fmt(totalMin)} – ${fmt(totalMax)}`;
+    if (formulaEl) formulaEl.textContent = `Calculado para ${weightLabel} × (${formatPrice(item.min, item.max)})`;
+    if (waBtn) waBtn.href = waLink(`Hola Eco Lógica García, coticé en su página web un lote de ${weightLabel} de ${item.name} con un estimado de ${fmt(totalMin)} a ${fmt(totalMax)} MXN. ¿Me podrían dar informes para entrega o recolección?`);
+  }
+}
+
+// Los listeners se enganchan UNA vez y leen siempre CALC (no variables
+// capturadas del primer render), así que un re-render no los deja viejos.
+function bindCalculatorOnce() {
+  if (CALC.bound) return;
+  CALC.bound = true;
+  const chipsContainer = document.getElementById("calcMaterialChips");
+  const selectEl = document.getElementById("calcMaterialSelect");
+  const weightInput = document.getElementById("calcWeightInput");
+  const gramsInput = document.getElementById("calcGramsInput");
+  const weightRange = document.getElementById("calcWeightRange");
+  const gramsPart = () => CALC.totalG % 1000;
+  const kgPart = () => Math.floor(CALC.totalG / 1000);
+
+  chipsContainer.addEventListener("click", (e) => {
+    const chip = e.target.closest(".calc-chip-btn");
+    if (chip) setCalcMaterial(chip.dataset.calcId);
+  });
+  // Flechas dentro del grupo de materiales (role="radiogroup").
+  chipsContainer.addEventListener("keydown", (e) => {
+    const keys = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+    if (!(e.key in keys)) return;
+    const i = CALC.items.findIndex((it) => it.id === CALC.materialId);
+    const next = CALC.items[(i + keys[e.key] + CALC.items.length) % CALC.items.length];
+    e.preventDefault();
+    setCalcMaterial(next.id, { focus: true });
+  });
+  selectEl.addEventListener("change", (e) => setCalcMaterial(e.target.value));
+
+  // Kilos: acepta decimales ("2.5"). Los dos campos SUMAN: 2.5 kg + 0 g =
+  // 2 kg 500 g. Al salir del campo se normaliza la vista a kg + g.
+  weightInput.addEventListener("input", () => {
+    const raw = weightInput.value.trim().replace(",", ".");
+    const kg = raw === "" ? 0 : parseFloat(raw);
+    if (!isFinite(kg) || kg < 0) { setCalcWeight(gramsPart()); weightInput.value = ""; return; }
+    if (kg > CALC_MAX_G / 1000) { setCalcWeight(CALC_MAX_G); return; }
+    // Con decimales el campo de kilos ya trae el peso completo: mientras
+    // se escribe, el de gramos muestra 0 (si mostrara 500 junto a "2.5"
+    // se leería como 3 kg). Al salir del campo queda "2 kg" + "500 g".
+    if (!Number.isInteger(kg)) {
+      setCalcWeight(Math.round(kg * 1000), { except: [weightInput, gramsInput] });
+      if (gramsInput) gramsInput.value = 0;
+      return;
+    }
+    setCalcWeight(kg * 1000 + gramsPart(), { except: weightInput });
+  });
+  weightInput.addEventListener("blur", () => syncWeightUI());
+
+  if (gramsInput) {
+    gramsInput.addEventListener("input", () => {
+      const raw = gramsInput.value.trim();
+      const g = raw === "" ? 0 : Math.floor(Number(raw));
+      if (!isFinite(g) || g < 0) { setCalcWeight(kgPart() * 1000); gramsInput.value = ""; return; }
+      // 1500 g con 2 kg = 3 kg 500 g: los gramos de más pasan a kilos.
+      setCalcWeight(kgPart() * 1000 + g, { except: g >= 1000 ? null : gramsInput });
+    });
+    gramsInput.addEventListener("blur", () => syncWeightUI());
+  }
+
+  const step = (id, deltaG) => document.getElementById(id)?.addEventListener("click", () => setCalcWeight(CALC.totalG + deltaG));
+  step("calcMinusBtn", -1000);
+  step("calcPlusBtn", 1000);
+  step("calcMinusGramsBtn", -50);
+  step("calcPlusGramsBtn", 50);
+
+  // El deslizador fija los kilos enteros y conserva los gramos.
+  if (weightRange) {
+    weightRange.addEventListener("input", () => {
+      setCalcWeight((parseInt(weightRange.value, 10) || 0) * 1000 + gramsPart(), { except: weightRange });
+    });
+  }
+
+  document.getElementById("calcQuickPills")?.addEventListener("click", (e) => {
+    const pill = e.target.closest(".quick-pill");
+    if (pill) setCalcWeight(Number(pill.dataset.kg || 0) * 1000 + Number(pill.dataset.g || 0));
+  });
 }
 
 /* ---------- Render: selector de material ----------
@@ -478,13 +437,13 @@ function renderSelector() {
       <button class="selector-btn" type="button" data-material="${esc(m.id)}" data-group="${esc(m.group)}">
         ${photo
           ? `<span class="sel-photo"><img src="${esc(photo.src)}" alt="" loading="lazy" /></span>`
-          : `<span class="sel-icon">${esc(m.modalIcon || "🔧")}</span>`}
+          : `<span class="sel-icon"><i class="bi ${esc(m.icon || "bi-cpu")}" aria-hidden="true"></i></span>`}
         <span class="sel-name">${esc(m.name)}</span>
-        <span class="sel-price">${formatPrice(m.min, m.max, m.unit)}</span>
+        <span class="sel-price">${esc(formatPrice(m.min, m.max, m.unit))}</span>
       </button>`;
   }).join("") + `
       <button class="selector-btn" type="button" data-material="otro" data-group="otros">
-        <span class="sel-icon">⚙️</span>
+        <span class="sel-icon"><i class="bi bi-question-circle" aria-hidden="true"></i></span>
         <span class="sel-name">Otra cosa</span>
       </button>`;
 
@@ -498,32 +457,97 @@ const selectorModal = document.getElementById("selectorModal");
 const selectorOverlay = document.getElementById("selectorOverlay");
 const selectorClose = document.getElementById("selectorClose");
 
+// Desplazamientos por JS: suaves, salvo que el visitante pidió menos
+// movimiento (el CSS ya respeta esa preferencia; el JS no lo hacía).
+function scrollBehavior() {
+  try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"; } catch (_e) { return "smooth"; }
+}
+
 // Recuerda qué elemento tenía el foco antes de abrir el modal, para
 // devolvérselo al cerrar — sin esto, alguien navegando con teclado perdía
 // su lugar en la página cada vez que cerraba el selector.
 let selectorLastFocused = null;
+// Si el modal se cierra con history.back() (para quitar el #modal de la
+// URL), lo que tenga que pasar después —como bajar al detalle— espera a
+// que termine ese regreso: el navegador restaura la posición de scroll al
+// volver en el historial y pisaría cualquier desplazamiento hecho antes.
+let selectorAfterClose = null;
+let selectorClosingViaHistory = false;
+
 function showSelector() {
   if (!selectorModal) return;
   selectorLastFocused = document.activeElement;
   selectorModal.classList.add("active");
   selectorModal.setAttribute("aria-hidden", "false");
-  document.body.style.overflow = "hidden";
+  // En <html> y <body>: Safari en iPhone ignora el overflow:hidden si solo
+  // va en <body> y la página de atrás seguía desplazándose.
+  document.documentElement.classList.add("modal-abierto");
   applySelectorMode("all");
-  selectorClose?.focus();
+  selectorClose?.focus({ preventScroll: true });
+  // El botón "atrás" del teléfono cierra el modal en vez de salir del sitio.
+  if (window.location.hash !== "#modal") {
+    history.pushState(null, "", "#modal");
+  }
 }
-function hideSelector() {
-  if (!selectorModal) return;
+function hideSelector(opts) {
+  if (!selectorModal || !selectorModal.classList.contains("active")) {
+    if (opts && typeof opts.then === "function") opts.then();
+    return;
+  }
+  const fromPop = opts === true;
+  const then = opts && typeof opts.then === "function" ? opts.then : null;
+  const restoreFocus = !(opts && opts.restoreFocus === false);
   selectorModal.classList.remove("active");
   selectorModal.setAttribute("aria-hidden", "true");
-  document.body.style.overflow = "";
-  if (selectorLastFocused && document.contains(selectorLastFocused)) selectorLastFocused.focus();
+  document.documentElement.classList.remove("modal-abierto");
+  if (restoreFocus && selectorLastFocused && document.contains(selectorLastFocused)) {
+    selectorLastFocused.focus({ preventScroll: true });
+  }
   selectorLastFocused = null;
+  if (!fromPop && window.location.hash === "#modal") {
+    selectorAfterClose = then;
+    selectorClosingViaHistory = true;
+    history.back();
+    // Respaldo por si el navegador no dispara popstate.
+    setTimeout(() => { if (selectorClosingViaHistory) finishSelectorClose(); }, 400);
+  } else if (then) {
+    then();
+  }
 }
-selectorOverlay && selectorOverlay.addEventListener("click", hideSelector);
-selectorClose && selectorClose.addEventListener("click", hideSelector);
+function finishSelectorClose() {
+  selectorClosingViaHistory = false;
+  const fn = selectorAfterClose;
+  selectorAfterClose = null;
+  if (fn) requestAnimationFrame(fn);
+}
+selectorOverlay && selectorOverlay.addEventListener("click", () => hideSelector());
+selectorClose && selectorClose.addEventListener("click", () => hideSelector());
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && selectorModal?.classList.contains("active")) hideSelector();
+  if (!selectorModal?.classList.contains("active")) return;
+  if (e.key === "Escape") { hideSelector(); return; }
+  // Retención del foco: con aria-modal, Tab no debe salir a la página de
+  // atrás (antes 11 de cada 20 Tab terminaban fuera del modal).
+  if (e.key === "Tab") {
+    const panel = selectorModal.querySelector(".selector-panel");
+    const focusables = Array.from(panel.querySelectorAll("button, a[href], input, select, [tabindex]:not([tabindex=\"-1\"])"))
+      .filter((el) => !el.disabled && el.offsetParent !== null);
+    if (!focusables.length) return;
+    const first = focusables[0], last = focusables[focusables.length - 1];
+    if (e.shiftKey && (document.activeElement === first || !panel.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (document.activeElement === last || !panel.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+  }
 });
+window.addEventListener("popstate", () => {
+  if (selectorClosingViaHistory) { finishSelectorClose(); return; }
+  if (selectorModal?.classList.contains("active") && window.location.hash !== "#modal") {
+    hideSelector(true);
+  }
+});
+// Si se recarga la página con #modal en la URL, el modal no está abierto:
+// se limpia para que "atrás" no se quede atorado en esa entrada.
+if (window.location.hash === "#modal") {
+  history.replaceState(null, "", window.location.pathname + window.location.search);
+}
 document.querySelectorAll(".open-material-selector, [data-open-selector]").forEach((btn) => {
   btn.addEventListener("click", (e) => { e.preventDefault(); showSelector(); });
 });
@@ -535,22 +559,21 @@ function applySelectorMode(mode) {
   document.querySelectorAll(".mode-btn").forEach((b) => {
     const active = b.dataset.mode === mode;
     b.classList.toggle("is-active", active);
-    b.setAttribute("aria-selected", active ? "true" : "false");
+    b.setAttribute("aria-pressed", active ? "true" : "false");
   });
   document.querySelectorAll(".selector-btn").forEach((b) => {
     const show = mode === "all" || b.dataset.group === mode;
     b.classList.toggle("is-hidden", !show);
   });
 }
-// Patrón de teclado APG para grupos de pestañas (role="tablist"): con el
-// foco en una pestaña, las flechas mueven el foco Y activan la vecina
-// (Home/End van a la primera/última). Se usa aquí y en el filtro de
-// sucursales por estado — antes los botones tenían role="tab" pero no
-// respondían a las flechas, solo a Tab+Enter/Espacio.
-function wireTablistArrowKeys(tablistEl) {
-  if (!tablistEl) return;
-  tablistEl.addEventListener("keydown", (e) => {
-    const tabs = Array.from(tablistEl.querySelectorAll('[role="tab"]'));
+// Grupos de filtros (botones con aria-pressed): además de Tab, las flechas
+// mueven el foco Y activan el filtro vecino (Home/End: primero/último).
+// Antes eran role="tab" sin paneles, que para un lector de pantalla
+// prometía pestañas que no existían.
+function wireFilterArrowKeys(groupEl) {
+  if (!groupEl) return;
+  groupEl.addEventListener("keydown", (e) => {
+    const tabs = Array.from(groupEl.querySelectorAll("button[aria-pressed]"));
     const currentIndex = tabs.indexOf(document.activeElement);
     if (currentIndex === -1) return;
     let nextIndex = null;
@@ -564,7 +587,7 @@ function wireTablistArrowKeys(tablistEl) {
     tabs[nextIndex].click();
   });
 }
-wireTablistArrowKeys(document.querySelector(".selector-modes"));
+wireFilterArrowKeys(document.querySelector(".selector-modes"));
 
 /* ---------- Detalle de material (unifica tipos de celular + otros materiales) ---------- */
 const materialDetail = document.getElementById("materialDetail");
@@ -578,68 +601,99 @@ let carouselTimer = null;
 let detailLastFocused = null;
 function openMaterialDetailPanel() {
   const wasActive = materialDetail.classList.contains("active");
-  if (!wasActive) detailLastFocused = document.activeElement;
+  // Si se llegó desde el modal, el foco "de origen" es el botón que abrió
+  // el modal, no el botón del modal (que queda oculto al cerrarse).
+  if (!wasActive) {
+    detailLastFocused = selectorModal?.contains(document.activeElement) ? selectorLastFocused : document.activeElement;
+  }
   materialDetail.classList.add("active");
-  if (!wasActive) document.getElementById("detailBack")?.focus();
+  // setCarousel() corre antes de que el detalle esté abierto; el avance
+  // automático arranca ahora que ya se ve.
+  resetCarouselAutoplay();
+  // preventScroll: el foco no debe provocar un salto brusco; el
+  // desplazamiento suave hasta el detalle lo hace selectMaterial().
+  if (!wasActive) document.getElementById("detailBack")?.focus({ preventScroll: true });
+}
+
+function openWhatsAppFor(message) {
+  window.open(waLink(message), "_blank", "noopener");
 }
 
 function selectMaterial(materialId) {
   if (materialId === "otro") {
-    window.open(waLink("Hola, tengo material electrónico que no aparece en el catálogo, ¿me pueden cotizar?"), "_blank", "noopener");
     hideSelector();
+    openWhatsAppFor("Hola, tengo material electrónico que no aparece en el catálogo, ¿me pueden cotizar?");
     return;
   }
   const material = getMaterial(materialId);
-  hideSelector();
   // Un material marcado como "sin ficha propia" (por ejemplo, uno recién
   // agregado desde el panel, sin tipos ni fotos todavía) manda directo a
   // WhatsApp en vez de abrir un detalle que no tendría nada que mostrar.
   if (material && material.directContact) {
-    window.open(waLink(`Hola, tengo ${material.name.toLowerCase()} para vender, ¿me pueden cotizar?`), "_blank", "noopener");
+    hideSelector();
+    openWhatsAppFor(`Hola, tengo ${material.name.toLowerCase()} para vender, ¿me pueden cotizar?`);
     return;
   }
-  if (materialId === "celular") {
-    showCelularTypes("tipo1");
-  } else {
-    showOtherMaterial(materialId);
+  const shown = materialId === "celular" ? showCelularTypes(bestCelularType()?.id) : showOtherMaterial(materialId);
+  if (!shown) {
+    // Sin ficha que mostrar: antes el modal se cerraba y no pasaba nada.
+    hideSelector();
+    openWhatsAppFor(`Hola, tengo ${material ? material.name.toLowerCase() : "material"} para vender, ¿me pueden cotizar?`);
+    return;
   }
-  materialDetail.scrollIntoView({ behavior: "smooth", block: "start" });
+  // El foco va al detalle (no de regreso al botón que abrió el modal) y el
+  // desplazamiento espera a que el modal termine de cerrarse.
+  hideSelector({
+    restoreFocus: false,
+    then: () => materialDetail.scrollIntoView({ behavior: scrollBehavior(), block: "start" }),
+  });
 }
 
 function showCelularTypes(typeId) {
   const tabsWrap = document.getElementById("detailTabs");
   const celularTypes = PRICES?.celularTypes || [];
   const type = celularTypes.find((t) => t.id === typeId) || celularTypes[0];
-  if (!type) return; // sin tipos configurados, no hay nada que mostrar
+  if (!type) return false; // sin tipos configurados, no hay nada que mostrar
+  // Si el foco estaba en una pestaña, se devuelve a la nueva pestaña
+  // activa: al volver a pintar las pestañas, el botón enfocado se destruía
+  // y el teclado quedaba "perdido" al inicio de la página.
+  const focusInTabs = tabsWrap.contains(document.activeElement);
 
   document.getElementById("detailEyebrow").textContent = "Lógica de celular";
   document.getElementById("detailTitle").textContent = "Tipos y precios según características";
 
   tabsWrap.hidden = false;
   tabsWrap.innerHTML = celularTypes.map((t) => `
-    <button type="button" class="type-tab ${t.id === type.id ? "is-active" : ""}" data-type="${esc(t.id)}">
+    <button type="button" class="type-tab ${t.id === type.id ? "is-active" : ""}" data-type="${esc(t.id)}" aria-pressed="${t.id === type.id}">
       <span class="tab-label">${esc(t.label)}</span>
-      <span class="tab-price">${formatPrice(t.min, t.max)}</span>
+      <span class="tab-price">${esc(formatPrice(t.min, t.max))}</span>
     </button>
   `).join("");
   tabsWrap.querySelectorAll(".type-tab").forEach((tab) => {
     tab.addEventListener("click", () => showCelularTypes(tab.dataset.type));
   });
+  if (focusInTabs) tabsWrap.querySelector(".type-tab.is-active")?.focus({ preventScroll: true });
 
   document.getElementById("detailInfoEyebrow").textContent = type.shortLabel;
   document.getElementById("detailCaption").textContent = `Referencia · ${type.label}`;
   document.getElementById("detailPrice").textContent = formatPrice(type.min, type.max);
-  document.getElementById("detailSpecs").innerHTML = type.specs.map((s) => `<li><i class="bi bi-check2"></i><span>${esc(s)}</span></li>`).join("");
+  document.getElementById("detailSpecs").innerHTML = (type.specs || []).map((s) => `<li><i class="bi bi-check2" aria-hidden="true"></i><span>${esc(s)}</span></li>`).join("");
   document.getElementById("detailWaLink").href = waLink(`Hola, tengo lógica de celular (${type.shortLabel}) para vender.`);
 
   setCarousel(getGalleryImages(type.galleryCategory));
   openMaterialDetailPanel();
+  return true;
 }
 
 function showOtherMaterial(materialId) {
-  const data = (PRICES?.otherMaterials || []).find((o) => o.id === materialId);
+  // La ficha se busca por el material al que pertenece (priceId), que es
+  // como la relaciona el panel; las fichas creadas desde ahí tienen un id
+  // propio ("ficha-…") distinto del material, y buscando por id no se
+  // abrían. Se conserva la búsqueda por id para las fichas antiguas.
+  const fichas = PRICES?.otherMaterials || [];
+  const data = fichas.find((o) => o.priceId === materialId) || fichas.find((o) => o.id === materialId);
   const price = getMaterial(data ? data.priceId : materialId);
-  if (!data || !price) return;
+  if (!data || !price) return false;
 
   document.getElementById("detailTabs").hidden = true;
   document.getElementById("detailTabs").innerHTML = "";
@@ -649,20 +703,37 @@ function showOtherMaterial(materialId) {
   document.getElementById("detailInfoEyebrow").textContent = "Consideraciones importantes";
   document.getElementById("detailCaption").textContent = `Referencia · ${data.eyebrow}`;
   document.getElementById("detailPrice").textContent = formatPrice(price.min, price.max, price.unit);
-  document.getElementById("detailSpecs").innerHTML = data.specs.map((s) => `<li><i class="bi bi-check2"></i><span>${esc(s)}</span></li>`).join("");
-  document.getElementById("detailWaLink").href = waLink(`Hola, tengo ${data.eyebrow.toLowerCase()} para vender.`);
+  document.getElementById("detailSpecs").innerHTML = (data.specs || []).map((s) => `<li><i class="bi bi-check2" aria-hidden="true"></i><span>${esc(s)}</span></li>`).join("");
+  document.getElementById("detailWaLink").href = waLink(`Hola, tengo ${String(data.eyebrow || price.name).toLowerCase()} para vender.`);
 
   setCarousel(getGalleryImages(data.galleryCategory));
   openMaterialDetailPanel();
+  return true;
 }
 
 function setCarousel(images) {
-  carouselImages = images && images.length ? images : [{ src: "Galeria/logica_celular.webp", alt: "Referencia" }];
+  carouselImages = images && images.length ? images : [];
   carouselIndex = 0;
   const track = document.getElementById("carouselTrack");
   const dots = document.getElementById("carouselDots");
-  track.innerHTML = carouselImages.map((img) => `<img src="${esc(img.src)}" alt="${esc(img.alt || "")}" loading="lazy" />`).join("");
-  dots.innerHTML = carouselImages.map((_, i) => `<button class="carousel-dot ${i === 0 ? "is-active" : ""}" data-index="${i}" aria-label="Imagen ${i + 1}"></button>`).join("");
+  // Un material sin fotos propias (como tablet) mostraba fotos de placas de
+  // celular: ahora se dice que las fotos vienen en camino.
+  if (!carouselImages.length) {
+    track.style.transform = "";
+    track.innerHTML = `<div class="carousel-vacio"><i class="bi bi-camera" aria-hidden="true"></i><span>Fotos reales de este material, próximamente.</span></div>`;
+    dots.innerHTML = "";
+    ["carouselPrev", "carouselNext"].forEach((id) => { const b = document.getElementById(id); if (b) b.hidden = true; });
+    dots.hidden = true;
+    resetCarouselAutoplay();
+    return;
+  }
+  // La primera foto sin lazy: es la que se ve al abrir el detalle.
+  track.innerHTML = carouselImages.map((img, i) => `<img src="${esc(img.src)}" alt="${esc(img.alt || "")}" ${i ? "loading=\"lazy\"" : ""} decoding="async" />`).join("");
+  dots.innerHTML = carouselImages.map((_, i) => `<button type="button" class="carousel-dot ${i === 0 ? "is-active" : ""}" data-index="${i}" aria-label="Imagen ${i + 1} de ${carouselImages.length}"></button>`).join("");
+  // Con una sola foto, las flechas y los puntos no sirven para nada.
+  const single = carouselImages.length < 2;
+  ["carouselPrev", "carouselNext"].forEach((id) => { const b = document.getElementById(id); if (b) b.hidden = single; });
+  dots.hidden = single;
   dots.querySelectorAll(".carousel-dot").forEach((dot) => dot.addEventListener("click", () => goToSlide(Number(dot.dataset.index))));
   updateCarouselPosition();
   resetCarouselAutoplay();
@@ -675,35 +746,67 @@ function updateCarouselPosition() {
   document.querySelectorAll(".carousel-dot").forEach((dot, i) => dot.classList.toggle("is-active", i === carouselIndex));
 }
 function goToSlide(index) {
+  if (!carouselImages.length) return;
   carouselIndex = (index + carouselImages.length) % carouselImages.length;
   updateCarouselPosition();
   resetCarouselAutoplay();
 }
+// El avance automático se detiene cuando no tiene sentido o molesta: con
+// "reducir movimiento" (WCAG 2.2.2), con la pestaña en segundo plano, con
+// el detalle cerrado, con el puntero o el foco del teclado encima.
+let carouselPaused = false;
+function carouselCanAutoplay() {
+  let reduced = false;
+  try { reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (_e) {}
+  return carouselImages.length > 1 && !reduced && !document.hidden && !carouselPaused
+    && materialDetail && materialDetail.classList.contains("active");
+}
 function resetCarouselAutoplay() {
   if (carouselTimer) clearInterval(carouselTimer);
-  if (carouselImages.length < 2) return;
+  carouselTimer = null;
+  if (!carouselCanAutoplay()) return;
   carouselTimer = setInterval(() => goToSlide(carouselIndex + 1), 5000);
 }
+document.addEventListener("visibilitychange", resetCarouselAutoplay);
 
 document.getElementById("carouselPrev")?.addEventListener("click", () => goToSlide(carouselIndex - 1));
 document.getElementById("carouselNext")?.addEventListener("click", () => goToSlide(carouselIndex + 1));
 const carouselViewport = document.getElementById("carouselViewport");
 if (carouselViewport) {
-  carouselViewport.addEventListener("mouseenter", () => carouselTimer && clearInterval(carouselTimer));
-  carouselViewport.addEventListener("mouseleave", resetCarouselAutoplay);
-  let touchStartX = 0;
-  carouselViewport.addEventListener("touchstart", (e) => { touchStartX = e.touches[0].clientX; }, { passive: true });
+  const pause = (v) => () => { carouselPaused = v; resetCarouselAutoplay(); };
+  carouselViewport.addEventListener("mouseenter", pause(true));
+  carouselViewport.addEventListener("mouseleave", pause(false));
+  carouselViewport.addEventListener("focusin", pause(true));
+  carouselViewport.addEventListener("focusout", pause(false));
+  let touchStartX = 0, touchStartY = 0;
+  carouselViewport.addEventListener("touchstart", (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
   carouselViewport.addEventListener("touchend", (e) => {
     const dx = e.changedTouches[0].clientX - touchStartX;
-    if (Math.abs(dx) > 40) goToSlide(carouselIndex + (dx < 0 ? 1 : -1));
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    // Solo cuenta como deslizar si el gesto fue sobre todo horizontal: un
+    // scroll vertical que empezaba sobre la foto cambiaba de imagen.
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) goToSlide(carouselIndex + (dx < 0 ? 1 : -1));
   }, { passive: true });
 }
 
 function closeDetail() {
   materialDetail.classList.remove("active");
   if (carouselTimer) clearInterval(carouselTimer);
-  if (detailLastFocused && document.contains(detailLastFocused)) detailLastFocused.focus();
+  carouselTimer = null;
+  // De regreso a donde estaba el visitante (la tarjeta de precio o el
+  // botón que abrió el selector); si llegó por un enlace directo
+  // (?material=ram), a la sección de precios.
+  const target = detailLastFocused && document.contains(detailLastFocused) ? detailLastFocused : null;
   detailLastFocused = null;
+  if (target) {
+    target.focus({ preventScroll: true });
+    target.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
+  } else {
+    document.getElementById("precios")?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
+  }
 }
 // Ni el enlace de arriba ("← Elegir otro material") ni el botón de abajo
 // reabren ya el selector: para un admin/visitante que ya está viendo un
@@ -715,31 +818,190 @@ function closeDetail() {
 document.getElementById("detailBack")?.addEventListener("click", () => { closeDetail(); });
 
 /* ---------- Galería general ---------- */
-function renderGalleryGeneral() {
-  const grid = document.getElementById("galleryGeneral");
-  if (!grid) return;
-  const images = getGalleryImages("operacion");
-  if (!images.length) {
-    grid.innerHTML = `<p style="grid-column:1/-1;text-align:center;padding:24px;color:var(--ink-soft);">Fotos de lotes recibidos próximamente.</p>`;
-    return;
-  }
-  grid.innerHTML = images.map((img, i) => `
-    <article class="gallery-card reveal ${i ? "delay-" + Math.min(i, 3) : ""}">
-      <img src="${esc(img.src)}" alt="${esc(img.alt || "Lote recibido")}" loading="lazy" onerror="this.parentElement.style.display='none'" />
-    </article>
-  `).join("");
-  observeReveals();
+/* La galería mostraba SOLO la categoría "operacion": tres fotos de las casi
+   cuarenta que hay cargadas desde el panel. Ahora junta todas las
+   categorías y deja filtrarlas, igual que las sucursales — así se ve el
+   material de verdad y las fotos que se suben no quedan escondidas. */
+let GALERIA_FILTRO = "todas";
+
+function galeriaTodasLasFotos() {
+  // Se guarda de qué categoría viene cada foto para poder filtrar sin
+  // volver a recorrer el JSON en cada clic.
+  return (GALLERY?.categories || []).flatMap((c) => {
+    const nombre = c.label || c.id;
+    const total = (c.images || []).length;
+    return (c.images || []).map((img, i) => {
+      const generico = !img.alt || img.alt.trim() === nombre;
+      const alt = generico ? `${nombre}: lote recibido${total > 1 ? `, foto ${i + 1} de ${total}` : ""}` : img.alt;
+      return { ...img, alt, categoria: c.id, categoriaNombre: nombre };
+    });
+  });
 }
 
+function renderGalleryGeneral() {
+  const grid = document.getElementById("galleryGeneral");
+  const filtros = document.getElementById("galleryFilters");
+  if (!grid) return;
+
+  const todas = galeriaTodasLasFotos();
+  if (!todas.length) {
+    grid.innerHTML = `<p style="grid-column:1/-1;text-align:center;padding:24px;color:var(--ink-soft);">Fotos de lotes recibidos próximamente.</p>`;
+    if (filtros) filtros.innerHTML = "";
+    return;
+  }
+
+  // --- Botones de filtro, uno por categoría que tenga fotos ---
+  if (filtros && !filtros.dataset.listo) {
+    const cats = (GALLERY?.categories || []).filter((c) => (c.images || []).length);
+    filtros.innerHTML =
+      `<button type="button" class="galeria-filtro is-active" data-cat="todas" aria-pressed="true">Todas <span class="galeria-cuenta">${todas.length}</span></button>` +
+      cats.map((c) => `<button type="button" class="galeria-filtro" data-cat="${esc(c.id)}" aria-pressed="false">${esc(c.label || c.id)} <span class="galeria-cuenta">${c.images.length}</span></button>`).join("");
+    filtros.dataset.listo = "1";
+    wireFilterArrowKeys(filtros);
+    filtros.addEventListener("click", (e) => {
+      const btn = e.target.closest(".galeria-filtro");
+      if (!btn) return;
+      GALERIA_FILTRO = btn.dataset.cat || "todas";
+      filtros.querySelectorAll(".galeria-filtro").forEach((b) => {
+        const activo = b === btn;
+        b.classList.toggle("is-active", activo);
+        b.setAttribute("aria-pressed", activo ? "true" : "false");
+      });
+      pintarFotosGaleria();
+    });
+  }
+
+  pintarFotosGaleria();
+}
+
+// Cuántas fotos se muestran de entrada y cuántas más con "Ver más fotos".
+// Antes se pintaban las 39 de golpe: en el teléfono eran ~3,000 px de
+// fotos seguidas que casi nadie recorre.
+let GALERIA_VISIBLES = [];
+let GALERIA_MOSTRADAS = 0;
+function galeriaPaso() {
+  try { return window.matchMedia("(max-width: 700px)").matches ? 8 : 12; } catch (_e) { return 12; }
+}
+function tarjetaGaleria(img, i) {
+  return `
+    <article class="gallery-card brillo-borde reveal ${i % 4 ? "delay-" + Math.min(i % 4, 3) : ""}">
+      <button type="button" class="gallery-open" data-i="${i}" aria-label="Ver en grande: ${esc(img.alt)}">
+        <img src="${esc(img.src)}" alt="${esc(img.alt)}" loading="lazy" decoding="async" onerror="this.closest('.gallery-card').style.display='none'" />
+        <span class="gallery-zoom" aria-hidden="true"><i class="bi bi-arrows-fullscreen"></i></span>
+      </button>
+      <span class="gallery-cat-tag">${esc(img.categoriaNombre)}</span>
+    </article>`;
+}
+function actualizarBotonMas() {
+  const mas = document.getElementById("galleryMore");
+  if (!mas) return;
+  const restantes = GALERIA_VISIBLES.length - GALERIA_MOSTRADAS;
+  mas.hidden = restantes <= 0;
+  mas.textContent = `Ver más fotos (${restantes})`;
+}
+function pintarFotosGaleria() {
+  const grid = document.getElementById("galleryGeneral");
+  if (!grid) return;
+  const todas = galeriaTodasLasFotos();
+  GALERIA_VISIBLES = GALERIA_FILTRO === "todas"
+    ? todas
+    : todas.filter((img) => img.categoria === GALERIA_FILTRO);
+  GALERIA_MOSTRADAS = Math.min(galeriaPaso(), GALERIA_VISIBLES.length);
+
+  // Con un filtro puesto, la etiqueta de cada foto repetiría lo que ya
+  // dice el botón activo; el CSS la esconde con esta clase.
+  grid.classList.toggle("filtrada", GALERIA_FILTRO !== "todas");
+  grid.innerHTML = GALERIA_VISIBLES.slice(0, GALERIA_MOSTRADAS).map(tarjetaGaleria).join("");
+  actualizarBotonMas();
+  observeReveals();
+  if (window.__KIT__) window.__KIT__.reenganchar();
+}
+function mostrarMasFotos() {
+  const grid = document.getElementById("galleryGeneral");
+  if (!grid) return;
+  const desde = GALERIA_MOSTRADAS;
+  GALERIA_MOSTRADAS = Math.min(GALERIA_VISIBLES.length, desde + galeriaPaso());
+  grid.insertAdjacentHTML("beforeend", GALERIA_VISIBLES.slice(desde, GALERIA_MOSTRADAS).map((img, k) => tarjetaGaleria(img, desde + k)).join(""));
+  actualizarBotonMas();
+  observeReveals();
+  // El foco pasa a la primera foto nueva: con teclado se sigue desde ahí.
+  grid.querySelector(`.gallery-open[data-i="${desde}"]`)?.focus({ preventScroll: true });
+}
+document.getElementById("galleryMore")?.addEventListener("click", mostrarMasFotos);
+document.getElementById("galleryGeneral")?.addEventListener("click", (e) => {
+  const btn = e.target.closest(".gallery-open");
+  if (btn) abrirVisor(Number(btn.dataset.i), btn);
+});
+
+/* ---------- Visor de fotos a pantalla completa ----------
+   <dialog> nativo: retiene el foco, se cierra con Esc y queda por encima
+   de todo sin pelear con z-index. Flechas del teclado, botones y deslizar
+   con el dedo recorren las fotos del filtro activo (no solo las que ya se
+   mostraron en la rejilla). */
+const visor = document.getElementById("visorGaleria");
+let visorIndice = 0;
+let visorOrigen = null;
+function mostrarEnVisor(i) {
+  if (!visor || !GALERIA_VISIBLES.length) return;
+  visorIndice = (i + GALERIA_VISIBLES.length) % GALERIA_VISIBLES.length;
+  const img = GALERIA_VISIBLES[visorIndice];
+  const el = document.getElementById("visorImg");
+  el.src = img.src;
+  el.alt = img.alt || "";
+  document.getElementById("visorTitulo").textContent = img.categoriaNombre || "";
+  document.getElementById("visorCuenta").textContent = `${visorIndice + 1} / ${GALERIA_VISIBLES.length}`;
+  // Precarga la siguiente para que el cambio sea instantáneo.
+  const sig = GALERIA_VISIBLES[(visorIndice + 1) % GALERIA_VISIBLES.length];
+  if (sig) { const pre = new Image(); pre.src = sig.src; }
+}
+function abrirVisor(i, origen) {
+  if (!visor || typeof visor.showModal !== "function") return;
+  visorOrigen = origen || null;
+  mostrarEnVisor(i);
+  visor.showModal();
+  document.documentElement.classList.add("modal-abierto");
+}
+function cerrarVisor() {
+  if (visor && visor.open) visor.close();
+}
+if (visor) {
+  visor.addEventListener("close", () => {
+    document.documentElement.classList.remove("modal-abierto");
+    if (visorOrigen && document.contains(visorOrigen)) visorOrigen.focus({ preventScroll: true });
+  });
+  document.getElementById("visorCerrar")?.addEventListener("click", cerrarVisor);
+  document.getElementById("visorPrev")?.addEventListener("click", () => mostrarEnVisor(visorIndice - 1));
+  document.getElementById("visorNext")?.addEventListener("click", () => mostrarEnVisor(visorIndice + 1));
+  // Clic en el fondo oscuro (fuera de la foto y los controles) cierra.
+  visor.addEventListener("click", (e) => { if (e.target === visor || e.target.id === "visorEscena") cerrarVisor(); });
+  visor.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight") { e.preventDefault(); mostrarEnVisor(visorIndice + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); mostrarEnVisor(visorIndice - 1); }
+  });
+  let x0 = 0, y0 = 0;
+  visor.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  visor.addEventListener("touchend", (e) => {
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) mostrarEnVisor(visorIndice + (dx < 0 ? 1 : -1));
+    else if (dy > 90 && Math.abs(dy) > Math.abs(dx) * 1.5) cerrarVisor(); // deslizar hacia abajo cierra
+  }, { passive: true });
+}
+
+// Portada de cada tarjeta: primero por id de la sucursal (Acapulco tiene
+// la suya) y luego por estado. Lo que no tenga portada propia usa la de la
+// comunidad: antes Chilpancingo mostraba la foto de Acapulco.
 const BRANCH_PORTADAS = {
-  puebla: "icons/portadas/portada-puebla.jpg",
-  aguascalientes: "icons/portadas/portada-aguascalientes.jpg",
-  veracruz: "icons/portadas/portada-veracruz.jpg",
-  guanajuato: "icons/portadas/portada-guanajuato.jpg",
-  guerrero: "icons/portadas/portada-acapulco.jpg",
-  cdmx: "icons/portadas/portada-cdmx.jpg",
-  mexico: "icons/portadas/portada-edomex.jpg"
+  acapulco: "icons/portadas/portada-acapulco.webp",
+  puebla: "icons/portadas/portada-puebla.webp",
+  aguascalientes: "icons/portadas/portada-aguascalientes.webp",
+  veracruz: "icons/portadas/portada-veracruz.webp",
+  guanajuato: "icons/portadas/portada-guanajuato.webp",
+  cdmx: "icons/portadas/portada-cdmx.webp",
+  mexico: "icons/portadas/portada-edomex.webp"
 };
+// Nombres cortos para los chips de filtro (el nombre completo va en la
+// tarjeta). Un estado que no esté aquí usa su nombre oficial.
+const ESTADO_CORTO = { cdmx: "CDMX", mexico: "EdoMéx" };
 
 /* ---------- Sucursales y contacto directo ----------
    El título de cada tarjeta es el ESTADO; debajo, según el tipo, se muestra
@@ -750,66 +1012,106 @@ function renderBranches() {
   const grid = document.getElementById("sucursalesGrid");
   if (!grid) return;
   const branches = (BRANCHES && BRANCHES.branches) || [];
+  actualizarPlazas(branches.filter((b) => b.activo !== false).length);
   grid.innerHTML = branches.map((b, i) => {
     const isSucursal = b.kind === "sucursal";
     const title = getStateName(b.estado) || b.cobertura || b.ubicacion || "México";
     const subtitle = isSucursal ? (b.local ? `Sucursal · ${b.local}` : "Sucursal") : (b.nombre || "Contacto directo");
     const icon = isSucursal ? "bi-shop" : "bi-geo-alt";
     const metaLine = isSucursal ? (b.ubicacion || "") : (b.cobertura || "");
-    const canWrite = b.activo !== false && b.whatsapp;
-    const portadaSrc = BRANCH_PORTADAS[b.estado] || "icons/portadas/portada-comunidad.jpg";
+    // Solo con un número válido: uno mal capturado abría "este número no
+    // existe" en WhatsApp (pasó con el de CDMX, de 11 dígitos).
+    const canWrite = b.activo !== false && isWaNumber(b.whatsapp);
+    const portadaSrc = BRANCH_PORTADAS[b.id] || BRANCH_PORTADAS[b.estado] || "icons/portadas/portada-comunidad.webp";
+    // El mensaje dice "sucursal" solo cuando lo es; a un contacto de
+    // recolección a domicilio no se le entrega nada "en la sucursal".
+    const donde = isSucursal ? `la sucursal de ${title}` : (b.cobertura || title);
+    const saludo = "Hola " + (b.nombre ? b.nombre + ", " : "");
     // isSafeHttpUrl() bloquea esquemas peligrosos (javascript:, data:, etc.)
     // — sin esto, un enlace de grupo guardado con ese esquema se ejecutaría
     // al hacer clic cualquier visitante del sitio.
     const groupLink = b.grupoUrl && isSafeHttpUrl(b.grupoUrl)
-      ? esc(b.grupoUrl)
-      : (b.whatsapp ? waLinkTo(b.whatsapp, "Hola " + (b.nombre ? b.nombre + ", " : "") + "me interesa unirme al grupo oficial de WhatsApp de " + title) : "");
+      ? b.grupoUrl
+      : (canWrite ? waLinkTo(b.whatsapp, saludo + "me interesa unirme al grupo oficial de WhatsApp de " + title) : "");
+    // Un solo botón de WhatsApp con el número a la vista (antes el número
+    // y "Escribir a encargado" eran dos enlaces al MISMO chat). El avatar
+    // del grupo va dentro del botón del grupo, que es donde se reconoce:
+    // como insignia de la tarjeta, a 48 px, los 9 avatares se veían iguales.
+    const telefono = formatMexPhone(b.whatsapp);
+    const encargado = b.nombre ? b.nombre : "";
     return `
-    <article class="sucursal-card reveal ${i ? "delay-" + Math.min(i, 3) : ""} ${b.primary ? "is-primary" : ""}" data-estado="${esc(b.estado || "")}">
+    <article class="sucursal-card brillo-borde reveal ${i ? "delay-" + Math.min(i, 3) : ""} ${b.primary ? "is-primary" : ""}" data-estado="${esc(b.estado || "")}">
       <div class="sucursal-top">
-        <div><h3>${esc(title)}</h3><p>${esc(subtitle)}</p></div>
-        <div class="sucursal-badge-wrap" title="Plaza oficial ${esc(title)}">
-          <img src="${portadaSrc}" alt="${esc(title)}" class="sucursal-badge-img" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';" />
-          <span class="sucursal-icon" style="display:none;"><i class="bi ${icon}"></i></span>
-        </div>
+        <span class="sucursal-icon"><i class="bi ${icon}" aria-hidden="true"></i></span>
+        <div class="sucursal-head"><h3>${esc(title)}</h3><p>${esc(subtitle)}</p></div>
       </div>
       <div class="sucursal-bottom">
-        ${metaLine ? `<p class="sucursal-meta">${esc(metaLine)}</p>` : ""}
-        ${isSucursal ? `<p class="sucursal-encargado">${esc(b.nombre || "Próximamente")}</p>` : ""}
+        ${metaLine ? `<p class="sucursal-meta"><i class="bi ${isSucursal ? "bi-shop-window" : "bi-signpost-2"}" aria-hidden="true"></i><span>${esc(metaLine)}</span></p>` : ""}
+        ${isSucursal && encargado ? `<p class="sucursal-encargado">Encargado: ${esc(encargado)}</p>` : ""}
         ${canWrite
-          ? `<a class="sucursal-tel is-link" href="${waLinkTo(b.whatsapp, "Hola, tengo material para entregar en la sucursal de " + title)}" target="_blank" rel="noopener"><i class="bi bi-telephone-fill"></i> ${esc(formatMexPhone(b.whatsapp))}</a>
-             <div class="sucursal-actions">
-               <a class="btn btn-sm sucursal-wa-btn" href="${waLinkTo(b.whatsapp, "Hola " + (b.nombre ? b.nombre + ", " : "") + "me interesa entregar o cotizar material en la sucursal de " + title)}" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Escribir a encargado</a>
-               <a class="btn btn-sm sucursal-group-btn" href="${groupLink}" target="_blank" rel="noopener"><i class="bi bi-people-fill"></i> Grupo de WhatsApp · ${esc(title)}</a>
+          ? `<div class="sucursal-actions">
+               <a class="btn sucursal-wa-btn" href="${esc(waLinkTo(b.whatsapp, saludo + "me interesa entregar o cotizar material en " + donde))}" target="_blank" rel="noopener noreferrer" aria-label="Escribir por WhatsApp ${encargado ? "a " + esc(encargado) + " " : ""}al ${esc(telefono)}, ${esc(title)}"><i class="bi bi-whatsapp" aria-hidden="true"></i><span class="sucursal-num">${esc(telefono)}</span></a>
+               ${groupLink ? `<a class="btn sucursal-group-btn" href="${esc(groupLink)}" target="_blank" rel="noopener noreferrer"><img class="sucursal-grupo-avatar" src="${esc(portadaSrc)}" alt="" width="24" height="24" loading="lazy" onerror="this.remove()" /> Unirme al grupo</a>` : ""}
              </div>`
-          : `<p class="sucursal-tel"><i class="bi bi-whatsapp"></i>Próximamente</p>`}
+          : `<p class="sucursal-proximamente"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Próximamente</p>`}
       </div>
     </article>`;
-  }).join("");
+  }).join("") + `<p class="sucursales-vacio" id="sucursalesVacio" hidden>No hay contactos en este estado todavía. Escríbenos al chat general y te atendemos.</p>`;
+  renderSucursalesChips(branches);
   initSucursalesFilter();
   observeReveals();
+}
+
+// Un chip por estado con contacto, en el orden en que aparecen en los
+// datos, con cuántos contactos tiene. "Todos" es el único fijo en el HTML.
+function renderSucursalesChips(branches) {
+  const bar = document.getElementById("sucursalesFilterBar");
+  if (!bar) return;
+  const counts = new Map();
+  branches.forEach((b) => { if (b.estado) counts.set(b.estado, (counts.get(b.estado) || 0) + 1); });
+  bar.querySelectorAll(".sucursal-filter-chip:not([data-filter=\"all\"])").forEach((c) => c.remove());
+  const todos = bar.querySelector("[data-filter=\"all\"]");
+  if (todos) {
+    todos.classList.add("is-active");
+    todos.setAttribute("aria-pressed", "true");
+  }
+  counts.forEach((n, estado) => {
+    const nombre = ESTADO_CORTO[estado] || getStateName(estado) || estado;
+    bar.insertAdjacentHTML("beforeend",
+      `<button type="button" class="sucursal-filter-chip" data-filter="${esc(estado)}" aria-pressed="false">${esc(nombre)}${n > 1 ? ` <span class="galeria-cuenta">${n}</span>` : ""}</button>`);
+  });
+}
+
+// La banda de garantías anunciaba "7 plazas" escrito a mano mientras
+// data/branches.json ya tenía 9. Se toma del mismo dato que pinta las
+// tarjetas (solo las activas), así no se puede volver a desfasar.
+function actualizarPlazas(total) {
+  const el = document.getElementById("trustPlazas");
+  if (el && total > 0) el.textContent = total;
 }
 
 function initSucursalesFilter() {
   const filterBar = document.getElementById("sucursalesFilterBar");
   if (!filterBar || filterBar.dataset.bound === "true") return;
   filterBar.dataset.bound = "true";
-  wireTablistArrowKeys(filterBar);
+  wireFilterArrowKeys(filterBar);
   filterBar.addEventListener("click", (e) => {
     const btn = e.target.closest(".sucursal-filter-chip");
     if (!btn) return;
     filterBar.querySelectorAll(".sucursal-filter-chip").forEach((b) => {
       const active = b === btn;
       b.classList.toggle("is-active", active);
-      b.setAttribute("aria-selected", active ? "true" : "false");
+      b.setAttribute("aria-pressed", active ? "true" : "false");
     });
     const filter = btn.dataset.filter || "all";
-    const cards = document.querySelectorAll(".sucursal-card");
-    cards.forEach((card) => {
-      const estado = card.dataset.estado;
-      const match = filter === "all" || estado === filter;
-      card.style.display = match ? "" : "none";
+    let visibles = 0;
+    document.querySelectorAll(".sucursal-card").forEach((card) => {
+      const match = filter === "all" || card.dataset.estado === filter;
+      card.hidden = !match;
+      if (match) visibles++;
     });
+    const vacio = document.getElementById("sucursalesVacio");
+    if (vacio) vacio.hidden = visibles > 0;
   });
 }
 
@@ -821,26 +1123,30 @@ function renderTeam() {
   const section = document.getElementById("equipo");
   const grid = document.getElementById("teamGrid");
   const navItem = document.getElementById("navTeamItem");
-  if (!section || !grid) return;
-  // Solo se muestra en el sitio público cuando alguien ya llenó su nombre
-  // desde el panel admin; nunca se inventa contenido de relleno.
+  
   const members = ((TEAM && TEAM.members) || []).filter((m) => (m.name || "").trim());
-  if (!members.length) {
-    section.hidden = true;
-    if (navItem) navItem.hidden = true;
+  const hasMembers = members.length > 0;
+  
+  if (navItem) navItem.hidden = !hasMembers;
+  
+  if (!section || !grid) return;
+  
+  if (!hasMembers) {
+    // En su propia página (nosotros.html) no se deja la sección en blanco.
+    grid.innerHTML = `<p class="team-vacio">Muy pronto conocerás aquí a nuestro equipo. Mientras tanto, escríbenos por WhatsApp.</p>`;
     return;
   }
+  
   section.hidden = false;
-  if (navItem) navItem.hidden = false;
   grid.innerHTML = members.map((m, i) => `
-    <article class="team-card reveal ${i ? "delay-" + Math.min(i, 3) : ""}">
+    <article class="team-card brillo-borde reveal ${i ? "delay-" + Math.min(i, 3) : ""}">
       <div class="team-photo">${m.photo ? `<img src="${esc(m.photo)}" alt="${esc(m.name)}" loading="lazy" />` : `<span class="team-photo-fallback">${esc(initials(m.name))}</span>`}</div>
       <h3 class="team-name">${esc(m.name)}</h3>
       <p class="team-role">${esc(m.role || "")}</p>
       <div class="team-contacts">
-        ${m.whatsapp ? `<a class="team-contact-link" href="${waLinkTo(m.whatsapp, "Hola, quiero contactarte por Eco Lógica García")}" target="_blank" rel="noopener" aria-label="WhatsApp de ${esc(m.name)}"><i class="bi bi-whatsapp"></i></a>` : ""}
-        ${m.email ? `<a class="team-contact-link" href="mailto:${esc(m.email)}" aria-label="Correo de ${esc(m.name)}"><i class="bi bi-envelope"></i></a>` : ""}
-        ${(m.social || []).filter((s) => isSafeHttpUrl(s.url)).map((s) => `<a class="team-contact-link" href="${esc(s.url)}" target="_blank" rel="noopener" aria-label="${esc(s.network)} de ${esc(m.name)}"><i class="bi ${SOCIAL_ICONS[s.network] || "bi-globe2"}"></i></a>`).join("")}
+        ${isWaNumber(m.whatsapp) ? `<a class="team-contact-link" href="${waLinkTo(m.whatsapp, "Hola, quiero contactarte por Eco Lógica García")}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp de ${esc(m.name)}"><i class="bi bi-whatsapp" aria-hidden="true"></i></a>` : ""}
+        ${m.email ? `<a class="team-contact-link" href="mailto:${esc(m.email)}" aria-label="Correo de ${esc(m.name)}"><i class="bi bi-envelope" aria-hidden="true"></i></a>` : ""}
+        ${(m.social || []).filter((s) => isSafeHttpUrl(s.url)).map((s) => `<a class="team-contact-link" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(s.network)} de ${esc(m.name)}"><i class="bi ${SOCIAL_ICONS[s.network] || "bi-globe2"}" aria-hidden="true"></i></a>`).join("")}
       </div>
     </article>
   `).join("");
@@ -853,8 +1159,8 @@ function renderSocial() {
   const links = ((SOCIAL && SOCIAL.links) || []).filter((l) => isSafeHttpUrl(l.url));
   document.querySelectorAll(".js-social-links").forEach((wrap) => {
     wrap.innerHTML = links.map((l) => `
-      <a class="social-link" href="${esc(l.url)}" target="_blank" rel="noopener" aria-label="${esc(l.label || l.network)}">
-        <i class="bi ${SOCIAL_ICONS[l.network] || "bi-globe2"}"></i>
+      <a class="social-link" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(l.label || l.network)}">
+        <i class="bi ${SOCIAL_ICONS[l.network] || "bi-globe2"}" aria-hidden="true"></i>
       </a>`).join("");
     wrap.hidden = links.length === 0;
   });
@@ -883,11 +1189,13 @@ function renderFAQ() {
   if (!list) return;
   list.innerHTML = FAQ_DATA.map((f, i) => `
     <div class="faq-item" data-index="${i}">
-      <button class="faq-q" type="button" aria-expanded="false" aria-controls="faq-panel-${i}">
-        <span>${f.q}</span>
-        <i class="bi bi-plus-lg" aria-hidden="true"></i>
-      </button>
-      <div class="faq-a" id="faq-panel-${i}"><p>${f.a}</p></div>
+      <h3 class="faq-h">
+        <button class="faq-q" type="button" id="faq-q-${i}" aria-expanded="false" aria-controls="faq-panel-${i}">
+          <span>${esc(f.q)}</span>
+          <i class="bi bi-plus-lg" aria-hidden="true"></i>
+        </button>
+      </h3>
+      <div class="faq-a" id="faq-panel-${i}" role="region" aria-labelledby="faq-q-${i}" aria-hidden="true" inert><p>${esc(f.a)}</p></div>
     </div>
   `).join("");
   list.querySelectorAll(".faq-item").forEach((item) => {
@@ -895,15 +1203,23 @@ function renderFAQ() {
     const a = item.querySelector(".faq-a");
     q.addEventListener("click", () => {
       const isOpen = item.classList.contains("is-open");
+      // Cerrada, la respuesta queda fuera del árbol accesible (aria-hidden)
+      // y del orden de Tab (inert): antes el lector de pantalla leía todas
+      // las respuestas aunque estuvieran "cerradas".
       list.querySelectorAll(".faq-item").forEach((other) => {
+        const otherA = other.querySelector(".faq-a");
         other.classList.remove("is-open");
-        other.querySelector(".faq-a").style.maxHeight = null;
+        otherA.style.maxHeight = null;
+        otherA.setAttribute("aria-hidden", "true");
+        otherA.inert = true;
         other.querySelector(".faq-q i").className = "bi bi-plus-lg";
         other.querySelector(".faq-q").setAttribute("aria-expanded", "false");
       });
       if (!isOpen) {
         item.classList.add("is-open");
         a.style.maxHeight = a.scrollHeight + 24 + "px";
+        a.setAttribute("aria-hidden", "false");
+        a.inert = false;
         q.querySelector("i").className = "bi bi-dash-lg";
         q.setAttribute("aria-expanded", "true");
       }
@@ -945,7 +1261,13 @@ function renderEverything() {
   safeRender("renderSocial", renderSocial);
   safeRender("renderCoverageStats", renderCoverageStats);
   safeRender("renderFAQ", renderFAQ);
+  // js/motion.js espera esta bandera para animar los contadores: si cuenta
+  // antes, cuenta hasta el número de relleno del HTML ("5+") y lo deja ahí.
+  window.__DATOS_LISTOS__ = true;
   observeReveals();
+  // Las tarjetas recién pintadas traen botones magnéticos que aún no
+  // tienen su listener; js/ui.js los engancha aquí.
+  if (window.__KIT__) window.__KIT__.reenganchar();
 
   // Selecciona un material si viene por query string, ej. index.html?material=ram
   const params = new URLSearchParams(window.location.search);
@@ -965,17 +1287,32 @@ function applyTheme(isDark) {
   document.body.classList.toggle("dark-mode", isDark);
   if (themeIcon) themeIcon.className = isDark ? "bi bi-sun-fill" : "bi bi-moon-fill";
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", isDark ? "#06180f" : "#064528");
+  // Los mismos colores que el <meta> del HTML y el manifest (Verde
+  // profundo / Carbón de la paleta oficial).
+  if (meta) meta.setAttribute("content", isDark ? "#0B1F13" : "#0B3B22");
+  if (themeToggle) themeToggle.setAttribute("aria-label", isDark ? "Cambiar a tema claro" : "Cambiar a tema oscuro");
+}
+// Solo se GUARDA cuando la persona elige con el botón. Antes se guardaba
+// también el tema automático, y desde la primera visita el sitio dejaba de
+// seguir al sistema (el teléfono pasaba a oscuro de noche y el sitio no).
+function saveTheme(isDark) {
   try { localStorage.setItem("theme-preference", isDark ? "dark" : "light"); } catch (_e) {}
 }
+function savedTheme() {
+  try { return localStorage.getItem("theme-preference"); } catch (_e) { return null; }
+}
 function initTheme() {
-  let saved = null;
-  try { saved = localStorage.getItem("theme-preference"); } catch (_e) {}
+  const saved = savedTheme();
   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
   applyTheme(saved ? saved === "dark" : prefersDark.matches);
-  themeToggle?.addEventListener("click", () => applyTheme(!document.body.classList.contains("dark-mode")));
-  const onChange = (e) => { if (!localStorage.getItem("theme-preference")) applyTheme(e.matches); };
-  prefersDark.addEventListener ? prefersDark.addEventListener("change", onChange) : prefersDark.addListener?.(onChange);
+  themeToggle?.addEventListener("click", () => {
+    const next = !document.body.classList.contains("dark-mode");
+    applyTheme(next);
+    saveTheme(next);
+  });
+  const onChange = (e) => { if (!savedTheme()) applyTheme(e.matches); };
+  if (prefersDark.addEventListener) prefersDark.addEventListener("change", onChange);
+  else if (prefersDark.addListener) prefersDark.addListener(onChange); // Safari < 14
 }
 initTheme();
 
@@ -985,14 +1322,24 @@ const navLinks = document.getElementById("navLinks");
 const siteHeader = document.getElementById("siteHeader");
 const scrollProgress = document.getElementById("scrollProgress");
 
-menuBtn?.addEventListener("click", () => {
-  const open = navLinks.classList.toggle("open");
+function setMenu(open) {
+  if (!navLinks || !menuBtn) return;
+  // Se mide justo antes de abrir: el header cambia de alto al pegarse
+  // arriba (y la barra superior desaparece), y con la medida de la carga el
+  // menú quedaba 34 px separado del header o encimado sobre él.
+  if (open) updateHeaderOffset();
+  navLinks.classList.toggle("open", open);
   menuBtn.setAttribute("aria-expanded", String(open));
+  menuBtn.textContent = open ? "Cerrar" : "Menú";
+}
+menuBtn?.addEventListener("click", () => setMenu(!navLinks.classList.contains("open")));
+navLinks?.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => setMenu(false)));
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && navLinks?.classList.contains("open")) {
+    setMenu(false);
+    menuBtn.focus();
+  }
 });
-navLinks?.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => {
-  navLinks.classList.remove("open");
-  menuBtn?.setAttribute("aria-expanded", "false");
-}));
 
 // La barra superior puede pasar a dos líneas en pantallas angostas, así que
 // medimos la altura real del header en vez de asumir un alto fijo (evita que
@@ -1008,28 +1355,97 @@ if (window.ResizeObserver && siteHeader) {
 }
 
 const backToTopBtn = document.getElementById("backToTop");
-backToTopBtn?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+// El atributo hidden solo protege la carga sin JS; a partir de aquí lo
+// esconde el CSS (opacity + visibility, que lo saca del orden de Tab).
+if (backToTopBtn) backToTopBtn.hidden = false;
+backToTopBtn?.addEventListener("click", () => {
+  window.scrollTo({ top: 0, behavior: scrollBehavior() });
+  // El foco sube con la página, para que el siguiente Tab no siga abajo.
+  document.getElementById("contenido")?.focus({ preventScroll: true });
+});
+
+/* La marca grande de la portada encoge y se desvanece mientras el
+   logotipo de la barra aparece. Se resuelve con UNA variable CSS
+   (--marca-p, de 0 a 1) en vez de con GSAP, por dos motivos: en móvil
+   GSAP ni se carga, y aquí ya había un listener de scroll, así que no se
+   añade ninguno nuevo. El CSS (css/kit.css) hace el resto. */
+const marcaIntro = document.getElementById("marcaIntro");
+// Distancia en la que ocurre toda la transición. Deliberadamente corta:
+// esto es un sitio para cotizar, no una presentación, y nadie debería
+// tener que desplazarse media pantalla para llegar al contenido.
+const MARCA_RECORRIDO = 220;
+
+// Le avisa al CSS que puede esconder el logotipo de la barra, porque hay
+// JS vivo para volver a mostrarlo al bajar. Si este archivo no llegara a
+// ejecutarse, la clase no se pone y el logotipo se queda visible.
+// Con "reducir movimiento" no hay transición: la marca grande no se
+// muestra (kit.css) y el logotipo de la barra se queda visible desde arriba.
+let quieroMenosMovimiento = false;
+try { quieroMenosMovimiento = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (_e) {}
+if (marcaIntro && !quieroMenosMovimiento) document.body.classList.add("marca-activa");
+
+let marcaUltimo = -1;
+function actualizarMarca(scrollTop) {
+  if (!marcaIntro) return;
+  const p = Math.min(1, Math.max(0, scrollTop / MARCA_RECORRIDO));
+  // Dos decimales: sin redondear se escribiría un valor nuevo en cada
+  // píxel de scroll, y cada escritura cuesta un recálculo de estilo.
+  const v = Math.round(p * 50) / 50;
+  if (v === marcaUltimo) return;
+  marcaUltimo = v;
+
+  // La variable se escribe en el PROPIO elemento, no en :root.
+  // Esto importa mucho: una propiedad personalizada puesta en :root
+  // invalida el estilo de TODO el documento en cada cambio, y este sitio
+  // ronda los dos mil nodos (la galería sola son 39 tarjetas). Medido en
+  // un móvil de gama baja, hacerlo en :root hundía el desplazamiento de
+  // 60 a 28 fps; acotado al elemento, no cuesta nada.
+  marcaIntro.style.setProperty("--marca-p", v);
+
+  // El logotipo de la barra no necesita interpolarse: basta con saber si
+  // ya toca mostrarlo. Una clase en <body> evita una segunda variable
+  // global y deja la transición al CSS.
+  document.body.classList.toggle("marca-fuera", v > 0.55);
+}
+
+// El recorrido máximo se mide aparte (al cargar, al cambiar el tamaño de
+// la página) y no en cada evento de scroll: leer scrollHeight justo después
+// de escribir estilos obligaba al navegador a recalcular el layout en
+// cada cuadro.
+let maxScroll = 1;
+function medirScroll() {
+  maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+}
+medirScroll();
+window.addEventListener("resize", medirScroll);
+window.addEventListener("load", medirScroll);
+if (window.ResizeObserver) new ResizeObserver(medirScroll).observe(document.body);
 
 function onScroll() {
   const scrollTop = window.scrollY;
   siteHeader?.classList.toggle("is-scrolled", scrollTop > 8);
-  if (scrollProgress) {
-    const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-    scrollProgress.style.width = `${scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0}%`;
+  actualizarMarca(scrollTop);
+  // Cuando js/motion.js está activo, la barra la mueve GSAP; aquí solo se
+  // calcula si no hay GSAP. scaleX (compositor) en vez de width (layout).
+  if (scrollProgress && !(window.__MOTION__ && window.__MOTION__.activo)) {
+    scrollProgress.style.width = "100%";
+    scrollProgress.style.transform = `scaleX(${Math.min(1, scrollTop / maxScroll)})`;
   }
-  if (backToTopBtn) {
-    backToTopBtn.hidden = false;
-    backToTopBtn.classList.toggle("is-visible", scrollTop > window.innerHeight * 0.8);
-  }
+  backToTopBtn?.classList.toggle("is-visible", scrollTop > window.innerHeight * 0.8);
 }
-window.addEventListener("scroll", onScroll, { passive: true });
+// Un cálculo por cuadro como máximo: el evento scroll dispara muchas más
+// veces de las que se pinta.
+let scrollPendiente = false;
+window.addEventListener("scroll", () => {
+  if (scrollPendiente) return;
+  scrollPendiente = true;
+  requestAnimationFrame(() => { scrollPendiente = false; onScroll(); });
+}, { passive: true });
 onScroll();
 
-// "equipo" está oculta con [hidden] hasta que haya datos de equipo que
-// mostrar (ver renderTeam) — igual se observa desde ahora: el elemento ya
-// existe en el DOM, así que en cuanto se revele, el resaltado de "Quiénes
-// somos" en el menú empieza a funcionar solo, sin nada más que hacer aquí.
-const sections = ["inicio", "precios", "calculadora", "proceso", "equipo", "sucursales", "cobertura", "galeria", "faq"];
+// Secciones que resaltan su enlace del menú al pasar por ellas.
+// ("Quiénes somos" ahora es su propia página, nosotros.html.)
+const sections = ["inicio", "precios", "calculadora", "proceso", "sucursales", "cobertura", "galeria", "faq"];
 const navAnchors = Array.from(document.querySelectorAll('.nav-links a'));
 if ("IntersectionObserver" in window && navAnchors.length) {
   const navObserver = new IntersectionObserver((entries) => {
@@ -1044,8 +1460,27 @@ if ("IntersectionObserver" in window && navAnchors.length) {
 
 /* ---------- Reveal on scroll ---------- */
 let revealObserver = null;
-let revealFallbackTimer = null;
+// En escritorio, index.html empieza a bajar GSAP antes de que corra este
+// archivo (window.__MOTION_ESPERADO__). Se le da un momento para llegar
+// antes de usar el respaldo: si el respaldo mostraba la portada primero,
+// al llegar GSAP la volvía a esconder y animar (entrada doble).
+const MOTION_ESPERA_MS = 1500;
+let motionEsperaVencida = false;
+let motionEsperaTimer = null;
 function observeReveals() {
+  // Si js/motion.js logró cargar GSAP, él se encarga de todas las apariciones
+  // (con mucho más detalle que esto) y aquí no hay nada que hacer. Este
+  // camino queda como respaldo para cuando el CDN de GSAP esté bloqueado.
+  if (window.__MOTION__ && window.__MOTION__.activo) {
+    window.__MOTION__.refrescar();
+    return;
+  }
+  if (window.__MOTION_ESPERADO__ && !motionEsperaVencida) {
+    if (!motionEsperaTimer) {
+      motionEsperaTimer = setTimeout(() => { motionEsperaVencida = true; observeReveals(); }, MOTION_ESPERA_MS);
+    }
+    return;
+  }
   if ("IntersectionObserver" in window) {
     if (!revealObserver) {
       revealObserver = new IntersectionObserver((entries) => {
@@ -1061,32 +1496,23 @@ function observeReveals() {
   } else {
     document.querySelectorAll(".reveal").forEach((el) => el.classList.add("show"));
   }
-  // Red de seguridad: si por lo que sea el observer no revela un elemento
-  // a tiempo (motor lento, pestaña en segundo plano, etc.), nunca debe
-  // quedar contenido invisible de forma permanente.
-  clearTimeout(revealFallbackTimer);
-  revealFallbackTimer = setTimeout(() => {
-    document.querySelectorAll(".reveal:not(.show)").forEach((el) => el.classList.add("show"));
-  }, 1800);
+  // Ya no hay temporizador de respaldo: el contenido solo nace en opacity:0
+  // cuando html lleva la clase js-motion, y esa clase se pone desde un script
+  // en línea del <head> que solo corre si el JS está vivo. Si algo falla más
+  // adelante, la página simplemente nunca se oculta. El temporizador anterior
+  // (1800 ms) revelaba TODA la página sin que el usuario hiciera scroll, así
+  // que en la práctica anulaba el efecto que se supone que protegía.
 }
 
-/* ---------- Interacción 3D suave del hero (deshabilitada si hay reduced motion) ---------- */
-const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-if (!prefersReducedMotion) {
-  const heroMedia = document.querySelector(".hero-media");
-  if (heroMedia) {
-    heroMedia.addEventListener("mousemove", (e) => {
-      const rect = heroMedia.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width;
-      const y = (e.clientY - rect.top) / rect.height;
-      heroMedia.style.transform = `perspective(900px) rotateX(${(0.5 - y) * 4}deg) rotateY(${(x - 0.5) * 5}deg)`;
-    });
-    heroMedia.addEventListener("mouseleave", () => { heroMedia.style.transform = ""; });
-  }
-}
+/* La inclinación 3D del hero con el puntero vive ahora en js/motion.js, junto
+   con el parallax, para que un solo dueño escriba el transform de .hero-media.
+   La versión que estaba aquí nunca llegó a verse: escribía style.transform,
+   pero .hero-media tenía "animation: floatSoft" y las animaciones CSS ganan
+   sobre los estilos en línea, así que el flotado la pisaba siempre. */
 
 /* ---------- Mapa de cobertura (Leaflet) ---------- */
 let coverageMapInstance = null;
+let DATOS_LISTOS = null;   // promesa de loadData(), para que el mapa la espere
 
 // leaflet.css ya no se carga en el <head> (bloqueaba el primer render de
 // toda la página por un mapa que vive hasta abajo del sitio); se inyecta
@@ -1098,13 +1524,35 @@ function ensureLeafletCss() {
     const link = document.createElement("link");
     link.id = "leafletCssLink";
     link.rel = "stylesheet";
-    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+    link.href = "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css";
     link.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=";
     link.crossOrigin = "";
     link.onload = () => resolve();
     link.onerror = () => resolve(); // si falla, initCoverageMap ya tiene su propio aviso de respaldo
     document.head.appendChild(link);
   });
+}
+
+// Hermana de ensureLeafletCss(): la biblioteca en sí también se baja solo
+// cuando "Cobertura" se acerca a pantalla. Antes venía en un <script> normal
+// de index.html, 147 KB que bloqueaban el render de toda la página por un
+// mapa que está hasta el final y que mucha gente nunca llega a ver.
+let leafletJsPromesa = null;
+function ensureLeafletJs() {
+  if (typeof window.L !== "undefined") return Promise.resolve();
+  if (leafletJsPromesa) return leafletJsPromesa;
+  leafletJsPromesa = new Promise((resolve) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js";
+    s.integrity = "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=";
+    s.crossOrigin = "";
+    // Resolvemos igual si falla: initCoverageMap ya tiene su aviso de respaldo
+    // para cuando window.L no existe, así que no hace falta distinguir aquí.
+    s.onload = resolve;
+    s.onerror = resolve;
+    document.head.appendChild(s);
+  });
+  return leafletJsPromesa;
 }
 
 function initCoverageMap() {
@@ -1115,8 +1563,18 @@ function initCoverageMap() {
     mapContainer.innerHTML = `<p class='map-fallback'>No se pudo cargar el mapa. Cobertura activa en ${active.length} estado(s); el resto del país aplica desde 10 kg.</p>`;
     return;
   }
-  coverageMapInstance = window.L.map(mapContainer, { scrollWheelZoom: false, minZoom: 4, maxZoom: 10 });
-  window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  // En pantallas táctiles el mapa no se arrastra con un dedo: si no, al
+  // deslizar sobre él para bajar por la página, el que se movía era el
+  // mapa y la página se quedaba "atorada". Se sigue pudiendo usar el zoom.
+  let tactil = false;
+  try { tactil = window.matchMedia("(pointer: coarse)").matches; } catch (_e) {}
+  coverageMapInstance = window.L.map(mapContainer, {
+    scrollWheelZoom: false, dragging: !tactil, tap: false, minZoom: 4, maxZoom: 10, zoomControl: false,
+  });
+  window.L.control.zoom({ zoomInTitle: "Acercar", zoomOutTitle: "Alejar" }).addTo(coverageMapInstance);
+  // Servidor de mosaicos actual de OpenStreetMap (los subdominios a/b/c
+  // están en desuso).
+  window.L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19, attribution: "&copy; OpenStreetMap contributors"
   }).addTo(coverageMapInstance);
 
@@ -1131,7 +1589,9 @@ function initCoverageMap() {
       html: `<span style="display:block;width:12px;height:12px;border-radius:50%;background:${zoneColor};border:2px solid #fff;box-shadow:0 0 0 2px ${zoneColor}"></span>`,
       iconSize: [14, 14], iconAnchor: [7, 7]
     });
-    window.L.marker(coords, { icon }).addTo(coverageMapInstance)
+    // title/alt: los marcadores se pueden enfocar con Tab y antes no
+    // tenían nombre para el lector de pantalla.
+    window.L.marker(coords, { icon, title: state.name, alt: `Cobertura activa en ${state.name}` }).addTo(coverageMapInstance)
       .bindPopup(`<strong>${esc(state.name)}</strong><br/>Cobertura activa`);
   });
   if (bounds.length) coverageMapInstance.fitBounds(bounds, { padding: [30, 30] });
@@ -1143,8 +1603,16 @@ if ("IntersectionObserver" in window) {
     const mapObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;
-        ensureLeafletCss().then(() => initCoverageMap());
         mapObserver.disconnect();
+        // Esperamos también a DATOS_LISTOS: si alguien llega directo a
+        // #cobertura (o baja muy rápido) antes de que resuelvan los JSON, el
+        // mapa se dibujaba con los estados de respaldo y se quedaba así,
+        // porque initCoverageMap solo corre una vez.
+        Promise.all([
+          Promise.resolve(DATOS_LISTOS),
+          ensureLeafletCss(),
+          ensureLeafletJs(),
+        ]).then(() => initCoverageMap());
       });
     }, { threshold: 0.2 });
     mapObserver.observe(coverageSection);
@@ -1152,4 +1620,8 @@ if ("IntersectionObserver" in window) {
 }
 
 /* ---------- Arranque ---------- */
-loadData();
+// Lo que ya viene en el HTML (el hero, los títulos) se revela sin esperar a
+// los seis JSON: en una red móvil lenta el titular y el botón de WhatsApp
+// se quedaban invisibles hasta que terminaba de llegar todo.
+observeReveals();
+DATOS_LISTOS = loadData();

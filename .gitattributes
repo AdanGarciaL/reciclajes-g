@@ -1,0 +1,12 @@
+# Finales de línea uniformes (LF) en el repositorio, sin importar el
+# sistema de quien edite. Había archivos CRLF y LF mezclados y git avisaba
+# en cada commit ("LF will be replaced by CRLF").
+* text=auto eol=lf
+
+# Binarios: nunca se tocan.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.pdf binary

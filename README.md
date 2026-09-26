@@ -3,7 +3,7 @@
 Sitio público y panel interno de ECO LÓGICA García, compra de lógica de celular, RAM, laptop
 y componentes electrónicos para reciclaje responsable en México.
 
-**Última actualización:** 9 de septiembre de 2026
+**Última actualización:** 25 de septiembre de 2026
 
 ## Resumen
 
@@ -58,9 +58,9 @@ personas que no programan: no hay que tocar código ni entender GitHub para el u
 
 ### Sitio público
 
-Al estar publicado en GitHub Pages, basta con abrir la URL del sitio. Para probarlo en local,
-sírvelo con un servidor simple (abrirlo con doble clic no permite cargar `data/*.json` en
-algunos navegadores por restricciones de `file://`):
+El sitio está publicado en **Vercel** (https://www.ecologicagarcia.com; la dirección sin `www`
+redirige ahí). Para probarlo en local, sírvelo con un servidor simple (abrirlo con doble clic no
+permite cargar `data/*.json` en algunos navegadores por restricciones de `file://`):
 
 ```bash
 npx serve .
@@ -94,7 +94,14 @@ contraseña del panel no expone el repositorio por sí solo.
 
 ## Archivos principales
 
-- `index.html`, `styles.css`, `script.js`: sitio público.
+- `index.html`, `styles.css`, `script.js`: sitio público (portada).
+- `nosotros.html`: página "Quiénes somos" (se llena con `data/team.json`).
+- `css/base.css` (tokens de marca y colores de cada tema), `css/kit.css` (piezas visuales
+  compartidas), `css/motion.css` (estados de animación).
+- `js/utils.js` (utilidades compartidas con el panel), `js/motion.js` (animaciones con GSAP,
+  solo escritorio), `js/ui.js` (efectos de puntero, solo con mouse), `js/fallbacks.js`
+  (respaldo de los datos, **generado**: ver abajo).
+- `data/faq.json`: preguntas frecuentes.
 - `admin.html`, `admin.css`, `admin.js`: panel interno.
 - `data/prices.json`: precios por material y por tipo de lógica de celular (editable desde el panel).
 - `data/gallery.json`: fotos por categoría que alimentan las galerías y carruseles (editable desde el panel).
@@ -107,6 +114,16 @@ contraseña del panel no expone el repositorio por sí solo.
   las fotos que se suben desde "Quiénes somos".
 - `aviso-privacidad.html`, `terminos.html`, `legal.css`, `legal.js`: páginas legales.
 
+## Respaldo de datos (`js/fallbacks.js`)
+
+Si falla la descarga de `data/*.json`, el sitio usa `js/fallbacks.js`. Ese archivo es un espejo de
+los datos y **no se edita a mano**: después de cambiar cualquier `data/*.json` (a mano o, de vez en
+cuando, después de varios guardados desde el panel), regenéralo con:
+
+```bash
+node scripts/generar-fallbacks.js
+```
+
 ## Cómo se guardan los cambios (sin base de datos)
 
 1. El sitio público carga todos los archivos de `data/*.json` con `fetch` al abrir la página.
@@ -114,7 +131,9 @@ contraseña del panel no expone el repositorio por sí solo.
 3. Al guardar, el panel usa la API de contenidos de GitHub (`PUT /repos/.../contents/...`) para
    crear un commit con el archivo actualizado, usando el token que la persona administradora
    conectó en su sesión del navegador.
-4. GitHub Pages publica el cambio automáticamente al construir la rama `main`.
+4. Vercel publica el cambio automáticamente al detectar el commit en la rama `main`.
+5. Si dos personas editan la misma sección a la vez, el panel **no sobrescribe** el trabajo de la
+   otra: avisa que el archivo cambió y pide recargar esa sección.
 
 Esto sustituye a una base de datos tradicional: el propio repositorio es la fuente de verdad,
 versionada y con historial de cambios visible en GitHub.
@@ -136,5 +155,12 @@ versionada y con historial de cambios visible en GitHub.
 
 ## Publicación
 
-Este repositorio se publica con GitHub Pages desde la rama `main`. Cualquier commit a `main`
+Este repositorio se publica en **Vercel** desde la rama `main`. Cualquier commit a `main`
 (manual o generado desde el panel interno) actualiza el sitio en vivo en un par de minutos.
+`vercel.json` define la caché de imágenes y cabeceras de seguridad; `.vercelignore` deja fuera
+lo que no debe publicarse (scripts, flyers). El archivo `CNAME` es de la época de GitHub Pages y
+Vercel no lo usa.
+
+**Antes de hacer commit**, revisa con `git status` que los archivos nuevos (por ejemplo
+`css/kit.css`, `js/motion.js`, iconos o portadas nuevas) estén agregados con `git add`: si el HTML
+los usa pero no se suben, el sitio publicado los pide y recibe un 404.

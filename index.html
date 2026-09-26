@@ -6,10 +6,14 @@
   <title>ECO LÓGICA García | Compra de lógica de celular en México</title>
   <meta name="description" content="ECO LÓGICA García compra lógica de celular, RAM, laptop y componentes electrónicos para reciclaje responsable en México. Cotiza por WhatsApp, sin registros ni formularios." />
   <meta name="theme-color" content="#0B3B22" />
-  <link rel="icon" href="icons/icono.png" type="image/png" />
-  <link rel="apple-touch-icon" href="icons/icono.png" />
+  <!-- El icono de la pestaña se dibuja a 16-32 px: pedía el archivo de
+       512 px (27 KB) para eso. Con el de 128 px bastan 5 KB. El de Apple
+       sí necesita resolución (la pantalla de inicio del iPhone lo pinta
+       grande), pero solo lo descarga iOS al guardar el sitio. -->
+  <link rel="icon" href="icons/icono-128.png" type="image/png" />
+  <link rel="apple-touch-icon" href="icons/icono-192.png" />
   <link rel="manifest" href="manifest.json" />
-  <link rel="canonical" href="https://ecologicagarcia.com/" />
+  <link rel="canonical" href="https://www.ecologicagarcia.com/" />
 
   <!-- Vista previa al compartir el enlace en WhatsApp, Facebook, etc. -->
   <meta property="og:type" content="website" />
@@ -17,31 +21,59 @@
   <meta property="og:site_name" content="ECO LÓGICA García" />
   <meta property="og:title" content="ECO LÓGICA García | Compra de lógica de celular en México" />
   <meta property="og:description" content="Compramos lógica de celular, RAM, laptop y componentes electrónicos para reciclaje responsable. Cotiza por WhatsApp, sin registros ni formularios." />
-  <meta property="og:url" content="https://ecologicagarcia.com/" />
-  <meta property="og:image" content="https://ecologicagarcia.com/icons/icono.png" />
-  <meta name="twitter:card" content="summary" />
+  <meta property="og:url" content="https://www.ecologicagarcia.com/" />
+  <!-- 1200x630 (y no el icono cuadrado): es la proporción que recortan bien
+       WhatsApp, Facebook y Twitter. Con el icono cuadrado la vista previa
+       salía recortada o como miniatura pequeña al lado del texto. -->
+  <meta property="og:image" content="https://www.ecologicagarcia.com/icons/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="ECO LÓGICA García — compra de lógica de celular y componentes electrónicos" />
+  <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="ECO LÓGICA García | Compra de lógica de celular en México" />
   <meta name="twitter:description" content="Compramos lógica de celular, RAM, laptop y componentes electrónicos para reciclaje responsable. Cotiza por WhatsApp." />
-  <meta name="twitter:image" content="https://ecologicagarcia.com/icons/icono.png" />
+  <meta name="twitter:image" content="https://www.ecologicagarcia.com/icons/og-image.png" />
 
   <!-- Datos estructurados para buscadores (nombre, contacto, tipo de negocio) -->
+  <!-- www: el dominio sin www responde 308 hacia www (Vercel), así que
+       las URL canónicas, la imagen al compartir y los datos estructurados
+       apuntan directo a la dirección final, sin un salto de redirección. -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
+    "@id": "https://www.ecologicagarcia.com/#negocio",
     "name": "ECO LÓGICA García",
-    "image": "https://ecologicagarcia.com/icons/icono.png",
-    "url": "https://ecologicagarcia.com/",
-    "telephone": "+522227548704",
+    "url": "https://www.ecologicagarcia.com/",
+    "logo": "https://www.ecologicagarcia.com/icons/icono.png",
+    "image": [
+      "https://www.ecologicagarcia.com/icons/og-image.png",
+      "https://www.ecologicagarcia.com/icons/icono.png"
+    ],
+    "telephone": "+52 222 754 8704",
     "priceRange": "$$",
-    "areaServed": "MX",
+    "currenciesAccepted": "MXN",
+    "paymentAccepted": "Efectivo, transferencia SPEI",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Puebla",
+      "addressRegion": "Puebla",
+      "addressCountry": "MX"
+    },
+    "areaServed": { "@type": "Country", "name": "México" },
     "description": "Compra de lógica de celular, RAM, laptop y componentes electrónicos para reciclaje responsable en México.",
     "sameAs": ["https://www.facebook.com/profile.php?id=100063747836703"]
   }
   </script>
 
+  <!-- Abrir la conexión con cada CDN antes de necesitarla ahorra el ida y
+       vuelta de DNS + TLS, que en una red móvil mexicana es lo más caro de
+       todo. Estaban solo los de Google Fonts; faltaban los dos orígenes que
+       sirven los iconos y GSAP. -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
   <!-- leaflet.css se carga solo cuando hace falta (ver ensureLeafletCss en
@@ -50,8 +82,43 @@
        tal vez el visitante nunca llegue a necesitar si no baja tanto. -->
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="styles.css" />
+  <!-- kit.css va DESPUÉS de styles.css: sus piezas (bordes que brillan,
+       botones con halo, rejilla bento) reescriben algunos estilos de las
+       tarjetas y necesitan ganar la cascada. -->
+  <link rel="stylesheet" href="css/kit.css" />
+  <link rel="stylesheet" href="css/motion.css" />
+
+  <!-- Esta clase es el interruptor de todo el sistema de animación: el CSS
+       solo se atreve a esconder contenido si sabe que hay JS vivo para
+       volver a mostrarlo. Va aquí, en línea y antes de pintar, para que no
+       haya un parpadeo entre que se ve la página y que se esconde.
+       Si el visitante pidió menos movimiento, la clase no se pone y la
+       página se comporta como una página quieta de toda la vida. -->
+  <script>
+    (function () {
+      try {
+        if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          document.documentElement.classList.add("js-motion");
+        }
+      } catch (_e) { /* sin matchMedia se queda sin animación, que es lo seguro */ }
+    })();
+  </script>
 </head>
 <body>
+  <!-- El tema se aplica AQUÍ, antes de pintar nada: si lo pone script.js
+       (que va con defer), quien usa modo oscuro ve un destello del tema
+       claro en cada carga. Sin preferencia guardada sigue al sistema. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("theme-preference");
+        if (t ? t === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches) {
+          document.body.classList.add("dark-mode");
+        }
+      } catch (_e) { /* sin localStorage: se queda en claro */ }
+    })();
+  </script>
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
   <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
 
   <div class="topbar">
@@ -59,7 +126,7 @@
       <p>Compra · Venta · Reciclaje de componentes electrónicos</p>
       <div class="topbar-right">
         <div class="topbar-social js-social-links" hidden></div>
-        <p>Recolección a domicilio en Puebla · <strong><a class="js-wa-link js-wa-text" href="https://wa.me/522227548704" target="_blank" rel="noopener">222 754 8704</a></strong></p>
+        <p>Recolección a domicilio en Puebla · <strong><a class="js-wa-link js-wa-text" href="https://wa.me/522227548704" target="_blank" rel="noopener noreferrer">222 754 8704</a></strong></p>
       </div>
     </div>
   </div>
@@ -67,28 +134,28 @@
   <header class="site-header" id="siteHeader">
     <nav class="nav container">
       <a href="#inicio" class="logo" aria-label="ECO LÓGICA García, ir al inicio">
-        <span class="logo-mark"><img src="icons/icono.png" alt="" width="52" height="52" /></span>
+        <span class="logo-mark"><img src="icons/icono-128.png" alt="" width="52" height="52" /></span>
         <span class="logo-text-wrap">
           <span class="logo-text">ECO <span class="logo-kas">LÓGICA</span></span>
           <span class="logo-subtext">García · Compra de lógica de celular</span>
         </span>
       </a>
-      <button class="menu-btn" id="menuBtn" aria-label="Abrir menú" aria-expanded="false">Menú</button>
+      <button class="menu-btn" id="menuBtn" type="button" aria-controls="navLinks" aria-expanded="false">Menú</button>
       <ul class="nav-links" id="navLinks">
-        <li><a href="#precios">Precios</a></li>
-        <li><a href="#calculadora">Calculadora</a></li>
-        <li><a href="#proceso">Cómo funciona</a></li>
-        <li><a href="#sucursales">Sucursales y Grupos</a></li>
-        <li><a href="#cobertura">Cobertura</a></li>
-        <li><a href="#galeria">Galería</a></li>
-        <li><a href="#faq">Preguntas</a></li>
-        <li id="navTeamItem" hidden><a href="#equipo">Quiénes somos</a></li>
+        <li><a class="enlace-linea" href="#precios">Precios</a></li>
+        <li><a class="enlace-linea" href="#calculadora">Calculadora</a></li>
+        <li><a class="enlace-linea" href="#proceso">Cómo funciona</a></li>
+        <li><a class="enlace-linea" href="#sucursales">Sucursales y Grupos</a></li>
+        <li><a class="enlace-linea" href="#cobertura">Cobertura</a></li>
+        <li><a class="enlace-linea" href="#galeria">Galería</a></li>
+        <li><a class="enlace-linea" href="#faq">Preguntas</a></li>
+        <li id="navTeamItem" hidden><a href="nosotros.html">Quiénes somos</a></li>
       </ul>
       <div class="nav-actions">
-        <button class="theme-toggle" id="themeToggle" aria-label="Cambiar tema" title="Cambiar tema">
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Cambiar tema" title="Cambiar tema">
           <i class="bi bi-moon-fill" id="themeIcon" aria-hidden="true"></i>
         </button>
-        <a class="btn btn-primary nav-cta js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp" aria-hidden="true"></i> Escríbenos</a>
+        <a class="btn btn-kit magnetico btn-primary nav-cta js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener noreferrer"><i class="bi bi-whatsapp" aria-hidden="true"></i> Escríbenos</a>
       </div>
     </nav>
   </header>
@@ -96,14 +163,63 @@
   <section class="campaign-strip" id="campaignStrip" hidden aria-label="Campaña activa">
     <div class="container campaign-strip-inner">
       <p>Oferta de campaña: evaluación prioritaria de lotes grandes en menos de 24h.</p>
-      <a class="btn btn-primary js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener">Escribir ahora</a>
+      <a class="btn btn-kit magnetico btn-primary js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener noreferrer">Escribir ahora</a>
     </div>
   </section>
 
-  <main>
+  <main id="contenido" tabindex="-1">
     <!-- PORTADA -->
     <section class="hero" id="inicio">
-      <div class="container hero-grid">
+      <!-- Fondo de la portada: tres manchas de los verdes de marca muy
+           desenfocadas, una rejilla que se pierde en el horizonte y un
+           grano fino encima. Todo decorativo, sin peso de red: son
+           degradados de CSS y un SVG en línea. -->
+      <div class="aurora" aria-hidden="true">
+        <span class="aurora-capa"></span>
+        <!-- Líneas de luz cayendo, como las pistas de un circuito. Se
+             mueven solo con transform, así que las resuelve el compositor
+             y no cuestan trabajo del hilo principal ni en un móvil.
+             Las medidas van en línea porque cada una necesita su propia
+             posición, largo, velocidad y retardo: sacarlas a clases serían
+             dieciséis reglas casi idénticas en el CSS. -->
+        <span class="lineas-luz">
+          <i style="left:4%;  height:16%; animation-duration:7.5s;  animation-delay:-1.2s; opacity:.30"></i>
+          <i style="left:11%; height:26%; animation-duration:11s;   animation-delay:-4.6s; opacity:.55"></i>
+          <i style="left:17%; height:11%; animation-duration:6.2s;  animation-delay:-0.4s; opacity:.22"></i>
+          <i style="left:24%; height:32%; animation-duration:13s;   animation-delay:-7.1s; opacity:.45"></i>
+          <i style="left:31%; height:14%; animation-duration:8.4s;  animation-delay:-2.9s; opacity:.28"></i>
+          <i style="left:38%; height:22%; animation-duration:10.2s; animation-delay:-5.8s; opacity:.50"></i>
+          <i style="left:44%; height:9%;  animation-duration:5.6s;  animation-delay:-1.9s; opacity:.20"></i>
+          <i style="left:52%; height:28%; animation-duration:12.4s; animation-delay:-8.3s; opacity:.42"></i>
+          <i style="left:59%; height:13%; animation-duration:7.1s;  animation-delay:-3.4s; opacity:.26"></i>
+          <i style="left:66%; height:24%; animation-duration:11.6s; animation-delay:-6.2s; opacity:.52"></i>
+          <i style="left:72%; height:10%; animation-duration:6.8s;  animation-delay:-0.9s; opacity:.24"></i>
+          <i style="left:79%; height:30%; animation-duration:13.8s; animation-delay:-9.5s; opacity:.44"></i>
+          <i style="left:85%; height:15%; animation-duration:8.9s;  animation-delay:-2.2s; opacity:.30"></i>
+          <i style="left:91%; height:20%; animation-duration:10.7s; animation-delay:-5.1s; opacity:.48"></i>
+          <i style="left:96%; height:12%; animation-duration:6.5s;  animation-delay:-3.8s; opacity:.22"></i>
+        </span>
+        <span class="rejilla-fuga"></span>
+        <span class="grano"></span>
+      </div>
+
+      <!-- LA MARCA EN GRANDE.
+           Arriba del todo se ve el logotipo centrado y a tamaño completo;
+           al bajar se encoge y se desvanece mientras aparece el de la
+           barra, que arranca oculto. La transición la calcula onScroll()
+           en script.js con una sola variable CSS, sin GSAP, para que
+           funcione igual en un teléfono.
+           aria-hidden porque es el MISMO logotipo que ya anuncia el enlace
+           de la barra: repetirlo solo ensuciaría el lector de pantalla. -->
+      <div class="marca-intro sobre-fondo" id="marcaIntro" aria-hidden="true">
+        <span class="marca-intro-mark">
+          <img src="icons/icono-192.png" alt="" width="192" height="192" />
+        </span>
+        <span class="marca-intro-texto">ECO <span class="logo-kas">LÓGICA</span></span>
+        <span class="marca-intro-sub">García · Compra de lógica de celular</span>
+      </div>
+
+      <div class="container hero-grid sobre-fondo">
         <div class="hero-copy">
           <p class="hero-badge-pill reveal"><span class="dot"></span>Cobertura activa en <span id="coverageActiveInline">10</span> estados · recolección en toda la República desde 10 kg</p>
           <h1 class="reveal delay-1">Compramos tu lógica de celular al precio justo por kilo</h1>
@@ -113,15 +229,12 @@
             sin formularios ni registros.
           </p>
           <div class="hero-cta reveal delay-3">
-            <a class="btn btn-primary js-wa-link" data-wa-msg="Hola, tengo material para reciclar y quiero una cotización" href="https://wa.me/522227548704?text=Hola%2C%20tengo%20material%20para%20reciclar%20y%20quiero%20una%20cotizaci%C3%B3n" target="_blank" rel="noopener"><i class="bi bi-whatsapp" aria-hidden="true"></i> Pregunta por tu material</a>
-            <a class="btn btn-ghost" href="#precios">Ver precios de hoy</a>
+            <a class="btn btn-kit magnetico btn-primary js-wa-link" data-wa-msg="Hola, tengo material para reciclar y quiero una cotización" href="https://wa.me/522227548704?text=Hola%2C%20tengo%20material%20para%20reciclar%20y%20quiero%20una%20cotizaci%C3%B3n" target="_blank" rel="noopener noreferrer"><i class="bi bi-whatsapp" aria-hidden="true"></i> Pregunta por tu material</a>
+            <a class="btn btn-kit btn-ghost" href="#precios">Ver precios de hoy</a>
           </div>
-          <p class="hero-note reveal delay-4">
-            <strong>Importante:</strong> el material se compra para destrucción y desguace, por eso el precio
-            es menor que una pieza funcional de reventa. Cotizamos por tipo, peso y estado.
-          </p>
+
           <div class="hero-stats reveal delay-4" id="heroStats">
-            <article><p class="stat-number" id="heroStatStates">5+</p><p class="stat-label">Estados activos, resto del país desde 10&nbsp;kg</p></article>
+            <article><p class="stat-number" id="heroStatStates">10+</p><p class="stat-label">Estados activos, resto del país desde 10&nbsp;kg</p></article>
             <article><p class="stat-number">24h</p><p class="stat-label">Meta de respuesta por WhatsApp</p></article>
             <article><p class="stat-number" id="heroStatMaterials">6</p><p class="stat-label">Tipos de material que compramos</p></article>
           </div>
@@ -129,15 +242,20 @@
 
         <div class="hero-media reveal delay-2">
           <div class="hero-media-frame">
-            <img src="Galeria/logica_celular.webp" alt="Lote real de lógicas de celular recibido para reciclaje" />
+            <img src="Galeria/logica_celular.webp" alt="Lote real de lógicas de celular recibido para reciclaje"
+              width="526" height="701" fetchpriority="high" decoding="async" />
+            <!-- La misma foto, desenfocada, rellena los lados del marco: la
+                 foto es vertical y el marco horizontal, y antes quedaban dos
+                 bandas grises. Mismo archivo: no se descarga dos veces. -->
+            <img class="hero-media-fondo" src="Galeria/logica_celular.webp" alt="" aria-hidden="true" width="526" height="701" decoding="async" />
             <div class="hero-media-tag"><span class="dot"></span><span class="label">Lote real recibido</span></div>
           </div>
           <div class="hero-media-foot">
             <div>
               <p class="foot-label">Mejor precio del catálogo</p>
-              <p class="foot-title">Lógica de celular · Tipo 1</p>
+              <p class="foot-title" id="heroBestLabel">Lógica de celular · Tipo 1</p>
             </div>
-            <p class="foot-price" id="heroBestPrice">$0 – $0 /kg</p>
+            <p class="foot-price" id="heroBestPrice">$5,000&nbsp;– $10,000&nbsp;/kg</p>
           </div>
         </div>
       </div>
@@ -146,32 +264,32 @@
     <!-- GARANTÍAS DE COMPRA SEGURA -->
     <section class="trust-strip" aria-label="Garantías de compra segura">
       <div class="container">
-        <div class="trust-grid reveal">
-          <div class="trust-card">
+        <div class="trust-grid bento reveal">
+          <div class="trust-card brillo-borde bento-ancho">
             <span class="trust-icon"><i class="bi bi-camera-video-fill" aria-hidden="true"></i></span>
             <div class="trust-info">
               <strong class="trust-title">Pesaje transparente en vivo</strong>
               <p class="trust-desc">Báscula calibrada frente a ti o en video para envíos foráneos. Cero sorpresas en tus kilos.</p>
             </div>
           </div>
-          <div class="trust-card">
+          <div class="trust-card brillo-borde bento-ancho">
             <span class="trust-icon"><i class="bi bi-cash-coin" aria-hidden="true"></i></span>
             <div class="trust-info">
               <strong class="trust-title">Pago inmediato en mano</strong>
               <p class="trust-desc">Efectivo o transferencia SPEI al momento de entregar tu material antes de retirarte.</p>
             </div>
           </div>
-          <div class="trust-card">
+          <div class="trust-card brillo-borde bento-ancho">
             <span class="trust-icon"><i class="bi bi-shield-check" aria-hidden="true"></i></span>
             <div class="trust-info">
               <strong class="trust-title">Trato directo sin intermediarios</strong>
               <p class="trust-desc">Somos recicladores directos: tabulador honesto y el mejor precio por kilo del mercado.</p>
             </div>
           </div>
-          <div class="trust-card">
+          <div class="trust-card brillo-borde bento-ancho">
             <span class="trust-icon"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i></span>
             <div class="trust-info">
-              <strong class="trust-title">7 plazas y envíos nacionales</strong>
+              <strong class="trust-title"><span id="trustPlazas">9</span> plazas y envíos nacionales</strong>
               <p class="trust-desc">Entrega en tu sucursal más cercana o coordinamos recolección en toda la República desde 10 kg.</p>
             </div>
           </div>
@@ -184,7 +302,7 @@
       <div class="container">
         <div class="section-head reveal">
           <div>
-            <p class="eyebrow">Precios por kilo</p>
+            <p class="eyebrow eyebrow-linea">Precios por kilo</p>
             <h2>Lo que estamos comprando hoy</h2>
           </div>
           <p>Rangos referenciales. El precio final depende del estado del material y de la plaza donde se entrega.</p>
@@ -202,7 +320,50 @@
         </div>
 
         <div class="precios-extra-hint reveal delay-3">
-          <p>¿Tienes otro tipo de tarjeta o material? <button type="button" class="btn-link text-accent open-material-selector" style="font-weight:700">Explora el catálogo completo con fotos</button> o <a class="text-accent js-wa-link" style="font-weight:700" data-wa-msg="Hola, tengo material para reciclar que no veo en la lista, ¿me pueden cotizar?" href="https://wa.me/522227548704" target="_blank" rel="noopener">pregúntanos por WhatsApp</a>.</p>
+          <p><strong>Importante:</strong> el material se compra para destrucción y desguace, por eso el precio es menor que una pieza funcional de reventa.</p>
+          <p>¿Tienes otro tipo de tarjeta o material? <button type="button" class="btn-link text-accent open-material-selector" style="font-weight:700">Explora el catálogo completo con fotos</button> o <a class="text-accent js-wa-link" style="font-weight:700" data-wa-msg="Hola, tengo material para reciclar que no veo en la lista, ¿me pueden cotizar?" href="https://wa.me/522227548704" target="_blank" rel="noopener noreferrer">pregúntanos por WhatsApp</a>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- DETALLE DE MATERIAL (tipos de celular y otros materiales, unificado).
+         Va justo después de Precios, que es donde se pide ("Ver detalle").
+         Antes estaba después de la calculadora y de "Cómo funciona": el
+         visitante bajaba unos 4000 px, atravesando la sección fijada. -->
+    <section class="material-detail" id="materialDetail">
+      <div class="container">
+        <div class="section-head-solo reveal">
+          <button type="button" class="back-link" id="detailBack"><i class="bi bi-arrow-left" aria-hidden="true"></i> Elegir otro material</button>
+          <p class="eyebrow" id="detailEyebrow">Lógica de celular</p>
+          <h2 id="detailTitle">Tipos y precios según características</h2>
+        </div>
+
+        <div class="type-tabs" id="detailTabs" hidden></div>
+
+        <div class="detail-grid reveal delay-1">
+          <div class="detail-media">
+            <div class="carousel-viewport" id="carouselViewport">
+              <div class="carousel-track" id="carouselTrack"></div>
+              <button type="button" class="carousel-nav carousel-prev" id="carouselPrev" aria-label="Imagen anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></button>
+              <button type="button" class="carousel-nav carousel-next" id="carouselNext" aria-label="Imagen siguiente"><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+              <div class="carousel-dots" id="carouselDots"></div>
+            </div>
+            <div class="detail-media-foot">
+              <span class="foot-caption" id="detailCaption">Referencia</span>
+              <span class="foot-price" id="detailPrice">$0 – $0 /kg</span>
+            </div>
+          </div>
+          <div class="detail-info">
+            <div>
+              <p class="detail-eyebrow" id="detailInfoEyebrow">Consideraciones</p>
+              <h3>Consideraciones importantes</h3>
+            </div>
+            <ul class="spec-list" id="detailSpecs"></ul>
+            <div class="detail-actions">
+              <a class="btn btn-kit magnetico btn-primary" id="detailWaLink" href="https://wa.me/522227548704" target="_blank" rel="noopener noreferrer"><i class="bi bi-whatsapp" aria-hidden="true"></i> Tengo este material</a>
+              <a class="btn btn-kit btn-ghost js-wa-link" id="detailOtherBtn" data-wa-msg="Hola, tengo otro tipo de material para vender que no veo en su lista de precios." href="https://wa.me/522227548704" target="_blank" rel="noopener noreferrer"><i class="bi bi-whatsapp" aria-hidden="true"></i> Tengo otro tipo de material</a>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -212,7 +373,7 @@
       <div class="container">
         <div class="section-head reveal">
           <div>
-            <p class="eyebrow"><i class="bi bi-calculator" aria-hidden="true"></i> Cotizador Express</p>
+            <p class="eyebrow eyebrow-linea"><i class="bi bi-calculator" aria-hidden="true"></i> Cotizador Express</p>
             <h2>Calcula tus ganancias estimadas</h2>
           </div>
           <p>Selecciona tu tipo de material y la cantidad de kilos para calcular cuánto dinero en efectivo recibirás al momento.</p>
@@ -221,13 +382,13 @@
         <div class="calc-wrapper reveal delay-1">
           <div class="calc-inputs">
             <div class="calc-field">
-              <label class="calc-label" for="calcMaterialSelect">1. Selecciona el tipo de material</label>
-              <div class="calc-material-chips" id="calcMaterialChips" role="radiogroup" aria-label="Tipos de material">
+              <label class="calc-label" id="calcMaterialLabel" for="calcMaterialSelect">1. Selecciona el tipo de material</label>
+              <div class="calc-material-chips" id="calcMaterialChips" role="radiogroup" aria-labelledby="calcMaterialLabel">
                 <div class="skeleton" style="height:44px;border-radius:10px"></div>
                 <div class="skeleton" style="height:44px;border-radius:10px"></div>
                 <div class="skeleton" style="height:44px;border-radius:10px"></div>
               </div>
-              <select id="calcMaterialSelect" class="calc-select" aria-label="Seleccionar material en lista"></select>
+              <select id="calcMaterialSelect" class="calc-select" ></select>
             </div>
 
             <div class="calc-field">
@@ -236,7 +397,7 @@
                 <div class="calc-weight-fields">
                   <div class="calc-stepper" title="Kilos enteros">
                     <button type="button" class="calc-step-btn" id="calcMinusBtn" aria-label="Restar 1 kilo">−</button>
-                    <input type="number" id="calcWeightInput" class="calc-number-input" min="0" max="1000" value="3" step="any" inputmode="decimal" aria-label="Kilos de tu lote" />
+                    <input type="number" id="calcWeightInput" class="calc-number-input" min="0" max="1000" value="3" step="any" inputmode="decimal" aria-label="Peso aproximado de tu lote, en kilos" />
                     <span class="calc-unit">kg</span>
                     <button type="button" class="calc-step-btn" id="calcPlusBtn" aria-label="Sumar 1 kilo">+</button>
                   </div>
@@ -272,7 +433,9 @@
           <div class="calc-result-card">
             <div class="result-badge"><span class="live-pulse-dot"></span> <i class="bi bi-cash-stack" aria-hidden="true"></i> Estimación de compra inmediata</div>
             <p class="result-material-title" id="calcResultTitle">Cargando material…</p>
-            <div class="result-price-wrap">
+            <!-- aria-live: quien usa lector de pantalla escucha el monto nuevo al
+                 cambiar el peso o el material (antes no se enteraba). -->
+            <div class="result-price-wrap" aria-live="polite" aria-atomic="true">
               <span class="result-currency">MXN</span>
               <span class="result-amount" id="calcResultAmount">$0 – $0</span>
             </div>
@@ -285,7 +448,7 @@
               <div class="benefit-item"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> En sucursal o recolección a domicilio</div>
             </div>
 
-            <a class="btn btn-primary btn-block calc-cta-btn" id="calcWaBtn" href="https://wa.me/522227548704" target="_blank" rel="noopener">
+            <a class="btn btn-kit magnetico btn-primary btn-block calc-cta-btn" id="calcWaBtn" href="https://wa.me/522227548704" target="_blank" rel="noopener noreferrer">
               <i class="bi bi-whatsapp" aria-hidden="true"></i> Cotizar este lote por WhatsApp
             </a>
             <p class="calc-disclaimer">*El valor final se confirma al evaluar el lote físico (chip presente, estado y limpieza). Precios sujetos a actualización.</p>
@@ -298,13 +461,14 @@
     <section class="bg-alt" id="proceso">
       <div class="container">
         <div class="section-head-solo reveal">
-          <p class="eyebrow">Proceso transparente</p>
+          <p class="eyebrow eyebrow-linea">Proceso transparente</p>
           <h2>Cómo funciona la compra en 3 pasos</h2>
         </div>
         <div class="steps">
-          <article class="step reveal"><span class="step-n">01</span><h3>Nos escribes</h3><p>Manda fotos por WhatsApp de tu material, tipo de tarjeta y kilos aproximados.</p></article>
-          <article class="step reveal delay-1"><span class="step-n">02</span><h3>Te damos cotización</h3><p>Revisamos tipo, peso y componentes para confirmarte el rango de precio exacto.</p></article>
-          <article class="step reveal delay-2"><span class="step-n">03</span><h3>Pago al instante</h3><p>Cerramos el trato con entrega en sucursal o recolección a domicilio y pago inmediato.</p></article>
+          <span class="steps-linea" aria-hidden="true"></span>
+          <article class="step brillo-borde reveal"><span class="step-n">01</span><span class="num-fantasma" aria-hidden="true">01</span><h3>Nos escribes</h3><p>Manda fotos por WhatsApp de tu material, tipo de tarjeta y kilos aproximados.</p></article>
+          <article class="step brillo-borde reveal delay-1"><span class="step-n">02</span><span class="num-fantasma" aria-hidden="true">02</span><h3>Te damos cotización</h3><p>Revisamos tipo, peso y componentes para confirmarte el rango de precio exacto.</p></article>
+          <article class="step brillo-borde reveal delay-2"><span class="step-n">03</span><span class="num-fantasma" aria-hidden="true">03</span><h3>Pago al instante</h3><p>Cerramos el trato con entrega en sucursal o recolección a domicilio y pago inmediato.</p></article>
         </div>
       </div>
     </section>
@@ -313,16 +477,18 @@
     <section class="selector-modal" id="selectorModal" aria-hidden="true">
       <div class="selector-overlay" id="selectorOverlay"></div>
       <div class="selector-panel" role="dialog" aria-modal="true" aria-labelledby="selectorTitle">
-        <button class="selector-close" id="selectorClose" aria-label="Cerrar">×</button>
+        <button type="button" class="selector-close" id="selectorClose" aria-label="Cerrar selector de material"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
         <div class="selector-head">
           <h2 id="selectorTitle">¿Qué tipo de material tienes?</h2>
           <p>Elige tu material para ver precio, imágenes reales y las consideraciones antes de escribirnos.</p>
         </div>
         <p class="selector-step-label">1. Elige categoría</p>
-        <div class="selector-modes" role="tablist" aria-label="Categoría de material">
-          <button class="mode-btn is-active" type="button" role="tab" aria-selected="true" data-mode="all">Ver todos</button>
-          <button class="mode-btn" type="button" role="tab" aria-selected="false" data-mode="celular">Solo celular</button>
-          <button class="mode-btn" type="button" role="tab" aria-selected="false" data-mode="otros">Otros tipos</button>
+        <!-- Son filtros, no pestañas: role="tab" sin paneles confundía al lector
+             de pantalla. Botones de alternancia (aria-pressed) en un grupo. -->
+        <div class="selector-modes" role="group" aria-label="Categoría de material">
+          <button class="mode-btn is-active" type="button" aria-pressed="true" data-mode="all">Ver todos</button>
+          <button class="mode-btn" type="button" aria-pressed="false" data-mode="celular">Solo celular</button>
+          <button class="mode-btn" type="button" aria-pressed="false" data-mode="otros">Otros tipos</button>
         </div>
         <p class="selector-step-label">2. Selecciona material</p>
         <div class="selector-grid" id="selectorGrid">
@@ -333,93 +499,39 @@
       </div>
     </section>
 
-    <!-- DETALLE DE MATERIAL (tipos de celular y otros materiales, unificado) -->
-    <section class="material-detail" id="materialDetail">
-      <div class="container">
-        <div class="section-head-solo reveal">
-          <button class="back-link" id="detailBack"><i class="bi bi-arrow-left" aria-hidden="true"></i> Elegir otro material</button>
-          <p class="eyebrow" id="detailEyebrow">Lógica de celular</p>
-          <h2 id="detailTitle">Tipos y precios según características</h2>
-        </div>
-
-        <div class="type-tabs" id="detailTabs" hidden></div>
-
-        <div class="detail-grid reveal delay-1">
-          <div class="detail-media">
-            <div class="carousel-viewport" id="carouselViewport">
-              <div class="carousel-track" id="carouselTrack"></div>
-              <button class="carousel-nav carousel-prev" id="carouselPrev" aria-label="Imagen anterior">❮</button>
-              <button class="carousel-nav carousel-next" id="carouselNext" aria-label="Imagen siguiente">❯</button>
-              <div class="carousel-dots" id="carouselDots"></div>
-            </div>
-            <div class="detail-media-foot">
-              <span class="foot-caption" id="detailCaption">Referencia</span>
-              <span class="foot-price" id="detailPrice">$0 – $0 /kg</span>
-            </div>
-          </div>
-          <div class="detail-info">
-            <div>
-              <p class="detail-eyebrow" id="detailInfoEyebrow">Consideraciones</p>
-              <h3>Consideraciones importantes</h3>
-            </div>
-            <ul class="spec-list" id="detailSpecs"></ul>
-            <div class="detail-actions">
-              <a class="btn btn-primary" id="detailWaLink" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp" aria-hidden="true"></i> Tengo este material</a>
-              <a class="btn btn-ghost js-wa-link" id="detailOtherBtn" data-wa-msg="Hola, tengo otro tipo de material para vender que no veo en su lista de precios." href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp" aria-hidden="true"></i> Tengo otro tipo de material</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- QUIENES SOMOS -->
-    <section class="bg-alt" id="equipo" hidden>
-      <div class="container">
-        <div class="section-head-solo reveal">
-          <p class="eyebrow">Quiénes somos</p>
-          <h2>El equipo detrás de Eco Lógica García</h2>
-        </div>
-        <div class="team-grid" id="teamGrid"></div>
-      </div>
-    </section>
-
     <!-- SUCURSALES -->
     <section id="sucursales">
       <div class="container">
         <div class="section-head reveal">
           <div>
-            <p class="eyebrow">Dónde estamos</p>
+            <p class="eyebrow eyebrow-linea">Dónde estamos</p>
             <h2>Sucursales y contacto directo</h2>
           </div>
           <p>Escribe por WhatsApp a tu encargado más cercano o únete al grupo oficial de tu estado.</p>
         </div>
         <div class="community-banner reveal">
-          <img src="icons/portadas/portada-comunidad.jpg" alt="Comunidad Oficial Eco Lógica García" class="community-banner-thumb" loading="lazy" onerror="this.style.display='none'" />
+          <img src="icons/portadas/portada-comunidad.webp" alt="Comunidad Oficial Eco Lógica García" class="community-banner-thumb" loading="lazy" onerror="this.style.display='none'" />
           <div class="community-banner-text">
             <strong>Comunidad y Grupos Oficiales de WhatsApp por Estado:</strong> Únete a nuestra comunidad oficial o entra directamente al grupo de tu región para recibir avisos de cambios de precios, listas actualizadas y coordinar recolecciones de material (grupos moderados, estrictamente cero spam).
           </div>
-          <a class="btn btn-primary btn-sm community-banner-btn" href="https://chat.whatsapp.com/FqxcY8FG4lCIPCalAgIXZZ" target="_blank" rel="noopener">
+          <a class="btn btn-kit magnetico btn-primary btn-sm community-banner-btn" href="https://chat.whatsapp.com/FqxcY8FG4lCIPCalAgIXZZ" target="_blank" rel="noopener noreferrer">
             <i class="bi bi-whatsapp" aria-hidden="true"></i> Unirme a la Comunidad
           </a>
         </div>
 
         <!-- Filtros rápidos por estado -->
-        <div class="sucursales-filter-bar reveal delay-1" id="sucursalesFilterBar" role="tablist" aria-label="Filtrar sucursales por estado">
-          <button type="button" class="sucursal-filter-chip is-active" data-filter="all" role="tab" aria-selected="true"><i class="bi bi-grid-fill" aria-hidden="true"></i> Todos</button>
-          <button type="button" class="sucursal-filter-chip" data-filter="puebla" role="tab" aria-selected="false">Puebla</button>
-          <button type="button" class="sucursal-filter-chip" data-filter="tlaxcala" role="tab" aria-selected="false">Tlaxcala</button>
-          <button type="button" class="sucursal-filter-chip" data-filter="cdmx" role="tab" aria-selected="false">CDMX</button>
-          <button type="button" class="sucursal-filter-chip" data-filter="mexico" role="tab" aria-selected="false">EdoMéx</button>
-          <button type="button" class="sucursal-filter-chip" data-filter="veracruz" role="tab" aria-selected="false">Veracruz</button>
-          <button type="button" class="sucursal-filter-chip" data-filter="aguascalientes" role="tab" aria-selected="false">Aguascalientes</button>
-          <button type="button" class="sucursal-filter-chip" data-filter="guanajuato" role="tab" aria-selected="false">Guanajuato</button>
-          <button type="button" class="sucursal-filter-chip" data-filter="guerrero" role="tab" aria-selected="false">Guerrero</button>
+        <div class="sucursales-filter-bar reveal delay-1" id="sucursalesFilterBar" role="group" aria-label="Filtrar sucursales por estado">
+          <button type="button" class="sucursal-filter-chip is-active" data-filter="all" aria-pressed="true"><i class="bi bi-grid-fill" aria-hidden="true"></i> Todos</button>
+          <!-- Un chip por cada estado que tenga contacto en data/branches.json:
+               los agrega renderBranches(). Escritos a mano aquí, un estado
+               nuevo del panel no aparecía y uno vaciado dejaba la rejilla
+               en blanco. -->
         </div>
 
         <div class="sucursales-grid" id="sucursalesGrid"></div>
         <div class="sucursal-tip-strip reveal">
           <p><i class="bi bi-info-circle-fill" aria-hidden="true"></i> <strong>Para cotizar más rápido por WhatsApp:</strong> Envía fotos claras de tu lote, tipo de tarjeta, kilos aproximados y tu ciudad.</p>
-          <a class="btn btn-sm btn-ghost js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp" aria-hidden="true"></i> Chat general de atención</a>
+          <a class="btn btn-sm btn-ghost js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener noreferrer"><i class="bi bi-whatsapp" aria-hidden="true"></i> Chat general de atención</a>
         </div>
       </div>
     </section>
@@ -428,7 +540,7 @@
     <section id="cobertura">
       <div class="container">
         <div class="section-head-solo reveal">
-          <p class="eyebrow">Logística</p>
+          <p class="eyebrow eyebrow-linea">Logística</p>
           <h2>Cobertura en la República</h2>
         </div>
         <div class="coverage-layout reveal delay-1">
@@ -439,7 +551,7 @@
                 <span class="legend-item"><i class="legend-dot legend-dot-active"></i>Cobertura activa</span>
               </div>
             </div>
-            <div id="coverageMap" class="coverage-map" aria-label="Mapa de cobertura actual"></div>
+            <div id="coverageMap" class="coverage-map" role="region" aria-label="Mapa de los estados con cobertura activa"></div>
           </div>
           <div class="coverage-side">
             <div class="coverage-block">
@@ -478,13 +590,21 @@
     <section class="bg-alt" id="galeria">
       <div class="container">
         <div class="section-head-solo reveal">
-          <p class="eyebrow">Operación</p>
+          <p class="eyebrow eyebrow-linea">Operación</p>
           <h2>Así luce el material que recibimos</h2>
         </div>
+        <!-- Los filtros los genera renderGalleryGeneral() a partir de las
+             categorías reales de data/gallery.json, igual que las tarjetas
+             de sucursales: si el panel agrega una categoría, su botón
+             aparece solo, sin tocar este archivo. -->
+        <div class="galeria-filtros reveal" id="galleryFilters" role="group" aria-label="Filtrar galería por tipo de material"></div>
         <div class="gallery-grid" id="galleryGeneral">
           <div class="skeleton" style="aspect-ratio:4/3"></div>
           <div class="skeleton" style="aspect-ratio:4/3"></div>
           <div class="skeleton" style="aspect-ratio:4/3"></div>
+        </div>
+        <div class="galeria-mas">
+          <button type="button" class="btn btn-ghost" id="galleryMore" hidden>Ver más fotos</button>
         </div>
       </div>
     </section>
@@ -493,7 +613,7 @@
     <section id="faq">
       <div class="container faq-wrap">
         <div class="section-head-solo reveal">
-          <p class="eyebrow">Dudas comunes</p>
+          <p class="eyebrow eyebrow-linea">Dudas comunes</p>
           <h2>Preguntas frecuentes</h2>
         </div>
         <div class="faq-list reveal delay-1" id="faqList"></div>
@@ -503,29 +623,43 @@
     <!-- CIERRE -->
     <section class="no-border">
       <div class="container">
-        <div class="cta-band-inner reveal">
+        <div class="cta-band-inner brillo-borde reveal">
           <h2>Tu lógica también tiene valor</h2>
           <p>Pregunta sin compromiso. Te decimos el rango de precio antes de que muevas el material.</p>
           <div class="cta-band-actions">
-            <a class="btn btn-primary js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener"><i class="bi bi-whatsapp" aria-hidden="true"></i> Escribir por WhatsApp</a>
-            <a class="btn btn-ghost" href="#sucursales"><i class="bi bi-geo-alt" aria-hidden="true"></i> Ver sucursales</a>
+            <a class="btn btn-kit magnetico btn-primary js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener noreferrer"><i class="bi bi-whatsapp" aria-hidden="true"></i> Escribir por WhatsApp</a>
+            <a class="btn btn-kit btn-ghost" href="#sucursales"><i class="bi bi-geo-alt" aria-hidden="true"></i> Ver sucursales</a>
           </div>
         </div>
       </div>
     </section>
   </main>
 
-  <a class="floating-whatsapp js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp"><i class="bi bi-whatsapp" aria-hidden="true"></i></a>
+  <!-- Visor de fotos de la galería (lo controla script.js). -->
+  <dialog class="visor" id="visorGaleria" aria-labelledby="visorTitulo">
+    <div class="visor-barra">
+      <p class="visor-titulo" id="visorTitulo"></p>
+      <span class="visor-cuenta" id="visorCuenta"></span>
+      <button type="button" class="visor-btn" id="visorCerrar" aria-label="Cerrar foto"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+    </div>
+    <div class="visor-escena" id="visorEscena">
+      <button type="button" class="visor-btn visor-nav" id="visorPrev" aria-label="Foto anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></button>
+      <img id="visorImg" alt="" />
+      <button type="button" class="visor-btn visor-nav" id="visorNext" aria-label="Foto siguiente"><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+    </div>
+  </dialog>
+
+  <a class="floating-whatsapp js-wa-link" href="https://wa.me/522227548704" target="_blank" rel="noopener noreferrer" aria-label="Escribir por WhatsApp"><i class="bi bi-whatsapp" aria-hidden="true"></i></a>
   <button class="back-to-top" id="backToTop" type="button" aria-label="Volver arriba" hidden><i class="bi bi-arrow-up" aria-hidden="true"></i></button>
 
   <footer class="site-footer">
     <div class="container footer-grid">
       <div class="footer-brand">
         <div class="footer-brand-mark">
-          <img src="icons/icono.png" alt="" />
+          <img src="icons/icono-128.png" alt="" />
           <span class="logo-text-wrap">
-            <span class="logo-text" style="color:#F0F6F1">ECO <span class="logo-kas">LÓGICA</span></span>
-            <span class="logo-subtext" style="color:rgba(244,246,244,0.5)">García</span>
+            <span class="logo-text">ECO <span class="logo-kas">LÓGICA</span></span>
+            <span class="logo-subtext">García</span>
           </span>
         </div>
         <p>Compra de lógica de celular y componentes electrónicos para reciclaje responsable en México.</p>
@@ -542,14 +676,14 @@
       </div>
       <div class="footer-col">
         <p class="footer-col-title">Legales</p>
-        <a href="aviso-privacidad.html" target="_blank" rel="noopener">Aviso de privacidad</a>
-        <a href="terminos.html" target="_blank" rel="noopener">Términos y condiciones</a>
-        <a href="admin.html" style="opacity:.7">Panel interno</a>
+        <a href="aviso-privacidad.html">Aviso de privacidad</a>
+        <a href="terminos.html">Términos y condiciones</a>
+        <a href="admin.html" rel="nofollow" style="opacity:.7">Panel interno</a>
       </div>
       <div class="footer-col">
         <p class="footer-col-title">Contacto</p>
         <p class="footer-tel js-wa-text">222 754 8704</p>
-        <p style="font-size:13px;line-height:1.6;color:rgba(244,246,244,0.55)">Recolección a domicilio en el estado de Puebla</p>
+        <p class="footer-nota">Recolección a domicilio en el estado de Puebla</p>
       </div>
     </div>
     <div class="footer-bottom">
@@ -564,18 +698,65 @@
   <aside class="mobile-sticky-bar" id="mobileStickyBar" aria-label="Cotización rápida en móvil">
     <div class="mobile-sticky-inner">
       <div class="mobile-sticky-info">
-        <span class="mobile-sticky-tag"><i class="bi bi-lightning-fill" aria-hidden="true"></i> Celular Tipo 1</span>
-        <div class="mobile-sticky-price" id="mobileStickyPrice">$900 – $1,300/kg</div>
+        <span class="mobile-sticky-tag"><i class="bi bi-lightning-fill" aria-hidden="true"></i> <span id="mobileStickyLabel">Celular Tipo 1</span></span>
+        <div class="mobile-sticky-price" id="mobileStickyPrice">$5,000&nbsp;– $10,000&nbsp;/kg</div>
       </div>
-      <a href="https://wa.me/522227548704?text=Hola%2C%20quiero%20cotizar%20un%20lote%20de%20tarjetas%20con%20Eco%20L%C3%B3gica%20Garc%C3%ADa" class="btn btn-sm btn-primary mobile-sticky-cta js-wa-link" target="_blank" rel="noopener" data-wa-msg="Hola, quiero cotizar un lote de tarjetas con Eco Lógica García">
+      <a href="https://wa.me/522227548704?text=Hola%2C%20quiero%20cotizar%20un%20lote%20de%20tarjetas%20con%20Eco%20L%C3%B3gica%20Garc%C3%ADa" class="btn btn-sm btn-primary mobile-sticky-cta js-wa-link" target="_blank" rel="noopener noreferrer" data-wa-msg="Hola, quiero cotizar un lote de tarjetas con Eco Lógica García">
         <i class="bi bi-whatsapp" aria-hidden="true"></i> Cotizar WhatsApp
       </a>
     </div>
   </aside>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="js/utils.js"></script>
-  <script src="js/fallbacks.js"></script>
-  <script src="script.js"></script>
+  <!-- leaflet.js ya no se carga aquí: son 147 KB que bloqueaban el render de
+       TODA la página (y con ella el hero, que nace en opacity:0 y solo aparece
+       cuando corre script.js) por un mapa que vive hasta abajo, en "Cobertura",
+       y que mucha gente nunca llega a ver. Ahora lo baja ensureLeafletJs() en
+       script.js, junto con su CSS, cuando esa sección se acerca a pantalla. -->
+  <!-- CARGA CONDICIONAL DE LO QUE SOLO SIRVE EN ESCRITORIO.
+       GSAP (25 KB) + ScrollTrigger (16 KB) + js/motion.js (25 KB) suman
+       66 KB que en un teléfono se descargaban para NADA: motion.js se
+       apaga solo en móvil porque ScrollTrigger costaba demasiados cuadros
+       por segundo. Y js/ui.js solo hace cosas con un puntero fino (bordes
+       que siguen al cursor, botones magnéticos), así que tampoco tiene
+       sentido bajarlo con un dedo.
+       Aquí se decide antes de pedir nada: en móvil son 74 KB que no
+       viajan, y la página queda igual de completa porque script.js vuelve
+       a su sistema de apariciones con IntersectionObserver. -->
+  <script>
+    (function () {
+      function cargar(lista) {
+        lista.forEach(function (src) {
+          var s = document.createElement("script");
+          s.src = src;
+          // async=false conserva el ORDEN de ejecución entre scripts
+          // insertados por JavaScript; sin esto, ScrollTrigger podría
+          // correr antes que gsap y no registrarse.
+          s.async = false;
+          document.head.appendChild(s);
+        });
+      }
+      var puedo = function (q) { try { return window.matchMedia(q).matches; } catch (_e) { return false; } };
+      var quieto = puedo("(prefers-reduced-motion: reduce)");
+
+      if (puedo("(min-width: 901px)") && !quieto) {
+        // script.js lo consulta: mientras GSAP viene en camino, espera un
+        // momento antes de usar su propio sistema de apariciones, para que
+        // la portada no entre dos veces (primero con CSS y luego con GSAP).
+        window.__MOTION_ESPERADO__ = true;
+        cargar([
+          "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/gsap.min.js",
+          "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/ScrollTrigger.min.js",
+          "js/motion.js",
+        ]);
+      }
+      if (puedo("(hover: hover) and (pointer: fine)")) {
+        cargar(["js/ui.js"]);
+      }
+    })();
+  </script>
+
+  <script defer src="js/utils.js"></script>
+  <script defer src="js/fallbacks.js"></script>
+  <script defer src="script.js"></script>
 </body>
 </html>

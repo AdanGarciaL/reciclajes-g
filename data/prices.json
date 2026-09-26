@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-10",
+  "updatedAt": "2026-09-25",
   "materials": [
     {
       "id": "celular",
@@ -10,7 +10,7 @@
       "min": 250,
       "max": 10000,
       "unit": "/kg",
-      "note": "Del mas barato hasta el tipo 1 alcanza el precio máximo del catálogo.",
+      "note": "Desde el más barato hasta el Tipo 1, que alcanza el precio máximo del catálogo.",
       "quick": true,
       "quickCopy": "Rango completo según tipo, estado y material. El Tipo 1 alcanza el precio máximo.",
       "showInSelector": true,
@@ -106,7 +106,7 @@
         "Debe tener su chip",
         "Celulares de gama media a alta",
         "Condición variable aceptable mientras el chip esté presente",
-        "256 Gbs en adelante"
+        "256 GB en adelante"
       ],
       "galleryCategory": "celular-tipo-1"
     },
@@ -122,7 +122,7 @@
         "Si no entra en Tipo 1 pasa a Tipo 2",
         "Condición variable aceptable mientras el chip esté presente",
         "Cualquier marca o modelo",
-        "64 Gbs en adelante"
+        "64 GB en adelante"
       ],
       "galleryCategory": "celular-tipo-2"
     },
@@ -135,10 +135,10 @@
       "max": 1800,
       "specs": [
         "Placas tipo L",
-        "Si no entra en Tipo 1, Tipo 2 pasa a Tipo 3",
+        "Si no entra en Tipo 1 ni en Tipo 2, pasa a Tipo 3",
         "Condición variable aceptable mientras el chip esté presente",
         "Cualquier marca o modelo",
-        "32 Gbs en adelante"
+        "32 GB en adelante"
       ],
       "galleryCategory": "celular-tipo-3"
     },
@@ -155,8 +155,8 @@
         "Sin tapa: se puede dejar como venga",
         "Para clientes sin tiempo de desarmado",
         "Ideal para lotes grandes y descarte",
-        "Celular de teclas o touch pero que tenga 1 Cámara $250 el kilo",
-        "Celular de teclas o touch pero que tenga 2, 3 y 4 Cámaras $400 el kilo"
+        "Celular de teclas o touch pero que tenga 1 cámara $250 el kilo",
+        "Celular de teclas o touch pero que tenga 2, 3 y 4 cámaras $400 el kilo"
       ],
       "galleryCategory": "sin-pila-tapa"
     },
@@ -172,8 +172,8 @@
         "Celulares de gama baja",
         "Condición variable aceptable mientras el chip esté presente",
         "Cualquier marca o modelo",
-        "8 Gbs en adelante",
-        "Si no entra en Tipo 1, Tipo 2, Tipo 3 pasa a Teclado o Grande"
+        "8 GB en adelante",
+        "Si no entra en Tipo 1, 2 ni 3, pasa a Teclas o Grande"
       ],
       "galleryCategory": "nueva-categoria"
     }
@@ -197,7 +197,7 @@
       "id": "ram",
       "priceId": "ram",
       "eyebrow": "Memorias RAM",
-      "title": "Módulos de memoria RAM DDR / DDR2 / DDR3 / DDR4",
+      "title": "Módulos de memoria RAM, de DDR a DDR5",
       "specs": [
         "Memorias RAM de cualquier generación",
         "DDR, DDR2, DDR3, DDR4, DDR5",
@@ -218,7 +218,7 @@
         "Cualquier estado, rotos o funcionales",
         "Demanda consistente en reciclaje"
       ],
-      "galleryCategory": "celular-tipo-3"
+      "galleryCategory": "nueva-categoria"
     },
     {
       "id": "tablet",
@@ -232,7 +232,7 @@
         "Condición variable aceptable mientras el chip esté presente",
         "Aceptamos grandes volúmenes"
       ],
-      "galleryCategory": "celular-tipo-3"
+      "galleryCategory": ""
     }
   ]
 }

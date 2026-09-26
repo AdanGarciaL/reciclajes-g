@@ -1,0 +1,29 @@
+{
+  "updatedAt": "2026-09-25",
+  "items": [
+    {
+      "q": "¿Por qué el precio es más bajo que una pieza funcional?",
+      "a": "El material se compra para destrucción y desguace, no para reventa como refacción. El valor está en los metales y componentes que se recuperan, por eso el precio va por kilo y no por pieza."
+    },
+    {
+      "q": "¿El sitio guarda mis datos?",
+      "a": "No. Esta página solo informa precios, tipos de material y contactos. No hay formularios ni registros: toda la atención es por WhatsApp o directamente en sucursal."
+    },
+    {
+      "q": "¿Cómo sé en qué tipo entra mi lógica?",
+      "a": "Revisa la sección de tipos: el Tipo 1 requiere chip presente, sin flex, tiras ni cámaras. Si no cumple, pasa a Tipo 2, y si tampoco, a Tipo 3 (placas tipo L). Las placas de teléfonos de teclas o de placa completa van en «Teclas o Grande», y las de tablet tienen su propio precio en la lista. Si tienes duda, manda fotos al WhatsApp de tu plaza."
+    },
+    {
+      "q": "Estoy en un estado sin cobertura activa, ¿me pueden comprar?",
+      "a": "Sí. En cualquier estado de la República consideramos la recolección si el lote es de 10 kg o más. En Puebla además hacemos recolección a domicilio sin ese mínimo."
+    },
+    {
+      "q": "¿El precio que aparece en el sitio es final?",
+      "a": "No. Son rangos referenciales. El precio se confirma después de revisar el lote, según el tipo de material, los kilos y el estado físico."
+    },
+    {
+      "q": "¿Cómo se hace el pago?",
+      "a": "Pagamos al momento de recibir tu material, en efectivo o por transferencia SPEI. La forma de entrega o envío se acuerda antes de cerrar el trato: nunca movemos material sin que las condiciones estén acordadas."
+    }
+  ]
+}

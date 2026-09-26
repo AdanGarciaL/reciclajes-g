@@ -4,40 +4,40 @@
    ========================================================= */
 
 
-  background: linear-gradient(90deg, var(--surface-alt) 25%, var(--surface-strong) 37%, var(--surface-alt) 63%);
-  background-size: 400px 100%;
-  animation: shimmer 1.4s ease infinite;
-  border-radius: var(--radius-sm);
-}
-
 /* ---------- Barra de progreso de scroll ---------- */
 .scroll-progress {
   position: fixed; top: 0; left: 0; height: 3px; width: 0%;
   background: linear-gradient(90deg, var(--brand-mid), var(--brand-green));
-  z-index: 200; transition: width 0.1s linear;
+  z-index: 200;
+  transform-origin: left center;
 }
 
 /* ---------- Barra superior ---------- */
 .topbar {
-  background: var(--brand-forest);
-  color: rgba(244, 246, 244, 0.82);
+  background: linear-gradient(135deg, var(--brand-forest) 0%, var(--brand-forest-dark) 100%);
+  color: rgba(244, 246, 244, 0.85);
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 .topbar .container {
   min-height: var(--topbar-h);
   display: flex; align-items: center; justify-content: space-between;
   gap: 16px; flex-wrap: wrap; padding-top: 6px; padding-bottom: 6px;
 }
-.topbar strong { color: var(--brand-green); font-weight: 600; }
-.topbar a { color: var(--brand-green); }
+.topbar-right { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.topbar strong { font-weight: 600; }
+.topbar a { color: #ffffff; text-shadow: 0 0 12px rgba(63, 216, 106, 0.3); transition: text-shadow 0.2s ease, color 0.2s ease; }
+.topbar a:hover { color: var(--brand-green); text-shadow: 0 0 16px rgba(63, 216, 106, 0.6); }
 
 /* ---------- Encabezado ---------- */
 .site-header {
   position: sticky; top: 0; z-index: 100;
   border-bottom: 1px solid var(--border);
-  transition: box-shadow 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  background: transparent;
 }
 /* El desenfoque vive en un pseudo-elemento (no en .site-header directamente)
    porque backdrop-filter en el propio elemento crea un nuevo "containing
@@ -52,14 +52,34 @@
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  transition: background-color 0.35s ease;
+  transition: background-color 0.35s ease, border-radius 0.4s ease;
+  border-radius: inherit;
 }
-.site-header.is-scrolled { box-shadow: var(--shadow-sm); }
+.site-header.is-scrolled { 
+  top: 12px;
+  left: 0;
+  right: 0;
+  width: calc(100% - 24px);
+  max-width: 1140px;
+  margin: 0 auto;
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  box-shadow: 0 16px 48px rgba(11, 59, 34, 0.12);
+  transform: translateY(0);
+}
+@media (max-width: 768px) {
+  .site-header.is-scrolled {
+    top: 8px;
+    width: calc(100% - 16px);
+    border-radius: 14px;
+  }
+}
+.site-header .container { max-width: 1200px; padding: 0 16px; }
 .nav {
   min-height: var(--header-h);
-  display: flex; align-items: center; justify-content: space-between; gap: clamp(10px, 1.5vw, 20px);
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: clamp(8px, 1vw, 16px);
 }
-.logo { display: inline-flex; align-items: center; gap: 11px; flex: 0 0 auto; min-width: 0; max-width: 320px; }
+.logo { display: inline-flex; align-items: center; gap: 11px; justify-self: start; min-width: 0; max-width: 320px; }
 .logo-mark { width: 52px; height: 52px; border-radius: 14px; overflow: hidden; flex: none; box-shadow: var(--shadow-sm); }
 .logo-mark img { width: 100%; height: 100%; object-fit: cover; }
 .logo-text-wrap { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -67,10 +87,10 @@
 .logo-text .logo-kas { color: var(--brand-green-strong); }
 body.dark-mode .logo-text .logo-kas { color: var(--brand-green); }
 .logo-subtext { font-family: var(--font-display); font-weight: 600; font-size: 11px; letter-spacing: 0.22em; color: var(--ink-soft); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-@media (max-width: 1180px) { .logo-subtext { display: none; } }
+.site-header .logo-subtext { display: none; }
 
-.nav-links { display: flex; gap: clamp(8px, 1.2vw, 16px); flex-wrap: nowrap; align-items: center; }
-.nav-links a { font-size: 13.5px; font-weight: 500; color: var(--ink-muted); padding: 6px 2px; position: relative; transition: color 0.2s ease; white-space: nowrap; }
+.nav-links { display: flex; gap: clamp(6px, 1vw, 12px); flex-wrap: nowrap; align-items: center; justify-self: center; }
+.nav-links a { font-size: 12.5px; font-weight: 500; color: var(--ink-muted); padding: 6px 2px; position: relative; transition: color 0.2s ease; white-space: nowrap; }
 .nav-links a::after {
   content: ""; position: absolute; left: 0; right: 100%; bottom: -2px; height: 2px;
   background: var(--brand-green-strong); transition: right 0.25s ease;
@@ -80,12 +100,16 @@ body.dark-mode .nav-links a::after { background: var(--brand-green); }
 .nav-links a:hover::after, .nav-links a.is-active::after { right: 0; }
 .nav-links a.is-active { color: var(--ink); font-weight: 700; }
 
+/* line-height numérico: con "normal" el alto del botón dependía de las
+   métricas de la fuente y, al terminar de cargar IBM Plex, el header se
+   movía un par de píxeles (CLS en móvil). */
 .menu-btn {
   display: none; flex: none; border: 1px solid var(--border-strong); background: var(--surface);
-  color: var(--ink); font-size: 13px; font-weight: 600; padding: 9px 14px; border-radius: 8px;
+  color: var(--ink); font-size: 13px; font-weight: 600; line-height: 1.2; padding: 9px 14px; border-radius: 8px;
+  align-items: center; justify-content: center;
 }
 
-.nav-actions { display: flex; align-items: center; gap: 10px; flex: none; }
+.nav-actions { display: flex; align-items: center; gap: 10px; justify-self: end; }
 .nav-cta { padding: 9px 15px; font-size: 13.5px; }
 .theme-toggle {
   width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--border-strong);
@@ -100,9 +124,19 @@ body.dark-mode .nav-links a::after { background: var(--brand-green); }
   border: 1px solid transparent; transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
   white-space: nowrap;
 }
-.btn-primary { background: var(--brand-green-strong); color: #06210f; }
-body.dark-mode .btn-primary { background: var(--brand-green); color: #06210f; }
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(31, 184, 89, 0.35); }
+/* Tema claro: Verde García con texto blanco (5.07:1). El degradado ahora
+   va hacia un García más profundo, no hacia el Verde señal: con el señal
+   en un extremo, el texto quedaba sobre un verde claro ilegible.
+   Tema oscuro: Verde señal con texto carbón (9.2:1). */
+.btn-primary {
+  background: var(--accent-fill);
+  background: linear-gradient(135deg, var(--brand-garcia), color-mix(in srgb, var(--brand-garcia) 78%, var(--brand-deep)));
+  color: var(--on-accent-fill);
+}
+body.dark-mode .btn-primary { background: linear-gradient(135deg, var(--brand-green), #59d67a); color: var(--on-accent-fill); }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(31, 184, 89, 0.4); }
+/* Respuesta al presionar (sobre todo en el teléfono, donde no hay hover). */
+.btn:active { transform: translateY(0) scale(0.98); transition-duration: 0.08s; }
 .btn-ghost { background: var(--surface); border-color: var(--border-strong); color: var(--ink); }
 .btn-ghost:hover { border-color: var(--brand-green-strong); color: var(--ink); transform: translateY(-1px); }
 .btn-block { width: 100%; }
@@ -122,17 +156,35 @@ body.dark-mode .btn-primary { background: var(--brand-green); color: #06210f; }
 .section-head-solo { margin-bottom: 24px; }
 .eyebrow { margin: 0; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brand-green-strong); }
 body.dark-mode .eyebrow { color: var(--brand-green); }
-.section-head h2 { font-family: var(--font-display); font-weight: 800; font-size: clamp(26px, 3.4vw, 40px); line-height: 1.08; letter-spacing: -0.02em; color: var(--ink); margin-top: 8px; }
+/* .section-head-solo va en la MISMA regla, no en una aparte.
+   Estaba solo .section-head, así que seis de los once títulos de sección
+   (Cómo funciona, Quiénes somos, Cobertura, Galería, Preguntas y el
+   detalle de material) caían al h2 por defecto del navegador: IBM Plex
+   Sans a 24 px en vez de Archivo a 40. Se veían como subtítulos y
+   rompían la jerarquía de toda la página. */
+.section-head h2,
+.section-head-solo h2 { font-family: var(--font-display); font-weight: 800; font-size: clamp(26px, 3.4vw, 40px); line-height: 1.08; letter-spacing: -0.02em; color: var(--ink); margin-top: 8px; }
 .section-head > p { margin: 0; max-width: 40ch; font-size: 14.5px; line-height: 1.6; color: var(--ink-soft); }
 
-section { padding: clamp(34px, 4vw, 54px) 0; border-bottom: 1px solid var(--border); }
+/* Más aire entre secciones en pantallas grandes (antes 34-54 px, apretado
+   en escritorio); en el teléfono se mantiene compacto. */
+section { padding: clamp(40px, 5.5vw, 84px) 0; border-bottom: 1px solid var(--border); }
 section[id] { scroll-margin-top: 76px; }
 section.bg-alt { background: var(--bg-alt); }
 section.no-border { border-bottom: none; }
 
 /* ---------- Hero ---------- */
-.hero { padding-top: clamp(46px, 6vw, 72px); }
-.hero-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: clamp(32px, 5vw, 60px); align-items: center; }
+/* Menos aire arriba que antes (era 46-72 px): el bloque de marca ya
+   aporta su propio respiro, y lo que importa es que el titular y su
+   botón entren en la primera pantalla. */
+.hero { padding-top: clamp(20px, 2.4vw, 34px); }
+.hero-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: clamp(32px, 5vw, 60px); align-items: center; }
+/* A partir de tablet apaisada la columna del texto pesa más que la de la
+   foto: con dos columnas iguales el titular se partía en cuatro líneas y
+   estiraba la portada de más. */
+@media (min-width: 1024px) {
+  .hero-grid { grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr); }
+}
 .hero-copy { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .hero-badge-pill {
   display: inline-flex; align-items: center; gap: 9px; font-family: var(--font-mono); font-size: 11px;
@@ -151,7 +203,7 @@ body.dark-mode .hero-badge-pill .dot { background: var(--brand-green); }
 body.dark-mode .hero-note { border-left-color: var(--brand-green); }
 
 .hero-stats {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1px;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px;
   background: var(--surface-alt); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-top: 24px; box-shadow: var(--shadow-sm);
 }
 .hero-stats article { background: var(--surface); padding: 16px 18px; }
@@ -163,7 +215,14 @@ body.dark-mode .hero-stats .stat-number { color: var(--brand-green); }
 
 .hero-media {
   position: relative; border: 1px solid var(--border-strong); border-radius: var(--radius-lg); overflow: hidden;
-  background: var(--surface); box-shadow: var(--shadow-md); animation: floatSoft 6s ease-in-out infinite;
+  background: var(--surface); box-shadow: var(--shadow-md);
+  /* Sin "animation: floatSoft" aquí. Las animaciones CSS ganan sobre
+     style.transform en la cascada, así que ese flotado infinito pisaba el
+     efecto 3D del mouse y lo volvía código muerto, además de dejar al
+     elemento más grande del pliegue con coste de compositor permanente.
+     Ahora js/motion.js es el único dueño del transform de este bloque
+     (parallax al hacer scroll + inclinación con el puntero, en un solo
+     transform), que es justo lo que evita que vuelvan a pelearse. */
 }
 .hero-media-frame { aspect-ratio: 4/3; position: relative; overflow: hidden; background: var(--surface-alt); }
 /* object-fit: contain (no "cover") a propósito: las fotos reales que sube el
@@ -176,7 +235,13 @@ body.dark-mode .hero-stats .stat-number { color: var(--brand-green); }
    marco, así que agrandarla podía salirse por el lado donde sí lo toca y
    recortarse contra el overflow:hidden del marco — justo lo que este
    cambio de cover a contain buscaba evitar. */
-.hero-media-frame img { width: 100%; height: 100%; object-fit: contain; }
+.hero-media-frame img { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: contain; }
+/* Relleno de los lados: la misma foto, ampliada y desenfocada detrás. Se
+   pinta una sola vez (no se anima), así que no cuesta durante el scroll. */
+.hero-media-frame img.hero-media-fondo {
+  position: absolute; inset: -10%; z-index: 0; width: 120%; height: 120%;
+  object-fit: cover; filter: blur(24px) saturate(1.15); opacity: 0.85;
+}
 .hero-media-frame::after {
   content: ""; position: absolute; inset: 0;
   /* Más tenue que antes: con "contain" puede haber un margen neutro
@@ -202,7 +267,7 @@ body.dark-mode .hero-stats .stat-number { color: var(--brand-green); }
 body.dark-mode .hero-media-foot .foot-price { color: var(--brand-green); }
 
 /* ---------- Precios rápidos ---------- */
-.quick-prices-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.quick-prices-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 14px; }
 .price-card {
   border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; background: var(--surface);
   display: flex; flex-direction: column; gap: 10px; transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
@@ -210,8 +275,11 @@ body.dark-mode .hero-media-foot .foot-price { color: var(--brand-green); }
   position: relative;
 }
 .price-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--border-strong); }
+/* Las fotos de producto vienen sobre fondo blanco: el panel también es
+   blanco (en los dos temas), como una foto de estudio. Antes el blanco de
+   la foto quedaba como un recorte pegado sobre el verde claro del panel. */
 .price-card-photo {
-  margin: -24px -24px 8px; aspect-ratio: 16/10; overflow: hidden; background: var(--surface-alt);
+  margin: -24px -24px 8px; aspect-ratio: 16/10; overflow: hidden; background: #ffffff;
   display: flex; align-items: center; justify-content: center; padding: 10px;
   border-bottom: 1px solid var(--border);
   position: relative;
@@ -230,6 +298,31 @@ body.dark-mode .price-card .price-icon { color: var(--brand-green); }
 body.dark-mode .price-card .price-value { color: var(--brand-green); }
 .price-card .price-copy { font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); flex: 1; }
 .price-card .btn { align-self: flex-start; margin-top: 4px; }
+.price-card:hover .price-card-photo img { transform: scale(1.04); }
+.price-card-photo img { transition: transform 0.5s cubic-bezier(.2,.7,.2,1); }
+
+/* Tarjetas de precio compactas en el teléfono: foto a la izquierda y datos
+   a la derecha. Apiladas medían ~500 px cada una (1,500 px solo para tres
+   precios); así caben las tres en una pantalla. */
+@media (max-width: 600px) {
+  .price-card {
+    display: grid; grid-template-columns: 104px minmax(0, 1fr); column-gap: 14px; row-gap: 6px;
+    padding: 14px; align-items: start;
+  }
+  .price-card > * { grid-column: 2; }
+  .price-card .price-card-photo {
+    grid-column: 1; grid-row: 1 / span 4; margin: 0; aspect-ratio: 1; padding: 6px;
+    border: 1px solid var(--border); border-radius: 12px;
+  }
+  .price-card .price-icon { display: none; }
+  .price-card .price-tag { margin-top: 0; font-size: 15px; }
+  .price-card .price-value { font-size: 16.5px; }
+  .price-card .price-copy { font-size: 12.5px; line-height: 1.45; }
+  .price-card .btn { align-self: stretch; justify-content: center; padding: 9px 14px; font-size: 13.5px; }
+  .price-card:not(:has(.price-card-photo)) { grid-template-columns: minmax(0, 1fr); }
+  .price-card:not(:has(.price-card-photo)) > * { grid-column: 1; }
+  .price-card .featured-price-badge { font-size: 9.5px; padding: 3px 8px; }
+}
 
 /* ---------- Tabla de precios completa ---------- */
 .price-table { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
@@ -250,13 +343,6 @@ body.dark-mode .price-row .row-icon { color: var(--brand-green); }
 .price-row .row-note { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-soft); }
 .price-row .row-price { margin: 0; font-family: var(--font-mono); font-weight: 600; font-size: 16.5px; color: var(--brand-green-strong); text-align: right; white-space: nowrap; }
 body.dark-mode .price-row .row-price { color: var(--brand-green); }
-.price-table-foot {
-  padding: 16px 22px; background: var(--surface-alt); display: flex; justify-content: space-between;
-  gap: 16px; flex-wrap: wrap; align-items: center;
-}
-.price-table-foot p { margin: 0; font-size: 13px; color: var(--ink-soft); }
-.price-table-foot a { font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.05em; color: var(--brand-green-strong); font-weight: 600; }
-body.dark-mode .price-table-foot a { color: var(--brand-green); }
 
 @media (max-width: 640px) {
   .price-row { grid-template-columns: 1fr; text-align: left; gap: 8px; }
@@ -289,9 +375,8 @@ body.dark-mode .price-table-foot a { color: var(--brand-green); }
   border: 1px solid var(--border-strong); background: var(--surface-alt); color: var(--ink-muted); font-size: 13px;
   font-weight: 600; padding: 8px 14px; border-radius: 8px; transition: all 0.2s ease;
 }
-.mode-btn.is-active { background: var(--brand-green-strong); border-color: var(--brand-green-strong); color: #06210f; }
-body.dark-mode .mode-btn.is-active { background: var(--brand-green); border-color: var(--brand-green); }
-.selector-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.mode-btn.is-active { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent-fill); }
+.selector-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 10px; }
 .selector-btn {
   border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-md); padding: 18px 14px;
   display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; transition: all 0.2s ease;
@@ -313,7 +398,7 @@ body.dark-mode .selector-btn .sel-price { color: var(--brand-green); }
   font-size: 13px; font-weight: 600; color: var(--ink-soft); margin-bottom: 10px;
 }
 .back-link:hover { color: var(--ink); }
-.type-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 24px; }
+.type-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr)); gap: 10px; margin-bottom: 24px; }
 .type-tab {
   text-align: left; border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-md);
   padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; transition: all 0.2s ease;
@@ -326,7 +411,7 @@ body.dark-mode .selector-btn .sel-price { color: var(--brand-green); }
 .type-tab.is-active .tab-price { color: var(--brand-green-strong); }
 body.dark-mode .type-tab.is-active .tab-price { color: var(--brand-green); }
 
-.detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: stretch; }
+.detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 16px; align-items: stretch; }
 .detail-media { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: var(--surface); display: flex; flex-direction: column; }
 .carousel-viewport { position: relative; aspect-ratio: 16/11; background: var(--surface-alt); overflow: hidden; }
 /* El fondo del "letterbox" ya lo da .carousel-viewport (el abuelo), pero se
@@ -361,17 +446,35 @@ body.dark-mode .spec-list li i { color: var(--brand-green); }
 .detail-actions { margin-top: auto; display: flex; gap: 10px; flex-wrap: wrap; }
 
 /* ---------- Proceso ---------- */
-.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
-.step { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 26px; background: var(--surface); display: flex; flex-direction: column; gap: 10px; transition: transform 0.25s ease, box-shadow 0.25s ease; }
+/* Línea de tiempo: cada paso lleva su número en un círculo y una línea
+   discontinua los une (se ve entre tarjeta y tarjeta, detrás de ellas). */
+.steps { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.steps-linea {
+  position: absolute; z-index: 0; top: 48px; left: 12%; right: 12%; height: 0;
+  border-top: 2px dashed var(--border-strong); transform-origin: left center;
+}
+.step { position: relative; z-index: 1; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 26px; background: var(--surface); display: flex; flex-direction: column; gap: 10px; transition: transform 0.25s ease, box-shadow 0.25s ease; }
 .step:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
-.step .step-n { font-family: var(--font-mono); font-weight: 600; font-size: 13px; letter-spacing: 0.1em; color: var(--brand-green-strong); }
-body.dark-mode .step .step-n { color: var(--brand-green); }
+.step .step-n {
+  width: 44px; height: 44px; border-radius: 50%; display: inline-grid; place-items: center; margin-bottom: 6px;
+  font-family: var(--font-mono); font-weight: 700; font-size: 14px; letter-spacing: 0.02em;
+  background: var(--accent-fill); color: var(--on-accent-fill);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent-fill) 14%, transparent);
+}
+@media (max-width: 760px) {
+  .steps { grid-template-columns: 1fr; gap: 16px; }
+  /* En columna, la línea baja por el costado, a la altura de los círculos. */
+  .steps-linea { top: 24px; bottom: 24px; left: 48px; right: auto; height: auto; border-top: 0; border-left: 2px dashed var(--border-strong); transform-origin: center top; }
+}
 .step h3 { font-family: var(--font-display); font-weight: 700; font-size: 18px; color: var(--ink); }
 .step p { font-size: 13.5px; line-height: 1.6; color: var(--ink-soft); }
 
 /* ---------- Cobertura ---------- */
-.coverage-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
-.coverage-map-card { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: var(--surface); }
+.coverage-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 16px; }
+/* isolation: Leaflet usa z-index de 400 a 1000 en sus capas y controles;
+   sin un contexto de apilamiento propio, el mapa (el "+", el "−" y los
+   créditos) se dibujaba ENCIMA del header fijo al hacer scroll. */
+.coverage-map-card { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: var(--surface); isolation: isolate; position: relative; z-index: 0; }
 .coverage-map-head { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
 .coverage-map-head p { font-family: var(--font-display); font-weight: 700; font-size: 14.5px; color: var(--ink); }
 .coverage-map-legend { display: flex; gap: 14px; flex-wrap: wrap; }
@@ -396,42 +499,64 @@ body.dark-mode .coverage-block-head p.kpi { color: var(--brand-green); }
 }
 .chip-active { border-color: rgba(31,184,89,0.35); background: rgba(31,184,89,0.1); color: var(--brand-mid); }
 body.dark-mode .chip-active { border-color: rgba(43,213,103,0.32); background: rgba(43,213,103,0.1); color: #8de5ac; }
-.chip-min10 { border-color: rgba(217,141,43,0.32); background: rgba(217,141,43,0.1); color: #a5641b; }
+.chip-min10 { border-color: rgba(217,141,43,0.32); background: rgba(217,141,43,0.1); color: #8f5616; }
 body.dark-mode .chip-min10 { color: #e7c182; }
 .coverage-rule { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 14px; }
 .coverage-rule .rule-title { font-family: var(--font-display); font-weight: 700; font-size: 13.5px; color: var(--ink); margin-bottom: 4px; }
 .coverage-rule p { font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
 
 /* ---------- Galería general ---------- */
-.gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 14px; }
 .gallery-card { border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); aspect-ratio: 4/3; background: var(--surface-alt); }
 /* Sin zoom al pasar el mouse, mismo motivo que el hero y las tarjetas de
    precios: con "contain" recortaría la foto por el lado que sí toca el
    marco. */
-.gallery-card img { width: 100%; height: 100%; object-fit: contain; }
+/* cover en la rejilla (mosaico parejo, sin bandas) y la foto COMPLETA en
+   el visor, que se abre al tocarla: así no se pierde nada de la foto. */
+.gallery-open { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; position: relative; }
+.gallery-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s cubic-bezier(.2,.7,.2,1); }
+.gallery-zoom {
+  position: absolute; right: 10px; top: 10px; width: 34px; height: 34px; border-radius: 10px;
+  display: grid; place-items: center; background: color-mix(in srgb, var(--brand-carbon) 70%, transparent);
+  color: #fff; font-size: 14px; opacity: 0; transform: scale(0.9); transition: opacity 0.25s ease, transform 0.25s ease;
+}
+@media (hover: hover) {
+  .gallery-card:hover img { transform: scale(1.05); }
+  .gallery-card:hover .gallery-zoom { opacity: 1; transform: none; }
+}
+.gallery-open:focus-visible { outline-offset: -4px; }
+.gallery-open:focus-visible .gallery-zoom { opacity: 1; transform: none; }
+.galeria-mas { display: flex; justify-content: center; margin-top: 22px; }
 
 /* ---------- Sucursales ---------- */
-.sucursales-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.sucursales-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 14px; }
 .sucursal-card {
   border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; background: var(--surface);
   display: flex; flex-direction: column; gap: 14px; transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 .sucursal-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
 .sucursal-card.is-primary { border-color: rgba(31,184,89,0.4); }
-.sucursal-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.sucursal-top { display: flex; align-items: center; gap: 14px; }
 .sucursal-top h3 { font-family: var(--font-display); font-weight: 800; font-size: 17px; letter-spacing: -0.01em; color: var(--ink); }
 .sucursal-top p { margin-top: 6px; font-size: 13.5px; line-height: 1.5; color: var(--ink-soft); }
-.sucursal-icon { width: 32px; height: 32px; flex: none; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; background: var(--surface-alt); border: 1px solid var(--border); color: var(--brand-green-strong); font-size: 14px; }
+.sucursal-icon { width: 42px; height: 42px; flex: none; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: var(--surface-alt); border: 1px solid var(--border); color: var(--brand-green-strong); font-size: 18px; }
 body.dark-mode .sucursal-icon { color: var(--brand-green); }
-.sucursal-bottom { border-top: 1px solid var(--border); padding-top: 14px; display: flex; flex-direction: column; gap: 8px; }
-.sucursal-meta { margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink-muted); }
-.sucursal-encargado { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
-.sucursal-tel { display: flex; align-items: center; gap: 9px; font-family: var(--font-mono); font-weight: 600; font-size: 16.5px; color: var(--brand-mid); }
-.sucursal-tel.is-link:hover { color: var(--brand-green-strong); }
-body.dark-mode .sucursal-tel { color: var(--brand-green); }
+/* flex:1 + margin-top:auto en las acciones: los botones de todas las
+   tarjetas de una fila quedan a la misma altura aunque unas traigan
+   local y encargado y otras no. */
+.sucursal-bottom { border-top: 1px solid var(--border); padding-top: 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.sucursales-vacio { grid-column: 1 / -1; margin: 0; padding: 28px 16px; text-align: center; color: var(--ink-soft); border: 1px dashed var(--border-strong); border-radius: var(--radius-md); }
+.sucursal-meta { margin: 0; display: flex; gap: 8px; align-items: flex-start; font-size: 13.5px; line-height: 1.5; color: var(--ink-muted); }
+.sucursal-meta i { margin-top: 2px; color: var(--ink-soft); }
+.sucursal-encargado { margin: 0; font-size: 13px; color: var(--ink-soft); }
+.sucursal-proximamente { margin: auto 0 0; display: flex; gap: 8px; align-items: center; font-size: 13.5px; color: var(--ink-soft); }
+.sucursal-head { min-width: 0; }
+/* Número de WhatsApp dentro del botón, en mono para leerlo de un vistazo. */
+.sucursal-num { font-family: var(--font-mono); font-weight: 700; letter-spacing: 0.02em; }
+.sucursal-grupo-avatar { width: 24px; height: 24px; border-radius: 50%; flex: none; }
 
 /* ---------- Quiénes somos ---------- */
-.team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 14px; }
 .team-card {
   border: 1px solid var(--border); border-radius: var(--radius-md); padding: 28px 22px; background: var(--surface);
   display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px;
@@ -481,8 +606,11 @@ body.dark-mode .faq-q i { color: var(--brand-green); }
 .cta-band-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
 
 /* ---------- Pie ---------- */
-.site-footer { background: var(--brand-forest); color: rgba(244, 246, 244, 0.86); }
-.footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 32px; padding: 48px 0 24px; }
+.site-footer { background: linear-gradient(135deg, var(--brand-forest) 0%, var(--brand-forest-dark) 100%); color: rgba(244, 246, 244, 0.86); }
+/* padding-block y no "padding: 48px 0": el shorthand ponía en 0 el margen
+   lateral del .container y el pie quedaba 24 px fuera de línea con el
+   resto del contenido. */
+.footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 32px; padding-block: 56px 28px; }
 .footer-brand { display: flex; flex-direction: column; gap: 14px; }
 .footer-brand-mark { display: inline-flex; align-items: center; gap: 11px; }
 .footer-brand-mark img { width: 34px; height: 34px; border-radius: 9px; }
@@ -492,25 +620,30 @@ body.dark-mode .faq-q i { color: var(--brand-green); }
   width: 36px; height: 36px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center;
   background: rgba(244,246,244,0.08); color: rgba(244,246,244,0.82); font-size: 15px; transition: all 0.2s ease;
 }
-.social-link:hover { background: var(--brand-green-strong); color: #06210f; transform: translateY(-2px); }
-.footer-col-title { margin: 0 0 4px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(244,246,244,0.5); }
+.social-link:hover { background: var(--accent-fill); color: var(--on-accent-fill); transform: translateY(-2px); }
+.footer-col-title { margin: 0 0 4px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(244,246,244,0.72); }
 .footer-col { display: flex; flex-direction: column; gap: 10px; }
 .footer-col a { font-size: 13.5px; color: rgba(244,246,244,0.82); transition: color 0.2s ease; }
 .footer-col a:hover { color: var(--brand-green); }
 .footer-tel { font-family: var(--font-mono); font-size: 14px; color: var(--brand-green); }
 .footer-bottom { border-top: 1px solid rgba(244,246,244,0.12); }
-.footer-bottom-inner { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 16px 0; font-family: var(--font-mono); font-size: 11px; color: rgba(244,246,244,0.45); }
+.footer-bottom-inner { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-block: 18px; font-family: var(--font-mono); font-size: 11px; color: rgba(244,246,244,0.72); }
+/* La marca del pie va sobre verde profundo en los DOS temas: sus colores
+   no pueden depender del tema (antes iban en style="" dentro del HTML y
+   "LÓGICA" en Verde García daba 2.49:1 sobre ese fondo). */
+.site-footer .logo-text { color: #F0F6F1; }
+.site-footer .logo-text .logo-kas { color: var(--brand-signal); }
+.site-footer .logo-subtext { color: rgba(244, 246, 244, 0.72); }
 .footer-bottom-inner a { color: rgba(244,246,244,0.55); }
 .footer-bottom-inner a:hover { color: var(--brand-green); }
 
 /* ---------- Botón flotante WhatsApp ---------- */
 .floating-whatsapp {
   position: fixed; right: 22px; bottom: 22px; z-index: 150; width: 58px; height: 58px; border-radius: 50%;
-  background: var(--brand-green-strong); color: #06210f; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--accent-fill); color: var(--on-accent-fill); display: inline-flex; align-items: center; justify-content: center;
   font-size: 26px; box-shadow: var(--shadow-lg); animation: pulseRing 2.6s ease infinite;
   transition: transform 0.25s ease;
 }
-body.dark-mode .floating-whatsapp { background: var(--brand-green); }
 .floating-whatsapp:hover { transform: scale(1.08); }
 
 /* ---------- Botón flotante "volver arriba" ---------- */
@@ -518,10 +651,17 @@ body.dark-mode .floating-whatsapp { background: var(--brand-green); }
   position: fixed; right: 22px; bottom: 90px; z-index: 150; width: 44px; height: 44px; border-radius: 50%;
   background: var(--surface); color: var(--ink); border: 1px solid var(--border-strong);
   display: inline-flex; align-items: center; justify-content: center; font-size: 17px;
-  box-shadow: var(--shadow-md); transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease;
-  opacity: 0; transform: translateY(8px); pointer-events: none;
+  box-shadow: var(--shadow-md);
+  /* visibility además de opacity: invisible, el botón seguía siendo una
+     parada de Tab (el foco caía en algo que no se ve). Se oculta con
+     retardo para que el desvanecido se alcance a ver. */
+  transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, visibility 0s linear 0.2s;
+  opacity: 0; transform: translateY(8px); pointer-events: none; visibility: hidden;
 }
-.back-to-top.is-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.back-to-top.is-visible {
+  opacity: 1; transform: translateY(0); pointer-events: auto; visibility: visible;
+  transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, visibility 0s linear 0s;
+}
 .back-to-top:hover { transform: translateY(-2px); border-color: var(--brand-green-strong); }
 
 /* ---------- Utilidades varias ---------- */
@@ -532,13 +672,36 @@ body.dark-mode .text-accent { color: var(--brand-green); }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1024px) {
+  /* Logo a la izquierda y los dos botones juntos a la derecha (tema y
+     menú, el menú al final, que es donde el pulgar lo busca). Con
+     space-between y tres piezas, "Menú" quedaba flotando a media barra. */
+  .nav { display: flex; }
+  .nav .logo { margin-right: auto; }
+  .nav-actions { order: 2; }
+  .menu-btn { order: 3; }
   .nav-links {
     position: fixed; top: var(--header-total-h, calc(var(--header-h) + var(--topbar-h))); left: 0; right: 0; bottom: 0;
     background: var(--bg); flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 0;
     padding: 12px 24px; transform: translateY(-12px);
-    opacity: 0; pointer-events: none; transition: opacity 0.25s ease, transform 0.25s ease; overflow-y: auto;
+    opacity: 0; pointer-events: none; overflow-y: auto;
+    /* justify-self:center (el de la barra de escritorio) también aplica a
+       elementos position:fixed en los navegadores actuales: el menú se
+       encogía al ancho de su contenido (~205 px) y quedaba flotando a media
+       pantalla en vez de cubrirla. */
+    justify-self: stretch; align-self: stretch;
+    /* visibility (y no solo opacity) saca del orden de tabulación los ocho
+       enlaces del menú cerrado: con opacity:0 seguían siendo enfocables, así
+       que al navegar con el teclado el foco desaparecía dentro de un menú
+       invisible. Se anima con un retardo igual a la duración de la
+       transición para que el desvanecido siga viéndose al cerrar. */
+    visibility: hidden;
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0s linear 0.25s;
   }
-  .nav-links.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  .nav-links.open {
+    opacity: 1; pointer-events: auto; transform: translateY(0);
+    visibility: visible;
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0s linear 0s;
+  }
   .nav-links li { border-bottom: 1px solid var(--border); }
   .nav-links a { display: block; padding: 16px 4px; font-size: 16px; }
   .menu-btn { display: inline-flex; }
@@ -557,13 +720,27 @@ body.dark-mode .text-accent { color: var(--brand-green); }
   .nav { gap: 10px; }
 }
 
+/* En un iPhone SE (320 px) la barra no cabía: la marca de 52 px más
+   "ECO LÓGICA" a 22 px, el botón de menú y el de tema sumaban 356 px y
+   aparecía barra de desplazamiento horizontal en toda la página.
+   Aquí solo se reduce la ESCALA: mismo logotipo, misma tipografía, mismo
+   color. El botón de tema conserva sus 44 px de área táctil. */
+@media (max-width: 400px) {
+  .container { padding: 0 14px; }
+  .nav { gap: 8px; }
+  .logo { gap: 8px; }
+  .logo-mark { width: 40px; height: 40px; border-radius: 11px; }
+  .logo-text { font-size: 18px; }
+  .menu-btn { padding-left: 12px; padding-right: 12px; }
+}
+
 /* ---------- Calculadora de Ganancias ---------- */
 .calc-section {
   /* Mismo padding responsivo que el resto de las secciones (antes 64px
      fijo); sin border-top propio: la sección anterior ya aporta ese borde
      con su border-bottom, así que tenerlo aquí también dibujaba una línea
      doble justo en este límite y en ningún otro del sitio. */
-  padding: clamp(34px, 4vw, 54px) 0;
+  padding: clamp(40px, 5.5vw, 84px) 0;
   background: var(--bg-alt);
 }
 .calc-wrapper {
@@ -595,9 +772,11 @@ body.dark-mode .text-accent { color: var(--brand-green); }
   color: var(--ink);
   letter-spacing: -0.01em;
 }
+/* 3 columnas: los 9 materiales quedan en una rejilla 3x3 y cada tarifa
+   ("$5,000 – $10,000 /kg") cabe en un solo renglón. */
 .calc-material-chips {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 .calc-chip-btn {
@@ -639,6 +818,9 @@ body.dark-mode .calc-chip-btn.is-active {
 }
 .calc-chip-rate {
   font-size: 11.5px;
+  /* "$5,000 – $10,000 /kg": formatPrice() solo deja cortar después del
+     guion, nunca antes de "/kg". */
+  text-wrap: balance;
   color: var(--ink-soft);
   font-family: var(--font-mono);
   margin-top: 2px;
@@ -693,13 +875,9 @@ body.dark-mode .calc-chip-btn.is-active {
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 .calc-step-btn:hover {
-  background: var(--brand-green-strong);
-  color: #06210f;
+  background: var(--accent-fill);
+  color: var(--on-accent-fill);
   transform: scale(1.05);
-}
-body.dark-mode .calc-step-btn:hover {
-  background: var(--brand-signal);
-  color: var(--brand-carbon);
 }
 .calc-number-input {
   width: 46px;
@@ -726,6 +904,12 @@ body.dark-mode .calc-step-btn:hover {
   color: var(--ink-soft);
   margin-right: 4px;
 }
+/* El control se dibuja a mano (appearance:none) en vez de dejarlo en
+   manos del navegador. Con el render nativo, Chrome pintaba la pista sin
+   rellenar de un gris casi blanco: una barra clara cruzando el panel
+   verde profundo, que no es de la paleta y cantaba mucho. Con
+   accent-color solo se puede teñir la parte rellenada, no la otra, así
+   que la única forma de tener las dos en color de marca es esta. */
 .calc-slider {
   width: 100%;
   height: 8px;
@@ -734,7 +918,41 @@ body.dark-mode .calc-step-btn:hover {
   outline: none;
   margin: 8px 0 4px;
   cursor: pointer;
-  accent-color: var(--brand-green-strong);
+  appearance: none;
+  -webkit-appearance: none;
+}
+.calc-slider::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 6px;
+  background: var(--border);
+}
+.calc-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--brand-green-strong);
+  border: 2px solid var(--surface);
+  box-shadow: var(--shadow-sm);
+  /* Centra el tirador sobre la pista: (8 - 24) / 2 */
+  margin-top: -8px;
+}
+.calc-slider::-moz-range-track {
+  height: 8px;
+  border-radius: 6px;
+  background: var(--border);
+}
+.calc-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--brand-green-strong);
+  border: 2px solid var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+body.dark-mode .calc-slider::-webkit-slider-thumb,
+body.dark-mode .calc-slider::-moz-range-thumb {
+  background: var(--brand-green);
 }
 /* El outline:none de arriba quita también el foco por teclado; se repone
    aquí para que quien navegue con Tab vea dónde está parado. */
@@ -782,14 +1000,9 @@ body.dark-mode .calc-step-btn:hover {
    (.mode-btn.is-active, .sucursal-filter-chip.is-active, .calc-chip-btn.is-active)
    — antes usaba negro/blanco aquí, la única excepción del sitio. */
 .quick-pill.is-active {
-  background: var(--brand-green-strong);
-  color: #06210f;
-  border-color: var(--brand-green-strong);
-}
-body.dark-mode .quick-pill.is-active {
-  background: var(--brand-green);
-  color: #06210f;
-  border-color: var(--brand-green);
+  background: var(--accent-fill);
+  color: var(--on-accent-fill);
+  border-color: var(--accent-fill);
 }
 
 /* Tarjeta de resultado */
@@ -1050,7 +1263,8 @@ body.dark-mode .benefit-item i {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: auto;
+  padding-top: 10px;
 }
 .sucursal-wa-btn {
   width: 100%;
@@ -1169,7 +1383,14 @@ body.dark-mode .community-banner i {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
 }
+/* flex:none es la corrección de los chips "aplastados" en el teléfono:
+   la regla táctil de kit.css les pone min-width:44px, que sustituye al
+   mínimo automático de flexbox (el ancho de su texto), así que dentro de
+   esta barra con scroll horizontal se encogían hasta volverse círculos de
+   44 px con el texto encimado. Sin encogerse, la barra simplemente se
+   desplaza de lado. */
 .sucursal-filter-chip {
+  flex: none;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1191,42 +1412,15 @@ body.dark-mode .community-banner i {
   transform: translateY(-1px);
 }
 .sucursal-filter-chip.is-active {
-  background: var(--brand-green-strong);
-  border-color: var(--brand-green-strong);
-  color: #06210f;
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
+  color: var(--on-accent-fill);
   font-weight: 700;
   box-shadow: 0 4px 14px rgba(31, 184, 89, 0.35);
 }
-body.dark-mode .sucursal-filter-chip.is-active {
-  background: var(--brand-green);
-  border-color: var(--brand-green);
-  color: #041409;
-}
+
 
 /* Mini-portadas en cabecera de tarjeta de sucursal */
-.sucursal-badge-wrap {
-  width: 50px;
-  height: 50px;
-  flex: none;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1.5px solid rgba(63, 216, 106, 0.45);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
-  background: var(--surface-alt);
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.sucursal-badge-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-.sucursal-card:hover .sucursal-badge-img {
-  transform: scale(1.08);
-}
 
 
 /* ---------- Enlaces de redes sociales en topbar ---------- */
@@ -1247,8 +1441,16 @@ body.dark-mode .sucursal-filter-chip.is-active {
   align-items: center;
   gap: 10px;
 }
+/* Tamaño propio: sin él heredaba los 36x36 de .social-link (pensados para
+   el pie) y, al llegar social.json, la barra superior crecía 14 px y
+   empujaba toda la página hacia abajo (CLS 0.07 en escritorio).
+   Color claro: la barra es verde profundo en ambos temas; --ink-soft
+   daba 2.31:1 sobre ella. */
 .topbar-social .social-link {
-  color: var(--ink-soft);
+  width: 24px;
+  height: 24px;
+  background: none;
+  color: rgba(244, 246, 244, 0.82);
   font-size: 15px;
   transition: color 0.15s ease;
   display: inline-flex;
@@ -1365,12 +1567,19 @@ body.dark-mode .sucursal-tip-strip i {
   body.dark-mode .mobile-sticky-tag {
     color: var(--brand-signal);
   }
+  .mobile-sticky-info { min-width: 0; }
   .mobile-sticky-price {
     font-family: var(--font-mono);
     font-size: 15.5px;
     font-weight: 800;
     color: var(--ink);
     line-height: 1.1;
+    /* Nunca en dos renglones ("/kg" abajo): si no cabe, se reduce. */
+    white-space: nowrap;
+  }
+  @media (max-width: 380px) {
+    .mobile-sticky-price { font-size: 13.5px; }
+    .mobile-sticky-cta { padding: 9px 12px; font-size: 12.5px; }
   }
   .mobile-sticky-cta {
     padding: 9px 16px;
@@ -1380,15 +1589,157 @@ body.dark-mode .sucursal-tip-strip i {
     border-radius: 999px;
     box-shadow: 0 4px 14px rgba(31, 184, 89, 0.35);
   }
-  .floating-whatsapp {
-    bottom: 76px !important;
-  }
-  .back-to-top {
-    bottom: 76px !important;
-  }
+  /* Con la barra fija visible, el WhatsApp flotante sobra: la barra ya
+     lleva el mismo botón ("Cotizar WhatsApp"), y tenerlos juntos eran TRES
+     piezas flotantes (barra + WhatsApp + volver arriba) tapando el
+     contenido en una pantalla de 390 px. Queda la barra como el único
+     llamado fijo, y "volver arriba" justo encima de ella. */
+  .floating-whatsapp { display: none; }
+  .back-to-top { bottom: 80px; }
   body {
     padding-bottom: 64px;
   }
 }
 
 
+
+/* ---------- Enlace "Saltar al contenido" ----------
+   Invisible hasta que alguien navega con teclado: es la primera parada de
+   Tab y evita recorrer toda la barra para llegar al contenido. */
+.skip-link {
+  position: fixed; left: 12px; top: -64px; z-index: 300;
+  padding: 10px 16px; border-radius: 10px;
+  background: var(--accent-fill); color: var(--on-accent-fill);
+  font-weight: 700; font-size: 14px; box-shadow: var(--shadow-md);
+  transition: top 0.2s ease;
+}
+.skip-link:focus { top: 12px; }
+main:focus { outline: none; }
+
+/* Selector de material abierto: la página de atrás no se desplaza. Va en
+   <html> y en <body> porque Safari de iPhone ignora el de <body> solo. */
+html.modal-abierto,
+html.modal-abierto body { overflow: hidden; }
+
+/* Las preguntas del FAQ ahora son encabezados (h3 > button), para que un
+   lector de pantalla pueda saltar de pregunta en pregunta. El h3 no debe
+   cambiar el aspecto del botón. */
+.faq-h { margin: 0; font: inherit; }
+
+/* ---------- Página "Quiénes somos" (nosotros.html) ---------- */
+.nosotros-intro { padding-top: clamp(40px, 6vw, 72px); padding-bottom: clamp(40px, 6vw, 72px); }
+.section-head-solo .nosotros-titulo {
+  font-family: var(--font-display); font-weight: 900; font-size: clamp(30px, 4.4vw, 48px);
+  line-height: 1.06; letter-spacing: -0.02em; color: var(--ink); margin-top: 8px; text-wrap: balance;
+}
+.nosotros-lede { margin-top: 16px; max-width: 60ch; font-size: clamp(15px, 1.4vw, 17px); line-height: 1.65; color: var(--ink-muted); }
+.nosotros-intro .team-grid { margin-top: 32px; }
+.team-vacio { grid-column: 1 / -1; text-align: center; padding: 32px 16px; color: var(--ink-soft); border: 1px dashed var(--border-strong); border-radius: var(--radius-md); }
+.footer-nota { font-size: 13px; line-height: 1.6; color: rgba(244, 246, 244, 0.72); }
+
+/* Carrusel de un material que todavía no tiene fotos propias. */
+.carousel-vacio {
+  flex: 0 0 100%; min-height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 24px; text-align: center; color: var(--ink-soft); background: var(--surface-alt); font-size: 14px;
+}
+.carousel-vacio i { font-size: 30px; color: var(--brand-green-strong); }
+body.dark-mode .carousel-vacio i { color: var(--brand-green); }
+
+/* ---------- Hero en el teléfono ----------
+   Los dos botones del mismo ancho (antes uno más angosto que el otro) y
+   las estadísticas más compactas en su fila de tres. */
+@media (max-width: 600px) {
+  .hero-cta .btn { flex: 1 1 100%; }
+  .hero-stats article { padding: 12px 10px; }
+  .hero-stats .stat-label { font-size: 11px; }
+  .marca-intro-sub { text-wrap: balance; letter-spacing: 0.16em; }
+}
+
+/* ---------- Pie en el teléfono ----------
+   Enlaces en dos columnas (antes una sola columna larguísima de enlaces de
+   44 px de alto) y separación con la línea inferior. */
+@media (max-width: 600px) {
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 28px 20px; padding-block: 44px 24px; }
+  .footer-brand, .footer-col:last-child { grid-column: 1 / -1; }
+  .footer-col { gap: 2px; }
+  .footer-bottom-inner { flex-direction: column; gap: 6px; }
+}
+
+/* ---------- Visor de fotos ---------- */
+.visor {
+  width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0;
+  background: transparent; color: #fff;
+}
+.visor[open] { display: flex; flex-direction: column; animation: visorEntra 0.25s ease; }
+/* El fondo va en ::backdrop (cubre toda la página detrás del diálogo). */
+.visor::backdrop { background: rgba(5, 15, 9, 0.94); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+@keyframes visorEntra { from { opacity: 0; } to { opacity: 1; } }
+.visor-barra { display: flex; align-items: center; gap: 14px; padding: 14px clamp(14px, 3vw, 28px); }
+.visor-titulo { margin: 0; flex: 1; min-width: 0; font-family: var(--font-display); font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.visor-cuenta { font-family: var(--font-mono); font-size: 12.5px; color: rgba(244, 246, 244, 0.72); }
+.visor-escena { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 0 clamp(8px, 2vw, 24px) clamp(16px, 3vw, 28px); }
+/* La foto ocupa todo el espacio disponible (contain): así una foto chica
+   también se ve grande, que es para lo que se abre el visor. */
+.visor-escena img { flex: 1; min-width: 0; width: 100%; height: 100%; max-width: 1100px; object-fit: contain; filter: drop-shadow(0 24px 60px rgba(0, 0, 0, 0.45)); }
+.visor-btn {
+  flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
+  border: 1px solid rgba(244, 246, 244, 0.2); background: rgba(244, 246, 244, 0.08); color: #fff; font-size: 18px;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.visor-btn:hover { background: rgba(244, 246, 244, 0.18); }
+.visor-btn:focus-visible { outline: 2px solid var(--brand-signal); outline-offset: 3px; }
+@media (max-width: 600px) {
+  /* En el teléfono las flechas flotan sobre la foto; se desliza con el dedo. */
+  .visor-escena { position: relative; padding: 0 0 16px; }
+  .visor-escena img { max-width: 100%; }
+  .visor-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(11, 31, 19, 0.6); }
+  #visorPrev { left: 10px; }
+  #visorNext { right: 10px; }
+}
+@media (prefers-reduced-motion: reduce) { .visor[open] { animation: none; } }
+
+/* ---------- Sucursales más compactas en el teléfono ---------- */
+@media (max-width: 600px) {
+  .sucursal-card { padding: 18px; gap: 12px; }
+  .sucursal-bottom { padding-top: 12px; }
+}
+
+/* ---------- Filtros de la galería en una sola fila en el teléfono ----------
+   Antes se envolvían en cinco renglones (~250 px) antes de la primera foto. */
+@media (max-width: 700px) {
+  .galeria-filtros { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 2px 2px 8px; margin-inline: -2px; }
+  .galeria-filtros::-webkit-scrollbar { display: none; }
+  .galeria-filtro { flex: none; white-space: nowrap; }
+}
+
+/* ---------- Pulido de interfaz, segundo pase ---------- */
+
+/* Sucursales: 3 columnas en escritorio. Con 9 contactos queda una rejilla
+   3x3 exacta (a 4 columnas sobraba una tarjeta sola en la última fila) y
+   las tarjetas tienen más ancho para textos como "Aguascalientes". */
+@media (min-width: 1024px) {
+  .sucursales-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+}
+
+/* Pasos: el número ya va en el círculo; la marca de agua lo repetía. */
+.steps .num-fantasma { display: none; }
+
+@media (max-width: 600px) {
+  /* Tarjeta destacada: la insignia va en su propio renglón, arriba del
+     nombre (encima de la foto o del texto tapaba contenido). */
+  .price-card.price-card-featured .price-tag { padding-right: 0; }
+  .price-card .featured-price-badge { position: static; grid-column: 2; justify-self: start; margin: 0 0 2px; box-shadow: none; }
+
+  /* Calculadora: kg y g lado a lado a lo ancho, y los accesos rápidos en
+     una rejilla de 4 (antes tres renglones desparejos). */
+  .calc-weight-fields { display: grid; grid-template-columns: 1fr 1fr; width: 100%; gap: 10px; }
+  .calc-stepper { justify-content: space-between; }
+  .calc-number-input { width: 100%; min-width: 0; }
+  .calc-quick-pills { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .quick-pill-label { grid-column: 1 / -1; }
+  .quick-pill { padding-inline: 4px; }
+
+  /* Cierre: los dos botones del mismo ancho. */
+  .cta-band-actions { flex-direction: column; align-items: stretch; }
+  .cta-band-actions .btn { width: 100%; }
+}

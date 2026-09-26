@@ -61,13 +61,18 @@ const themeIcon = document.getElementById("themeIcon");
 function applyTheme(isDark) {
   document.body.classList.toggle("dark-mode", isDark);
   if (themeIcon) themeIcon.className = isDark ? "bi bi-sun-fill" : "bi bi-moon-fill";
-  try { localStorage.setItem("theme-preference", isDark ? "dark" : "light"); } catch (_e) {}
 }
+// Igual que el sitio público: el tema automático NO se guarda (así sigue al
+// sistema); solo se guarda cuando se elige con el botón.
 (function initTheme() {
   let saved = null;
   try { saved = localStorage.getItem("theme-preference"); } catch (_e) {}
   applyTheme(saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches);
-  themeToggle?.addEventListener("click", () => applyTheme(!document.body.classList.contains("dark-mode")));
+  themeToggle?.addEventListener("click", () => {
+    const next = !document.body.classList.contains("dark-mode");
+    applyTheme(next);
+    try { localStorage.setItem("theme-preference", next ? "dark" : "light"); } catch (_e) {}
+  });
 })();
 
 /* ---------- Login / sesión ---------- */
@@ -112,7 +117,15 @@ document.getElementById("logoutBtn")?.addEventListener("click", () => {
   window.location.reload();
 });
 
+// Quién hizo cada cambio: la llave de GitHub es por computadora (varias
+// personas comparten la misma cuenta), así que el historial solo decía la
+// cuenta. Ahora el mensaje del cambio incluye el usuario del panel.
+let panelUser = "";
+function quienGuarda() {
+  return panelUser && ghUsername ? `${panelUser} vía ${ghUsername}` : (panelUser || ghUsername || "desconocido");
+}
 async function enterApp(username) {
+  panelUser = username;
   loginScreen.hidden = true;
   adminApp.hidden = false;
   whoAmI.textContent = username;
@@ -147,12 +160,33 @@ const TAB_PANEL_MAP = {
   sucursales: "panelSucursales",
   cobertura: "panelCobertura",
 };
-document.querySelectorAll(".app-tab").forEach((tab) => {
-  tab.addEventListener("click", () => {
-    document.querySelectorAll(".app-tab").forEach((t) => t.classList.toggle("is-active", t === tab));
-    const targetId = TAB_PANEL_MAP[tab.dataset.tab];
-    document.querySelectorAll(".panel").forEach((p) => p.classList.toggle("is-active", p.id === targetId));
+function selectAppTab(tab, focus) {
+  document.querySelectorAll(".app-tab").forEach((t) => {
+    const active = t === tab;
+    t.classList.toggle("is-active", active);
+    t.setAttribute("aria-selected", active ? "true" : "false");
+    t.tabIndex = active ? 0 : -1;
   });
+  const targetId = TAB_PANEL_MAP[tab.dataset.tab];
+  document.querySelectorAll(".panel").forEach((p) => p.classList.toggle("is-active", p.id === targetId));
+  if (focus) tab.focus();
+}
+document.querySelectorAll(".app-tab").forEach((tab) => {
+  tab.addEventListener("click", () => selectAppTab(tab));
+});
+// Patrón de pestañas: flechas izquierda/derecha, Inicio y Fin.
+document.querySelector(".app-tabs")?.addEventListener("keydown", (e) => {
+  const tabs = Array.from(document.querySelectorAll(".app-tab"));
+  const i = tabs.indexOf(document.activeElement);
+  if (i === -1) return;
+  let next = null;
+  if (e.key === "ArrowRight") next = tabs[(i + 1) % tabs.length];
+  else if (e.key === "ArrowLeft") next = tabs[(i - 1 + tabs.length) % tabs.length];
+  else if (e.key === "Home") next = tabs[0];
+  else if (e.key === "End") next = tabs[tabs.length - 1];
+  if (!next) return;
+  e.preventDefault();
+  selectAppTab(next, true);
 });
 
 /* =========================================================
@@ -305,23 +339,45 @@ function base64ToUtf8(b64) {
   return decodeURIComponent(escape(atob(b64.replace(/\n/g, ""))));
 }
 
+// Mensaje entendible para el equipo (que no programa) a partir del código
+// de respuesta de GitHub. Antes se mostraba el texto en inglés de la API
+// ("... does not match ...", "sha wasn't supplied").
+function ghErrorMessage(status, accion) {
+  if (status === 401) return `No se pudo ${accion}: la llave de GitHub ya no es válida o venció. Vuelve a conectarla en Ajustes.`;
+  if (status === 403) return `No se pudo ${accion}: la llave no tiene permiso para escribir en el repositorio, o GitHub limitó las peticiones por un momento. Espera un minuto e inténtalo de nuevo.`;
+  if (status === 404) return `No se pudo ${accion}: no se encontró el repositorio o el archivo.`;
+  if (status === 409 || status === 422) return `No se pudo ${accion} porque el archivo cambió en GitHub mientras trabajabas (alguien más guardó). Recarga esta sección con "Descartar cambios" y vuelve a hacer tus cambios.`;
+  if (status >= 500) return `No se pudo ${accion}: GitHub tuvo un problema temporal. Inténtalo de nuevo en unos minutos.`;
+  return `No se pudo ${accion} (error ${status}).`;
+}
+// fetch que convierte "sin conexión" en un mensaje claro.
+async function ghFetch(url, options, accion) {
+  try {
+    return await fetch(url, options);
+  } catch (_err) {
+    throw new Error(`No se pudo ${accion}: no hay conexión a internet.`);
+  }
+}
+
+// cache: "no-store": GitHub responde con "max-age=60", y el navegador
+// devolvía la versión de hace un minuto. Un segundo guardado dentro de ese
+// minuto mandaba un "sha" viejo y fallaba con un error en inglés.
 async function ghGetFile(path) {
-  const res = await fetch(`${API_BASE}/contents/${encodeURI(path)}?ref=${REPO_BRANCH}`, { headers: ghHeaders() });
+  const res = await ghFetch(`${API_BASE}/contents/${encodeURI(path)}?ref=${REPO_BRANCH}`, { headers: ghHeaders(), cache: "no-store" }, `leer ${path}`);
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`No se pudo leer ${path} (${res.status}).`);
+  if (!res.ok) throw new Error(ghErrorMessage(res.status, `leer ${path}`));
   return res.json();
 }
 
 async function ghPutFile(path, base64Content, message, sha) {
   const body = { message, content: base64Content, branch: REPO_BRANCH };
   if (sha) body.sha = sha;
-  const res = await fetch(`${API_BASE}/contents/${encodeURI(path)}`, {
+  const res = await ghFetch(`${API_BASE}/contents/${encodeURI(path)}`, {
     method: "PUT", headers: { ...ghHeaders(), "Content-Type": "application/json" }, body: JSON.stringify(body),
-  });
+  }, `guardar ${path}`);
   if (!res.ok) {
-    const errBody = await res.json().catch(() => ({}));
-    const err = new Error(errBody.message || `No se pudo guardar ${path} (${res.status}).`);
-    err.status = res.status; // para que ghSaveJson sepa si vale la pena reintentar
+    const err = new Error(ghErrorMessage(res.status, `guardar ${path}`));
+    err.status = res.status;
     throw err;
   }
   return res.json();
@@ -336,33 +392,43 @@ async function ghPutFile(path, base64Content, message, sha) {
 async function ghDeleteFile(path, message) {
   const existing = await ghGetFile(path);
   if (!existing) return null;
-  const res = await fetch(`${API_BASE}/contents/${encodeURI(path)}`, {
+  const res = await ghFetch(`${API_BASE}/contents/${encodeURI(path)}`, {
     method: "DELETE",
     headers: { ...ghHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ message, sha: existing.sha, branch: REPO_BRANCH }),
-  });
-  if (!res.ok) {
-    const errBody = await res.json().catch(() => ({}));
-    throw new Error(errBody.message || `No se pudo borrar ${path} (${res.status}).`);
-  }
+  }, `borrar ${path}`);
+  if (!res.ok) throw new Error(ghErrorMessage(res.status, `borrar ${path}`));
   return res.json();
 }
 
-/** Guarda JSON en el repo, reintenta una vez si el sha cambió (409/422). */
+/* Control de concurrencia.
+   Al cargar cada archivo se guarda cómo venía (loadedVersions). Antes de
+   guardar, se compara con lo que hay AHORA en GitHub: si alguien más lo
+   cambió mientras tanto (otra persona del equipo, u otra pestaña), NO se
+   sobrescribe — antes el panel pedía el sha más reciente justo antes de
+   guardar y pisaba en silencio el trabajo de la otra persona. Esto también
+   protege del retraso de la copia publicada: si el panel cargó una versión
+   vieja, se detecta aquí en vez de revertir lo último guardado. */
+const loadedVersions = {};
+const canonicalJson = (obj) => JSON.stringify(obj);
+function rememberLoadedVersion(path, data) {
+  loadedVersions[path] = canonicalJson(data);
+}
 async function ghSaveJson(path, dataObject, message) {
-  const existing = await ghGetFile(path);
-  const content = utf8ToBase64(JSON.stringify(dataObject, null, 2) + "\n");
-  try {
-    return await ghPutFile(path, content, message, existing ? existing.sha : undefined);
-  } catch (err) {
-    // Solo reintenta si de verdad fue un conflicto de sha (alguien más
-    // guardó justo antes): para cualquier otro error (sin conexión, token
-    // vencido, límite de peticiones de GitHub, error del servidor) reintentar
-    // no soluciona nada, solo repite el mismo fallo — mejor avisar de una vez.
-    if (err?.status !== 409 && err?.status !== 422) throw err;
-    const fresh = await ghGetFile(path);
-    return ghPutFile(path, content, message, fresh ? fresh.sha : undefined);
+  const remote = await ghGetFile(path);
+  if (remote && path in loadedVersions) {
+    let remoteJson = null;
+    try { remoteJson = canonicalJson(JSON.parse(base64ToUtf8(remote.content))); } catch (_e) { /* ilegible: se sobrescribe */ }
+    if (remoteJson !== null && remoteJson !== loadedVersions[path]) {
+      const err = new Error(ghErrorMessage(409, `guardar ${path}`));
+      err.status = 409;
+      throw err;
+    }
   }
+  const content = utf8ToBase64(JSON.stringify(dataObject, null, 2) + "\n");
+  const res = await ghPutFile(path, content, message, remote ? remote.sha : undefined);
+  rememberLoadedVersion(path, dataObject);
+  return res;
 }
 
 /* =========================================================
@@ -400,24 +466,38 @@ function guardDataLoaded(statusElId) {
 // mensaje genérico sin importar si el problema era estar desconectado, un
 // token vencido, un límite de peticiones de GitHub, o un archivo corrupto.
 let lastLoadErrorDetail = "";
+// Con llave conectada se lee PRIMERO de GitHub: es la versión real de la
+// rama main. La copia publicada del sitio tarda de segundos a minutos en
+// actualizarse después de cada guardado, y leerla justo después de guardar
+// (al recargar o al "Descartar cambios") traía la versión VIEJA, que el
+// siguiente guardado volvía a subir deshaciendo lo anterior.
 async function fetchJsonOrFromGitHub(path) {
   let detail = "";
-  try {
-    const res = await fetch(`${path}?t=${Date.now()}`, { cache: "no-store" });
-    if (res.ok) { lastLoadErrorDetail = ""; return await res.json(); }
-    detail = `el sitio respondió con un error (${res.status}) al pedir ${path}`;
-  } catch (_err) {
-    detail = "no se pudo conectar (sin internet, o el archivo no está disponible así en este servidor)";
-  }
-
   if (ghToken) {
     try {
       const file = await ghGetFile(path);
-      if (file) { lastLoadErrorDetail = ""; return JSON.parse(base64ToUtf8(file.content)); }
+      if (file) {
+        const data = JSON.parse(base64ToUtf8(file.content));
+        lastLoadErrorDetail = "";
+        rememberLoadedVersion(path, data);
+        return data;
+      }
       detail = `${path} no existe en el repositorio de GitHub`;
     } catch (err) {
       detail = err?.message || "no se pudo leer desde GitHub";
     }
+  }
+  try {
+    const res = await fetch(`${path}?t=${Date.now()}`, { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      lastLoadErrorDetail = "";
+      rememberLoadedVersion(path, data);
+      return data;
+    }
+    detail = detail || `el sitio respondió con un error (${res.status}) al pedir ${path}`;
+  } catch (_err) {
+    detail = detail || "no se pudo conectar (sin internet, o el archivo no está disponible así en este servidor)";
   }
   lastLoadErrorDetail = detail;
   return null;
@@ -486,6 +566,21 @@ document.getElementById("itemModalSaveBtn")?.addEventListener("click", () => {
 });
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && itemModal?.classList.contains("active")) cancelItemModal();
+});
+
+// Retención del foco en las ventanas del panel (edición y Ajustes): con
+// aria-modal, Tab no debe salir a la página de atrás, que queda tapada.
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Tab") return;
+  const modal = document.querySelector(".settings-modal.active");
+  const panel = modal && modal.querySelector(".settings-panel");
+  if (!panel) return;
+  const focusables = Array.from(panel.querySelectorAll("button, a[href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])"))
+    .filter((el) => !el.disabled && el.offsetParent !== null);
+  if (!focusables.length) return;
+  const first = focusables[0], last = focusables[focusables.length - 1];
+  if (e.shiftKey && (document.activeElement === first || !panel.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && (document.activeElement === last || !panel.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
 });
 
 /* =========================================================
@@ -659,6 +754,10 @@ function hasUnsavedChanges() {
   );
 }
 window.addEventListener("beforeunload", (e) => {
+  // Lo escrito en las descripciones de fotos, nombres de categoría y redes
+  // vive en el DOM hasta que algo lo lee: se sincroniza antes de comparar.
+  try { if (workingGallery) readGalleryAltEdits(); } catch (_e) {}
+  try { if (workingSocial) syncSocialFormFields(); } catch (_e) {}
   if (!hasUnsavedChanges()) return;
   e.preventDefault();
   e.returnValue = ""; // los navegadores modernos ignoran el texto, pero exigen setearlo
@@ -720,12 +819,25 @@ function materialFormHtml(m) {
       <input id="mat-quickcopy" type="text" class="mat-quickcopy" value="${esc(m.quickCopy || "")}" />
     </div>`;
 }
+// Revisa un rango de precios escrito en dos campos. Un campo vacío ya no se
+// guarda como $0 sin avisar, y cada error dice lo que de verdad pasa.
+function priceRangeError(minRaw, maxRaw) {
+  if (String(minRaw).trim() === "" || String(maxRaw).trim() === "") return "Escribe el precio mínimo y el máximo.";
+  const min = Number(minRaw), max = Number(maxRaw);
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return "Los precios deben ser números (sin $ ni comas).";
+  if (min < 0 || max < 0) return "Los precios no pueden ser negativos.";
+  if (max === 0) return "El precio máximo debe ser mayor que cero.";
+  if (min > max) return "El precio mínimo no puede ser mayor al máximo.";
+  return null;
+}
 function applyMaterialForm(m) {
   const name = itemModalBodyEl.querySelector(".mat-name").value.trim();
   if (!name) return "Escribe un nombre para el material.";
-  const min = Number(itemModalBodyEl.querySelector(".mat-min").value);
-  const max = Number(itemModalBodyEl.querySelector(".mat-max").value);
-  if (!Number.isFinite(min) || !Number.isFinite(max) || min < 0 || max < 0 || min > max) return "El precio mínimo no puede ser mayor al máximo.";
+  const minRaw = itemModalBodyEl.querySelector(".mat-min").value;
+  const maxRaw = itemModalBodyEl.querySelector(".mat-max").value;
+  const rangeError = priceRangeError(minRaw, maxRaw);
+  if (rangeError) return rangeError;
+  const min = Number(minRaw), max = Number(maxRaw);
   m.name = name;
   m.min = min;
   m.max = max;
@@ -832,9 +944,11 @@ function typeFormHtml(t) {
 function applyTypeForm(t) {
   const label = itemModalBodyEl.querySelector(".type-label").value.trim();
   if (!label) return "Escribe un nombre para el tipo.";
-  const min = Number(itemModalBodyEl.querySelector(".type-min").value);
-  const max = Number(itemModalBodyEl.querySelector(".type-max").value);
-  if (!Number.isFinite(min) || !Number.isFinite(max) || min < 0 || max < 0 || min > max) return "El precio mínimo no puede ser mayor al máximo.";
+  const minRaw = itemModalBodyEl.querySelector(".type-min").value;
+  const maxRaw = itemModalBodyEl.querySelector(".type-max").value;
+  const rangeError = priceRangeError(minRaw, maxRaw);
+  if (rangeError) return rangeError;
+  const min = Number(minRaw), max = Number(maxRaw);
   t.label = label;
   t.shortLabel = label;
   t.min = min;
@@ -977,7 +1091,13 @@ itemModalBodyEl.addEventListener("change", (e) => {
   }
 });
 
-document.getElementById("resetPricesBtn")?.addEventListener("click", loadPricesIntoForm);
+// "Descartar cambios" pide confirmación solo si hay algo que perder.
+function confirmDiscard(isDirty) {
+  return !isDirty || window.confirm("¿Descartar los cambios sin guardar de esta sección? Se volverá a cargar la versión guardada.");
+}
+document.getElementById("resetPricesBtn")?.addEventListener("click", () => {
+  if (confirmDiscard(isSectionDirty("prices", workingPrices))) loadPricesIntoForm();
+});
 
 document.getElementById("savePricesBtn")?.addEventListener("click", async () => {
   if (!guardDataLoaded("pricesStatus")) return;
@@ -987,7 +1107,7 @@ document.getElementById("savePricesBtn")?.addEventListener("click", async () => 
   showStatus("pricesStatus", "info", "Guardando cambios en GitHub…");
   try {
     workingPrices.updatedAt = new Date().toISOString().slice(0, 10);
-    await ghSaveJson("data/prices.json", workingPrices, `Actualiza precios (panel interno, ${ghUsername})`);
+    await ghSaveJson("data/prices.json", workingPrices, `Actualiza precios (panel interno: ${quienGuarda()})`);
     markSectionSaved("prices", workingPrices);
     showStatus("pricesStatus", "success", "Precios guardados. El sitio público se actualiza en unos segundos.");
   } catch (err) {
@@ -1009,6 +1129,11 @@ let pendingUploads = []; // { categoryId, fileName, base64, previewUrl, alt }
 // saveGalleryBtn), después de guardar el JSON, para que el sitio nunca
 // referencie una foto ya borrada.
 let pendingGalleryDeletions = [];
+// Archivos que el sitio usa directamente en su código (no solo a través de
+// data/gallery.json): quitarlos de una categoría no debe borrarlos.
+const PROTECTED_SITE_FILES = new Set([
+  "Galeria/logica_celular.webp", // foto de la portada (index.html)
+]);
 
 async function loadGalleryIntoUI() {
   const data = await fetchJsonOrFromGitHub("data/gallery.json");
@@ -1202,7 +1327,13 @@ function readGalleryAltEdits() {
   });
 }
 
-function resizeImageFile(file, maxDimension = 1600, quality = 0.82) {
+// Devuelve { dataUrl, ext }. Se intenta WebP (el formato del resto de la
+// galería, ~30 % más ligero que JPEG); si el navegador no sabe generar
+// WebP (Safari antiguo) se usa JPEG con fondo blanco, porque un PNG con
+// transparencia pasado a JPEG salía con el fondo NEGRO.
+// 1280 px de lado mayor alcanzan de sobra para una foto que en el sitio
+// se muestra a menos de 700 px de ancho (antes 1600).
+function resizeImageFile(file, maxDimension = 1280, quality = 0.8) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error("No se pudo leer la imagen."));
@@ -1217,8 +1348,14 @@ function resizeImageFile(file, maxDimension = 1600, quality = 0.82) {
         }
         const canvas = document.createElement("canvas");
         canvas.width = width; canvas.height = height;
-        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL("image/jpeg", quality));
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        const webp = canvas.toDataURL("image/webp", quality);
+        if (webp.startsWith("data:image/webp")) { resolve({ dataUrl: webp, ext: "webp" }); return; }
+        ctx.globalCompositeOperation = "destination-over";
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, width, height);
+        resolve({ dataUrl: canvas.toDataURL("image/jpeg", quality), ext: "jpg" });
       };
       img.src = reader.result;
     };
@@ -1238,14 +1375,17 @@ const MAX_UPLOAD_BYTES = 25 * 1024 * 1024; // 25 MB: generoso para una foto de c
 // en pendingUploads. Se usa tanto para arrastrar-y-soltar como para el
 // selector de archivos de siempre, así el mismo código sirve para los dos.
 async function processPhotoFile(file) {
+  // La categoría se toma ANTES de procesar: si el admin cambiaba de
+  // categoría mientras se reducía la foto, se guardaba en la equivocada.
   const cat = currentCategory();
-  const dataUrl = await resizeImageFile(file);
+  const categoryId = activeCategoryId;
+  const { dataUrl, ext } = await resizeImageFile(file);
   const base64 = dataUrl.split(",")[1];
   const baseName = slugify(file.name.replace(/\.[^.]+$/, "")) || "foto";
-  const fileName = `${baseName}-${Date.now()}-${Math.random().toString(16).slice(2, 6)}.jpg`;
+  const fileName = `${baseName}-${Date.now()}-${Math.random().toString(16).slice(2, 6)}.${ext}`;
   pendingUploads.push({
     id: `p${Date.now()}${Math.random().toString(16).slice(2, 6)}`,
-    categoryId: activeCategoryId,
+    categoryId,
     fileName,
     path: `${cat.folder}/${fileName}`,
     base64,
@@ -1345,7 +1485,11 @@ if (addPhotoBox) {
   });
 });
 
-document.getElementById("resetGalleryBtn")?.addEventListener("click", loadGalleryIntoUI);
+document.getElementById("resetGalleryBtn")?.addEventListener("click", () => {
+  readGalleryAltEdits();
+  const dirty = isSectionDirty("gallery", workingGallery) || pendingUploads.length > 0 || pendingGalleryDeletions.length > 0;
+  if (confirmDiscard(dirty)) loadGalleryIntoUI();
+});
 
 const GALLERY_LOCK_IDS = ["galleryCats", "galleryCatEditor", "galleryThumbs", "addPhotoBox", "addCategoryBtn", "resetGalleryBtn"];
 document.getElementById("saveGalleryBtn")?.addEventListener("click", async () => {
@@ -1364,13 +1508,13 @@ document.getElementById("saveGalleryBtn")?.addEventListener("click", async () =>
     // mitad, dar clic en "Guardar cambios" otra vez retoma donde se quedó
     // en vez de repetir (y fallar) las fotos que ya están en GitHub.
     for (const upload of toUpload) {
-      await ghPutFile(upload.path, upload.base64, `Agrega foto de galería (panel interno, ${ghUsername})`);
+      await ghPutFile(upload.path, upload.base64, `Agrega foto de galería (panel interno: ${quienGuarda()})`);
       upload._uploaded = true;
       const cat = workingGallery.categories.find((c) => c.id === upload.categoryId);
       if (cat) cat.images.push({ src: upload.path, alt: upload.alt || cat.label });
     }
     workingGallery.updatedAt = new Date().toISOString().slice(0, 10);
-    await ghSaveJson("data/gallery.json", workingGallery, `Actualiza galería (panel interno, ${ghUsername})`);
+    await ghSaveJson("data/gallery.json", workingGallery, `Actualiza galería (panel interno: ${quienGuarda()})`);
     pendingUploads = [];
     markSectionSaved("gallery", workingGallery);
 
@@ -1381,11 +1525,17 @@ document.getElementById("saveGalleryBtn")?.addEventListener("click", async () =>
     // existe. Si alguna no se pudo borrar, se deja agendada para el
     // siguiente "Guardar cambios" en vez de perderla de vista (borrar es
     // idempotente: si ya no existe, ghDeleteFile no hace nada).
-    const uniqueDeletions = [...new Set(pendingGalleryDeletions)];
+    // Nunca se borra un archivo que se siga usando: la misma foto puede
+    // estar en otra categoría, y algunas las usa el sitio fijo (la foto de
+    // la portada). Antes, quitar la foto de "Galería general" borraba del
+    // repositorio la imagen principal de la página de inicio.
+    const stillUsed = new Set(workingGallery.categories.flatMap((c) => c.images.map((img) => img.src)));
+    const uniqueDeletions = [...new Set(pendingGalleryDeletions)]
+      .filter((p) => !stillUsed.has(p) && !PROTECTED_SITE_FILES.has(p));
     const stillPending = [];
     for (const path of uniqueDeletions) {
       try {
-        await ghDeleteFile(path, `Quita foto de galería (panel interno, ${ghUsername})`);
+        await ghDeleteFile(path, `Quita foto de galería (panel interno: ${quienGuarda()})`);
       } catch (err) {
         stillPending.push(path);
       }
@@ -1444,7 +1594,7 @@ function teamPhotoEditHtml(m) {
     <div class="team-photo-preview">${teamPhotoPreviewHtml(m)}</div>
     <label class="btn btn-ghost btn-sm team-photo-pick">
       <i class="bi bi-camera" aria-hidden="true"></i> Cambiar foto
-      <input type="file" accept="image/*" class="team-photo-input" hidden />
+      <input type="file" accept="image/*" class="team-photo-input file-input-oculto" />
     </label>
     ${(m.photo || m._pendingPhoto) && !m._removePhoto ? `<button type="button" class="btn btn-ghost btn-sm team-photo-remove">Quitar foto</button>` : ""}`;
 }
@@ -1473,19 +1623,26 @@ function teamFormHtml(m) {
       <button type="button" class="btn btn-ghost btn-sm team-social-add-btn"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar red social</button>
     </div>`;
 }
+// Primero se leen y validan TODOS los campos, y solo si todo está bien se
+// copian a la persona. Antes el nombre y el puesto ya se habían aplicado
+// cuando fallaba el WhatsApp, y "Cancelar" no los deshacía.
 function applyTeamForm(m) {
-  m.name = itemModalBodyEl.querySelector(".team-name-input").value.trim();
-  m.role = itemModalBodyEl.querySelector(".team-role-input").value.trim();
+  const name = itemModalBodyEl.querySelector(".team-name-input").value.trim();
+  const role = itemModalBodyEl.querySelector(".team-role-input").value.trim();
   const wa = itemModalBodyEl.querySelector(".team-wa-input").value.trim();
   const waError = validateWhatsappDigits(wa);
   if (waError) return waError;
-  m.whatsapp = wa ? normalizeWhatsapp(wa) : "";
-  m.email = itemModalBodyEl.querySelector(".team-email-input").value.trim();
+  const email = itemModalBodyEl.querySelector(".team-email-input").value.trim();
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return `El correo "${esc(email)}" no parece válido.`;
   const social = Array.from(itemModalBodyEl.querySelectorAll(".team-social-row"))
-    .map((row) => ({ network: row.querySelector(".team-social-network").value, url: row.querySelector(".team-social-url").value.trim() }))
+    .map((row) => ({ network: row.querySelector(".team-social-network").value, url: normalizeHttpUrl(row.querySelector(".team-social-url").value) }))
     .filter((s) => s.url);
   const unsafeLink = social.find((s) => !isSafeHttpUrl(s.url));
-  if (unsafeLink) return `Ese enlace de red social no es válido: "${esc(unsafeLink.url)}". Debe empezar con http:// o https://`;
+  if (unsafeLink) return `Ese enlace de red social no es válido: "${esc(unsafeLink.url)}". Copia la dirección completa del perfil (empieza con https://).`;
+  m.name = name;
+  m.role = role;
+  m.whatsapp = wa ? normalizeWhatsapp(wa) : "";
+  m.email = email;
   m.social = social;
 }
 function teamRowHtml(m, i) {
@@ -1565,7 +1722,9 @@ document.getElementById("addTeamMemberBtn")?.addEventListener("click", () => {
     renderTeamList();
   });
 });
-document.getElementById("resetTeamBtn")?.addEventListener("click", loadTeamIntoForm);
+document.getElementById("resetTeamBtn")?.addEventListener("click", () => {
+  if (confirmDiscard(isSectionDirty("team", workingTeam) || pendingTeamPhotoDeletions.length > 0)) loadTeamIntoForm();
+});
 
 // Delegados sobre la ventana de edición, activos solo mientras se edita una
 // persona (dataset.itemType === "team"): agregar/quitar una red social solo
@@ -1602,7 +1761,9 @@ itemModalBodyEl.addEventListener("change", async (e) => {
   const fileInput = e.target.closest(".team-photo-input");
   if (!fileInput || !fileInput.files[0] || !currentModalDraft) return;
   try {
-    const dataUrl = await resizeImageFile(fileInput.files[0], 800, 0.85);
+    // 480 px: la foto se muestra a ~120 px (el doble para pantallas de alta
+    // densidad, con margen). Antes se subían de 800 px.
+    const { dataUrl, ext } = await resizeImageFile(fileInput.files[0], 480, 0.85);
     const base64 = dataUrl.split(",")[1];
     // Reemplazar una foto ya guardada por una nueva deja obsoleta la
     // anterior: se agenda su borrado (una sola vez por sesión de edición,
@@ -1611,7 +1772,7 @@ itemModalBodyEl.addEventListener("change", async (e) => {
     if (currentModalDraft.photo && !currentModalDraft._pendingPhoto) {
       pendingTeamPhotoDeletions.push(currentModalDraft.photo);
     }
-    currentModalDraft._pendingPhoto = { base64, previewUrl: dataUrl, fileName: `${slugify(currentModalDraft.id || currentModalDraft.name || "persona")}-${Date.now()}.jpg` };
+    currentModalDraft._pendingPhoto = { base64, previewUrl: dataUrl, fileName: `${slugify(currentModalDraft.id || currentModalDraft.name || "persona")}-${Date.now()}.${ext}` };
     currentModalDraft._removePhoto = false;
     itemModalBodyEl.querySelector(".team-photo-edit").innerHTML = teamPhotoEditHtml(currentModalDraft);
   } catch (err) {
@@ -1629,10 +1790,16 @@ document.getElementById("saveTeamBtn")?.addEventListener("click", async () => {
   showStatus("teamStatus", "info", "Guardando cambios en GitHub…");
   try {
     for (const m of workingTeam.members) {
-      if (m._pendingPhoto) {
+      // _uploaded: si en un intento anterior la foto sí se subió pero falló
+      // el guardado de team.json, el reintento no la vuelve a mandar (GitHub
+      // respondía 422 "sha wasn't supplied" y ya no se podía guardar nunca).
+      if (m._pendingPhoto && !m._pendingPhoto._uploaded) {
         const path = `icons/equipo/${m._pendingPhoto.fileName}`;
-        await ghPutFile(path, m._pendingPhoto.base64, `Actualiza foto de equipo (panel interno, ${ghUsername})`);
+        await ghPutFile(path, m._pendingPhoto.base64, `Actualiza foto de equipo (panel interno: ${quienGuarda()})`);
+        m._pendingPhoto._uploaded = true;
         m.photo = path;
+      } else if (m._pendingPhoto && m._pendingPhoto._uploaded) {
+        m.photo = `icons/equipo/${m._pendingPhoto.fileName}`;
       } else if (m._removePhoto) {
         m.photo = "";
       }
@@ -1641,7 +1808,7 @@ document.getElementById("saveTeamBtn")?.addEventListener("click", async () => {
       members: workingTeam.members.map(({ _pendingPhoto, _removePhoto, ...rest }) => rest),
       updatedAt: new Date().toISOString().slice(0, 10),
     };
-    await ghSaveJson("data/team.json", toSave, `Actualiza "Quiénes somos" (panel interno, ${ghUsername})`);
+    await ghSaveJson("data/team.json", toSave, `Actualiza "Quiénes somos" (panel interno: ${quienGuarda()})`);
     workingTeam.members.forEach((m) => { m._pendingPhoto = null; m._removePhoto = false; });
     markSectionSaved("team", workingTeam);
 
@@ -1652,7 +1819,7 @@ document.getElementById("saveTeamBtn")?.addEventListener("click", async () => {
     const stillPending = [];
     for (const path of uniqueDeletions) {
       try {
-        await ghDeleteFile(path, `Quita foto de equipo (panel interno, ${ghUsername})`);
+        await ghDeleteFile(path, `Quita foto de equipo (panel interno: ${quienGuarda()})`);
       } catch (err) {
         stillPending.push(path);
       }
@@ -1690,19 +1857,19 @@ async function loadBranchesIntoForm() {
 }
 
 const BRANCH_PORTADAS = {
-  puebla: "icons/portadas/portada-puebla.jpg",
-  aguascalientes: "icons/portadas/portada-aguascalientes.jpg",
-  veracruz: "icons/portadas/portada-veracruz.jpg",
-  guanajuato: "icons/portadas/portada-guanajuato.jpg",
-  guerrero: "icons/portadas/portada-acapulco.jpg",
-  cdmx: "icons/portadas/portada-cdmx.jpg",
-  mexico: "icons/portadas/portada-edomex.jpg"
+  puebla: "icons/portadas/portada-puebla.webp",
+  aguascalientes: "icons/portadas/portada-aguascalientes.webp",
+  veracruz: "icons/portadas/portada-veracruz.webp",
+  guanajuato: "icons/portadas/portada-guanajuato.webp",
+  guerrero: "icons/portadas/portada-acapulco.webp",
+  cdmx: "icons/portadas/portada-cdmx.webp",
+  mexico: "icons/portadas/portada-edomex.webp"
 };
 
 function branchFormHtml(b) {
   const isSucursal = b.kind !== "directo";
   const stateOptions = MEXICO_STATES.map((s) => `<option value="${s.id}" ${b.estado === s.id ? "selected" : ""}>${esc(s.name)}</option>`).join("");
-  const portadaSrc = BRANCH_PORTADAS[b.estado] || "icons/portadas/portada-comunidad.jpg";
+  const portadaSrc = BRANCH_PORTADAS[b.estado] || "icons/portadas/portada-comunidad.webp";
   return `
     <div class="branch-modal-header-preview">
       <img src="${portadaSrc}" alt="${esc(b.estado || "")}" class="branch-modal-badge-img" onerror="this.style.display='none'" />
@@ -1748,22 +1915,23 @@ function branchFormHtml(b) {
 // tarjetas (ahora solo existe una sucursal/contacto en el DOM a la vez,
 // dentro de la ventana de edición), así que la exclusividad se hace a mano:
 // al marcar una como principal se desmarcan todas las demás en los datos.
+// Validar primero, aplicar después (ver applyTeamForm).
 function applyBranchForm(b) {
-  b.kind = itemModalBodyEl.querySelector(".branch-kind-input").value;
-  b.estado = itemModalBodyEl.querySelector(".branch-estado-input").value;
-  b.nombre = itemModalBodyEl.querySelector(".branch-nombre-input").value.trim();
   const wa = itemModalBodyEl.querySelector(".branch-wa-input").value.trim();
   const waError = validateWhatsappDigits(wa);
   if (waError) return waError;
-  b.whatsapp = wa ? normalizeWhatsapp(wa) : "";
   const grupoUrlInput = itemModalBodyEl.querySelector(".branch-grupourl-input");
-  const grupoUrlRaw = grupoUrlInput ? grupoUrlInput.value.trim() : "";
+  const grupoUrlRaw = normalizeHttpUrl(grupoUrlInput ? grupoUrlInput.value : "");
   // Igual que las redes sociales: solo se acepta http(s), para no poder
   // guardar un esquema como javascript: que se ejecutaría al hacer clic
   // cualquier visitante del sitio público.
   if (grupoUrlRaw && !isSafeHttpUrl(grupoUrlRaw)) {
-    return `Ese enlace de grupo de WhatsApp no es válido: "${esc(grupoUrlRaw)}". Debe empezar con http:// o https://`;
+    return `Ese enlace de grupo de WhatsApp no es válido: "${esc(grupoUrlRaw)}". Copia el enlace de invitación completo (https://chat.whatsapp.com/...).`;
   }
+  b.kind = itemModalBodyEl.querySelector(".branch-kind-input").value;
+  b.estado = itemModalBodyEl.querySelector(".branch-estado-input").value;
+  b.nombre = itemModalBodyEl.querySelector(".branch-nombre-input").value.trim();
+  b.whatsapp = wa ? normalizeWhatsapp(wa) : "";
   b.grupoUrl = grupoUrlRaw;
   b.ubicacion = itemModalBodyEl.querySelector(".branch-ubicacion-input").value.trim();
   b.local = itemModalBodyEl.querySelector(".branch-local-input").value.trim();
@@ -1785,7 +1953,7 @@ function ensureOnePrimaryBranch() {
 function branchRowHtml(b, i) {
   const isSucursal = b.kind !== "directo";
   const stateName = MEXICO_STATES.find((s) => s.id === b.estado)?.name || b.estado || "(Sin estado)";
-  const portadaSrc = BRANCH_PORTADAS[b.estado] || "icons/portadas/portada-comunidad.jpg";
+  const portadaSrc = BRANCH_PORTADAS[b.estado] || "icons/portadas/portada-comunidad.webp";
   const subParts = [
     isSucursal ? "Sucursal" : (b.nombre || "Contacto directo"),
     b.whatsapp ? formatMexPhone(b.whatsapp) : "sin WhatsApp",
@@ -1854,7 +2022,9 @@ document.getElementById("addBranchBtn")?.addEventListener("click", () => {
     renderBranchesList();
   });
 });
-document.getElementById("resetBranchesBtn")?.addEventListener("click", loadBranchesIntoForm);
+document.getElementById("resetBranchesBtn")?.addEventListener("click", () => {
+  if (confirmDiscard(isSectionDirty("branches", workingBranches))) loadBranchesIntoForm();
+});
 
 // El selector de tipo (sucursal/contacto directo) y de estado dentro de la
 // ventana de edición: actualiza campos visibles y la miniatura de la portada.
@@ -1870,7 +2040,7 @@ itemModalBodyEl.addEventListener("change", (e) => {
   if (estadoSelect) {
     const badgeImg = itemModalBodyEl.querySelector(".branch-modal-badge-img");
     if (badgeImg) {
-      const src = BRANCH_PORTADAS[estadoSelect.value] || "icons/portadas/portada-comunidad.jpg";
+      const src = BRANCH_PORTADAS[estadoSelect.value] || "icons/portadas/portada-comunidad.webp";
       badgeImg.src = src;
       badgeImg.style.display = "";
     }
@@ -1897,7 +2067,7 @@ document.getElementById("saveBranchesBtn")?.addEventListener("click", async () =
   showStatus("branchesStatus", "info", "Guardando cambios en GitHub…");
   try {
     workingBranches.updatedAt = new Date().toISOString().slice(0, 10);
-    await ghSaveJson("data/branches.json", workingBranches, `Actualiza sucursales y contacto (panel interno, ${ghUsername})`);
+    await ghSaveJson("data/branches.json", workingBranches, `Actualiza sucursales y contacto (panel interno: ${quienGuarda()})`);
     markSectionSaved("branches", workingBranches);
     showStatus("branchesStatus", "success", "Guardado. El sitio público se actualiza en unos segundos.");
     renderBranchesList();
@@ -2025,7 +2195,10 @@ document.getElementById("addSocialBtn")?.addEventListener("click", () => {
   workingSocial.links.push({ id: `red-${Date.now()}`, network: "facebook", label: "", url: "" });
   renderSocialForm();
 });
-document.getElementById("resetCoverageBtn")?.addEventListener("click", loadCoverageAndSocialIntoForm);
+document.getElementById("resetCoverageBtn")?.addEventListener("click", () => {
+  syncSocialFormFields();
+  if (confirmDiscard(isSectionDirty("coverage", workingCoverage) || isSectionDirty("social", workingSocial))) loadCoverageAndSocialIntoForm();
+});
 
 // Sin filtrar filas en blanco (ver syncTeamFormFields arriba): mantiene el
 // largo del arreglo para que un índice tomado del DOM (al quitar una fila)
@@ -2036,9 +2209,15 @@ function syncSocialFormFields() {
     const i = Number(card.dataset.socialIndex);
     const l = workingSocial.links[i];
     if (!l) return;
+    const previousNetwork = l.network;
     l.network = card.querySelector(".social-network-input").value;
-    l.url = card.querySelector(".social-url-input").value.trim();
-    l.label = SOCIAL_NETWORKS.find((n) => n.value === l.network)?.label || "";
+    l.url = normalizeHttpUrl(card.querySelector(".social-url-input").value);
+    // La etiqueta propia (p. ej. "Comunidad Oficial de WhatsApp", que es lo
+    // que lee un lector de pantalla en el ícono) solo se reemplaza si está
+    // vacía o si cambió la red. Antes se perdía en cada guardado.
+    if (!l.label || previousNetwork !== l.network) {
+      l.label = SOCIAL_NETWORKS.find((n) => n.value === l.network)?.label || "";
+    }
   });
 }
 function readSocialFromForm() {
@@ -2052,7 +2231,7 @@ document.getElementById("saveCoverageBtn")?.addEventListener("click", async () =
   readSocialFromForm();
   const unsafeLink = workingSocial.links.find((l) => !isSafeHttpUrl(l.url));
   if (unsafeLink) {
-    showStatus("coverageStatus", "error", `Ese enlace de red social no es válido: "${esc(unsafeLink.url)}". Debe empezar con http:// o https://`);
+    showStatus("coverageStatus", "error", `Ese enlace de red social no es válido: "${esc(unsafeLink.url)}". Copia la dirección completa (empieza con https://).`);
     return;
   }
   const btn = document.getElementById("saveCoverageBtn");
@@ -2061,8 +2240,8 @@ document.getElementById("saveCoverageBtn")?.addEventListener("click", async () =
   try {
     workingCoverage.updatedAt = new Date().toISOString().slice(0, 10);
     workingSocial.updatedAt = new Date().toISOString().slice(0, 10);
-    await ghSaveJson("data/coverage.json", workingCoverage, `Actualiza cobertura (panel interno, ${ghUsername})`);
-    await ghSaveJson("data/social.json", workingSocial, `Actualiza redes sociales (panel interno, ${ghUsername})`);
+    await ghSaveJson("data/coverage.json", workingCoverage, `Actualiza cobertura (panel interno: ${quienGuarda()})`);
+    await ghSaveJson("data/social.json", workingSocial, `Actualiza redes sociales (panel interno: ${quienGuarda()})`);
     markSectionSaved("coverage", workingCoverage);
     markSectionSaved("social", workingSocial);
     showStatus("coverageStatus", "success", "Guardado. El sitio público se actualiza en unos segundos.");

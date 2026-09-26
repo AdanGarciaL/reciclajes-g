@@ -5,20 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex, nofollow" />
   <title>Panel interno | ECO LÓGICA García</title>
-  <meta name="theme-color" content="#064528" />
-  <link rel="icon" href="icons/icono.png" type="image/png" />
+  <meta name="theme-color" content="#0B3B22" />
+  <link rel="icon" href="icons/icono-128.png" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="admin.css" />
+  <link rel="stylesheet" href="css/kit.css" />
 </head>
 <body>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("theme-preference");
+        if (t ? t === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches) {
+          document.body.classList.add("dark-mode");
+        }
+      } catch (_e) {}
+    })();
+  </script>
 
   <!-- LOGIN -->
   <div class="login-screen" id="loginScreen">
-    <form class="login-card" id="loginForm" autocomplete="off">
+    <div class="aurora" aria-hidden="true">
+      <span class="aurora-capa"></span>
+      <span class="grano"></span>
+    </div>
+    <form class="login-card brillo-borde sobre-fondo" id="loginForm" autocomplete="off">
       <div class="login-brand">
-        <img src="icons/icono.png" alt="" />
+        <img src="icons/icono-128.png" alt="" />
         <div class="login-brand-text">
           <strong>ECO LÓGICA García</strong>
           <span>Panel interno</span>
@@ -34,7 +49,7 @@
         <input type="password" id="loginPass" name="password" autocomplete="current-password" required />
       </div>
       <p class="login-msg" id="loginMsg"></p>
-      <button class="btn btn-primary btn-block" type="submit">Entrar</button>
+      <button class="btn btn-kit btn-primary btn-block" type="submit">Entrar</button>
       <p class="login-note">Acceso solo para el equipo de ECO LÓGICA García. Aquí se actualizan los precios y las fotos del sitio.</p>
     </form>
   </div>
@@ -44,7 +59,7 @@
     <header class="app-header">
       <div class="container app-header-inner">
         <div class="app-brand">
-          <img src="icons/icono.png" alt="" />
+          <img src="icons/icono-128.png" alt="" />
           <div>
             <h1>ECO LÓGICA García</h1>
             <span>Panel interno</span>
@@ -55,18 +70,18 @@
             <span class="gh-dot" id="ghDot"></span>
             <span id="connPillText">Guardado: revisando…</span>
           </button>
-          <button class="theme-toggle" id="themeToggle" aria-label="Cambiar tema"><i class="bi bi-moon-fill" id="themeIcon" aria-hidden="true"></i></button>
+          <button class="theme-toggle" id="themeToggle" type="button" aria-label="Cambiar tema"><i class="bi bi-moon-fill" id="themeIcon" aria-hidden="true"></i></button>
           <p class="who">Hola, <strong id="whoAmI">—</strong></p>
-          <button class="btn btn-ghost btn-sm" id="logoutBtn"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Salir</button>
-          <a class="btn btn-ghost btn-sm" href="index.html" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Ver sitio</a>
+          <button class="btn btn-ghost btn-sm" id="logoutBtn" type="button"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Salir</button>
+          <a class="btn btn-ghost btn-sm" href="index.html" target="_blank" rel="noopener noreferrer"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Ver sitio</a>
         </div>
       </div>
-      <div class="container app-tabs">
-        <button class="app-tab is-active" data-tab="precios"><i class="bi bi-tags" aria-hidden="true"></i> Precios y tipos</button>
-        <button class="app-tab" data-tab="galeria"><i class="bi bi-images" aria-hidden="true"></i> Galería</button>
-        <button class="app-tab" data-tab="equipo"><i class="bi bi-people" aria-hidden="true"></i> Quiénes somos</button>
-        <button class="app-tab" data-tab="sucursales"><i class="bi bi-shop" aria-hidden="true"></i> Sucursales y contacto</button>
-        <button class="app-tab" data-tab="cobertura"><i class="bi bi-geo-alt" aria-hidden="true"></i> Cobertura y redes</button>
+      <div class="container app-tabs" role="tablist" aria-label="Secciones del panel">
+        <button class="app-tab is-active" type="button" role="tab" id="tab-precios" aria-controls="panelPrecios" aria-selected="true" tabindex="0" data-tab="precios"><i class="bi bi-tags" aria-hidden="true"></i> Precios y tipos</button>
+        <button class="app-tab" type="button" role="tab" id="tab-galeria" aria-controls="panelGaleria" aria-selected="false" tabindex="-1" data-tab="galeria"><i class="bi bi-images" aria-hidden="true"></i> Galería</button>
+        <button class="app-tab" type="button" role="tab" id="tab-equipo" aria-controls="panelEquipo" aria-selected="false" tabindex="-1" data-tab="equipo"><i class="bi bi-people" aria-hidden="true"></i> Quiénes somos</button>
+        <button class="app-tab" type="button" role="tab" id="tab-sucursales" aria-controls="panelSucursales" aria-selected="false" tabindex="-1" data-tab="sucursales"><i class="bi bi-shop" aria-hidden="true"></i> Sucursales y contacto</button>
+        <button class="app-tab" type="button" role="tab" id="tab-cobertura" aria-controls="panelCobertura" aria-selected="false" tabindex="-1" data-tab="cobertura"><i class="bi bi-geo-alt" aria-hidden="true"></i> Cobertura y redes</button>
       </div>
     </header>
 
@@ -91,7 +106,7 @@
       </p>
 
       <!-- PESTAÑA PRECIOS -->
-      <section class="panel is-active" id="panelPrecios">
+      <section class="panel is-active" id="panelPrecios" role="tabpanel" aria-labelledby="tab-precios">
 
         <div class="section-block">
           <div class="section-block-head">
@@ -101,7 +116,7 @@
               <p class="card-sub">Da clic en "Editar" para abrir cada uno en una ventana aparte. Un material nuevo, mientras no tenga tipos o ficha propia (abajo), puede marcarse como "Sin ficha propia" para que mande mensaje directo por WhatsApp en vez de abrir una página vacía.</p>
             </div>
           </div>
-          <div class="card">
+          <div class="card brillo-borde">
             <div id="materialsForm"></div>
           </div>
           <button type="button" class="btn btn-ghost btn-sm" id="addMaterialBtn" style="margin-top:14px"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar material</button>
@@ -115,7 +130,7 @@
               <p class="card-sub">Tipo 1, Tipo 2, Tipo 3, sin pila/tapa, o cualquier otro que agregues. Da clic en "Editar" para cambiar su nombre, precio, material al que pertenece o sus características.</p>
             </div>
           </div>
-          <div class="card" id="typesForm"></div>
+          <div class="card brillo-borde" id="typesForm"></div>
           <button type="button" class="btn btn-ghost btn-sm" id="addTypeBtn" style="margin-top:14px"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar tipo</button>
         </div>
 
@@ -127,19 +142,19 @@
               <p class="card-sub">El título y las características que se muestran al elegir RAM, laptop, tablet, celular de teclado o cualquier ficha que agregues. El precio de cada una se edita arriba, en "Materiales".</p>
             </div>
           </div>
-          <div class="card" id="otherMaterialsForm"></div>
+          <div class="card brillo-borde" id="otherMaterialsForm"></div>
           <button type="button" class="btn btn-ghost btn-sm" id="addOtherMaterialBtn" style="margin-top:14px"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar ficha</button>
         </div>
 
         <div class="actions-row">
-          <button class="btn btn-primary" id="savePricesBtn"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> Guardar cambios</button>
+          <button class="btn btn-kit btn-primary" id="savePricesBtn"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> Guardar cambios</button>
           <button class="btn btn-ghost" id="resetPricesBtn">Descartar cambios</button>
         </div>
-        <p class="status-msg" id="pricesStatus"></p>
+        <p class="status-msg" role="status" aria-live="polite" id="pricesStatus"></p>
       </section>
 
       <!-- PESTAÑA GALERIA -->
-      <section class="panel" id="panelGaleria">
+      <section class="panel" id="panelGaleria" role="tabpanel" aria-labelledby="tab-galeria">
         <div class="section-block">
           <div class="section-block-head">
             <span class="section-num">1</span>
@@ -148,7 +163,7 @@
               <p class="card-sub">Cada categoría son las fotos que aparecen al elegir ese tipo de material en el sitio. Da clic en una para ver o editar sus fotos abajo; renombra o quita una categoría en la lista de más abajo.</p>
             </div>
           </div>
-          <div class="card">
+          <div class="card brillo-borde">
             <div class="gallery-cats" id="galleryCats"></div>
             <div class="gallery-cat-editor" id="galleryCatEditor"></div>
             <button type="button" class="btn btn-ghost btn-sm" id="addCategoryBtn" style="margin-top:14px"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar categoría</button>
@@ -160,17 +175,17 @@
             <span class="section-num">2</span>
             <div>
               <h2 class="card-title">Fotos de esta categoría</h2>
-              <p class="card-sub">"Quitar" retira la foto de la página, sin borrar el archivo. Escribe una descripción corta de cada foto.</p>
+              <p class="card-sub">"Quitar" retira la foto de la página y, al presionar "Guardar cambios", también borra su archivo del repositorio. Escribe una descripción corta de cada foto (qué se ve: marca, tipo de placa, cantidad): ayuda a quien usa lector de pantalla y a que Google muestre tus fotos.</p>
             </div>
           </div>
-          <div class="card">
+          <div class="card brillo-borde">
             <div class="gallery-thumb-grid" id="galleryThumbs"></div>
             <div class="add-photo-box" id="addPhotoBox">
               <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i>
               <p style="margin:0;font-size:13px;color:var(--ink-muted)">Arrastra una o varias fotos aquí, o da clic para elegirlas</p>
               <label class="btn btn-ghost btn-sm add-photo-pick">
                 Elegir fotos
-                <input type="file" id="addPhotoInput" accept="image/*" multiple hidden />
+                <input type="file" id="addPhotoInput" class="file-input-oculto" accept="image/*" multiple />
               </label>
               <p style="margin:0;font-size:11px;color:var(--ink-soft)">Solo imágenes (JPG, PNG...); se reducen automáticamente a un tamaño razonable para el sitio.</p>
             </div>
@@ -178,14 +193,14 @@
         </div>
 
         <div class="actions-row">
-          <button class="btn btn-primary" id="saveGalleryBtn"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> Guardar cambios</button>
+          <button class="btn btn-kit btn-primary" id="saveGalleryBtn"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> Guardar cambios</button>
           <button class="btn btn-ghost" id="resetGalleryBtn">Descartar cambios</button>
         </div>
-        <p class="status-msg" id="galleryStatus"></p>
+        <p class="status-msg" role="status" aria-live="polite" id="galleryStatus"></p>
       </section>
 
       <!-- PESTAÑA QUIENES SOMOS -->
-      <section class="panel" id="panelEquipo">
+      <section class="panel" id="panelEquipo" role="tabpanel" aria-labelledby="tab-equipo">
         <div class="section-block">
           <div class="section-block-head">
             <span class="section-num">1</span>
@@ -194,18 +209,18 @@
               <p class="card-sub">Da clic en "Editar" para abrir a cada persona en una ventana aparte: nombre, foto, contacto y sus redes sociales. Una persona solo aparece en el sitio público cuando su nombre no está vacío.</p>
             </div>
           </div>
-          <div class="card" id="teamForm"></div>
+          <div class="card brillo-borde" id="teamForm"></div>
           <button type="button" class="btn btn-ghost btn-sm" id="addTeamMemberBtn" style="margin-top:14px"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar persona</button>
         </div>
         <div class="actions-row">
-          <button class="btn btn-primary" id="saveTeamBtn"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> Guardar cambios</button>
+          <button class="btn btn-kit btn-primary" id="saveTeamBtn"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> Guardar cambios</button>
           <button class="btn btn-ghost" id="resetTeamBtn">Descartar cambios</button>
         </div>
-        <p class="status-msg" id="teamStatus"></p>
+        <p class="status-msg" role="status" aria-live="polite" id="teamStatus"></p>
       </section>
 
       <!-- PESTAÑA SUCURSALES Y CONTACTO -->
-      <section class="panel" id="panelSucursales">
+      <section class="panel" id="panelSucursales" role="tabpanel" aria-labelledby="tab-sucursales">
         <div class="section-block">
           <div class="section-block-head">
             <span class="section-num">1</span>
@@ -214,18 +229,18 @@
               <p class="card-sub">Da clic en "Editar" para abrir cada una en una ventana aparte. "Sucursal" es un local con dirección fija (y número de local, si aplica); "Contacto directo" es una persona que atiende una zona o estado sin local fijo. Marca "Número principal" en el contacto que debe usarse en los botones generales de WhatsApp de todo el sitio (solo puede haber uno).</p>
             </div>
           </div>
-          <div class="card" id="branchesForm"></div>
+          <div class="card brillo-borde" id="branchesForm"></div>
           <button type="button" class="btn btn-ghost btn-sm" id="addBranchBtn" style="margin-top:14px"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar sucursal o contacto</button>
         </div>
         <div class="actions-row">
-          <button class="btn btn-primary" id="saveBranchesBtn"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> Guardar cambios</button>
+          <button class="btn btn-kit btn-primary" id="saveBranchesBtn"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> Guardar cambios</button>
           <button class="btn btn-ghost" id="resetBranchesBtn">Descartar cambios</button>
         </div>
-        <p class="status-msg" id="branchesStatus"></p>
+        <p class="status-msg" role="status" aria-live="polite" id="branchesStatus"></p>
       </section>
 
       <!-- PESTAÑA COBERTURA Y REDES -->
-      <section class="panel" id="panelCobertura">
+      <section class="panel" id="panelCobertura" role="tabpanel" aria-labelledby="tab-cobertura">
         <div class="section-block">
           <div class="section-block-head">
             <span class="section-num">1</span>
@@ -234,10 +249,10 @@
               <p class="card-sub">Estos estados aparecen marcados en el mapa de la página principal. El resto del país se cuenta solo (32 menos los activos), con la política de recolección desde 10 kg.</p>
             </div>
           </div>
-          <div class="card">
+          <div class="card brillo-borde">
             <div class="coverage-add-row">
               <div class="field"><label>Agregar estado</label><select id="stateSelect"></select></div>
-              <button type="button" class="btn btn-primary btn-sm" id="addStateBtn"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar</button>
+              <button type="button" class="btn btn-kit btn-primary btn-sm" id="addStateBtn"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar</button>
             </div>
             <div class="state-chip-list" id="stateChipList"></div>
             <p class="price-hint" id="coverageCountHint"></p>
@@ -252,15 +267,15 @@
               <p class="card-sub">Enlaces que aparecen en el pie de página del sitio (Facebook, Instagram, etc.).</p>
             </div>
           </div>
-          <div class="card" id="socialForm"></div>
+          <div class="card brillo-borde" id="socialForm"></div>
           <button type="button" class="btn btn-ghost btn-sm" id="addSocialBtn" style="margin-top:14px"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar red social</button>
         </div>
 
         <div class="actions-row">
-          <button class="btn btn-primary" id="saveCoverageBtn"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> Guardar cambios</button>
+          <button class="btn btn-kit btn-primary" id="saveCoverageBtn"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> Guardar cambios</button>
           <button class="btn btn-ghost" id="resetCoverageBtn">Descartar cambios</button>
         </div>
-        <p class="status-msg" id="coverageStatus"></p>
+        <p class="status-msg" role="status" aria-live="polite" id="coverageStatus"></p>
       </section>
 
     </main>
@@ -274,9 +289,9 @@
       <button class="selector-close" id="itemModalClose" aria-label="Cerrar">×</button>
       <h2 id="itemModalTitle"></h2>
       <div id="itemModalBody"></div>
-      <p class="status-msg" id="itemModalStatus"></p>
+      <p class="status-msg" role="status" aria-live="polite" id="itemModalStatus"></p>
       <div class="actions-row">
-        <button class="btn btn-primary" id="itemModalSaveBtn"><i class="bi bi-check-lg" aria-hidden="true"></i> Aplicar a la lista</button>
+        <button class="btn btn-kit btn-primary" id="itemModalSaveBtn"><i class="bi bi-check-lg" aria-hidden="true"></i> Aplicar a la lista</button>
         <button class="btn btn-ghost" id="itemModalCancelBtn">Cancelar</button>
       </div>
       <p class="price-hint" style="margin-top:14px">Esto actualiza la lista de abajo. No olvides presionar "Guardar cambios" para publicarlo en el sitio.</p>
@@ -307,7 +322,7 @@
           <label for="ghToken">Llave de acceso (token de GitHub)</label>
           <input type="password" id="ghToken" placeholder="github_pat_..." autocomplete="off" />
         </div>
-        <button class="btn btn-primary" id="ghConnectBtn" type="button">Conectar esta computadora</button>
+        <button class="btn btn-kit btn-primary" id="ghConnectBtn" type="button">Conectar esta computadora</button>
         <button class="btn btn-danger" id="ghDisconnectBtn" type="button" hidden>Desconectar esta computadora</button>
       </div>
 
@@ -324,8 +339,11 @@
     </div>
   </div>
 
+  <!-- js/fallbacks.js ya no se carga aquí: son ~11 KB de datos de respaldo
+       para el sitio público, y admin.js no usa ninguna de sus variables
+       (el panel siempre lee data/*.json en vivo desde GitHub). -->
   <script src="js/utils.js"></script>
-  <script src="js/fallbacks.js"></script>
+  <script defer src="js/ui.js"></script>
   <script src="admin.js"></script>
 </body>
 </html>

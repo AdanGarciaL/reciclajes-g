@@ -3,23 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#eef7ef" />
+  <meta name="theme-color" content="#0B3B22" />
   <title>Aviso de Privacidad | ECO LÓGICA García</title>
   <meta name="description" content="Aviso de privacidad de ECO LÓGICA García: cómo se usan y protegen los datos de contacto de quienes cotizan o venden material por WhatsApp." />
-  <link rel="canonical" href="https://ecologicagarcia.com/aviso-privacidad.html" />
-  <link rel="icon" href="icons/icono.png" type="image/png" />
-  <link rel="apple-touch-icon" href="icons/icono.png" />
+  <link rel="canonical" href="https://www.ecologicagarcia.com/aviso-privacidad.html" />
+  <!-- Mismos iconos que la portada: el de 512 px pesaba 5 veces más para
+       dibujarse a 16-32 px en la pestaña. -->
+  <link rel="icon" href="icons/icono-128.png" type="image/png" />
+  <link rel="apple-touch-icon" href="icons/icono-192.png" />
+  <link rel="manifest" href="manifest.json" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="es_MX" />
+  <meta property="og:site_name" content="ECO LÓGICA García" />
+  <meta property="og:title" content="Aviso de Privacidad | ECO LÓGICA García" />
+  <meta property="og:description" content="Cómo se usan y protegen los datos de contacto de quienes cotizan o venden material por WhatsApp." />
+  <meta property="og:url" content="https://www.ecologicagarcia.com/aviso-privacidad.html" />
+  <meta property="og:image" content="https://www.ecologicagarcia.com/icons/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="legal.css" />
+  <link rel="stylesheet" href="css/kit.css" />
 </head>
 <body>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("theme-preference");
+        if (t ? t === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches) {
+          document.body.classList.add("legal-dark-mode");
+        }
+      } catch (_e) { /* sin localStorage: tema claro */ }
+    })();
+  </script>
   <div class="legal-shell">
     <header class="legal-header">
+      <div class="aurora" aria-hidden="true">
+        <span class="aurora-capa"></span>
+        <span class="grano"></span>
+      </div>
       <div class="legal-topbar">
         <a class="legal-brand" href="index.html" aria-label="Volver al sitio principal">
-          <span class="legal-mark"><img src="icons/icono.png" alt="" /></span>
+          <span class="legal-mark"><img src="icons/icono-128.png" alt="" /></span>
           <span class="legal-brand-copy">
             <strong>ECO LÓGICA García</strong>
             <span>Compra de lógica de celular y componentes</span>
@@ -27,7 +53,7 @@
         </a>
         <div class="legal-actions">
           <button type="button" class="legal-chip" id="legalThemeToggle" aria-label="Cambiar tema">Tema oscuro</button>
-          <a class="legal-button" href="index.html">Volver al sitio</a>
+          <a class="legal-button btn-kit magnetico" href="index.html">Volver al sitio</a>
         </div>
       </div>
 
@@ -35,18 +61,18 @@
         <p class="legal-kicker">Protección de datos</p>
         <h1>Aviso de Privacidad</h1>
         <p>Este sitio no usa formularios ni guarda información de quienes lo visitan. Aquí explicamos qué pasa con los datos que nos compartes cuando nos escribes por WhatsApp o nos visitas en sucursal.</p>
-        <div class="legal-hero-card" aria-label="Resumen ejecutivo del documento">
-          <div class="legal-hero-stat">
+        <div class="legal-hero-card brillo-borde" aria-label="Resumen ejecutivo del documento">
+          <div class="legal-hero-stat brillo-borde">
             <strong>Sin registros en el sitio</strong>
             <span>No hay formularios, cuentas ni base de datos de visitantes.</span>
           </div>
-          <div class="legal-hero-stat">
+          <div class="legal-hero-stat brillo-borde">
             <strong>Contacto directo</strong>
             <span>La conversación ocurre en WhatsApp, fuera de este sitio.</span>
           </div>
         </div>
         <div class="legal-meta" aria-label="Resumen del aviso">
-          <span class="legal-pill">Actualización: 10 de septiembre de 2026</span>
+          <span class="legal-pill">Actualización: 25 de septiembre de 2026</span>
           <span class="legal-pill">Contacto por WhatsApp</span>
           <span class="legal-pill">Sin base de datos</span>
         </div>
@@ -54,7 +80,7 @@
     </header>
 
     <main class="legal-grid">
-      <article class="legal-card" aria-label="Contenido del aviso de privacidad">
+      <article class="legal-card brillo-borde" aria-label="Contenido del aviso de privacidad">
         <section class="legal-section" id="privacidad-responsable">
           <h2>1. Responsable</h2>
           <p>ECO LÓGICA García es responsable de este sitio informativo y de la atención que se brinda por WhatsApp y en sucursal.</p>
@@ -65,34 +91,46 @@
           <p>El sitio público no tiene formularios de registro, no crea cuentas de usuario y no guarda información personal en ningún servidor ni base de datos. Solo se usa <code>localStorage</code> del navegador para recordar tu preferencia de tema claro u oscuro; eso nunca sale de tu dispositivo.</p>
         </section>
 
+        <section class="legal-section" id="privacidad-terceros">
+          <h2>3. Servicios de terceros que carga este sitio</h2>
+          <p>Para mostrarse, el sitio descarga recursos de proveedores externos. Como ocurre con cualquier página web, esos proveedores reciben la dirección IP de tu dispositivo y datos técnicos del navegador al entregar el recurso; este sitio no les envía ningún otro dato tuyo:</p>
+          <ul>
+            <li><strong>Vercel</strong>: alojamiento del sitio.</li>
+            <li><strong>Google Fonts</strong>: tipografías.</li>
+            <li><strong>jsDelivr</strong> y <strong>cdnjs (Cloudflare)</strong>: iconos, el mapa y las animaciones.</li>
+            <li><strong>OpenStreetMap</strong>: las imágenes del mapa de cobertura, solo si llegas a esa sección.</li>
+          </ul>
+          <p>Cada uno trata esa información conforme a su propia política de privacidad.</p>
+        </section>
+
         <section class="legal-section" id="privacidad-equipo">
-          <h2>3. Información del equipo y sucursales</h2>
-          <p>Las secciones "Quiénes somos" y "Sucursales" muestran el nombre, foto y WhatsApp de personas de nuestro equipo, y los estados con cobertura activa. Esta es información de la empresa que nuestro propio equipo administra y actualiza desde el panel interno; no proviene de datos de visitantes ni de formularios, y se publica porque sus titulares decidieron mostrarla como parte del contacto oficial del negocio.</p>
+          <h2>4. Información del equipo y sucursales</h2>
+          <p>Las secciones "Quiénes somos" y "Sucursales" muestran el nombre, foto, WhatsApp y, cuando la persona así lo decide, su correo y enlaces a sus redes sociales, además de los estados con cobertura activa. Esta es información de la empresa que nuestro propio equipo administra y actualiza desde el panel interno; no proviene de datos de visitantes ni de formularios, y se publica porque sus titulares decidieron mostrarla como parte del contacto oficial del negocio.</p>
         </section>
 
         <section class="legal-section" id="privacidad-finalidad">
-          <h2>4. Contacto por WhatsApp y redes sociales</h2>
+          <h2>5. Contacto por WhatsApp y redes sociales</h2>
           <p>Cuando decides escribirnos por WhatsApp, la conversación (tu número, fotos del material, nombre y lo que nos compartas) ocurre dentro de WhatsApp, una aplicación de Meta Platforms. Lo mismo aplica si nos contactas a través de nuestras páginas oficiales de Facebook o Instagram, cuando estén disponibles: esa interacción se trata conforme a la política de privacidad de esa plataforma, no de este sitio. La usamos únicamente para cotizar tu material, coordinar la compra y, en su caso, la recolección o entrega.</p>
         </section>
 
         <section class="legal-section" id="privacidad-seguridad">
-          <h2>5. Conservación</h2>
+          <h2>6. Conservación</h2>
           <p>Las conversaciones relacionadas con una compra se conservan el tiempo necesario para completar el trato y dar seguimiento; puedes solicitar que se eliminen una vez cerrada la operación.</p>
         </section>
 
         <section class="legal-section" id="privacidad-arco">
-          <h2>6. Tus derechos</h2>
+          <h2>7. Tus derechos</h2>
           <p>Puedes pedirnos en cualquier momento, por el mismo chat de WhatsApp, que te digamos qué información tenemos sobre tu solicitud o que la eliminemos.</p>
         </section>
 
         <section class="legal-section" id="privacidad-cambios">
-          <h2>7. Cambios al aviso</h2>
+          <h2>8. Cambios al aviso</h2>
           <p>Este aviso puede actualizarse cuando cambie la forma en que operamos. La versión vigente es siempre la publicada en esta página.</p>
         </section>
       </article>
 
       <aside class="legal-aside" aria-label="Resumen ejecutivo">
-        <div class="legal-aside-card">
+        <div class="legal-aside-card brillo-borde">
           <h3>Lo esencial</h3>
           <p>El sitio en sí no recolecta nada. Todo el contacto y la información que compartes ocurre directamente en tu conversación de WhatsApp con nosotros.</p>
         </div>
@@ -100,10 +138,11 @@
         <div class="legal-quicklinks">
           <h3>Navegación rápida</h3>
           <p>Salta a la parte que te interesa.</p>
-          <a class="legal-quicklink" href="#privacidad-datos">Datos que no recabamos <span>→</span></a>
-          <a class="legal-quicklink" href="#privacidad-equipo">Equipo y sucursales <span>→</span></a>
-          <a class="legal-quicklink" href="#privacidad-finalidad">Contacto por WhatsApp <span>→</span></a>
-          <a class="legal-quicklink" href="#privacidad-arco">Tus derechos <span>→</span></a>
+          <a class="legal-quicklink" href="#privacidad-datos">Datos que no recabamos <span aria-hidden="true">→</span></a>
+          <a class="legal-quicklink" href="#privacidad-terceros">Servicios de terceros <span aria-hidden="true">→</span></a>
+          <a class="legal-quicklink" href="#privacidad-equipo">Equipo y sucursales <span aria-hidden="true">→</span></a>
+          <a class="legal-quicklink" href="#privacidad-finalidad">Contacto por WhatsApp <span aria-hidden="true">→</span></a>
+          <a class="legal-quicklink" href="#privacidad-arco">Tus derechos <span aria-hidden="true">→</span></a>
         </div>
 
         <div class="legal-checklist">
@@ -130,7 +169,7 @@
           </div>
         </div>
 
-        <div class="legal-aside-card">
+        <div class="legal-aside-card brillo-borde">
           <h3>Canales de atención</h3>
           <p>Escríbenos por WhatsApp, por nuestras páginas oficiales de redes sociales, o visita la sucursal más cercana: todos los contactos vigentes están en las secciones "Sucursales" y pie de página del sitio principal.</p>
         </div>
@@ -143,6 +182,7 @@
     </footer>
   </div>
 
+  <script defer src="js/ui.js"></script>
   <script src="legal.js"></script>
 </body>
 </html>

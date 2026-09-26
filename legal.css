@@ -23,8 +23,29 @@
   --legal-radius: 20px;
 }
 
+/* Sin esto, el relleno y el borde SE SUMAN al ancho declarado, así que un
+   elemento al 100% acaba midiendo más que su columna. Era la causa de que
+   los enlaces rápidos del aviso se salieran unos píxeles por la derecha y
+   apareciera barra horizontal en cualquier móvil.
+   El resto del sitio ya lo declara en css/base.css; esta hoja se quedó
+   fuera porque es independiente. */
+*, *::before, *::after { box-sizing: border-box; }
+
 html {
   scroll-behavior: smooth;
+}
+
+/* Quien pide menos movimiento también lo pide aquí: el desplazamiento
+   suave al pulsar un enlace del índice puede marear. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+/* Foco visible con teclado, igual que en el resto del sitio. */
+:focus-visible {
+  outline: 2px solid var(--legal-primary);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 body {
@@ -175,7 +196,10 @@ body.legal-dark-mode .legal-header {
   padding: 0.78rem 1rem;
   text-decoration: none;
   color: #fff;
-  background: linear-gradient(135deg, var(--legal-primary) 0%, var(--legal-primary-2) 100%);
+  /* Verde García sólido con un degradado hacia un tono más profundo: el
+     degradado anterior terminaba en Verde señal y el texto blanco quedaba
+     a 1.87:1 sobre esa parte ("sitio" casi no se leía). */
+  background: linear-gradient(135deg, var(--legal-primary) 0%, color-mix(in srgb, var(--legal-primary) 78%, #0B3B22) 100%);
   box-shadow: 0 12px 24px rgba(27, 127, 58, 0.22);
 }
 
@@ -426,7 +450,7 @@ body.legal-dark-mode .legal-check {
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, var(--legal-primary) 0%, var(--legal-primary-2) 100%);
+  background: var(--legal-primary);
   color: #fff;
   font-size: 0.8rem;
 }
@@ -469,8 +493,10 @@ body.legal-dark-mode .legal-chip:hover {
   border-color: rgba(89, 214, 122, 0.42);
 }
 
-body.legal-dark-mode .legal-button {
+body.legal-dark-mode .legal-button,
+body.legal-dark-mode .legal-badge {
   color: #08140d;
+  background: linear-gradient(135deg, var(--legal-primary) 0%, var(--legal-primary-2) 100%);
 }
 
 body.legal-dark-mode .legal-footer a {
@@ -539,4 +565,10 @@ body.legal-dark-mode .legal-footer a {
 
 @media (max-width: 640px) {
   .legal-section::before { left: -0.75rem; }
+}
+/* En el teléfono, las dos tarjetas de resumen del encabezado van una
+   debajo de otra: a dos columnas el texto quedaba en renglones de dos
+   palabras. */
+@media (max-width: 640px) {
+  .legal-hero-card { grid-template-columns: 1fr; }
 }

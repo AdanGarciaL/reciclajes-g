@@ -8,13 +8,32 @@ function esc(value) {
   return String(value ?? "").replace(/[&<>"']/g, (ch) => ESCAPE_MAP[ch]);
 }
 
+// Solo enlaces ABSOLUTOS http(s). Antes se resolvía contra la página
+// actual, así que "facebook.com/eco" pasaba la validación y terminaba
+// publicado como https://ecologicagarcia.com/facebook.com/eco (roto).
 function isSafeHttpUrl(url) {
   try {
-    const u = new URL(String(url || "").trim(), window.location.href);
+    const u = new URL(String(url || "").trim());
     return u.protocol === "http:" || u.protocol === "https:";
   } catch (_e) {
     return false;
   }
+}
+
+// Completa "facebook.com/eco" o "www.instagram.com/eco" a https://…, que es
+// como la gente copia los enlaces de sus redes. Cualquier otra cosa se
+// devuelve tal cual para que isSafeHttpUrl() la rechace.
+function normalizeHttpUrl(url) {
+  const s = String(url || "").trim();
+  if (!s || /^[a-z][a-z0-9+.-]*:/i.test(s)) return s;
+  return /^[\w-]+(\.[\w-]+)+(\/|$)/.test(s) ? `https://${s}` : s;
+}
+
+// Número de WhatsApp de México en el formato que usa wa.me: 52 + 10 dígitos.
+// Un número mal capturado (como el de 11 dígitos que llegó a producción)
+// abría un chat con "este número no existe".
+function isWaNumber(value) {
+  return /^52\d{10}$/.test(String(value || ""));
 }
 
 function formatMexPhone(rawDigits) {

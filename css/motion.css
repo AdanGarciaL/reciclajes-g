@@ -1,0 +1,123 @@
+/* =========================================================
+   ECO LÓGICA García — animación de desplazamiento (scroll)
+
+   Esta hoja SOLO toca propiedades de movimiento: transform, opacity,
+   clip-path y, como mucho, un desenfoque. No define ni un color, ni una
+   familia tipográfica, ni un tamaño de letra: la paleta oficial y las
+   fuentes viven en css/base.css y no se tocan desde aquí.
+
+   Todo cuelga de .js-motion, una clase que pone un script en línea del
+   <head> de index.html. Si el JS no corre, o el visitante pidió menos
+   movimiento, nada de esto aplica y la página se ve completa y quieta.
+
+   El motor es GSAP + ScrollTrigger (js/motion.js). Si el CDN de GSAP
+   está bloqueado, js/motion.js no se activa y script.js vuelve al
+   IntersectionObserver de siempre, que solo usa las clases .reveal.
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   1. Estados finales
+   Al terminar cada animación, js/motion.js limpia el transform y el
+   will-change que había escrito. Esta regla es el cinturón: un
+   transform activo deja al elemento como bloque contenedor y contexto
+   de apilamiento de forma permanente, y son decenas de contenedores.
+   --------------------------------------------------------- */
+.js-motion .motion-hecho {
+  will-change: auto;
+}
+
+/* ---------------------------------------------------------
+   2. Revelado de texto palabra por palabra
+   js/motion.js parte el titular en palabras y envuelve cada una en
+   .palabra > .palabra-i. La de fuera recorta, la de dentro sube.
+   --------------------------------------------------------- */
+.palabra {
+  display: inline-block;
+  vertical-align: top;
+  overflow: hidden;
+  /* Aire arriba y abajo para que el recorte no se coma los acentos
+     (á, é, í, ó, ú) ni las colas de la g, la j, la p y la y. El margen
+     negativo devuelve ese espacio para que la línea no se separe. */
+  padding: 0.14em 0 0.20em;
+  margin: -0.14em 0 -0.20em;
+}
+.palabra-i {
+  display: inline-block;
+  transform: translateY(115%);
+}
+/* Una vez revelada, la palabra se queda arriba POR CLASE y no por un
+   transform en línea. Es imprescindible: al terminar, GSAP limpia el
+   transform que había escrito, y sin esta regla volvería a mandar el
+   translateY(115%) de arriba — la palabra caería otra vez dentro de su
+   recorte y el titular se vería vacío. */
+.js-motion .palabra-i.lista { transform: none; }
+/* Sin GSAP las palabras nunca se animarían: se quedarían fuera de su
+   recorte y el titular se vería vacío. Por eso el estado escondido solo
+   existe cuando motion.js ya confirmó que puede animarlas. */
+.js-motion:not(.motion-listo) .palabra-i {
+  transform: none;
+}
+
+/* ---------------------------------------------------------
+   3. Portada (hero)
+   --------------------------------------------------------- */
+.js-motion.motion-listo .hero-media {
+  /* El transform de este bloque lo escribe únicamente js/motion.js
+     (parallax + inclinación con el puntero, en una sola matriz). Antes
+     se lo peleaban una animación CSS infinita y un listener de mousemove,
+     y la animación ganaba siempre. */
+  transform-style: preserve-3d;
+}
+.js-motion.motion-listo .hero-media-frame img {
+  /* Un poco más grande que el marco para que el parallax interno tenga
+     de dónde moverse sin descubrir los bordes. */
+  scale: 1.12;
+}
+
+/* ---------------------------------------------------------
+   4. Encabezado que se compacta al bajar
+   Solo cambian medidas y opacidad; ni el color ni la tipografía.
+   --------------------------------------------------------- */
+.js-motion .site-header .logo-mark {
+  transition: width 0.4s cubic-bezier(.2,.7,.2,1), height 0.4s cubic-bezier(.2,.7,.2,1);
+}
+.js-motion .site-header .logo-subtext {
+  transition: opacity 0.35s ease, max-height 0.35s ease;
+  overflow: hidden;
+}
+.js-motion .site-header.is-compacto .logo-mark {
+  width: 40px;
+  height: 40px;
+}
+.js-motion .site-header.is-compacto .logo-subtext {
+  opacity: 0;
+  max-height: 0;
+}
+.js-motion .nav {
+  transition: min-height 0.4s cubic-bezier(.2,.7,.2,1);
+}
+.js-motion .site-header.is-compacto .nav {
+  min-height: 56px;
+}
+
+/* ---------------------------------------------------------
+   5. Secciones fijadas (pinning)
+   ScrollTrigger inserta su propio contenedor; esto solo asegura que
+   nada de lo que ya existía recorte el efecto.
+   --------------------------------------------------------- */
+.js-motion .pin-spacer {
+  /* El contenedor que crea ScrollTrigger no debe heredar el borde
+     inferior de la sección, o se ve una línea suelta al fijarse. */
+  border-bottom: 0;
+}
+
+/* ---------------------------------------------------------
+   6. Respeto por quien pide menos movimiento
+   Doble cinturón: js/motion.js ni siquiera arranca, y además aquí se
+   anula cualquier estado inicial por si algo quedó a medias.
+   --------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .palabra { overflow: visible; padding: 0; margin: 0; }
+  .palabra-i { transform: none !important; }
+  .js-motion .hero-media-frame img { scale: 1; }
+}
