@@ -1158,14 +1158,20 @@ function renderTeam() {
   
   section.hidden = false;
   grid.innerHTML = members.map((m, i) => `
-    <article class="team-card brillo-borde reveal ${i ? "delay-" + Math.min(i, 3) : ""}">
-      <div class="team-photo">${m.photo ? `<img src="${esc(m.photo)}" alt="${esc(m.name)}" loading="lazy" />` : `<span class="team-photo-fallback">${esc(initials(m.name))}</span>`}</div>
-      <h3 class="team-name">${esc(m.name)}</h3>
-      <p class="team-role">${esc(m.role || "")}</p>
-      <div class="team-contacts">
-        ${isWaNumber(m.whatsapp) ? `<a class="team-contact-link" href="${waLinkTo(m.whatsapp, "Hola, quiero contactarte por Eco Lógica García")}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp de ${esc(m.name)}"><i class="bi bi-whatsapp" aria-hidden="true"></i></a>` : ""}
-        ${m.email ? `<a class="team-contact-link" href="mailto:${esc(m.email)}" aria-label="Correo de ${esc(m.name)}"><i class="bi bi-envelope" aria-hidden="true"></i></a>` : ""}
-        ${(m.social || []).filter((s) => isSafeHttpUrl(s.url)).map((s) => `<a class="team-contact-link" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(s.network)} de ${esc(m.name)}"><i class="bi ${SOCIAL_ICONS[s.network] || "bi-globe2"}" aria-hidden="true"></i></a>`).join("")}
+    <article class="team-card reveal ${i ? "delay-" + Math.min(i, 3) : ""}" onclick="this.classList.toggle('is-revealed')">
+      ${m.photo 
+        ? `<img class="team-card-bg" src="${esc(m.photo)}" alt="${esc(m.name)}" loading="lazy" />` 
+        : `<div class="team-photo-fallback-bg">${esc(initials(m.name))}</div>`}
+      <div class="team-card-content">
+        <h3 class="team-name">${esc(m.name)}</h3>
+        <div class="team-card-reveal">
+          <p class="team-role">${esc(m.role || "Equipo")}</p>
+          <div class="team-contacts" onclick="event.stopPropagation()">
+            ${isWaNumber(m.whatsapp) ? `<a class="team-contact-link" href="${waLinkTo(m.whatsapp, "Hola, quiero contactarte por Eco Lógica García")}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp de ${esc(m.name)}"><i class="bi bi-whatsapp" aria-hidden="true"></i></a>` : ""}
+            ${m.email ? `<a class="team-contact-link" href="mailto:${esc(m.email)}" aria-label="Correo de ${esc(m.name)}"><i class="bi bi-envelope" aria-hidden="true"></i></a>` : ""}
+            ${(m.social || []).filter((s) => isSafeHttpUrl(s.url)).map((s) => `<a class="team-contact-link" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(s.network)} de ${esc(m.name)}"><i class="bi ${SOCIAL_ICONS[s.network] || "bi-globe2"}" aria-hidden="true"></i></a>`).join("")}
+          </div>
+        </div>
       </div>
     </article>
   `).join("");

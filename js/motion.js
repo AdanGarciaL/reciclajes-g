@@ -320,7 +320,6 @@
     { sel: ".trust-grid", hijos: ".trust-card", giro: true },
     { sel: ".quick-prices-grid", hijos: ".price-card", giro: true },
     { sel: ".sucursales-grid", hijos: ".sucursal-card" },
-    { sel: ".team-grid", hijos: ".team-card" },
     { sel: ".faq-list", hijos: ".faq-item" },
     { sel: ".gallery-grid", hijos: ".gallery-card", escalon: 0.025 },
     { sel: ".coverage-side", hijos: ".coverage-block" },
@@ -369,7 +368,37 @@
   }
 
   /* =========================================================
-     4. Bloques sueltos que aún usan .reveal
+     4. Staggered Grid (Efecto Vengeance UI Parallax)
+     ========================================================= */
+  function scrollStaggeredGrid() {
+    document.querySelectorAll(".team-grid").forEach((grid) => {
+      const cards = Array.from(grid.querySelectorAll(".team-card")).filter((el) => !el.classList.contains("motion-tomado"));
+      if (!cards.length) return;
+      
+      cards.forEach(tomarControl);
+      tomarControl(grid);
+      
+      // Animación de entrada inicial (fade in)
+      gsap.fromTo(cards, 
+        { opacity: 0, scale: 0.95 }, 
+        { opacity: 1, scale: 1, duration: 1, ease: SUAVE, stagger: 0.1, scrollTrigger: { trigger: grid, start: "top 85%", once: true }, onComplete: () => alTerminar(cards) }
+      );
+      
+      // Efecto Parallax Scrub: pares e impares se mueven a distinta velocidad
+      const pares = cards.filter((_, i) => i % 2 !== 0);
+      const impares = cards.filter((_, i) => i % 2 === 0);
+      
+      if(pares.length) {
+        gsap.fromTo(pares, { y: 20 }, { y: -40, ease: "none", scrollTrigger: { trigger: grid, start: "top bottom", end: "bottom top", scrub: 0.5 } });
+      }
+      if(impares.length) {
+        gsap.fromTo(impares, { y: -20 }, { y: 40, ease: "none", scrollTrigger: { trigger: grid, start: "top bottom", end: "bottom top", scrub: 0.5 } });
+      }
+    });
+  }
+
+  /* =========================================================
+     5. Bloques sueltos que aún usan .reveal
      Todo lo que no cayó en ninguna regla anterior se anima igual,
      para que no quede nada invisible.
      ========================================================= */
@@ -515,6 +544,7 @@
       titulares();
       proceso();
       grupos();
+      scrollStaggeredGrid();
       sueltos();
       // Los contadores esperan a que script.js haya pintado los datos
       // reales; refrescar() vuelve a correr cuando llegan.
