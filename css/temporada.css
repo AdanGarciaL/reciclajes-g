@@ -514,44 +514,38 @@ body.temporada-effects-paused .temporada-hanging-spider {
 }
 
 @media (max-width: 900px) {
-  .temporada-corner-web {
-    width: 110px;
-    height: 110px;
-    opacity: 0.42;
+  /* En móviles y tablets: CERO estorbos visuales. Nada de telarañas ni arañas sobre el menú o logo */
+  .temporada-corner-web,
+  .temporada-hanging-spider,
+  .temporada-section-figure,
+  .temporada-section-web,
+  .temporada-section-emblem {
+    display: none !important;
   }
 
-  .temporada-hanging-spider {
-    left: 36px;
-    width: 26px;
-    height: 105px;
+  .temporada-garland-top {
+    height: 18px;
+    background-size: 220px 18px;
+    opacity: 0.9;
   }
 
-  .temporada-hanging-spider--right {
-    right: 36px;
-    left: auto;
+  .site-footer::after {
+    height: 20px;
+    background-size: 220px 20px;
   }
 
-  .temporada-section-figure {
-    width: 48px;
-    height: 48px;
-    top: 14px;
-    opacity: 0.72;
-  }
-
-  .temporada-section-web {
-    width: 60px;
-    height: 60px;
+  .temporada-toggle-btn {
+    left: 0.75rem;
+    bottom: 5rem;
+    padding: 0.32rem 0.65rem;
+    font-size: 0.68rem;
   }
 }
 
 @media (max-width: 600px) {
   .temporada-garland-top {
-    height: 26px;
-    background-size: 250px 26px;
-  }
-
-  .temporada-section-figure--left {
-    display: none;
+    height: 16px;
+    background-size: 190px 16px;
   }
 }
 

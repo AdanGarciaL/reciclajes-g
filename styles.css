@@ -2539,6 +2539,50 @@ body.dark-mode .hero-app-btn {
   color: var(--brand-carbon);
 }
 
+@media (max-width: 640px) {
+  .app-showcase {
+    padding: 22px 16px;
+    border-radius: var(--radius-md);
+  }
+  .app-install-guide {
+    margin-top: 20px;
+    padding: 16px 14px;
+  }
+  .app-install-tabs {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .app-install-tab-group {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    gap: 4px;
+    padding: 3px;
+  }
+  .app-os-tab {
+    padding: 8px 4px;
+    font-size: 11.5px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .app-phone-mockup {
+    max-width: 100%;
+    padding: 12px 14px 16px;
+    border-radius: 22px;
+  }
+  .app-phone-meta-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .app-phone-meta-box {
+    padding: 8px 6px;
+  }
+  .app-phone-meta-box strong {
+    font-size: 12.5px;
+  }
+}
+
 /* =========================================================
    AVISO DE COOKIES Y ALMACENAMIENTO LOCAL (Primera visita)
    ========================================================= */

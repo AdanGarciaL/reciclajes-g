@@ -369,29 +369,29 @@ export default function App() {
   return (
     <div className="min-h-dvh flex flex-col bg-[#04120a] text-white pb-24 md:pb-10">
       {/* CABECERA MINIMALISTA Y PROFESIONAL */}
-      <header className="sticky top-0 z-30 backdrop-blur-xl bg-[#04120a]/90 border-b border-emerald-500/15">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-2 sm:gap-3">
+      <header className="sticky top-0 z-30 backdrop-blur-xl bg-[#04120a]/95 border-b border-emerald-500/15">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2">
           {/* Identidad Eco Lógica García + Regreso al sitio web */}
-          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
             {!isStandalone && (
               <a
                 href="../index.html#app-logica"
                 title="Volver a ecologicagarcia.com"
                 aria-label="Volver a la página principal de Eco Lógica García"
-                className="px-2.5 py-2 rounded-xl bg-white/5 hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-400/40 text-emerald-300 text-xs font-bold flex items-center gap-1.5 transition shrink-0"
+                className="p-2 sm:px-2.5 sm:py-2 rounded-xl bg-white/5 hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-400/40 text-emerald-300 text-xs font-bold flex items-center gap-1.5 transition shrink-0"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span className="hidden lg:inline">Volver al sitio</span>
+                <span className="hidden sm:inline">Sitio</span>
               </a>
             )}
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shrink-0">
-              <Cpu className="w-5 h-5 text-emerald-400" />
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shrink-0">
+              <Cpu className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-black tracking-tight text-white text-sm sm:text-base leading-none truncate">
+              <h1 className="font-black tracking-tight text-white text-xs sm:text-base leading-none truncate">
                 ECO LÓGICA <span className="text-emerald-400">GARCÍA</span>
               </h1>
-              <span className="text-[11px] text-emerald-300/70 font-medium block truncate mt-0.5">
+              <span className="text-[10px] sm:text-[11px] text-emerald-300/70 font-medium block truncate mt-0.5">
                 {dbStats.totalOfflineCount.toLocaleString()} chips registrados
               </span>
             </div>
@@ -435,26 +435,40 @@ export default function App() {
             })}
           </nav>
 
-          {/* Controles Rápidos: Instalar App + Voz + Base de Datos */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          {/* Controles Rápidos: Instalar App + Día de Muertos + Voz + Base de Datos */}
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             {!isStandalone && (
               <button
                 type="button"
                 onClick={handleInstallClick}
-                aria-label="Instalar aplicación en el celular"
-                title="Instalar App en Android o iPhone"
-                className="px-2.5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/40 text-emerald-300 font-extrabold text-xs flex items-center gap-1.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                aria-label="Instalar aplicación en el celular o PC"
+                title="Instalar App en Android, iPhone o PC"
+                className="px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/40 text-emerald-300 font-extrabold text-xs flex items-center gap-1 transition"
               >
                 <Download className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="hidden sm:inline">Instalar App</span>
+                <span className="hidden sm:inline">Instalar</span>
               </button>
             )}
 
             <button
               type="button"
+              onClick={togglePetals}
+              aria-label={petalsPaused ? 'Activar pétalos de cempasúchil' : 'Pausar pétalos'}
+              title={petalsPaused ? 'Pétalos pausados' : 'Día de Muertos activo'}
+              className={`p-1.5 sm:p-2 rounded-xl border text-xs font-bold transition ${
+                !petalsPaused
+                  ? 'bg-amber-500/15 border-amber-400/40 text-amber-300'
+                  : 'bg-white/5 border-white/10 text-gray-500'
+              }`}
+            >
+              <span className="text-xs sm:text-sm">🏵️</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setVoiceEnabled(!voiceEnabled)}
               aria-label={voiceEnabled ? 'Desactivar voz' : 'Activar voz'}
-              className={`p-2 rounded-xl border text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
+              className={`p-1.5 sm:p-2 rounded-xl border text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
                 voiceEnabled
                   ? 'bg-emerald-500/15 border-emerald-400/40 text-emerald-300'
                   : 'bg-white/5 border-white/10 text-gray-500'
@@ -468,10 +482,10 @@ export default function App() {
               type="button"
               onClick={() => setIsAdminOpen(true)}
               aria-label="Abrir Base de Datos"
-              className="relative px-3 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs flex items-center gap-1.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              className="relative px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs flex items-center gap-1 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
               <Database className="w-3.5 h-3.5" />
-              <span>BD</span>
+              <span className="hidden sm:inline">BD</span>
               {dbStats.pendingCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-amber-400 text-black text-[10px] font-black flex items-center justify-center border border-black">
                   {dbStats.pendingCount}
@@ -484,55 +498,10 @@ export default function App() {
         <div className="logica-papel-picado" aria-hidden="true" />
       </header>
 
-      {/* Telarañas en esquinas + Araña colgante + Pétalos y Calacas flotantes */}
-      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-20 overflow-hidden">
-        {/* Telaraña Izquierda */}
-        <svg className="absolute top-0 left-0 w-28 h-28 sm:w-36 sm:h-36 opacity-45" viewBox="0 0 160 160" fill="none">
-          <g stroke="#f59e0b" strokeWidth="1.2" strokeOpacity="0.65" strokeLinecap="round">
-            <line x1="0" y1="0" x2="155" y2="12" />
-            <line x1="0" y1="0" x2="142" y2="52" />
-            <line x1="0" y1="0" x2="118" y2="95" />
-            <line x1="0" y1="0" x2="86" y2="128" />
-            <line x1="0" y1="0" x2="45" y2="148" />
-            <path d="M 32 3 Q 26 12 30 12 Q 22 20 24 22 Q 16 26 18 30 Q 10 32 10 34" />
-            <path d="M 62 5 Q 52 18 58 21 Q 44 33 48 39 Q 32 46 35 52 Q 19 56 18 60" />
-            <path d="M 96 8 Q 80 26 90 33 Q 68 50 75 60 Q 50 72 55 82 Q 30 88 28 95" />
-          </g>
-        </svg>
-
-        {/* Telaraña Derecha */}
-        <svg className="absolute top-0 right-0 w-28 h-28 sm:w-36 sm:h-36 opacity-45 -scale-x-100" viewBox="0 0 160 160" fill="none">
-          <g stroke="#f59e0b" strokeWidth="1.2" strokeOpacity="0.65" strokeLinecap="round">
-            <line x1="0" y1="0" x2="155" y2="12" />
-            <line x1="0" y1="0" x2="142" y2="52" />
-            <line x1="0" y1="0" x2="118" y2="95" />
-            <line x1="0" y1="0" x2="86" y2="128" />
-            <line x1="0" y1="0" x2="45" y2="148" />
-            <path d="M 32 3 Q 26 12 30 12 Q 22 20 24 22 Q 16 26 18 30 Q 10 32 10 34" />
-            <path d="M 62 5 Q 52 18 58 21 Q 44 33 48 39 Q 32 46 35 52 Q 19 56 18 60" />
-            <path d="M 96 8 Q 80 26 90 33 Q 68 50 75 60 Q 50 72 55 82 Q 30 88 28 95" />
-          </g>
-        </svg>
-
-        {/* Araña colgante animada */}
-        {!petalsPaused && (
-          <svg className="logica-spider-hang absolute top-0 left-10 sm:left-14 w-7 h-28 opacity-80" viewBox="0 0 36 140" fill="none">
-            <line x1="18" y1="0" x2="18" y2="108" stroke="#fde047" strokeWidth="1" strokeOpacity="0.6" strokeDasharray="2 2" />
-            <g transform="translate(18, 114)">
-              <path d="M-4 -2 C-10 -8 -14 -6 -16 -1 M-5 0 C-12 -3 -15 1 -17 6 M-4 3 C-11 2 -14 6 -15 11" stroke="#f59e0b" strokeWidth="1.3" strokeLinecap="round" />
-              <path d="M4 -2 C10 -8 14 -6 16 -1 M5 0 C12 -3 15 1 17 6 M4 3 C11 2 14 6 15 11" stroke="#f59e0b" strokeWidth="1.3" strokeLinecap="round" />
-              <ellipse cx="0" cy="3" rx="5.5" ry="6.5" fill="#18181b" stroke="#f59e0b" strokeWidth="1.2" />
-              <circle cx="0" cy="-4" r="3.4" fill="#18181b" stroke="#f59e0b" strokeWidth="1.1" />
-              <circle cx="-1.3" cy="-4.5" r="0.9" fill="#fde047" />
-              <circle cx="1.3" cy="-4.5" r="0.9" fill="#fde047" />
-              <circle cx="0" cy="3" r="1.8" fill="#ec4899" />
-            </g>
-          </svg>
-        )}
-
-        {/* Pétalos de Cempasúchil flotantes */}
-        {!petalsPaused &&
-          [6, 18, 31, 44, 57, 70, 83, 94].map((left, idx) => (
+      {/* Lluvia ligera de Pétalos de Cempasúchil flotantes en el fondo */}
+      {!petalsPaused && (
+        <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-10 overflow-hidden">
+          {[6, 18, 31, 44, 57, 70, 83, 94].map((left, idx) => (
             <span
               key={left}
               className="logica-petal"
@@ -543,67 +512,39 @@ export default function App() {
               }}
             />
           ))}
-      </div>
-
-      {/* Botón flotante discreto para pausar/activar animación de Día de Muertos */}
-      <button
-        type="button"
-        onClick={togglePetals}
-        title="Activar o pausar animaciones de Día de Muertos"
-        className="fixed left-3 bottom-20 md:bottom-4 z-30 px-3 py-1.5 rounded-full bg-[#071f14]/90 hover:bg-[#0b2e1e] border border-amber-400/45 text-[11px] font-bold text-amber-200 shadow-lg flex items-center gap-1.5 transition"
-      >
-        <span aria-hidden="true">💀</span>
-        <span>{petalsPaused ? 'Animación en pausa' : 'Día de Muertos'}</span>
-      </button>
-
-      {/* CONTENEDOR CENTRAL LIMPIO CON FIGURAS DECORATIVAS DE CALACA Y CEMPASÚCHIL */}
-      <main className="relative max-w-5xl w-full mx-auto px-4 pt-4 sm:pt-6 flex-1">
-        {/* Calaca Mexicana animada en esquina superior derecha del contenedor */}
-        <div aria-hidden="true" className="logica-calaca-float pointer-events-none hidden lg:block absolute -right-12 top-6 w-14 h-14 opacity-85">
-          <svg viewBox="0 0 64 64" fill="none">
-            <circle cx="20" cy="12" r="5" fill="#f59e0b" />
-            <circle cx="32" cy="9" r="6" fill="#ec4899" />
-            <circle cx="44" cy="12" r="5" fill="#f59e0b" />
-            <path d="M32 12C19.8 12 11 21 11 32.2c0 6.8 3.4 12.5 8.5 15.6V54a3 3 0 0 0 3 3h19a3 3 0 0 0 3-3v-6.2c5.1-3.1 8.5-8.8 8.5-15.6C53 21 44.2 12 32 12Z" fill="#fefce8" stroke="#f59e0b" strokeWidth="2.2" />
-            <circle cx="23.5" cy="31" r="6" fill="#1e1b4b" stroke="#ec4899" strokeWidth="1.8" />
-            <circle cx="23.5" cy="31" r="2.3" fill="#fde047" />
-            <circle cx="40.5" cy="31" r="6" fill="#1e1b4b" stroke="#ec4899" strokeWidth="1.8" />
-            <circle cx="40.5" cy="31" r="2.3" fill="#fde047" />
-            <path d="M32 36 L28.5 42.5 H35.5 Z" fill="#1e1b4b" />
-            <line x1="22" y1="49" x2="42" y2="49" stroke="#1e1b4b" strokeWidth="2" strokeLinecap="round" />
-            <line x1="26" y1="46" x2="26" y2="54" stroke="#1e1b4b" strokeWidth="1.8" />
-            <line x1="32" y1="46" x2="32" y2="55" stroke="#1e1b4b" strokeWidth="1.8" />
-            <line x1="38" y1="46" x2="38" y2="54" stroke="#1e1b4b" strokeWidth="1.8" />
-          </svg>
         </div>
+      )}
+
+      {/* CONTENEDOR CENTRAL LIMPIO Y PROFESIONAL */}
+      <main className="max-w-5xl w-full mx-auto px-3 sm:px-4 pt-3 sm:pt-6 flex-1">
         {toastMsg && (
           <div
             role="status"
             aria-live="polite"
-            className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-emerald-400 text-black font-black text-xs shadow-2xl flex items-center gap-1.5"
+            className="fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-emerald-400 text-black font-black text-xs shadow-2xl flex items-center gap-1.5"
           >
             <CheckCircle2 className="w-4 h-4" />
             {toastMsg}
           </div>
         )}
 
-        {/* BANNER DE INSTALACIÓN RÁPIDA EN CELULAR O PC (Solo si no está instalada ni descartada) */}
+        {/* BANNER DE INSTALACIÓN RÁPIDA EN CELULAR O PC */}
         {!isStandalone && !installBannerDismissed && (
-          <div className="mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-[#082214] to-[#081f12] border border-emerald-400/35 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              <div className="w-9 h-9 rounded-xl bg-emerald-400 text-black flex items-center justify-center shrink-0 shadow">
-                <Smartphone className="w-5 h-5" />
+          <div className="mb-4 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-[#082214] to-[#081f12] border border-emerald-400/35 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-400 text-black flex items-center justify-center shrink-0 shadow">
+                <Smartphone className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm font-black text-white leading-tight">
-                  Instala EcoLógica IC en tu Celular (Android / iPhone) o PC / Laptop
+                  Instala EcoLógica IC en tu Celular o PC / Laptop
                 </p>
                 <p className="text-[11px] text-emerald-200/75 truncate">
-                  Acceso rápido desde tu pantalla de inicio o escritorio, con dictado por voz en español.
+                  Acceso rápido desde tu pantalla de inicio, Android, iPhone y PC.
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
               <button
                 type="button"
                 onClick={handleInstallClick}
@@ -714,24 +655,24 @@ export default function App() {
                 )}
 
                 {/* Fila Principal: Capacidad Gigante + Botón Sumar */}
-                <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
                   <div>
-                    <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-300/70 block mb-1">
+                    <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-emerald-300/70 block mb-1">
                       Almacenamiento
                     </span>
                     <div
-                      className={`inline-flex px-6 py-2.5 rounded-2xl border-2 font-mono font-black text-5xl sm:text-6xl tracking-tight shadow-xl ${theme.badge}`}
+                      className={`inline-flex px-5 sm:px-6 py-2 sm:py-2.5 rounded-2xl border-2 font-mono font-black text-4xl sm:text-6xl tracking-tight shadow-xl ${theme.badge}`}
                     >
                       {activeResult.storage || 'N/A'}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 ml-auto">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     <button
                       type="button"
                       onClick={() => speakChipResult(activeResult, true, false)}
                       aria-label="Repetir capacidad en voz alta"
-                      className="p-3 rounded-2xl bg-black/40 hover:bg-black/60 border border-white/10 text-emerald-300 transition"
+                      className="p-3 rounded-2xl bg-black/40 hover:bg-black/60 border border-white/10 text-emerald-300 transition shrink-0"
                       title="Escuchar voz"
                     >
                       <Volume2 className="w-5 h-5" />
@@ -739,7 +680,7 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => addChipToBatch(activeResult)}
-                      className="px-5 py-3.5 rounded-2xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-sm flex items-center gap-1.5 shadow-lg transition"
+                      className="flex-1 sm:flex-none px-4 sm:px-5 py-3 rounded-2xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg transition"
                     >
                       <Plus className="w-4 h-4" /> Sumar al Lote
                     </button>
@@ -747,30 +688,30 @@ export default function App() {
                 </div>
 
                 {/* 3 Datos Directos: Marca · RAM · Tipo */}
-                <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-white/10">
-                  <div className="p-3 rounded-2xl bg-[#04120a] border border-white/5">
-                    <span className="text-[10px] uppercase font-bold text-emerald-300/60 block">
+                <div className="grid grid-cols-3 gap-2 sm:gap-2.5 pt-2 border-t border-white/10">
+                  <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-[#04120a] border border-white/5">
+                    <span className="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-300/60 block">
                       Marca
                     </span>
-                    <span className="text-sm sm:text-base font-black text-white truncate block mt-0.5">
+                    <span className="text-xs sm:text-base font-black text-white truncate block mt-0.5">
                       {activeResult.manufacturer}
                     </span>
                   </div>
 
-                  <div className="p-3 rounded-2xl bg-[#04120a] border border-white/5">
-                    <span className="text-[10px] uppercase font-bold text-emerald-300/60 block">
+                  <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-[#04120a] border border-white/5">
+                    <span className="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-300/60 block">
                       RAM
                     </span>
-                    <span className="text-sm sm:text-base font-black text-emerald-300 truncate block mt-0.5">
+                    <span className="text-xs sm:text-base font-black text-emerald-300 truncate block mt-0.5">
                       {activeResult.ram || '—'}
                     </span>
                   </div>
 
-                  <div className="p-3 rounded-2xl bg-[#04120a] border border-white/5">
-                    <span className="text-[10px] uppercase font-bold text-emerald-300/60 block">
+                  <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-[#04120a] border border-white/5">
+                    <span className="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-300/60 block">
                       Tipo
                     </span>
-                    <span className="text-sm sm:text-base font-black text-white truncate block mt-0.5">
+                    <span className="text-xs sm:text-base font-black text-white truncate block mt-0.5">
                       {activeResult.type}
                     </span>
                   </div>

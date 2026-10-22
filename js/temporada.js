@@ -165,6 +165,14 @@
       "</svg>"
   };
 
+  function isMobileViewport() {
+    try {
+      return window.innerWidth <= 900 || window.matchMedia("(max-width: 900px)").matches;
+    } catch (_) {
+      return false;
+    }
+  }
+
   function initTopGarlandAndCornerWebs() {
     if (document.querySelector(".temporada-garland-top")) return;
 
@@ -174,7 +182,10 @@
     garland.setAttribute("aria-hidden", "true");
     document.body.insertBefore(garland, document.body.firstChild);
 
-    // 2. Telarañas en las esquinas superiores de la pantalla + Arañas colgantes
+    // En móviles y tablets, no inyectar telarañas ni arañas colgantes para no estorbar el menú ni el logotipo
+    if (isMobileViewport()) return;
+
+    // 2. Telarañas en las esquinas superiores de la pantalla + Arañas colgantes (solo en pantallas amplias de escritorio)
     const webLeft = document.createElement("div");
     webLeft.className = "temporada-corner-web temporada-corner-web--left";
     webLeft.setAttribute("aria-hidden", "true");
@@ -201,6 +212,9 @@
   }
 
   function decorateSectionsWithFiguresAndWebs() {
+    // En móviles se omite la inyección de figuras sobre las secciones para que todo luzca ordenado, limpio y sin tapar textos
+    if (isMobileViewport()) return;
+
     const sections = document.querySelectorAll(
       "main > section, .legal-section, .section-block"
     );
