@@ -484,10 +484,55 @@ export default function App() {
         <div className="logica-papel-picado" aria-hidden="true" />
       </header>
 
-      {/* Pétalos de Cempasúchil flotantes */}
-      {!petalsPaused && (
-        <div aria-hidden="true" className="pointer-events-none">
-          {[6, 18, 31, 44, 57, 70, 83, 94].map((left, idx) => (
+      {/* Telarañas en esquinas + Araña colgante + Pétalos y Calacas flotantes */}
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-20 overflow-hidden">
+        {/* Telaraña Izquierda */}
+        <svg className="absolute top-0 left-0 w-28 h-28 sm:w-36 sm:h-36 opacity-45" viewBox="0 0 160 160" fill="none">
+          <g stroke="#f59e0b" strokeWidth="1.2" strokeOpacity="0.65" strokeLinecap="round">
+            <line x1="0" y1="0" x2="155" y2="12" />
+            <line x1="0" y1="0" x2="142" y2="52" />
+            <line x1="0" y1="0" x2="118" y2="95" />
+            <line x1="0" y1="0" x2="86" y2="128" />
+            <line x1="0" y1="0" x2="45" y2="148" />
+            <path d="M 32 3 Q 26 12 30 12 Q 22 20 24 22 Q 16 26 18 30 Q 10 32 10 34" />
+            <path d="M 62 5 Q 52 18 58 21 Q 44 33 48 39 Q 32 46 35 52 Q 19 56 18 60" />
+            <path d="M 96 8 Q 80 26 90 33 Q 68 50 75 60 Q 50 72 55 82 Q 30 88 28 95" />
+          </g>
+        </svg>
+
+        {/* Telaraña Derecha */}
+        <svg className="absolute top-0 right-0 w-28 h-28 sm:w-36 sm:h-36 opacity-45 -scale-x-100" viewBox="0 0 160 160" fill="none">
+          <g stroke="#f59e0b" strokeWidth="1.2" strokeOpacity="0.65" strokeLinecap="round">
+            <line x1="0" y1="0" x2="155" y2="12" />
+            <line x1="0" y1="0" x2="142" y2="52" />
+            <line x1="0" y1="0" x2="118" y2="95" />
+            <line x1="0" y1="0" x2="86" y2="128" />
+            <line x1="0" y1="0" x2="45" y2="148" />
+            <path d="M 32 3 Q 26 12 30 12 Q 22 20 24 22 Q 16 26 18 30 Q 10 32 10 34" />
+            <path d="M 62 5 Q 52 18 58 21 Q 44 33 48 39 Q 32 46 35 52 Q 19 56 18 60" />
+            <path d="M 96 8 Q 80 26 90 33 Q 68 50 75 60 Q 50 72 55 82 Q 30 88 28 95" />
+          </g>
+        </svg>
+
+        {/* Araña colgante animada */}
+        {!petalsPaused && (
+          <svg className="logica-spider-hang absolute top-0 left-10 sm:left-14 w-7 h-28 opacity-80" viewBox="0 0 36 140" fill="none">
+            <line x1="18" y1="0" x2="18" y2="108" stroke="#fde047" strokeWidth="1" strokeOpacity="0.6" strokeDasharray="2 2" />
+            <g transform="translate(18, 114)">
+              <path d="M-4 -2 C-10 -8 -14 -6 -16 -1 M-5 0 C-12 -3 -15 1 -17 6 M-4 3 C-11 2 -14 6 -15 11" stroke="#f59e0b" strokeWidth="1.3" strokeLinecap="round" />
+              <path d="M4 -2 C10 -8 14 -6 16 -1 M5 0 C12 -3 15 1 17 6 M4 3 C11 2 14 6 15 11" stroke="#f59e0b" strokeWidth="1.3" strokeLinecap="round" />
+              <ellipse cx="0" cy="3" rx="5.5" ry="6.5" fill="#18181b" stroke="#f59e0b" strokeWidth="1.2" />
+              <circle cx="0" cy="-4" r="3.4" fill="#18181b" stroke="#f59e0b" strokeWidth="1.1" />
+              <circle cx="-1.3" cy="-4.5" r="0.9" fill="#fde047" />
+              <circle cx="1.3" cy="-4.5" r="0.9" fill="#fde047" />
+              <circle cx="0" cy="3" r="1.8" fill="#ec4899" />
+            </g>
+          </svg>
+        )}
+
+        {/* Pétalos de Cempasúchil flotantes */}
+        {!petalsPaused &&
+          [6, 18, 31, 44, 57, 70, 83, 94].map((left, idx) => (
             <span
               key={left}
               className="logica-petal"
@@ -498,28 +543,38 @@ export default function App() {
               }}
             />
           ))}
-        </div>
-      )}
+      </div>
 
-      {/* CONTENEDOR CENTRAL LIMPIO */}
-      <main className="max-w-5xl w-full mx-auto px-4 pt-4 sm:pt-6 flex-1">
-        {/* Cinta Conmemorativa Día de Muertos — Tradición Mexicana */}
-        <div className="mb-3.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-pink-500/10 to-emerald-500/15 border border-amber-400/40 shadow-lg flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5 text-xs text-amber-100">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/40 text-amber-200 font-bold" aria-hidden="true">
-              🏵️ 💀 🕯️
-            </span>
-            <span>
-              <strong className="text-amber-300">Día de Muertos · Tradición Mexicana:</strong> Clasificador IC con flor de cempasúchil y papel picado.
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={togglePetals}
-            className="px-3 py-1 rounded-full bg-black/45 hover:bg-black/65 border border-amber-400/45 text-[11px] font-bold text-amber-200 transition"
-          >
-            {petalsPaused ? '🏵️ Activar cempasúchil' : '🏵️ Pausar cempasúchil'}
-          </button>
+      {/* Botón flotante discreto para pausar/activar animación de Día de Muertos */}
+      <button
+        type="button"
+        onClick={togglePetals}
+        title="Activar o pausar animaciones de Día de Muertos"
+        className="fixed left-3 bottom-20 md:bottom-4 z-30 px-3 py-1.5 rounded-full bg-[#071f14]/90 hover:bg-[#0b2e1e] border border-amber-400/45 text-[11px] font-bold text-amber-200 shadow-lg flex items-center gap-1.5 transition"
+      >
+        <span aria-hidden="true">💀</span>
+        <span>{petalsPaused ? 'Animación en pausa' : 'Día de Muertos'}</span>
+      </button>
+
+      {/* CONTENEDOR CENTRAL LIMPIO CON FIGURAS DECORATIVAS DE CALACA Y CEMPASÚCHIL */}
+      <main className="relative max-w-5xl w-full mx-auto px-4 pt-4 sm:pt-6 flex-1">
+        {/* Calaca Mexicana animada en esquina superior derecha del contenedor */}
+        <div aria-hidden="true" className="logica-calaca-float pointer-events-none hidden lg:block absolute -right-12 top-6 w-14 h-14 opacity-85">
+          <svg viewBox="0 0 64 64" fill="none">
+            <circle cx="20" cy="12" r="5" fill="#f59e0b" />
+            <circle cx="32" cy="9" r="6" fill="#ec4899" />
+            <circle cx="44" cy="12" r="5" fill="#f59e0b" />
+            <path d="M32 12C19.8 12 11 21 11 32.2c0 6.8 3.4 12.5 8.5 15.6V54a3 3 0 0 0 3 3h19a3 3 0 0 0 3-3v-6.2c5.1-3.1 8.5-8.8 8.5-15.6C53 21 44.2 12 32 12Z" fill="#fefce8" stroke="#f59e0b" strokeWidth="2.2" />
+            <circle cx="23.5" cy="31" r="6" fill="#1e1b4b" stroke="#ec4899" strokeWidth="1.8" />
+            <circle cx="23.5" cy="31" r="2.3" fill="#fde047" />
+            <circle cx="40.5" cy="31" r="6" fill="#1e1b4b" stroke="#ec4899" strokeWidth="1.8" />
+            <circle cx="40.5" cy="31" r="2.3" fill="#fde047" />
+            <path d="M32 36 L28.5 42.5 H35.5 Z" fill="#1e1b4b" />
+            <line x1="22" y1="49" x2="42" y2="49" stroke="#1e1b4b" strokeWidth="2" strokeLinecap="round" />
+            <line x1="26" y1="46" x2="26" y2="54" stroke="#1e1b4b" strokeWidth="1.8" />
+            <line x1="32" y1="46" x2="32" y2="55" stroke="#1e1b4b" strokeWidth="1.8" />
+            <line x1="38" y1="46" x2="38" y2="54" stroke="#1e1b4b" strokeWidth="1.8" />
+          </svg>
         </div>
         {toastMsg && (
           <div
@@ -836,48 +891,28 @@ export default function App() {
         {/* 2. VISTA TABLAS POR MARCA                                         */}
         {/* ================================================================= */}
         {activeTab === 'tables' && (
-          <div className="space-y-3">
-            <div className="px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-400/30 flex items-center justify-between text-xs text-amber-200">
-              <span>🏵️ Catálogo de Memorias por Fabricante</span>
-              <span className="font-bold text-amber-300">💀 Día de Muertos · Tradición Mexicana</span>
-            </div>
-            <BrandTablesView
-              onSelectChip={handleSelectChip}
-              onAddChipToBatch={addChipToBatch}
-            />
-          </div>
+          <BrandTablesView
+            onSelectChip={handleSelectChip}
+            onAddChipToBatch={addChipToBatch}
+          />
         )}
 
         {/* ================================================================= */}
         {/* 3. VISTA GUÍA VISUAL                                              */}
         {/* ================================================================= */}
-        {activeTab === 'tutorial' && (
-          <div className="space-y-3">
-            <div className="px-3.5 py-2 rounded-xl bg-purple-500/10 border border-purple-400/30 flex items-center justify-between text-xs text-purple-200">
-              <span>🕯️ Guía Visual de Anatomía de Chips BGA</span>
-              <span className="font-bold text-amber-300">🏵️ Flor de Cempasúchil · Ofrenda MX</span>
-            </div>
-            <VisualTutorialView />
-          </div>
-        )}
+        {activeTab === 'tutorial' && <VisualTutorialView />}
 
         {/* ================================================================= */}
         {/* 4. VISTA MI LOTE (CONTADOR Y CORTE WHATSAPP)                      */}
         {/* ================================================================= */}
         {activeTab === 'batch' && (
-          <div className="space-y-3">
-            <div className="px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-400/30 flex items-center justify-between text-xs text-amber-200">
-              <span>💀 Contador de Lote y Corte para WhatsApp</span>
-              <span className="font-bold text-amber-300">🏵️ Edición Día de Muertos</span>
-            </div>
-            <BatchCounterPanel
-              counts={batchCounts}
-              onAdjustCount={handleAdjustBatchCount}
-              onResetBatch={handleResetBatch}
-              clientName={clientName}
-              setClientName={setClientName}
-            />
-          </div>
+          <BatchCounterPanel
+            counts={batchCounts}
+            onAdjustCount={handleAdjustBatchCount}
+            onResetBatch={handleResetBatch}
+            clientName={clientName}
+            setClientName={setClientName}
+          />
         )}
       </main>
 

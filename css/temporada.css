@@ -1,112 +1,52 @@
 /* ==========================================================================
-   TEMPORADA ESPECIAL: DÍA DE MUERTOS — TRADICIÓN MEXICANA
-   Respeta 100% la tipografía, el logotipo y los colores oficiales de Eco Lógica,
-   vistiendo todas las páginas y secciones con Papel Picado artesanal,
-   Flores de Cempasúchil, Calaveritas de Azúcar y Luz de Veladora.
+   TEMPORADA DÍA DE MUERTOS — ARTE VISUAL, CALACAS, TELARAÑAS Y CEMPASÚCHIL
+   Sin etiquetas de texto invasivas. Integra figuras SVG artesanales,
+   calacas animadas, telarañas en esquinas con araña colgante, flores de
+   cempasúchil, veladoras con flama viva y papel picado en todas las páginas
+   y secciones, respetando 100% tipografía, logo y colores oficiales.
    ========================================================================== */
 
 :root {
-  --muertos-cempasuchil: #f59e0b;
-  --muertos-marigold: #fb923c;
   --muertos-gold: #fde047;
+  --muertos-cempasuchil: #f59e0b;
+  --muertos-naranja: #ea580c;
   --muertos-rosa: #ec4899;
   --muertos-morado: #a855f7;
-  --muertos-veladora: rgba(251, 191, 36, 0.22);
 
-  /* Papel Picado Artesanal Mexicano (Calado tradicional con Cempasúchil y Calaverita) */
-  --papel-picado-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='34' viewBox='0 0 320 34'%3E%3Cdefs%3E%3ClinearGradient id='cuerda' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0%25' stop-color='%2310b981'/%3E%3Cstop offset='25%25' stop-color='%23f59e0b'/%3E%3Cstop offset='50%25' stop-color='%23ec4899'/%3E%3Cstop offset='75%25' stop-color='%23a855f7'/%3E%3Cstop offset='100%25' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='320' height='2.5' fill='url(%23cuerda)'/%3E%3Cg%3E%3C!-- Banderín 1: Verde Esmeralda Oficial --%3E%3Cpath d='M4 2.5 H76 V21 C72 21 70 25 66 28 C62 25 60 21 56 21 C52 21 50 26 46 30 C42 26 40 22 36 30 C32 22 30 26 24 30 C20 26 18 21 14 21 C10 21 8 25 4 21 Z' fill='%2308291e' stroke='%2310b981' stroke-width='1.1'/%3E%3Ccircle cx='40' cy='13' r='4.2' fill='%23fde047'/%3E%3Ccircle cx='40' cy='6.8' r='1.8' fill='%23f59e0b'/%3E%3Ccircle cx='40' cy='19.2' r='1.8' fill='%23f59e0b'/%3E%3Ccircle cx='33.8' cy='13' r='1.8' fill='%23f59e0b'/%3E%3Ccircle cx='46.2' cy='13' r='1.8' fill='%23f59e0b'/%3E%3Ccircle cx='20' cy='10' r='1.6' fill='%2310b981' opacity='0.85'/%3E%3Ccircle cx='60' cy='10' r='1.6' fill='%2310b981' opacity='0.85'/%3E%3Ccircle cx='20' cy='17' r='1.3' fill='%2310b981' opacity='0.6'/%3E%3Ccircle cx='60' cy='17' r='1.3' fill='%2310b981' opacity='0.6'/%3E%3C!-- Banderín 2: Cempasúchil Dorado --%3E%3Cpath d='M84 2.5 H156 V21 C152 21 150 25 146 28 C142 25 140 21 136 21 C132 21 130 26 126 30 C122 26 120 22 116 30 C112 22 110 26 104 30 C100 26 98 21 94 21 C90 21 88 25 84 21 Z' fill='%232c1606' stroke='%23f59e0b' stroke-width='1.1'/%3E%3Ccircle cx='120' cy='12.5' r='4.8' fill='%23fef3c7'/%3E%3Ccircle cx='118.2' cy='11.8' r='1.2' fill='%232c1606'/%3E%3Ccircle cx='121.8' cy='11.8' r='1.2' fill='%232c1606'/%3E%3Crect x='118' y='16.5' width='4' height='2.2' rx='0.8' fill='%23fef3c7'/%3E%3Ccircle cx='100' cy='11' r='1.8' fill='%23fb923c'/%3E%3Ccircle cx='140' cy='11' r='1.8' fill='%23fb923c'/%3E%3C!-- Banderín 3: Rosa Mexicano / Bugambilia --%3E%3Cpath d='M164 2.5 H236 V21 C232 21 230 25 226 28 C222 25 220 21 216 21 C212 21 210 26 206 30 C202 26 200 22 196 30 C192 22 190 26 184 30 C180 26 178 21 174 21 C170 21 168 25 164 21 Z' fill='%232b0b1e' stroke='%23ec4899' stroke-width='1.1'/%3E%3Ccircle cx='200' cy='13' r='4.2' fill='%23fde047'/%3E%3Ccircle cx='200' cy='6.8' r='1.8' fill='%23f472b6'/%3E%3Ccircle cx='200' cy='19.2' r='1.8' fill='%23f472b6'/%3E%3Ccircle cx='193.8' cy='13' r='1.8' fill='%23f472b6'/%3E%3Ccircle cx='206.2' cy='13' r='1.8' fill='%23f472b6'/%3E%3Ccircle cx='180' cy='11' r='1.6' fill='%23f472b6'/%3E%3Ccircle cx='220' cy='11' r='1.6' fill='%23f472b6'/%3E%3C!-- Banderín 4: Morado Ofrenda --%3E%3Cpath d='M244 2.5 H316 V21 C312 21 310 25 306 28 C302 25 300 21 296 21 C292 21 290 26 286 30 C282 26 280 22 276 30 C272 22 270 26 264 30 C260 26 258 21 254 21 C250 21 248 25 244 21 Z' fill='%231d0c2e' stroke='%23a855f7' stroke-width='1.1'/%3E%3Ccircle cx='280' cy='13' r='4.2' fill='%23fbbf24'/%3E%3Ccircle cx='280' cy='6.8' r='1.8' fill='%23c084fc'/%3E%3Ccircle cx='280' cy='19.2' r='1.8' fill='%23c084fc'/%3E%3Ccircle cx='273.8' cy='13' r='1.8' fill='%23c084fc'/%3E%3Ccircle cx='286.2' cy='13' r='1.8' fill='%23c084fc'/%3E%3Ccircle cx='260' cy='11' r='1.6' fill='%23c084fc'/%3E%3Ccircle cx='300' cy='11' r='1.6' fill='%23c084fc'/%3E%3C/g%3E%3C/svg%3E");
+  /* Papel Picado Calado con Calacas y Flores de Cempasúchil */
+  --papel-picado-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='42' viewBox='0 0 360 42'%3E%3Cdefs%3E%3ClinearGradient id='cuerda' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0%25' stop-color='%2310b981'/%3E%3Cstop offset='25%25' stop-color='%23f59e0b'/%3E%3Cstop offset='50%25' stop-color='%23ec4899'/%3E%3Cstop offset='75%25' stop-color='%23a855f7'/%3E%3Cstop offset='100%25' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='360' height='2.5' fill='url(%23cuerda)'/%3E%3Cg%3E%3C!-- Banderín 1: Calaca en Cempasúchil --%3E%3Cpath d='M5 2.5 H85 V26 L75 36 L65 28 L55 37 L45 28 L35 37 L25 28 L15 36 L5 26 Z' fill='%23291304' stroke='%23f59e0b' stroke-width='1.2'/%3E%3Ccircle cx='45' cy='14' r='6.5' fill='%23fef3c7'/%3E%3Crect x='41' y='18' width='8' height='4.5' rx='1' fill='%23fef3c7'/%3E%3Ccircle cx='42.6' cy='13.5' r='1.7' fill='%23291304'/%3E%3Ccircle cx='47.4' cy='13.5' r='1.7' fill='%23291304'/%3E%3Cpath d='M45 15.5 L43.8 17.5 H46.2 Z' fill='%23ec4899'/%3E%3Cline x1='43' y1='19.5' x2='43' y2='22' stroke='%23291304' stroke-width='1'/%3E%3Cline x1='45' y1='19.5' x2='45' y2='22' stroke='%23291304' stroke-width='1'/%3E%3Cline x1='47' y1='19.5' x2='47' y2='22' stroke='%23291304' stroke-width='1'/%3E%3Ccircle cx='20' cy='12' r='2.2' fill='%23fde047'/%3E%3Ccircle cx='70' cy='12' r='2.2' fill='%23fde047'/%3E%3Ccircle cx='20' cy='21' r='1.6' fill='%23fb923c'/%3E%3Ccircle cx='70' cy='21' r='1.6' fill='%23fb923c'/%3E%3C!-- Banderín 2: Flor de Cempasúchil en Verde Oficial --%3E%3Cpath d='M95 2.5 H175 V26 L165 36 L155 28 L145 37 L135 28 L125 37 L115 28 L105 36 L95 26 Z' fill='%2307261b' stroke='%2310b981' stroke-width='1.2'/%3E%3Ccircle cx='135' cy='16' r='4.2' fill='%23fde047'/%3E%3Ccircle cx='135' cy='8.8' r='2.4' fill='%23f59e0b'/%3E%3Ccircle cx='135' cy='23.2' r='2.4' fill='%23f59e0b'/%3E%3Ccircle cx='127.8' cy='16' r='2.4' fill='%23f59e0b'/%3E%3Ccircle cx='142.2' cy='16' r='2.4' fill='%23f59e0b'/%3E%3Ccircle cx='129.8' cy='10.8' r='2' fill='%23fb923c'/%3E%3Ccircle cx='140.2' cy='10.8' r='2' fill='%23fb923c'/%3E%3Ccircle cx='129.8' cy='21.2' r='2' fill='%23fb923c'/%3E%3Ccircle cx='140.2' cy='21.2' r='2' fill='%23fb923c'/%3E%3Ccircle cx='110' cy='14' r='2' fill='%2310b981'/%3E%3Ccircle cx='160' cy='14' r='2' fill='%2310b981'/%3E%3C!-- Banderín 3: Calaca en Morado Ofrenda --%3E%3Cpath d='M185 2.5 H265 V26 L255 36 L245 28 L235 37 L225 28 L215 37 L205 28 L195 36 L185 26 Z' fill='%231c0b2b' stroke='%23a855f7' stroke-width='1.2'/%3E%3Ccircle cx='225' cy='14' r='6.5' fill='%23f5d0fe'/%3E%3Crect x='221' y='18' width='8' height='4.5' rx='1' fill='%23f5d0fe'/%3E%3Ccircle cx='222.6' cy='13.5' r='1.7' fill='%231c0b2b'/%3E%3Ccircle cx='227.4' cy='13.5' r='1.7' fill='%231c0b2b'/%3E%3Cpath d='M225 15.5 L223.8 17.5 H226.2 Z' fill='%23f59e0b'/%3E%3Ccircle cx='200' cy='13' r='2.2' fill='%23c084fc'/%3E%3Ccircle cx='250' cy='13' r='2.2' fill='%23c084fc'/%3E%3C!-- Banderín 4: Rosa Mexicano Calado --%3E%3Cpath d='M275 2.5 H355 V26 L345 36 L335 28 L325 37 L315 28 L305 37 L295 28 L285 36 L275 26 Z' fill='%232b091c' stroke='%23ec4899' stroke-width='1.2'/%3E%3Ccircle cx='315' cy='16' r='4.2' fill='%23fde047'/%3E%3Ccircle cx='315' cy='8.8' r='2.4' fill='%23f472b6'/%3E%3Ccircle cx='315' cy='23.2' r='2.4' fill='%23f472b6'/%3E%3Ccircle cx='307.8' cy='16' r='2.4' fill='%23f472b6'/%3E%3Ccircle cx='322.2' cy='16' r='2.4' fill='%23f472b6'/%3E%3Ccircle cx='290' cy='14' r='2' fill='%23f472b6'/%3E%3Ccircle cx='340' cy='14' r='2' fill='%23f472b6'/%3E%3C/g%3E%3C/svg%3E");
 }
 
-/* 1. CENEFA SUPERIOR DE PAPEL PICADO ARTESANAL */
+/* ==========================================================================
+   1. GUIRNALDA SUPERIOR E INFERIOR DE PAPEL PICADO
+   ========================================================================== */
 .temporada-garland-top {
   position: relative;
   width: 100%;
-  height: 30px;
+  height: 36px;
   background-image: var(--papel-picado-svg);
   background-repeat: repeat-x;
   background-position: center top;
-  background-size: 320px 30px;
+  background-size: 340px 36px;
   pointer-events: none;
   z-index: 95;
   opacity: 0.96;
-  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.45));
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.5));
   transform-origin: top center;
-  animation: papelPicadoSway 7s ease-in-out infinite alternate;
+  animation: papelPicadoWave 6s ease-in-out infinite alternate;
 }
 
-@keyframes papelPicadoSway {
+@keyframes papelPicadoWave {
   0% {
-    transform: translateY(0) scaleY(1);
+    transform: translateY(0) scaleY(0.98);
   }
   100% {
-    transform: translateY(1px) scaleY(1.03);
+    transform: translateY(1.5px) scaleY(1.04);
   }
 }
 
-/* 2. DISTINTIVO DE DÍA DE MUERTOS EN TOPBAR (SIN TOCAR LOGO NI TIPOGRAFÍA) */
-.temporada-topbar-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.2rem 0.72rem;
-  margin-left: 0.5rem;
-  border-radius: 999px;
-  background: linear-gradient(
-    135deg,
-    rgba(245, 158, 11, 0.2),
-    rgba(236, 72, 153, 0.14),
-    rgba(16, 185, 129, 0.16)
-  );
-  border: 1px solid rgba(251, 191, 36, 0.48);
-  color: #fef08a;
-  font-size: 0.73rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
-  box-shadow:
-    0 0 18px rgba(245, 158, 11, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
-}
-
-.temporada-topbar-pill svg {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-}
-
-/* 3. AMBIENTACIÓN DE OFRENDA EN TODAS LAS SECCIONES */
-main > section,
-.section,
-.legal-section,
-.section-block,
-.cta-band,
 .site-footer {
   position: relative;
-}
-
-/* Línea divisoria de Cempasúchil y Rosa Mexicano entre cada sección */
-main > section::before,
-.legal-section::before,
-.section-block::before,
-.site-footer::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 4%;
-  right: 4%;
-  height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(16, 185, 129, 0.35) 15%,
-    rgba(245, 158, 11, 0.75) 38%,
-    rgba(253, 224, 71, 0.9) 50%,
-    rgba(236, 72, 153, 0.65) 62%,
-    rgba(168, 85, 247, 0.4) 85%,
-    transparent 100%
-  );
-  box-shadow: 0 0 14px rgba(245, 158, 11, 0.25);
-  pointer-events: none;
 }
 
 .site-footer::after {
@@ -115,186 +55,253 @@ main > section::before,
   top: 0;
   left: 0;
   right: 0;
-  height: 26px;
+  height: 32px;
   background-image: var(--papel-picado-svg);
   background-repeat: repeat-x;
   background-position: center top;
-  background-size: 290px 26px;
-  opacity: 0.85;
+  background-size: 320px 32px;
+  opacity: 0.88;
   pointer-events: none;
 }
 
-/* 4. INSIGNIAS DE CEMPASÚCHIL Y CALAVERITA EN ENCABEZADOS DE SECCIÓN */
-.temporada-section-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-left: 0.6rem;
-  padding: 0.18rem 0.62rem;
-  border-radius: 999px;
-  background: linear-gradient(
-    135deg,
-    rgba(245, 158, 11, 0.18),
-    rgba(236, 72, 153, 0.12),
-    rgba(168, 85, 247, 0.14)
-  );
-  border: 1px solid rgba(251, 191, 36, 0.42);
-  color: #fde68a;
-  font-size: 0.69rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  vertical-align: middle;
-  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.15);
+/* ==========================================================================
+   2. TELARAÑAS EN LAS ESQUINAS DE LA PANTALLA + ARAÑA ANIMADA EN HILO
+   ========================================================================== */
+.temporada-corner-web {
+  position: fixed;
+  top: 0;
+  width: 170px;
+  height: 170px;
+  pointer-events: none;
+  z-index: 88;
+  opacity: 0.55;
+  filter: drop-shadow(0 2px 8px rgba(245, 158, 11, 0.22));
+  transition: opacity 0.3s ease;
 }
 
-.temporada-section-badge svg {
-  width: 13px;
-  height: 13px;
-  flex-shrink: 0;
+.temporada-corner-web--left {
+  left: 0;
 }
 
-/* Halo cálido de veladora y cempasúchil en paneles principales */
-.hero-panel,
-.calc-shell,
-.app-showcase,
-.cta-band-inner,
-.legal-hero-card,
+.temporada-corner-web--right {
+  right: 0;
+  transform: scaleX(-1);
+}
+
+.temporada-corner-web svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Araña colgando de su hilo con animación suave */
+.temporada-hanging-spider {
+  position: fixed;
+  top: 0;
+  left: 64px;
+  width: 34px;
+  height: 140px;
+  pointer-events: none;
+  z-index: 89;
+  transform-origin: top center;
+  animation: spiderDropBounce 7.5s ease-in-out infinite;
+}
+
+.temporada-hanging-spider--right {
+  left: auto;
+  right: 72px;
+  animation-duration: 9s;
+  animation-delay: -3.2s;
+}
+
+@keyframes spiderDropBounce {
+  0%, 100% {
+    transform: translateY(-18px) rotate(-2deg);
+  }
+  45% {
+    transform: translateY(14px) rotate(2.5deg);
+  }
+  70% {
+    transform: translateY(4px) rotate(-1deg);
+  }
+}
+
+/* ==========================================================================
+   3. DECORACIÓN VISUAL EN CADA SECCIÓN (TELARAÑAS, CALACAS, FLORES Y VELAS)
+   ========================================================================== */
+main > section,
+.section,
 .legal-section,
 .section-block,
-.panel {
-  box-shadow:
-    0 18px 44px rgba(0, 0, 0, 0.32),
-    0 0 0 1px rgba(245, 158, 11, 0.18),
-    0 0 28px rgba(245, 158, 11, 0.06);
-}
-
-/* 5. BANDA CONMEMORATIVA DE OFRENDA Y DÍA DE MUERTOS */
-.temporada-altar-strip {
+.cta-band {
   position: relative;
-  margin: 0.95rem auto 0.25rem;
-  max-width: 1220px;
-  padding: 0.72rem 1.15rem;
-  border-radius: 18px;
-  background:
-    radial-gradient(circle at 8% 50%, rgba(245, 158, 11, 0.24), transparent 42%),
-    radial-gradient(circle at 50% 0%, rgba(236, 72, 153, 0.14), transparent 55%),
-    radial-gradient(circle at 92% 50%, rgba(168, 85, 247, 0.18), transparent 42%),
-    linear-gradient(180deg, rgba(12, 31, 23, 0.94), rgba(7, 20, 15, 0.94));
-  border: 1px solid rgba(251, 191, 36, 0.38);
-  box-shadow:
-    0 14px 36px rgba(0, 0, 0, 0.35),
-    0 0 24px rgba(245, 158, 11, 0.12),
-    inset 0 1px 0 rgba(254, 240, 138, 0.18);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  z-index: 20;
-  overflow: hidden;
 }
 
-.temporada-altar-strip::after {
+/* Línea luminosa de ofrenda al inicio de cada sección */
+main > section::before,
+.legal-section::before,
+.section-block::before {
   content: "";
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  top: 0;
+  left: 6%;
+  right: 6%;
   height: 2px;
   background: linear-gradient(
     90deg,
-    #10b981 0%,
-    #f59e0b 30%,
-    #fde047 50%,
-    #ec4899 72%,
-    #a855f7 100%
+    transparent 0%,
+    rgba(16, 185, 129, 0.32) 15%,
+    rgba(245, 158, 11, 0.72) 40%,
+    rgba(253, 224, 71, 0.95) 50%,
+    rgba(236, 72, 153, 0.65) 60%,
+    rgba(168, 85, 247, 0.38) 85%,
+    transparent 100%
   );
-  opacity: 0.85;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
+  pointer-events: none;
 }
 
-.temporada-altar-strip-left {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  flex-wrap: wrap;
-}
-
-.temporada-altar-icons {
+/* Emblema central de Calaca y Cempasúchil en el divisor de cada sección */
+.temporada-section-emblem {
+  position: absolute;
+  top: -19px;
+  left: 50%;
+  transform: translateX(-50%);
   display: inline-flex;
   align-items: center;
-  gap: 0.42rem;
-  padding: 0.32rem 0.68rem;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 14px;
   border-radius: 999px;
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(236, 72, 153, 0.16));
+  background: radial-gradient(circle at 50% 50%, rgba(28, 18, 8, 0.96), rgba(7, 22, 16, 0.96));
   border: 1px solid rgba(251, 191, 36, 0.45);
-  box-shadow: 0 0 16px rgba(245, 158, 11, 0.22);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.45),
+    0 0 18px rgba(245, 158, 11, 0.22);
+  pointer-events: none;
+  z-index: 6;
 }
 
-.temporada-altar-icons svg {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
+.temporada-section-emblem svg {
+  width: 22px;
+  height: 22px;
+  display: block;
 }
 
-.temporada-altar-text {
-  margin: 0;
-  font-size: 0.84rem;
-  color: #eef6f1;
-  line-height: 1.45;
+.temporada-section-emblem .emblem-flower {
+  width: 17px;
+  height: 17px;
+  animation: cempasuchilSpinSlow 18s linear infinite;
 }
 
-.temporada-altar-text strong {
-  color: #fde047;
-  font-weight: 800;
-  letter-spacing: 0.01em;
+.temporada-section-emblem .emblem-skull {
+  width: 24px;
+  height: 24px;
+  animation: calacaNod 4.2s ease-in-out infinite;
 }
 
-.temporada-altar-tags {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  flex-wrap: wrap;
+/* Telarañas sutiles dentro de las esquinas de cada sección */
+.temporada-section-web {
+  position: absolute;
+  top: 2px;
+  width: 88px;
+  height: 88px;
+  pointer-events: none;
+  opacity: 0.38;
+  z-index: 2;
 }
 
-.temporada-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.24rem 0.68rem;
-  border-radius: 999px;
-  font-size: 0.73rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+.temporada-section-web--left {
+  left: 0;
 }
 
-.temporada-tag svg {
-  width: 13px;
-  height: 13px;
-  flex-shrink: 0;
+.temporada-section-web--right {
+  right: 0;
+  transform: scaleX(-1);
 }
 
-.temporada-tag--cempasuchil {
-  background: rgba(245, 158, 11, 0.18);
-  border: 1px solid rgba(251, 191, 36, 0.45);
-  color: #fef08a;
+.temporada-section-web svg {
+  width: 100%;
+  height: 100%;
 }
 
-.temporada-tag--tradicion {
-  background: rgba(236, 72, 153, 0.16);
-  border: 1px solid rgba(244, 114, 182, 0.42);
-  color: #fbcfe8;
+/* Figuras flotantes de Calacas, Catrinas, Veladoras y Mariposas en las secciones */
+.temporada-section-figure {
+  position: absolute;
+  width: 68px;
+  height: 68px;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0.86;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.45))
+          drop-shadow(0 0 14px rgba(245, 158, 11, 0.22));
+  animation: figureFloat 5.5s ease-in-out infinite;
 }
 
-.temporada-tag--ofrenda {
-  background: rgba(168, 85, 247, 0.16);
-  border: 1px solid rgba(192, 132, 252, 0.4);
-  color: #e9d5ff;
+.temporada-section-figure--right {
+  top: 26px;
+  right: max(1.2rem, 3%);
 }
 
-/* 6. LLUVIA SUAVE DE PÉTALOS DE CEMPASÚCHIL Y DESTELLOS DE VELADORA */
+.temporada-section-figure--left {
+  top: 26px;
+  left: max(1.2rem, 3%);
+  animation-delay: -2.6s;
+}
+
+.temporada-section-figure svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Animaciones de las figuras */
+@keyframes figureFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(-3deg) scale(1);
+  }
+  50% {
+    transform: translateY(-9px) rotate(3deg) scale(1.04);
+  }
+}
+
+@keyframes calacaNod {
+  0%, 100% {
+    transform: translateY(0) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(-2.5px) rotate(4deg);
+  }
+}
+
+@keyframes cempasuchilSpinSlow {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes candleFlameFlicker {
+  0%, 100% {
+    transform: scale(1) rotate(-2deg);
+    opacity: 0.95;
+  }
+  50% {
+    transform: scale(1.12, 0.92) rotate(2deg);
+    opacity: 1;
+  }
+}
+
+.temporada-flame {
+  transform-origin: center bottom;
+  animation: candleFlameFlicker 1.8s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   4. LLUVIA DE PÉTALOS DE CEMPASÚCHIL, MARIPOSAS Y LUCES DE OFRENDA
+   ========================================================================== */
 .temporada-petals-layer {
   position: fixed;
   inset: 0;
@@ -303,43 +310,51 @@ main > section::before,
   overflow: hidden;
 }
 
-body.temporada-effects-paused .temporada-petals-layer {
+body.temporada-effects-paused .temporada-petals-layer,
+body.temporada-effects-paused .temporada-hanging-spider {
   display: none !important;
 }
 
 .temporada-petal {
   position: absolute;
-  top: -36px;
+  top: -40px;
   pointer-events: none;
   will-change: transform, opacity;
   animation: temporadaPetalFall linear infinite;
 }
 
 .temporada-petal--marigold {
-  width: 13px;
-  height: 17px;
+  width: 14px;
+  height: 18px;
   border-radius: 85% 15% 85% 15%;
   background: radial-gradient(circle at 30% 30%, #fef08a 0%, #f59e0b 60%, #ea580c 100%);
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.42);
-  opacity: 0.74;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.45);
+  opacity: 0.78;
 }
 
 .temporada-petal--amber {
-  width: 10px;
+  width: 11px;
   height: 15px;
   border-radius: 80% 20% 80% 20%;
   background: radial-gradient(circle at 30% 30%, #fde047 0%, #fb923c 70%, #d97706 100%);
-  box-shadow: 0 0 8px rgba(251, 146, 60, 0.35);
-  opacity: 0.64;
+  box-shadow: 0 0 8px rgba(251, 146, 60, 0.38);
+  opacity: 0.68;
 }
 
 .temporada-petal--rosa {
-  width: 9px;
-  height: 13px;
+  width: 10px;
+  height: 14px;
   border-radius: 80% 20% 80% 20%;
   background: radial-gradient(circle at 35% 35%, #fbcfe8 0%, #ec4899 75%, #be185d 100%);
   box-shadow: 0 0 9px rgba(236, 72, 153, 0.38);
-  opacity: 0.56;
+  opacity: 0.58;
+}
+
+.temporada-petal--calaca-mini {
+  width: 20px;
+  height: 20px;
+  opacity: 0.72;
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.45));
 }
 
 .temporada-petal--veladora {
@@ -347,31 +362,33 @@ body.temporada-effects-paused .temporada-petals-layer {
   height: 6px;
   border-radius: 50%;
   background: radial-gradient(circle, #fef9c3 0%, #fbbf24 65%, transparent 100%);
-  box-shadow: 0 0 12px rgba(251, 191, 36, 0.75);
-  opacity: 0.62;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.8);
+  opacity: 0.65;
 }
 
 @keyframes temporadaPetalFall {
   0% {
-    transform: translate3d(0, -34px, 0) rotate(0deg);
+    transform: translate3d(0, -36px, 0) rotate(0deg);
     opacity: 0;
   }
   12% {
-    opacity: 0.78;
+    opacity: 0.82;
   }
   50% {
-    transform: translate3d(32px, 48vh, 0) rotate(185deg);
+    transform: translate3d(34px, 48vh, 0) rotate(185deg);
   }
   88% {
-    opacity: 0.65;
+    opacity: 0.68;
   }
   100% {
-    transform: translate3d(-22px, 104vh, 0) rotate(360deg);
+    transform: translate3d(-24px, 104vh, 0) rotate(360deg);
     opacity: 0;
   }
 }
 
-/* 7. BOTÓN FLOTANTE DE TEMPORADA DÍA DE MUERTOS */
+/* ==========================================================================
+   5. BOTÓN FLOTANTE COMPACTO DE CONTROL DE ANIMACIÓN (ESQUINA INFERIOR)
+   ========================================================================== */
 .temporada-toggle-btn {
   position: fixed;
   left: 1rem;
@@ -380,44 +397,43 @@ body.temporada-effects-paused .temporada-petals-layer {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.45rem 0.85rem;
+  padding: 0.42rem 0.78rem;
   border-radius: 999px;
   background: linear-gradient(135deg, rgba(11, 31, 23, 0.94), rgba(24, 15, 32, 0.92));
   border: 1px solid rgba(251, 191, 36, 0.48);
   color: #fef08a;
   font-family: inherit;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   font-weight: 700;
   cursor: pointer;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow:
-    0 10px 26px rgba(0, 0, 0, 0.42),
-    0 0 16px rgba(245, 158, 11, 0.16);
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    0 10px 26px rgba(0, 0, 0, 0.45),
+    0 0 16px rgba(245, 158, 11, 0.18);
+  transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
 .temporada-toggle-btn svg {
-  width: 15px;
-  height: 15px;
+  width: 17px;
+  height: 17px;
   flex-shrink: 0;
 }
 
 .temporada-toggle-btn:hover {
   transform: translateY(-2px);
-  border-color: rgba(253, 224, 71, 0.85);
-  box-shadow:
-    0 12px 30px rgba(0, 0, 0, 0.5),
-    0 0 22px rgba(245, 158, 11, 0.28);
+  border-color: rgba(253, 224, 71, 0.9);
 }
 
 .temporada-toggle-btn[aria-pressed="false"] {
-  opacity: 0.78;
+  opacity: 0.72;
   border-color: rgba(16, 185, 129, 0.35);
   color: #a7f3d0;
 }
 
-/* 8. BANNER DE COOKIES GLOBAL (PARA PÁGINAS LEGALES QUE NO INCLUYEN styles.css) */
+/* ==========================================================================
+   6. BANNER DE COOKIES GLOBAL (PARA PÁGINAS SECUNDARIAS)
+   ========================================================================== */
 .cookie-banner-fallback {
   position: fixed;
   left: 1rem;
@@ -497,34 +513,57 @@ body.temporada-effects-paused .temporada-petals-layer {
   font-size: 0.78rem;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
+  .temporada-corner-web {
+    width: 110px;
+    height: 110px;
+    opacity: 0.42;
+  }
+
+  .temporada-hanging-spider {
+    left: 36px;
+    width: 26px;
+    height: 105px;
+  }
+
+  .temporada-hanging-spider--right {
+    right: 36px;
+    left: auto;
+  }
+
+  .temporada-section-figure {
+    width: 48px;
+    height: 48px;
+    top: 14px;
+    opacity: 0.72;
+  }
+
+  .temporada-section-web {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+@media (max-width: 600px) {
   .temporada-garland-top {
-    height: 24px;
-    background-size: 256px 24px;
+    height: 26px;
+    background-size: 250px 26px;
   }
 
-  .temporada-altar-strip {
-    margin: 0.6rem 0.85rem 0;
-    padding: 0.6rem 0.85rem;
-  }
-
-  .temporada-topbar-pill {
+  .temporada-section-figure--left {
     display: none;
-  }
-
-  .temporada-toggle-btn {
-    left: 0.75rem;
-    bottom: 0.75rem;
-    padding: 0.38rem 0.7rem;
-    font-size: 0.7rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .temporada-petals-layer {
+  .temporada-petals-layer,
+  .temporada-hanging-spider {
     display: none !important;
   }
-  .temporada-garland-top {
+  .temporada-garland-top,
+  .temporada-section-figure,
+  .temporada-section-emblem .emblem-flower,
+  .temporada-section-emblem .emblem-skull {
     animation: none !important;
   }
 }
