@@ -30,6 +30,7 @@
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="css/kit.css" />
+  <link rel="stylesheet" href="css/temporada.css" />
 
   <!-- Mismo interruptor de animaciones que la portada (ver index.html). -->
   <script>
@@ -80,11 +81,12 @@
         <li><a class="enlace-linea" href="index.html#precios">Precios</a></li>
         <li><a class="enlace-linea" href="index.html#calculadora">Calculadora</a></li>
         <li><a class="enlace-linea" href="index.html#proceso">Cómo funciona</a></li>
-        <li><a class="enlace-linea" href="index.html#sucursales">Sucursales y Grupos</a></li>
+        <li><a class="enlace-linea" href="index.html#sucursales">Sucursales</a></li>
         <li><a class="enlace-linea" href="index.html#cobertura">Cobertura</a></li>
         <li><a class="enlace-linea" href="index.html#galeria">Galería</a></li>
         <li><a class="enlace-linea" href="index.html#faq">Preguntas</a></li>
         <li><a class="enlace-linea is-active" href="nosotros.html" aria-current="page">Quiénes somos</a></li>
+        <li><a class="enlace-linea nav-app-pill" href="index.html#app-logica"><i class="bi bi-cpu" aria-hidden="true"></i> Detector IC</a></li>
       </ul>
       <div class="nav-actions">
         <button class="theme-toggle" id="themeToggle" type="button" aria-label="Cambiar tema" title="Cambiar tema">
@@ -169,6 +171,26 @@
     </div>
   </footer>
 
+  <!-- AVISO DE COOKIES Y ALMACENAMIENTO LOCAL (Solo primera visita) -->
+  <aside class="cookie-banner" id="cookieBanner" role="region" aria-label="Aviso de cookies y privacidad" hidden>
+    <div class="cookie-banner-inner">
+      <div class="cookie-banner-icon" aria-hidden="true">
+        <i class="bi bi-shield-check"></i>
+      </div>
+      <div class="cookie-banner-copy">
+        <strong>Aviso de Cookies y Almacenamiento Local</strong>
+        <p>
+          Este sitio y nuestra aplicación utilizan almacenamiento local únicamente para guardar tus preferencias (como el tema visual y tu contador de lote), sin cookies de rastreo ni publicidad.
+          <a href="aviso-privacidad.html#cookies">Ver política de cookies y privacidad</a>.
+        </p>
+      </div>
+      <div class="cookie-banner-actions">
+        <button type="button" class="btn btn-sm btn-ghost" id="cookieEssentialBtn">Solo esenciales</button>
+        <button type="button" class="btn btn-sm btn-primary" id="cookieAcceptBtn">Aceptar y continuar</button>
+      </div>
+    </div>
+  </aside>
+
   <!-- Los efectos de puntero (bordes que siguen al cursor, botones
        magnéticos) solo con mouse, igual que en la portada. -->
   <script>
@@ -185,5 +207,6 @@
   <script defer src="js/utils.js"></script>
   <script defer src="js/fallbacks.js"></script>
   <script defer src="script.js"></script>
+  <script defer src="js/temporada.js"></script>
 </body>
 </html>

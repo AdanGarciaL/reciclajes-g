@@ -173,3 +173,33 @@ h1, h2, h3, p { margin: 0; }
   animation: shimmer 1.4s ease infinite;
   border-radius: var(--radius-sm);
 }
+
+/* ---------- Barra de desplazamiento (Scrollbar) personalizada ---------- */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--brand-garcia) var(--bg-alt);
+}
+body.dark-mode {
+  scrollbar-color: var(--brand-signal) var(--brand-carbon);
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-alt);
+}
+body.dark-mode ::-webkit-scrollbar-track {
+  background: var(--brand-carbon);
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--brand-garcia), var(--brand-signal));
+  border-radius: 999px;
+  border: 2px solid var(--bg-alt);
+}
+body.dark-mode ::-webkit-scrollbar-thumb {
+  border-color: var(--brand-carbon);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-signal);
+}

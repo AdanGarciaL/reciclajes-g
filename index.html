@@ -90,6 +90,7 @@
        tarjetas y necesitan ganar la cascada. -->
   <link rel="stylesheet" href="css/kit.css" />
   <link rel="stylesheet" href="css/motion.css" />
+  <link rel="stylesheet" href="css/temporada.css" />
 
   <!-- Esta clase es el interruptor de todo el sistema de animación: el CSS
        solo se atreve a esconder contenido si sabe que hay JS vivo para
@@ -124,6 +125,26 @@
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
   <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
 
+  <!-- RIEL DE PROGRESO Y NAVEGACIÓN DE SCROLL (ESCRITORIO) -->
+  <aside class="scroll-rail" id="scrollRail" aria-label="Progreso de lectura por secciones">
+    <div class="scroll-rail-track" aria-hidden="true">
+      <div class="scroll-rail-fill" id="scrollRailFill"></div>
+      <div class="scroll-rail-thumb" id="scrollRailThumb"></div>
+    </div>
+    <nav class="scroll-rail-dots" aria-label="Saltar a sección">
+      <a href="#inicio" class="scroll-rail-dot is-active" data-section="inicio" aria-label="Inicio"><span class="scroll-rail-label">Inicio</span></a>
+      <a href="#precios" class="scroll-rail-dot" data-section="precios" aria-label="Precios"><span class="scroll-rail-label">Precios</span></a>
+      <a href="#calculadora" class="scroll-rail-dot" data-section="calculadora" aria-label="Calculadora"><span class="scroll-rail-label">Cotizador</span></a>
+      <a href="#proceso" class="scroll-rail-dot" data-section="proceso" aria-label="Cómo funciona"><span class="scroll-rail-label">Proceso</span></a>
+      <a href="#sucursales" class="scroll-rail-dot" data-section="sucursales" aria-label="Sucursales"><span class="scroll-rail-label">Sucursales</span></a>
+      <a href="#cobertura" class="scroll-rail-dot" data-section="cobertura" aria-label="Cobertura"><span class="scroll-rail-label">Cobertura</span></a>
+      <a href="#galeria" class="scroll-rail-dot" data-section="galeria" aria-label="Galería"><span class="scroll-rail-label">Galería</span></a>
+      <a href="#faq" class="scroll-rail-dot" data-section="faq" aria-label="Preguntas"><span class="scroll-rail-label">Preguntas</span></a>
+      <a href="#app-logica" class="scroll-rail-dot scroll-rail-dot-app" data-section="app-logica" aria-label="App Detector IC"><span class="scroll-rail-label">Detector IC</span></a>
+    </nav>
+    <div class="scroll-rail-pct" id="scrollRailPct" aria-hidden="true">0%</div>
+  </aside>
+
   <div class="topbar">
     <div class="container topbar-inner">
       <p>Compra · Venta · Reciclaje de componentes electrónicos</p>
@@ -148,11 +169,12 @@
         <li><a class="enlace-linea" href="#precios">Precios</a></li>
         <li><a class="enlace-linea" href="#calculadora">Calculadora</a></li>
         <li><a class="enlace-linea" href="#proceso">Cómo funciona</a></li>
-        <li><a class="enlace-linea" href="#sucursales">Sucursales y Grupos</a></li>
+        <li><a class="enlace-linea" href="#sucursales">Sucursales</a></li>
         <li><a class="enlace-linea" href="#cobertura">Cobertura</a></li>
         <li><a class="enlace-linea" href="#galeria">Galería</a></li>
         <li><a class="enlace-linea" href="#faq">Preguntas</a></li>
-        <li id="navTeamItem" hidden><a href="nosotros.html">Quiénes somos</a></li>
+        <li id="navTeamItem" hidden><a class="enlace-linea" href="nosotros.html">Quiénes somos</a></li>
+        <li><a class="enlace-linea nav-app-pill" href="#app-logica"><i class="bi bi-cpu" aria-hidden="true"></i> Detector IC</a></li>
       </ul>
       <div class="nav-actions">
         <button class="theme-toggle" id="themeToggle" type="button" aria-label="Cambiar tema" title="Cambiar tema">
@@ -234,6 +256,7 @@
           <div class="hero-cta reveal delay-3">
             <a class="btn btn-kit magnetico btn-primary js-wa-link" data-wa-msg="Hola, tengo material para reciclar y quiero una cotización" href="https://wa.me/522227548704?text=Hola%2C%20tengo%20material%20para%20reciclar%20y%20quiero%20una%20cotizaci%C3%B3n" target="_blank" rel="noopener noreferrer"><i class="bi bi-whatsapp" aria-hidden="true"></i> Pregunta por tu material</a>
             <a class="btn btn-kit btn-ghost" href="#precios">Ver precios de hoy</a>
+            <a class="btn btn-kit btn-ghost hero-app-btn" href="#app-logica"><i class="bi bi-cpu" aria-hidden="true"></i> App Detector IC</a>
           </div>
 
           <div class="hero-stats reveal delay-4" id="heroStats">
@@ -623,6 +646,216 @@
       </div>
     </section>
 
+    <!-- APLICACIÓN WEB: DETECTOR IC & CAPACIDAD (ANDROID / IPHONE / PC Y LAPTOP) -->
+    <section class="app-logica-section bg-alt" id="app-logica">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <p class="eyebrow eyebrow-linea">Herramienta para nuestro equipo y socios</p>
+            <h2>Detector IC &amp; Clasificador de Lógica</h2>
+          </div>
+          <p>Aplicación web instalable en Android, iPhone, PC y Laptop para identificar Gigabytes de almacenamiento, RAM y marca al instante.</p>
+        </div>
+
+        <div class="app-showcase brillo-borde reveal delay-1">
+          <div class="app-showcase-grid">
+            <div class="app-showcase-copy">
+              <div class="app-badge-row">
+                <span class="app-live-pill"><span class="live-pulse-dot"></span> HERRAMIENTA OFICIAL · EN LÍNEA</span>
+                <span class="app-platform-pill"><i class="bi bi-laptop" aria-hidden="true"></i> Android · iPhone · PC y Laptop</span>
+              </div>
+
+              <p class="app-showcase-lede">
+                Diseñada para encargados de sucursal, recolectores y técnicos que trabajan con nosotros.
+                Escribe el código grabado sobre el chip de memoria desde tu <strong>celular, computadora o laptop</strong> y conoce al instante sus <strong>Gigabytes de almacenamiento</strong>,
+                <strong>RAM</strong> y <strong>marca</strong>, con dictado por voz en español y contador de lote.
+              </p>
+
+              <div class="app-feature-grid">
+                <article class="app-feature-card brillo-borde">
+                  <span class="app-feature-icon"><i class="bi bi-memory" aria-hidden="true"></i></span>
+                  <div>
+                    <h3>+25,300 Chips en Base</h3>
+                    <p>Decodifica Samsung, Micron FBGA (JZ/JW), SK Hynix, SanDisk y Toshiba / NAND de iPhone al instante.</p>
+                  </div>
+                </article>
+                <article class="app-feature-card brillo-borde">
+                  <span class="app-feature-icon"><i class="bi bi-lightning-fill" aria-hidden="true"></i></span>
+                  <div>
+                    <h3>Voz + Auto-Corrección</h3>
+                    <p>Te dicta los GB en voz alta mientras separas material y corrige errores ópticos (como 0 por O).</p>
+                  </div>
+                </article>
+                <article class="app-feature-card brillo-borde">
+                  <span class="app-feature-icon"><i class="bi bi-calculator" aria-hidden="true"></i></span>
+                  <div>
+                    <h3>Contador de Lote</h3>
+                    <p>Suma tus lógicas por capacidad (16GB a 512GB+) y envía el corte listo directo a WhatsApp.</p>
+                  </div>
+                </article>
+                <article class="app-feature-card brillo-borde">
+                  <span class="app-feature-icon"><i class="bi bi-laptop" aria-hidden="true"></i></span>
+                  <div>
+                    <h3>Celular, PC y Laptop</h3>
+                    <p>Úsala directo en tu navegador o instálala como aplicación en Android, iPhone, Windows y Mac.</p>
+                  </div>
+                </article>
+              </div>
+
+              <div class="app-cta-row">
+                <a class="btn btn-kit magnetico btn-primary app-main-cta" href="logica/index.html">
+                  <i class="bi bi-cpu" aria-hidden="true"></i> Abrir Detector IC Ahora
+                </a>
+                <a class="btn btn-kit btn-ghost app-install-cta" href="logica/index.html?instalar=1">
+                  <i class="bi bi-phone" aria-hidden="true"></i> Instalar en Celular o PC
+                </a>
+              </div>
+            </div>
+
+            <!-- MOCKUP INTERACTIVO EN VIVO DEL DETECTOR IC -->
+            <div class="app-showcase-device">
+              <div class="app-phone-mockup brillo-borde" id="appPhoneMockup">
+                <div class="app-phone-notch" aria-hidden="true"></div>
+                <div class="app-phone-header">
+                  <div class="app-phone-brand">
+                    <span class="app-phone-logo"><i class="bi bi-cpu" aria-hidden="true"></i></span>
+                    <div>
+                      <strong>ECO LÓGICA <span>GARCÍA</span></strong>
+                      <small>25,400+ chips · En línea</small>
+                    </div>
+                  </div>
+                  <span class="app-phone-status">Web App</span>
+                </div>
+
+                <div class="app-phone-body">
+                  <p class="app-phone-hint">Prueba un código real aquí o abre la app completa:</p>
+                  <div class="app-phone-chips" id="appPreviewPresets" role="group" aria-label="Códigos de ejemplo">
+                    <button type="button" class="app-preset-chip is-active" data-code="JZ186">JZ186</button>
+                    <button type="button" class="app-preset-chip" data-code="KMDP6001DA">KMDP6001DA</button>
+                    <button type="button" class="app-preset-chip" data-code="H9HQ15AECMMD">H9HQ15</button>
+                    <button type="button" class="app-preset-chip" data-code="SDINDDH4-128G">SDIN-128G</button>
+                    <button type="button" class="app-preset-chip" data-code="K6A6RB5896">K6A6</button>
+                  </div>
+
+                  <div class="app-phone-search">
+                    <i class="bi bi-cpu" aria-hidden="true"></i>
+                    <input
+                      type="text"
+                      id="appPreviewInput"
+                      value="JZ186"
+                      placeholder="Escribe un código (ej. JZ008, KLMAG...)"
+                      aria-label="Probar código de chip IC"
+                      autocomplete="off"
+                      autocorrect="off"
+                      autocapitalize="characters"
+                      spellcheck="false"
+                    />
+                  </div>
+
+                  <div class="app-phone-result" id="appPreviewResult" aria-live="polite">
+                    <div class="app-phone-result-top">
+                      <div>
+                        <span class="app-phone-cap-label">Almacenamiento</span>
+                        <div class="app-phone-cap-badge" id="appPreviewCap" data-tier="64">64GB</div>
+                      </div>
+                      <div class="app-phone-tier-tag" id="appPreviewTier">Lógica con chip presente</div>
+                    </div>
+
+                    <div class="app-phone-meta-grid">
+                      <div class="app-phone-meta-box">
+                        <span>Marca</span>
+                        <strong id="appPreviewBrand">Micron</strong>
+                      </div>
+                      <div class="app-phone-meta-box">
+                        <span>RAM</span>
+                        <strong id="appPreviewRam">4GB</strong>
+                      </div>
+                      <div class="app-phone-meta-box">
+                        <span>Tipo</span>
+                        <strong id="appPreviewType">uMCP</strong>
+                      </div>
+                    </div>
+
+                    <div class="app-phone-rule" id="appPreviewRule">
+                      <code id="appPreviewCodeHighlight">JZ<mark>186</mark></code>
+                      <span id="appPreviewWhy">FBGA &ldquo;JZ186&rdquo; = 64GB</span>
+                    </div>
+                  </div>
+
+                  <a class="btn btn-kit btn-primary btn-block app-phone-open-link" id="appPreviewOpenLink" href="logica/index.html?q=JZ186">
+                    <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Abrir en pantalla completa
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Guía rápida interactiva de instalación a ancho completo -->
+          <div class="app-install-guide">
+            <div class="app-install-tabs" role="tablist" aria-label="Instrucciones de instalación por sistema">
+              <div class="app-install-title-wrap">
+                <i class="bi bi-phone" aria-hidden="true"></i>
+                <span class="app-install-label">¿Cómo instalarla en tu celular, PC o laptop?</span>
+              </div>
+              <div class="app-install-tab-group">
+                <button type="button" class="app-os-tab is-active" role="tab" aria-selected="true" data-os="android">Android (Chrome)</button>
+                <button type="button" class="app-os-tab" role="tab" aria-selected="false" data-os="ios">iPhone / iPad (Safari)</button>
+                <button type="button" class="app-os-tab" role="tab" aria-selected="false" data-os="pc">PC / Laptop (Chrome / Edge)</button>
+              </div>
+            </div>
+            <div class="app-os-panel is-active" id="appOsAndroid" role="tabpanel">
+              <ol class="app-os-steps">
+                <li>
+                  <span class="app-step-num">1</span>
+                  <div class="app-step-body">Abre <a href="logica/index.html"><strong>Detector IC</strong></a> desde el navegador <strong>Chrome</strong> en tu teléfono Android.</div>
+                </li>
+                <li>
+                  <span class="app-step-num">2</span>
+                  <div class="app-step-body">Toca el botón verde <strong>&ldquo;Instalar App&rdquo;</strong> en la barra superior o abre el menú <strong>⋮ ➔ Instalar aplicación</strong>.</div>
+                </li>
+                <li>
+                  <span class="app-step-num">3</span>
+                  <div class="app-step-body">Confirma y quedará el acceso directo en tu pantalla de inicio para entrar en un toque.</div>
+                </li>
+              </ol>
+            </div>
+            <div class="app-os-panel" id="appOsIos" role="tabpanel" hidden>
+              <ol class="app-os-steps">
+                <li>
+                  <span class="app-step-num">1</span>
+                  <div class="app-step-body">Abre <a href="logica/index.html"><strong>Detector IC</strong></a> desde el navegador <strong>Safari</strong> en tu iPhone o iPad.</div>
+                </li>
+                <li>
+                  <span class="app-step-num">2</span>
+                  <div class="app-step-body">Toca el botón <strong>Compartir</strong> en la barra inferior y selecciona <strong>&ldquo;Agregar a inicio&rdquo;</strong>.</div>
+                </li>
+                <li>
+                  <span class="app-step-num">3</span>
+                  <div class="app-step-body">Pulsa <strong>Agregar</strong> arriba a la derecha y ábrela desde tu pantalla principal como aplicación.</div>
+                </li>
+              </ol>
+            </div>
+            <div class="app-os-panel" id="appOsPc" role="tabpanel" hidden>
+              <ol class="app-os-steps">
+                <li>
+                  <span class="app-step-num">1</span>
+                  <div class="app-step-body">Abre <a href="logica/index.html"><strong>Detector IC</strong></a> directamente en <strong>Chrome</strong> o <strong>Edge</strong> desde tu PC o Laptop.</div>
+                </li>
+                <li>
+                  <span class="app-step-num">2</span>
+                  <div class="app-step-body">Úsala directo en el navegador o haz clic en <strong>&ldquo;Instalar App&rdquo;</strong> arriba a la derecha para instalarla en tu Escritorio.</div>
+                </li>
+                <li>
+                  <span class="app-step-num">3</span>
+                  <div class="app-step-body">Quedará un acceso directo en tu Escritorio y Barra de tareas para abrirla rápido en sucursal o bodega.</div>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- CIERRE -->
     <section class="no-border">
       <div class="container">
@@ -676,6 +909,7 @@
         <a href="#sucursales">Sucursales y WhatsApp</a>
         <a href="#cobertura">Cobertura</a>
         <a href="#faq">Preguntas</a>
+        <a href="#app-logica">App Detector IC (Móvil)</a>
       </div>
       <div class="footer-col">
         <p class="footer-col-title">Legales</p>
@@ -696,6 +930,26 @@
       </div>
     </div>
   </footer>
+
+  <!-- AVISO DE COOKIES Y ALMACENAMIENTO LOCAL (Solo primera visita) -->
+  <aside class="cookie-banner" id="cookieBanner" role="region" aria-label="Aviso de cookies y privacidad" hidden>
+    <div class="cookie-banner-inner">
+      <div class="cookie-banner-icon" aria-hidden="true">
+        <i class="bi bi-shield-check"></i>
+      </div>
+      <div class="cookie-banner-copy">
+        <strong>Aviso de Cookies y Almacenamiento Local</strong>
+        <p>
+          Este sitio y nuestra aplicación utilizan almacenamiento local únicamente para guardar tus preferencias (como el tema visual y tu contador de lote), sin cookies de rastreo ni publicidad.
+          <a href="aviso-privacidad.html#cookies">Ver política de cookies y privacidad</a>.
+        </p>
+      </div>
+      <div class="cookie-banner-actions">
+        <button type="button" class="btn btn-sm btn-ghost" id="cookieEssentialBtn">Solo esenciales</button>
+        <button type="button" class="btn btn-sm btn-primary" id="cookieAcceptBtn">Aceptar y continuar</button>
+      </div>
+    </div>
+  </aside>
 
   <!-- BARRA FIJA INFERIOR MÓVIL (<=768px) -->
   <aside class="mobile-sticky-bar" id="mobileStickyBar" aria-label="Cotización rápida en móvil">
@@ -761,5 +1015,6 @@
   <script defer src="js/utils.js"></script>
   <script defer src="js/fallbacks.js"></script>
   <script defer src="script.js"></script>
+  <script defer src="js/temporada.js"></script>
 </body>
 </html>

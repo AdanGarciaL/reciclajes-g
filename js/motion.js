@@ -319,6 +319,7 @@
   const GRUPOS = [
     { sel: ".trust-grid", hijos: ".trust-card", giro: true },
     { sel: ".quick-prices-grid", hijos: ".price-card", giro: true },
+    { sel: ".app-feature-grid", hijos: ".app-feature-card", giro: true },
     { sel: ".sucursales-grid", hijos: ".sucursal-card" },
     { sel: ".faq-list", hijos: ".faq-item" },
     { sel: ".gallery-grid", hijos: ".gallery-card", escalon: 0.025 },
@@ -422,7 +423,7 @@
   }
 
   /* =========================================================
-     5. Barra de progreso de scroll
+     5. Barra de progreso de scroll + Mockup 3D de la App
      ========================================================= */
   function progreso() {
     const barra = document.getElementById("scrollProgress");
@@ -436,6 +437,19 @@
       ease: "none",
       scrollTrigger: { start: 0, end: "max", scrub: 0.25 },
     });
+
+    const phone = document.getElementById("appPhoneMockup");
+    if (phone && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      gsap.set(phone, { transformPerspective: 950 });
+      const rx = gsap.quickTo(phone, "rotationX", { duration: 0.65, ease: "power3" });
+      const ry = gsap.quickTo(phone, "rotationY", { duration: 0.65, ease: "power3" });
+      phone.addEventListener("mousemove", (e) => {
+        const r = phone.getBoundingClientRect();
+        rx((0.5 - (e.clientY - r.top) / r.height) * 6);
+        ry(((e.clientX - r.left) / r.width - 0.5) * 7);
+      });
+      phone.addEventListener("mouseleave", () => { rx(0); ry(0); });
+    }
   }
 
   /* =========================================================

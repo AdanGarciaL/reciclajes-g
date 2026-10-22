@@ -114,6 +114,10 @@ contraseña del panel no expone el repositorio por sí solo.
 - `icons/`: logo e ícono oficiales de la marca, en sus variantes de color; `icons/equipo/` guarda
   las fotos que se suben desde "Quiénes somos".
 - `aviso-privacidad.html`, `terminos.html`, `legal.css`, `legal.js`: páginas legales.
+- `logica/`: aplicación web progresiva (PWA) **Detector IC & Clasificador de Memorias** (`/logica/`), instalable en Android y iPhone con funcionamiento 100% offline. Sus fuentes en React/Vite están en `logica/src/` y los archivos estáticos compilados (`logica/index.html`, `logica/assets/`, `logica/sw.js`, `logica/manifest.json`) viven directamente en `logica/` para servirse sin paso de build en Vercel o GitHub Pages. Para recompilarla tras editar `logica/src/`:
+  ```bash
+  npm --prefix logica run build
+  ```
 
 ## Archivos generados (no se editan a mano)
 

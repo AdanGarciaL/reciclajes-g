@@ -3,3 +3,13 @@ scripts/
 flyer_*.jpg
 README.md
 .github/
+logica/src/
+logica/dist/
+logica/node_modules/
+logica/public/
+logica/build-static.mjs
+logica/package.json
+logica/package-lock.json
+logica/postcss.config.js
+logica/tailwind.config.js
+logica/vite.config.js

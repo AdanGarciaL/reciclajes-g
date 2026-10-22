@@ -1,0 +1,33 @@
+{
+  "id": "/logica/",
+  "name": "Eco Lógica García · Detector IC",
+  "short_name": "EcoLógica IC",
+  "description": "Detector instantáneo de capacidad de procesadores y memorias IC de celulares (Sin Anuncios, Android, iPhone y PC)",
+  "lang": "es-MX",
+  "start_url": "/logica/",
+  "scope": "/logica/",
+  "display": "standalone",
+  "background_color": "#031209",
+  "theme_color": "#04120a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

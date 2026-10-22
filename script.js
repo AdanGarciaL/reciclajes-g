@@ -1446,15 +1446,29 @@ window.addEventListener("resize", medirScroll);
 window.addEventListener("load", medirScroll);
 if (window.ResizeObserver) new ResizeObserver(medirScroll).observe(document.body);
 
+const scrollRail = document.getElementById("scrollRail");
+const scrollRailPct = document.getElementById("scrollRailPct");
+let railPctUltimo = -1;
+
 function onScroll() {
   const scrollTop = window.scrollY;
+  const p = Math.min(1, Math.max(0, scrollTop / maxScroll));
   siteHeader?.classList.toggle("is-scrolled", scrollTop > 8);
   actualizarMarca(scrollTop);
-  // Cuando js/motion.js está activo, la barra la mueve GSAP; aquí solo se
+  // Cuando js/motion.js está activo, la barra superior la mueve GSAP; aquí solo se
   // calcula si no hay GSAP. scaleX (compositor) en vez de width (layout).
   if (scrollProgress && !(window.__MOTION__ && window.__MOTION__.activo)) {
     scrollProgress.style.width = "100%";
-    scrollProgress.style.transform = `scaleX(${Math.min(1, scrollTop / maxScroll)})`;
+    scrollProgress.style.transform = `scaleX(${p})`;
+  }
+  // Riel lateral de progreso (la variable se escribe SOLO en #scrollRail, no en :root)
+  if (scrollRail) {
+    scrollRail.style.setProperty("--scroll-p", p.toFixed(3));
+    const pct = Math.round(p * 100);
+    if (pct !== railPctUltimo && scrollRailPct) {
+      railPctUltimo = pct;
+      scrollRailPct.textContent = `${pct}%`;
+    }
   }
   backToTopBtn?.classList.toggle("is-visible", scrollTop > window.innerHeight * 0.8);
 }
@@ -1468,20 +1482,159 @@ window.addEventListener("scroll", () => {
 }, { passive: true });
 onScroll();
 
-// Secciones que resaltan su enlace del menú al pasar por ellas.
+// Secciones que resaltan su enlace del menú y del riel lateral al pasar por ellas.
 // ("Quiénes somos" ahora es su propia página, nosotros.html.)
-const sections = ["inicio", "precios", "calculadora", "proceso", "sucursales", "cobertura", "galeria", "faq"];
+const sections = ["inicio", "precios", "calculadora", "proceso", "sucursales", "cobertura", "galeria", "faq", "app-logica"];
 const navAnchors = Array.from(document.querySelectorAll('.nav-links a'));
-if ("IntersectionObserver" in window && navAnchors.length) {
+const railDots = Array.from(document.querySelectorAll('.scroll-rail-dot'));
+if ("IntersectionObserver" in window && (navAnchors.length || railDots.length)) {
   const navObserver = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (!entry.isIntersecting) return;
       const id = entry.target.id;
       navAnchors.forEach((a) => a.classList.toggle("is-active", a.getAttribute("href") === `#${id}`));
+      railDots.forEach((d) => d.classList.toggle("is-active", d.dataset.section === id));
     });
   }, { rootMargin: "-45% 0px -50% 0px" });
   sections.forEach((id) => { const el = document.getElementById(id); if (el) navObserver.observe(el); });
 }
+
+/* ---------- Showcase interactivo: App Detector IC (#app-logica) ---------- */
+(function initAppLogicaShowcase() {
+  // 1. Pestañas de guía de instalación Android / iOS / PC
+  const osTabs = document.querySelectorAll(".app-os-tab");
+  const panelAndroid = document.getElementById("appOsAndroid");
+  const panelIos = document.getElementById("appOsIos");
+  const panelPc = document.getElementById("appOsPc");
+  function setOsTab(os) {
+    osTabs.forEach((t) => {
+      const active = t.dataset.os === os;
+      t.classList.toggle("is-active", active);
+      t.setAttribute("aria-selected", active ? "true" : "false");
+    });
+    if (panelAndroid) panelAndroid.hidden = os !== "android";
+    if (panelIos) panelIos.hidden = os !== "ios";
+    if (panelPc) panelPc.hidden = os !== "pc";
+  }
+  osTabs.forEach((t) => t.addEventListener("click", () => setOsTab(t.dataset.os)));
+  try {
+    const ua = navigator.userAgent || "";
+    if (/iPhone|iPad|iPod/i.test(ua)) setOsTab("ios");
+    else if (!/Android/i.test(ua)) setOsTab("pc");
+  } catch (_e) {}
+
+  // 2. Mini-probador en vivo dentro del teléfono de muestra
+  const PREVIEW_CATALOG = {
+    JZ186: { storage: "64GB", tier: "64", brand: "Micron", ram: "4GB", type: "uMCP", pre: "JZ", mark: "186", post: "", why: 'FBGA "JZ186" = 64GB' },
+    JZ008: { storage: "16GB", tier: "16", brand: "Micron", ram: "2GB", type: "eMCP", pre: "JZ", mark: "008", post: "", why: 'FBGA "JZ008" = 16GB' },
+    JZ004: { storage: "32GB", tier: "32", brand: "Micron", ram: "3GB", type: "eMCP", pre: "JZ", mark: "004", post: "", why: 'FBGA "JZ004" = 32GB' },
+    JZ139: { storage: "128GB", tier: "128", brand: "Micron", ram: "4GB", type: "eMCP", pre: "JZ", mark: "139", post: "", why: 'FBGA "JZ139" = 128GB' },
+    KMDP6001DA: { storage: "64GB", tier: "64", brand: "Samsung", ram: "4GB", type: "eMCP", pre: "KM", mark: "DP", post: "6001DA", why: 'Serie "DP" = 64GB' },
+    KMQD60013M: { storage: "32GB", tier: "32", brand: "Samsung", ram: "2GB", type: "eMCP", pre: "KM", mark: "QD", post: "60013M", why: 'Serie "QD" = 32GB' },
+    KMDV6001DM: { storage: "128GB", tier: "128", brand: "Samsung", ram: "4GB", type: "eMCP", pre: "KM", mark: "DV", post: "6001DM", why: 'Serie "DV" = 128GB' },
+    H9HQ15AECMMD: { storage: "128GB", tier: "128", brand: "SK Hynix", ram: "6GB", type: "uMCP", pre: "H9HQ", mark: "15", post: "AECMMD", why: 'Código "15" = 128GB' },
+    H9TQ27ADFTMC: { storage: "32GB", tier: "32", brand: "SK Hynix", ram: "3GB", type: "eMCP", pre: "H9TQ", mark: "27", post: "ADFTMC", why: 'Código "27" = 32GB' },
+    H9HP52ACPMMD: { storage: "64GB", tier: "64", brand: "SK Hynix", ram: "4GB", type: "eMCP", pre: "H9HP", mark: "52", post: "ACPMMD", why: 'Código "52" = 64GB' },
+    "SDINDDH4-128G": { storage: "128GB", tier: "128", brand: "SanDisk", ram: "—", type: "UFS", pre: "SDINDDH4-", mark: "128G", post: "", why: 'Final "128G" = 128GB' },
+    K6A6RB5896: { storage: "256GB", tier: "256", brand: "Kioxia (iPhone)", ram: "—", type: "NVMe NAND", pre: "K6A", mark: "6", post: "RB5896", why: 'Número "6" = 256GB' },
+  };
+
+  function decodePreviewCode(raw) {
+    const c = String(raw || "").toUpperCase().trim().replace(/\s+/g, "");
+    if (!c) return PREVIEW_CATALOG.JZ186;
+    if (PREVIEW_CATALOG[c]) return PREVIEW_CATALOG[c];
+    for (const k of Object.keys(PREVIEW_CATALOG)) {
+      if (k.startsWith(c) || c.startsWith(k)) return PREVIEW_CATALOG[k];
+    }
+    if (/^KL[MU][ABCDEFG]G/.test(c)) {
+      const map = { A: ["16GB", "16"], B: ["32GB", "32"], C: ["64GB", "64"], D: ["128GB", "128"], E: ["256GB", "256"], F: ["512GB", "512"], G: ["1TB", "512"] };
+      const hit = map[c[3]] || ["64GB", "64"];
+      return { storage: hit[0], tier: hit[1], brand: "Samsung", ram: "—", type: c.startsWith("KLU") ? "UFS" : "eMMC", pre: c.slice(0, 3), mark: c[3], post: c.slice(4), why: `Letra "${c[3]}" = ${hit[0]}` };
+    }
+    if (c.startsWith("KMDP") || c.startsWith("KMDH")) {
+      return { storage: "64GB", tier: "64", brand: "Samsung", ram: "4GB", type: "eMCP", pre: "KM", mark: c.slice(2, 4), post: c.slice(4), why: `Serie "${c.slice(2, 4)}" = 64GB` };
+    }
+    if (c.startsWith("KMDV") || c.startsWith("KM8V8")) {
+      return { storage: "128GB", tier: "128", brand: "Samsung", ram: "6GB", type: "uMCP", pre: "KM", mark: c.slice(2, 4), post: c.slice(4), why: `Serie "${c.slice(2, 4)}" = 128GB` };
+    }
+    return {
+      storage: "Buscar en App",
+      tier: "64",
+      brand: "25,400+ Chips",
+      ram: "Auto",
+      type: "IC",
+      pre: "",
+      mark: c.slice(0, 12),
+      post: "",
+      why: "Pulsa abajo para decodificar en la App completa",
+    };
+  }
+
+  const input = document.getElementById("appPreviewInput");
+  const presets = document.getElementById("appPreviewPresets");
+  const capEl = document.getElementById("appPreviewCap");
+  const brandEl = document.getElementById("appPreviewBrand");
+  const ramEl = document.getElementById("appPreviewRam");
+  const typeEl = document.getElementById("appPreviewType");
+  const hlEl = document.getElementById("appPreviewCodeHighlight");
+  const whyEl = document.getElementById("appPreviewWhy");
+  const openLink = document.getElementById("appPreviewOpenLink");
+
+  function updatePreview(rawCode) {
+    const clean = String(rawCode || "").toUpperCase().trim();
+    const res = decodePreviewCode(clean);
+    if (capEl) {
+      capEl.textContent = res.storage;
+      capEl.dataset.tier = res.tier;
+    }
+    if (brandEl) brandEl.textContent = res.brand;
+    if (ramEl) ramEl.textContent = res.ram;
+    if (typeEl) typeEl.textContent = res.type;
+    if (hlEl) hlEl.innerHTML = `${esc(res.pre)}<mark>${esc(res.mark)}</mark>${esc(res.post)}`;
+    if (whyEl) whyEl.textContent = res.why;
+    if (openLink) {
+      openLink.href = clean ? `logica/index.html?q=${encodeURIComponent(clean)}` : "logica/index.html";
+    }
+    if (presets) {
+      presets.querySelectorAll(".app-preset-chip").forEach((btn) => {
+        btn.classList.toggle("is-active", btn.dataset.code === clean);
+      });
+    }
+  }
+
+  if (input) {
+    input.addEventListener("input", () => updatePreview(input.value));
+  }
+  if (presets) {
+    presets.addEventListener("click", (e) => {
+      const btn = e.target.closest(".app-preset-chip");
+      if (!btn) return;
+      if (input) input.value = btn.dataset.code;
+      updatePreview(btn.dataset.code);
+    });
+  }
+})();
+
+/* ---------- Aviso de Cookies y Almacenamiento Local (Solo primera visita) ---------- */
+(function initCookieBanner() {
+  const banner = document.getElementById("cookieBanner");
+  if (!banner) return;
+  const STORAGE_KEY = "eco_cookie_notice_accepted_v1";
+  try {
+    if (localStorage.getItem(STORAGE_KEY)) return;
+  } catch (_e) {
+    return;
+  }
+  banner.hidden = false;
+  function acceptCookies(mode) {
+    try {
+      localStorage.setItem(STORAGE_KEY, mode || "accepted");
+    } catch (_e) {}
+    banner.hidden = true;
+  }
+  document.getElementById("cookieAcceptBtn")?.addEventListener("click", () => acceptCookies("accepted"));
+  document.getElementById("cookieEssentialBtn")?.addEventListener("click", () => acceptCookies("essential"));
+})();
 
 /* ---------- Reveal on scroll ---------- */
 let revealObserver = null;

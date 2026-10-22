@@ -29,7 +29,7 @@ const fuente = fs.readFileSync(path.join(pkg, "font/fonts/bootstrap-icons.woff2"
 const version = JSON.parse(fs.readFileSync(path.join(pkg, "package.json"), "utf8")).version;
 
 // Archivos del sitio donde pueden aparecer clases de iconos.
-const IGNORAR = new Set(["node_modules", ".git", "scripts", "Galeria", "icons", "fonts"]);
+const IGNORAR = new Set(["node_modules", ".git", "scripts", "Galeria", "icons", "fonts", "logica", "Logica"]);
 const archivos = [];
 (function recorrer(dir) {
   for (const nombre of fs.readdirSync(dir)) {

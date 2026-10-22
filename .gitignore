@@ -1,5 +1,7 @@
-# Dependencias locales (nunca se publican)
+# Dependencias locales y artefactos temporales (nunca se publican)
 node_modules/
+logica/dist/
+scripts/package-lock.json
 
 # Material de marketing de trabajo: si se commitea queda público en el sitio
 # (y sus precios no siempre coinciden con data/prices.json).
