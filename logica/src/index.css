@@ -40,15 +40,16 @@ body {
   scrollbar-width: none;
 }
 
-/* Temporada Día de Muertos y Halloween (Oct-Nov) */
+/* Temporada Día de Muertos — Tradición Mexicana */
 .logica-papel-picado {
   width: 100%;
-  height: 16px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='22' viewBox='0 0 240 22'%3E%3Cdefs%3E%3ClinearGradient id='g1' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0%25' stop-color='%2310b981' stop-opacity='0.82'/%3E%3Cstop offset='33%25' stop-color='%23f59e0b' stop-opacity='0.88'/%3E%3Cstop offset='66%25' stop-color='%23a855f7' stop-opacity='0.82'/%3E%3Cstop offset='100%25' stop-color='%23ea580c' stop-opacity='0.88'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='240' height='2' fill='url(%23g1)'/%3E%3Cg fill-opacity='0.78'%3E%3Cpath d='M4 2 H56 V13 L48 20 L40 14 L30 21 L20 14 L12 20 L4 13 Z' fill='%230b2b22' stroke='%2310b981' stroke-width='0.9'/%3E%3Ccircle cx='30' cy='9' r='3.2' fill='%23f59e0b'/%3E%3Cpath d='M64 2 H116 V13 L108 20 L100 14 L90 21 L80 14 L72 20 L64 13 Z' fill='%2327170a' stroke='%23f59e0b' stroke-width='0.9'/%3E%3Ccircle cx='90' cy='8.5' r='3.4' fill='%23fde047'/%3E%3Cpath d='M124 2 H176 V13 L168 20 L160 14 L150 21 L140 14 L132 20 L124 13 Z' fill='%231f1130' stroke='%23a855f7' stroke-width='0.9'/%3E%3Ccircle cx='150' cy='8.5' r='3.2' fill='%23f59e0b'/%3E%3Cpath d='M184 2 H236 V13 L228 20 L220 14 L210 21 L200 14 L192 20 L184 13 Z' fill='%23291409' stroke='%23fb923c' stroke-width='0.9'/%3E%3Ccircle cx='210' cy='8.5' r='3.2' fill='%2310b981'/%3E%3C/g%3E%3C/svg%3E");
+  height: 22px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='34' viewBox='0 0 320 34'%3E%3Cdefs%3E%3ClinearGradient id='cuerda' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0%25' stop-color='%2310b981'/%3E%3Cstop offset='25%25' stop-color='%23f59e0b'/%3E%3Cstop offset='50%25' stop-color='%23ec4899'/%3E%3Cstop offset='75%25' stop-color='%23a855f7'/%3E%3Cstop offset='100%25' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='320' height='2.5' fill='url(%23cuerda)'/%3E%3Cg%3E%3Cpath d='M4 2.5 H76 V21 C72 21 70 25 66 28 C62 25 60 21 56 21 C52 21 50 26 46 30 C42 26 40 22 36 30 C32 22 30 26 24 30 C20 26 18 21 14 21 C10 21 8 25 4 21 Z' fill='%2308291e' stroke='%2310b981' stroke-width='1.1'/%3E%3Ccircle cx='40' cy='13' r='4.2' fill='%23fde047'/%3E%3Ccircle cx='40' cy='6.8' r='1.8' fill='%23f59e0b'/%3E%3Ccircle cx='40' cy='19.2' r='1.8' fill='%23f59e0b'/%3E%3Ccircle cx='33.8' cy='13' r='1.8' fill='%23f59e0b'/%3E%3Ccircle cx='46.2' cy='13' r='1.8' fill='%23f59e0b'/%3E%3Cpath d='M84 2.5 H156 V21 C152 21 150 25 146 28 C142 25 140 21 136 21 C132 21 130 26 126 30 C122 26 120 22 116 30 C112 22 110 26 104 30 C100 26 98 21 94 21 C90 21 88 25 84 21 Z' fill='%232c1606' stroke='%23f59e0b' stroke-width='1.1'/%3E%3Ccircle cx='120' cy='12.5' r='4.8' fill='%23fef3c7'/%3E%3Ccircle cx='118.2' cy='11.8' r='1.2' fill='%232c1606'/%3E%3Ccircle cx='121.8' cy='11.8' r='1.2' fill='%232c1606'/%3E%3Cpath d='M164 2.5 H236 V21 C232 21 230 25 226 28 C222 25 220 21 216 21 C212 21 210 26 206 30 C202 26 200 22 196 30 C192 22 190 26 184 30 C180 26 178 21 174 21 C170 21 168 25 164 21 Z' fill='%232b0b1e' stroke='%23ec4899' stroke-width='1.1'/%3E%3Ccircle cx='200' cy='13' r='4.2' fill='%23fde047'/%3E%3Ccircle cx='200' cy='6.8' r='1.8' fill='%23f472b6'/%3E%3Ccircle cx='200' cy='19.2' r='1.8' fill='%23f472b6'/%3E%3Cpath d='M244 2.5 H316 V21 C312 21 310 25 306 28 C302 25 300 21 296 21 C292 21 290 26 286 30 C282 26 280 22 276 30 C272 22 270 26 264 30 C260 26 258 21 254 21 C250 21 248 25 244 21 Z' fill='%231d0c2e' stroke='%23a855f7' stroke-width='1.1'/%3E%3Ccircle cx='280' cy='13' r='4.2' fill='%23fbbf24'/%3E%3Ccircle cx='280' cy='6.8' r='1.8' fill='%23c084fc'/%3E%3Ccircle cx='280' cy='19.2' r='1.8' fill='%23c084fc'/%3E%3C/g%3E%3C/svg%3E");
   background-repeat: repeat-x;
-  background-size: 200px 16px;
+  background-size: 260px 22px;
   pointer-events: none;
-  opacity: 0.9;
+  opacity: 0.95;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
 }
 
 @keyframes logicaPetalFall {

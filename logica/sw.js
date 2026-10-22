@@ -10,8 +10,8 @@ const ASSETS = [
   './assets/apple-touch-icon-q66XNoox.png',
   './assets/icon-192--oFsYMjq.png',
   './assets/icon-DBmVwXEj.svg',
-  './assets/index-DLMlpsvB.js',
-  './assets/manifest-DheEJjFC.json',
+  './assets/index-BifD29ia.js',
+  './assets/manifest-i-u5wQwz.json',
 ];
 
 self.addEventListener('install', (event) => {

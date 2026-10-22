@@ -480,14 +480,14 @@ export default function App() {
             </button>
           </div>
         </div>
-        {/* Cenefa de Papel Picado (Temporada Día de Muertos y Halloween) */}
+        {/* Cenefa de Papel Picado Artesanal (Temporada Día de Muertos) */}
         <div className="logica-papel-picado" aria-hidden="true" />
       </header>
 
       {/* Pétalos de Cempasúchil flotantes */}
       {!petalsPaused && (
         <div aria-hidden="true" className="pointer-events-none">
-          {[8, 22, 37, 52, 68, 81, 93].map((left, idx) => (
+          {[6, 18, 31, 44, 57, 70, 83, 94].map((left, idx) => (
             <span
               key={left}
               className="logica-petal"
@@ -503,20 +503,22 @@ export default function App() {
 
       {/* CONTENEDOR CENTRAL LIMPIO */}
       <main className="max-w-5xl w-full mx-auto px-4 pt-4 sm:pt-6 flex-1">
-        {/* Cinta de Temporada Día de Muertos y Halloween */}
-        <div className="mb-3 px-3.5 py-2 rounded-2xl bg-gradient-to-r from-amber-500/15 via-purple-500/10 to-emerald-500/15 border border-amber-400/30 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-xs text-amber-100">
-            <span aria-hidden="true">🏵️💀🎃</span>
+        {/* Cinta Conmemorativa Día de Muertos — Tradición Mexicana */}
+        <div className="mb-3.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-pink-500/10 to-emerald-500/15 border border-amber-400/40 shadow-lg flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 text-xs text-amber-100">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/40 text-amber-200 font-bold" aria-hidden="true">
+              🏵️ 💀 🕯️
+            </span>
             <span>
-              <strong className="text-amber-300">Edición Día de Muertos y Halloween:</strong> Clasificador IC activo en celular, PC y laptop.
+              <strong className="text-amber-300">Día de Muertos · Tradición Mexicana:</strong> Clasificador IC con flor de cempasúchil y papel picado.
             </span>
           </div>
           <button
             type="button"
             onClick={togglePetals}
-            className="px-2.5 py-1 rounded-full bg-black/40 hover:bg-black/60 border border-amber-400/35 text-[11px] font-bold text-amber-200 transition"
+            className="px-3 py-1 rounded-full bg-black/45 hover:bg-black/65 border border-amber-400/45 text-[11px] font-bold text-amber-200 transition"
           >
-            {petalsPaused ? '🏵️ Activar pétalos' : '🏵️ Pausar pétalos'}
+            {petalsPaused ? '🏵️ Activar cempasúchil' : '🏵️ Pausar cempasúchil'}
           </button>
         </div>
         {toastMsg && (
@@ -835,9 +837,9 @@ export default function App() {
         {/* ================================================================= */}
         {activeTab === 'tables' && (
           <div className="space-y-3">
-            <div className="px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-400/25 flex items-center justify-between text-xs text-amber-200">
+            <div className="px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-400/30 flex items-center justify-between text-xs text-amber-200">
               <span>🏵️ Catálogo de Memorias por Fabricante</span>
-              <span className="font-bold text-amber-300">💀 Tradición MX · 🎃 Halloween</span>
+              <span className="font-bold text-amber-300">💀 Día de Muertos · Tradición Mexicana</span>
             </div>
             <BrandTablesView
               onSelectChip={handleSelectChip}
@@ -851,9 +853,9 @@ export default function App() {
         {/* ================================================================= */}
         {activeTab === 'tutorial' && (
           <div className="space-y-3">
-            <div className="px-3.5 py-2 rounded-xl bg-purple-500/10 border border-purple-400/25 flex items-center justify-between text-xs text-purple-200">
+            <div className="px-3.5 py-2 rounded-xl bg-purple-500/10 border border-purple-400/30 flex items-center justify-between text-xs text-purple-200">
               <span>🕯️ Guía Visual de Anatomía de Chips BGA</span>
-              <span className="font-bold text-amber-300">🏵️ Día de Muertos · 🎃 Halloween</span>
+              <span className="font-bold text-amber-300">🏵️ Flor de Cempasúchil · Ofrenda MX</span>
             </div>
             <VisualTutorialView />
           </div>
@@ -864,9 +866,9 @@ export default function App() {
         {/* ================================================================= */}
         {activeTab === 'batch' && (
           <div className="space-y-3">
-            <div className="px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-400/25 flex items-center justify-between text-xs text-amber-200">
-              <span>🎃 Contador de Lote y Corte para WhatsApp</span>
-              <span className="font-bold text-amber-300">🏵️ Edición Especial</span>
+            <div className="px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-400/30 flex items-center justify-between text-xs text-amber-200">
+              <span>💀 Contador de Lote y Corte para WhatsApp</span>
+              <span className="font-bold text-amber-300">🏵️ Edición Día de Muertos</span>
             </div>
             <BatchCounterPanel
               counts={batchCounts}
