@@ -4,6 +4,68 @@
 
 :root {
   color-scheme: dark;
+  font-size: 16px;
+}
+
+/* ==========================================================================
+   SISTEMA ACCESIBLE Y ADAPTATIVO DE TAMAÑO DE TEXTO (VISTA ESTÁNDAR / MAYOR)
+   Escala todo proporcionalmente usando rem sin deformar ni romper el diseño
+   ========================================================================== */
+html[data-text-scale="normal"] {
+  font-size: 16px;
+}
+
+html[data-text-scale="large"] {
+  font-size: 18.5px;
+}
+
+html[data-text-scale="xlarge"] {
+  font-size: 21px;
+}
+
+/* En móviles pequeños (< 380px), ajustamos ligeramente el modo Extra Grande para que nunca desborde */
+@media (max-width: 380px) {
+  html[data-text-scale="large"] {
+    font-size: 17.5px;
+  }
+  html[data-text-scale="xlarge"] {
+    font-size: 19.5px;
+  }
+}
+
+/* Escalar también clases arbitrarias de 10px y 11px cuando el usuario elige Letra Grande o Extra Grande */
+html[data-text-scale="large"] .text-\[10px\] {
+  font-size: 0.75rem !important;
+  line-height: 1.15rem !important;
+}
+html[data-text-scale="large"] .text-\[11px\] {
+  font-size: 0.8125rem !important;
+  line-height: 1.2rem !important;
+}
+
+html[data-text-scale="xlarge"] .text-\[10px\] {
+  font-size: 0.82rem !important;
+  line-height: 1.25rem !important;
+}
+html[data-text-scale="xlarge"] .text-\[11px\] {
+  font-size: 0.875rem !important;
+  line-height: 1.3rem !important;
+}
+
+/* Grid adaptativo para tarjetas de metadatos (Marca / RAM / Tipo) para que no se aprieten en Vista Mayor */
+.adaptive-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+@media (max-width: 639px) {
+  html[data-text-scale="xlarge"] .adaptive-meta-grid {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+  html[data-text-scale="large"] .adaptive-meta-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 body {
@@ -14,6 +76,7 @@ body {
   padding-top: env(safe-area-inset-top, 0px);
   -webkit-tap-highlight-color: transparent;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  overflow-x: hidden;
 }
 
 /* Custom thin scrollbar */
@@ -38,61 +101,4 @@ body {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
-}
-
-/* Temporada Día de Muertos — Papel Picado con Calacas y Cempasúchil */
-.logica-papel-picado {
-  width: 100%;
-  height: 14px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='42' viewBox='0 0 360 42'%3E%3Cdefs%3E%3ClinearGradient id='cuerda' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0%25' stop-color='%2310b981'/%3E%3Cstop offset='25%25' stop-color='%23f59e0b'/%3E%3Cstop offset='50%25' stop-color='%23ec4899'/%3E%3Cstop offset='75%25' stop-color='%23a855f7'/%3E%3Cstop offset='100%25' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='360' height='2.5' fill='url(%23cuerda)'/%3E%3Cg%3E%3Cpath d='M5 2.5 H85 V26 L75 36 L65 28 L55 37 L45 28 L35 37 L25 28 L15 36 L5 26 Z' fill='%23291304' stroke='%23f59e0b' stroke-width='1.2'/%3E%3Ccircle cx='45' cy='14' r='6.5' fill='%23fef3c7'/%3E%3Crect x='41' y='18' width='8' height='4.5' rx='1' fill='%23fef3c7'/%3E%3Ccircle cx='42.6' cy='13.5' r='1.7' fill='%23291304'/%3E%3Ccircle cx='47.4' cy='13.5' r='1.7' fill='%23291304'/%3E%3Cpath d='M45 15.5 L43.8 17.5 H46.2 Z' fill='%23ec4899'/%3E%3Cpath d='M95 2.5 H175 V26 L165 36 L155 28 L145 37 L135 28 L125 37 L115 28 L105 36 L95 26 Z' fill='%2307261b' stroke='%2310b981' stroke-width='1.2'/%3E%3Ccircle cx='135' cy='16' r='4.2' fill='%23fde047'/%3E%3Ccircle cx='135' cy='8.8' r='2.4' fill='%23f59e0b'/%3E%3Ccircle cx='135' cy='23.2' r='2.4' fill='%23f59e0b'/%3E%3Ccircle cx='127.8' cy='16' r='2.4' fill='%23f59e0b'/%3E%3Ccircle cx='142.2' cy='16' r='2.4' fill='%23f59e0b'/%3E%3Cpath d='M185 2.5 H265 V26 L255 36 L245 28 L235 37 L225 28 L215 37 L205 28 L195 36 L185 26 Z' fill='%231c0b2b' stroke='%23a855f7' stroke-width='1.2'/%3E%3Ccircle cx='225' cy='14' r='6.5' fill='%23f5d0fe'/%3E%3Crect x='221' y='18' width='8' height='4.5' rx='1' fill='%23f5d0fe'/%3E%3Ccircle cx='222.6' cy='13.5' r='1.7' fill='%231c0b2b'/%3E%3Ccircle cx='227.4' cy='13.5' r='1.7' fill='%231c0b2b'/%3E%3Cpath d='M275 2.5 H355 V26 L345 36 L335 28 L325 37 L315 28 L305 37 L295 28 L285 36 L275 26 Z' fill='%232b091c' stroke='%23ec4899' stroke-width='1.2'/%3E%3Ccircle cx='315' cy='16' r='4.2' fill='%23fde047'/%3E%3Ccircle cx='315' cy='8.8' r='2.4' fill='%23f472b6'/%3E%3Ccircle cx='315' cy='23.2' r='2.4' fill='%23f472b6'/%3E%3Ccircle cx='307.8' cy='16' r='2.4' fill='%23f472b6'/%3E%3Ccircle cx='322.2' cy='16' r='2.4' fill='%23f472b6'/%3E%3C/g%3E%3C/svg%3E");
-  background-repeat: repeat-x;
-  background-size: 200px 14px;
-  pointer-events: none;
-  opacity: 0.94;
-}
-
-@media (min-width: 640px) {
-  .logica-papel-picado {
-    height: 18px;
-    background-size: 240px 18px;
-  }
-}
-
-@keyframes logicaPetalFall {
-  0% {
-    transform: translate3d(0, -24px, 0) rotate(0deg);
-    opacity: 0;
-  }
-  15% {
-    opacity: 0.65;
-  }
-  50% {
-    transform: translate3d(22px, 48vh, 0) rotate(180deg);
-  }
-  85% {
-    opacity: 0.55;
-  }
-  100% {
-    transform: translate3d(-16px, 102vh, 0) rotate(360deg);
-    opacity: 0;
-  }
-}
-
-.logica-petal {
-  position: fixed;
-  top: -24px;
-  width: 10px;
-  height: 14px;
-  border-radius: 80% 20% 80% 20%;
-  background: radial-gradient(circle at 30% 30%, #fde047, #f59e0b 65%, #ea580c);
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.35);
-  pointer-events: none;
-  z-index: 20;
-  animation: logicaPetalFall linear infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .logica-petal {
-    display: none !important;
-  }
 }

@@ -207,7 +207,7 @@ export default function VisualTutorialView() {
           </div>
 
           {/* Dibujo del Chip Físico */}
-          <div className="w-full max-w-[270px] aspect-square rounded-3xl bg-gradient-to-b from-neutral-800 to-neutral-950 border-4 border-neutral-700 shadow-2xl p-5 flex flex-col justify-between my-1">
+          <div className="w-full max-w-[18.5rem] min-h-[16.5rem] rounded-3xl bg-gradient-to-b from-neutral-800 to-neutral-950 border-4 border-neutral-700 shadow-2xl p-4 sm:p-5 flex flex-col justify-between gap-2 my-1">
             <div className="flex items-center justify-between">
               <span className="w-3 h-3 rounded-full bg-neutral-500" />
               <span className="text-[10px] font-mono text-neutral-500 tracking-widest">

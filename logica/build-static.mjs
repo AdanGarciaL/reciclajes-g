@@ -9,7 +9,7 @@ const DEV_INDEX_HTML = `<!DOCTYPE html>
 <html lang="es-MX" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#04120a" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -72,7 +72,7 @@ const assetFiles = fs.existsSync(distAssetsDir)
   ? fs.readdirSync(distAssetsDir).map((f) => `./assets/${f}`)
   : [];
 
-const swContent = `const CACHE_NAME = 'ecologica-garcia-ic-v5';
+const swContent = `const CACHE_NAME = 'ecologica-garcia-ic-v6';
 const ASSETS = [
   './',
   './index.html',

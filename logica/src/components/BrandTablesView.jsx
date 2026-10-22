@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Search, X } from 'lucide-react';
-import { SEED_IC_CATALOG } from '../data/seedCatalog';
-import { getCustomDatabase } from '../services/icEngine';
+import { Plus, Search, X, Pencil } from 'lucide-react';
+import { getAllEditableCatalog } from '../services/icEngine';
 
 // Extrae la parte exacta que define la capacidad con una etiqueta corta de 3 palabras
 export function highlightCodeDifference(item) {
@@ -103,7 +102,12 @@ export function getCapacityPillStyle(storageStr) {
   return 'bg-sky-400 text-black border-sky-200';
 }
 
-export default function BrandTablesView({ onSelectChip, onAddChipToBatch }) {
+export default function BrandTablesView({
+  onSelectChip,
+  onAddChipToBatch,
+  onEditChip,
+  catalogVersion = 0,
+}) {
   const [selectedBrand, setSelectedBrand] = useState('ALL');
   const [selectedCapacity, setSelectedCapacity] = useState('ALL');
   const [tableFilter, setTableFilter] = useState('');
@@ -120,18 +124,8 @@ export default function BrandTablesView({ onSelectChip, onAddChipToBatch }) {
   const capacityTabs = ['ALL', '8GB', '16GB', '32GB', '64GB', '128GB', '256GB', '512GB', '1TB'];
 
   const allCatalog = useMemo(() => {
-    const custom = getCustomDatabase();
-    const seen = new Set();
-    const merged = [];
-    for (const item of [...custom, ...SEED_IC_CATALOG]) {
-      const k = String(item.code).toUpperCase();
-      if (!seen.has(k)) {
-        seen.add(k);
-        merged.push(item);
-      }
-    }
-    return merged;
-  }, []);
+    return getAllEditableCatalog();
+  }, [catalogVersion]);
 
   const filteredCatalog = useMemo(() => {
     return allCatalog.filter((item) => {
@@ -256,14 +250,14 @@ export default function BrandTablesView({ onSelectChip, onAddChipToBatch }) {
             return (
               <div
                 key={item.code}
-                className="p-3.5 rounded-2xl bg-[#081f12] hover:bg-[#0b2918] border border-emerald-500/20 flex items-center justify-between gap-3 transition"
+                className="p-3.5 rounded-2xl bg-[#081f12] hover:bg-[#0b2918] border border-emerald-500/20 flex items-center justify-between gap-2.5 flex-wrap sm:flex-nowrap transition"
               >
                 <button
                   type="button"
                   onClick={() => onSelectChip(item)}
                   className="min-w-0 text-left flex-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-xl"
                 >
-                  <div className="font-mono font-bold text-sm sm:text-base flex items-center flex-wrap">
+                  <div className="font-mono font-bold text-sm sm:text-base flex items-center flex-wrap break-all">
                     <span className="text-gray-300">{diff.pre}</span>
                     <span
                       className={`px-1.5 py-0.5 mx-0.5 rounded-md font-black text-xs sm:text-sm shadow ${pillStyle}`}
@@ -283,15 +277,31 @@ export default function BrandTablesView({ onSelectChip, onAddChipToBatch }) {
                         <span className="text-gray-300">RAM {item.ram}</span>
                       </>
                     )}
+                    {item.isCustom && (
+                      <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[10px] font-bold">
+                        Editado / Propio
+                      </span>
+                    )}
                   </div>
                 </button>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <span
                     className={`px-3 py-1.5 rounded-xl font-mono font-black text-sm sm:text-base border ${pillStyle}`}
                   >
                     {item.storage}
                   </span>
+                  {onEditChip && (
+                    <button
+                      type="button"
+                      onClick={() => onEditChip(item)}
+                      aria-label={`Editar chip ${item.code}`}
+                      className="p-2.5 rounded-xl bg-white/5 hover:bg-white/15 text-emerald-300 border border-emerald-500/25 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                      title="Editar este chip"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => onAddChipToBatch(item)}

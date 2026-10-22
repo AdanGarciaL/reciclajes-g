@@ -518,10 +518,18 @@ export function getAutoLearnedDatabase() {
   return Array.isArray(list) ? list : [];
 }
 
-export function addOrUpdateCustomChip(chip) {
+export function addOrUpdateCustomChip(chip, originalCodeToReplace = null) {
   const code = normalizeCode(chip?.code);
   if (!code || code.length < 3) return null;
-  const list = getCustomDatabase();
+  let list = getCustomDatabase();
+
+  if (originalCodeToReplace) {
+    const oldNorm = normalizeCode(originalCodeToReplace);
+    if (oldNorm && oldNorm !== code) {
+      list = list.filter((item) => normalizeCode(item.code) !== oldNorm);
+    }
+  }
+
   const entry = {
     code,
     partNumber: chip.partNumber ? normalizeCode(chip.partNumber) : code,
@@ -546,11 +554,77 @@ export function addOrUpdateCustomChip(chip) {
   return entry;
 }
 
+export function addMultipleCustomChips(chipsArray) {
+  if (!Array.isArray(chipsArray) || chipsArray.length === 0) return 0;
+  const list = getCustomDatabase();
+  let count = 0;
+
+  for (let i = chipsArray.length - 1; i >= 0; i--) {
+    const chip = chipsArray[i];
+    const code = normalizeCode(chip?.code);
+    if (!code || code.length < 3) continue;
+
+    const entry = {
+      code,
+      partNumber: chip.partNumber ? normalizeCode(chip.partNumber) : code,
+      storage: String(chip.storage || '64GB').toUpperCase().trim(),
+      ram: chip.ram ? String(chip.ram).toUpperCase().trim() : null,
+      manufacturer: chip.manufacturer || 'Samsung',
+      type: chip.type || 'eMCP',
+      tech: chip.tech || chip.type || 'eMCP',
+      package: chip.package || null,
+      notes: chip.notes || '',
+      updatedAt: new Date().toISOString(),
+      source: 'Base Eco Lógica García',
+    };
+
+    const idx = list.findIndex((item) => normalizeCode(item.code) === code);
+    if (idx >= 0) {
+      list[idx] = entry;
+    } else {
+      list.unshift(entry);
+    }
+    count++;
+  }
+
+  if (count > 0) {
+    saveCustomDatabase(list);
+  }
+  return count;
+}
+
 export function deleteCustomChip(code) {
   const norm = normalizeCode(code);
   const list = getCustomDatabase().filter((item) => normalizeCode(item.code) !== norm);
   saveCustomDatabase(list);
   return list;
+}
+
+export function getAllEditableCatalog() {
+  const custom = getCustomDatabase();
+  const auto = getAutoLearnedDatabase();
+  const seen = new Set();
+  const merged = [];
+
+  for (const item of custom) {
+    const k = normalizeCode(item.code);
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    merged.push({ ...item, isCustom: true });
+  }
+  for (const item of auto) {
+    const k = normalizeCode(item.code);
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    merged.push({ ...item, isAutoLearned: true });
+  }
+  for (const item of SEED_IC_CATALOG) {
+    const k = normalizeCode(item.code);
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    merged.push({ ...item, isSeed: true });
+  }
+  return merged;
 }
 
 export function getPendingSuggestions() {
@@ -576,6 +650,36 @@ export function addPendingSuggestion(suggestion) {
   const next = [item, ...list.filter((x) => x.code !== code)];
   safeSetStorage(STORAGE_KEYS.PENDING_SUGGESTIONS, next);
   return next;
+}
+
+export function addMultiplePendingSuggestions(suggestionsArray) {
+  if (!Array.isArray(suggestionsArray) || suggestionsArray.length === 0) return 0;
+  let list = getPendingSuggestions();
+  let count = 0;
+
+  for (let i = suggestionsArray.length - 1; i >= 0; i--) {
+    const suggestion = suggestionsArray[i];
+    const code = normalizeCode(suggestion?.code);
+    if (!code || code.length < 3) continue;
+    const item = {
+      id: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
+      code,
+      storage: suggestion.storage || '64GB',
+      ram: suggestion.ram || '',
+      manufacturer: suggestion.manufacturer || 'Desconocido',
+      type: suggestion.type || 'eMCP',
+      notes: suggestion.notes || '',
+      submittedBy: suggestion.submittedBy || 'Operador',
+      createdAt: new Date().toISOString(),
+    };
+    list = [item, ...list.filter((x) => x.code !== code)];
+    count++;
+  }
+
+  if (count > 0) {
+    safeSetStorage(STORAGE_KEYS.PENDING_SUGGESTIONS, list);
+  }
+  return count;
 }
 
 export function removePendingSuggestion(id) {

@@ -17,7 +17,7 @@ import {
   Smartphone,
   Share,
   ArrowLeft,
-  WifiOff,
+  Pencil,
 } from 'lucide-react';
 import {
   decodeChipOffline,
@@ -35,6 +35,12 @@ import AdminDatabaseModal from './components/AdminDatabaseModal';
 import BatchCounterPanel, { normalizeBucketKey } from './components/BatchCounterPanel';
 import BrandTablesView, { highlightCodeDifference } from './components/BrandTablesView';
 import VisualTutorialView from './components/VisualTutorialView';
+
+const TEXT_SCALE_OPTIONS = [
+  { id: 'normal', shortLabel: 'A', fullLabel: 'Letra Estándar (Normal)' },
+  { id: 'large', shortLabel: 'A+', fullLabel: 'Letra Grande' },
+  { id: 'xlarge', shortLabel: 'A++', fullLabel: 'Letra Extra Grande (Vista Mayor)' },
+];
 
 function getCapacityTheme(storageStr) {
   const s = String(storageStr || '').toUpperCase().trim();
@@ -93,6 +99,35 @@ export default function App() {
 
   const [voiceEnabled, setVoiceEnabled] = useState(true);
 
+  // Tamaño de texto accesible y adaptativo (normal | large | xlarge)
+  const [textScale, setTextScale] = useState(() => {
+    try {
+      const saved = localStorage.getItem('eco_text_scale_v1');
+      if (saved === 'normal' || saved === 'large' || saved === 'xlarge') return saved;
+    } catch {
+      // ignore
+    }
+    return 'normal';
+  });
+
+  useEffect(() => {
+    try {
+      document.documentElement.setAttribute('data-text-scale', textScale);
+      localStorage.setItem('eco_text_scale_v1', textScale);
+    } catch {
+      // ignore
+    }
+  }, [textScale]);
+
+  function handleSelectTextScale(nextScale) {
+    setTextScale(nextScale);
+    const found = TEXT_SCALE_OPTIONS.find((o) => o.id === nextScale);
+    if (found) {
+      setToastMsg(found.fullLabel);
+      setTimeout(() => setToastMsg(''), 1800);
+    }
+  }
+
   const [recentHistory, setRecentHistory] = useState(() =>
     safeGetStorage('eco_recent_history_v1', SEED_IC_CATALOG.slice(0, 6))
   );
@@ -111,6 +146,8 @@ export default function App() {
   const [toastMsg, setToastMsg] = useState('');
 
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [editingChipTarget, setEditingChipTarget] = useState(null);
+  const [catalogVersion, setCatalogVersion] = useState(0);
   const [dbStats, setDbStats] = useState(() => getDatabaseStats());
 
   // Estado de Instalación PWA (Android + iPhone)
@@ -140,25 +177,6 @@ export default function App() {
       return true;
     }
   });
-  const [petalsPaused, setPetalsPaused] = useState(() => {
-    try {
-      return localStorage.getItem('eco_temporada_petals_paused_v1') === '1';
-    } catch {
-      return false;
-    }
-  });
-
-  function togglePetals() {
-    setPetalsPaused((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem('eco_temporada_petals_paused_v1', next ? '1' : '0');
-      } catch {
-        // ignore
-      }
-      return next;
-    });
-  }
 
   function handleAcceptCookies(mode = 'accepted') {
     try {
@@ -167,6 +185,17 @@ export default function App() {
       // ignorar
     }
     setCookieAccepted(true);
+  }
+
+  function openAddModal() {
+    setEditingChipTarget(null);
+    setIsAdminOpen(true);
+  }
+
+  function openEditChipModal(chip) {
+    if (!chip) return;
+    setEditingChipTarget(chip);
+    setIsAdminOpen(true);
   }
 
   const inputRef = useRef(null);
@@ -189,7 +218,6 @@ export default function App() {
     window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
     window.addEventListener('appinstalled', onAppInstalled);
 
-    // Si viene ?instalar=1 desde la página principal, abre la guía o lanza el instalador
     try {
       const params = new URLSearchParams(window.location.search);
       if (params.get('instalar') === '1' && !isStandalone) {
@@ -292,7 +320,7 @@ export default function App() {
         clearTimeout(timer);
       };
     }
-  }, [query]);
+  }, [query, catalogVersion]);
 
   function pushToRecent(chip) {
     if (!chip || !chip.code) return;
@@ -368,8 +396,8 @@ export default function App() {
 
   return (
     <div className="min-h-dvh flex flex-col bg-[#04120a] text-white pb-24 md:pb-10">
-      {/* CABECERA MINIMALISTA Y PROFESIONAL */}
-      <header className="sticky top-0 z-30 backdrop-blur-xl bg-[#04120a]/95 border-b border-emerald-500/15">
+      {/* CABECERA MINIMALISTA, ACCESIBLE Y PROFESIONAL */}
+      <header className="sticky top-0 z-30 backdrop-blur-xl bg-[#04120a]/95 border-b border-emerald-500/20">
         <div className="max-w-5xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2">
           {/* Identidad Eco Lógica García + Regreso al sitio web */}
           <div className="flex items-center gap-2 min-w-0">
@@ -391,7 +419,7 @@ export default function App() {
               <h1 className="font-black tracking-tight text-white text-xs sm:text-base leading-none truncate">
                 ECO LÓGICA <span className="text-emerald-400">GARCÍA</span>
               </h1>
-              <span className="text-[10px] sm:text-[11px] text-emerald-300/70 font-medium block truncate mt-0.5">
+              <span className="text-[10px] sm:text-[11px] text-emerald-300/75 font-medium block truncate mt-0.5">
                 {dbStats.totalOfflineCount.toLocaleString()} chips registrados
               </span>
             </div>
@@ -435,8 +463,36 @@ export default function App() {
             })}
           </nav>
 
-          {/* Controles Rápidos: Instalar App + Día de Muertos + Voz + Base de Datos */}
+          {/* Controles Rápidos: Tamaño de Letra (A / A+ / A++) + Instalar + Voz + Base de Datos */}
           <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            {/* Selector de Tamaño de Texto para Vista Estándar o Vista Mayor */}
+            <div
+              className="flex items-center p-0.5 rounded-xl bg-[#081f12] border border-emerald-500/30"
+              role="group"
+              aria-label="Tamaño de letra"
+            >
+              {TEXT_SCALE_OPTIONS.map((opt) => {
+                const active = textScale === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => handleSelectTextScale(opt.id)}
+                    title={opt.fullLabel}
+                    aria-label={opt.fullLabel}
+                    aria-pressed={active}
+                    className={`px-1.5 sm:px-2 py-1 rounded-lg font-mono text-[11px] sm:text-xs font-black transition ${
+                      active
+                        ? 'bg-emerald-400 text-black shadow'
+                        : 'text-emerald-200/75 hover:text-white'
+                    }`}
+                  >
+                    {opt.shortLabel}
+                  </button>
+                );
+              })}
+            </div>
+
             {!isStandalone && (
               <button
                 type="button"
@@ -446,23 +502,9 @@ export default function App() {
                 className="px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/40 text-emerald-300 font-extrabold text-xs flex items-center gap-1 transition"
               >
                 <Download className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="hidden sm:inline">Instalar</span>
+                <span className="hidden lg:inline">Instalar</span>
               </button>
             )}
-
-            <button
-              type="button"
-              onClick={togglePetals}
-              aria-label={petalsPaused ? 'Activar pétalos de cempasúchil' : 'Pausar pétalos'}
-              title={petalsPaused ? 'Pétalos pausados' : 'Día de Muertos activo'}
-              className={`p-1.5 sm:p-2 rounded-xl border text-xs font-bold transition ${
-                !petalsPaused
-                  ? 'bg-amber-500/15 border-amber-400/40 text-amber-300'
-                  : 'bg-white/5 border-white/10 text-gray-500'
-              }`}
-            >
-              <span className="text-xs sm:text-sm">🏵️</span>
-            </button>
 
             <button
               type="button"
@@ -480,8 +522,9 @@ export default function App() {
 
             <button
               type="button"
-              onClick={() => setIsAdminOpen(true)}
-              aria-label="Abrir Base de Datos"
+              onClick={openAddModal}
+              aria-label="Abrir Base de Datos y Gestión de Chips"
+              title="Agregar o editar chips en la Base de Datos"
               className="relative px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs flex items-center gap-1 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
               <Database className="w-3.5 h-3.5" />
@@ -494,36 +537,17 @@ export default function App() {
             </button>
           </div>
         </div>
-        {/* Cenefa de Papel Picado Artesanal (Temporada Día de Muertos) */}
-        <div className="logica-papel-picado" aria-hidden="true" />
       </header>
 
-      {/* Lluvia ligera de Pétalos de Cempasúchil flotantes en el fondo */}
-      {!petalsPaused && (
-        <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-10 overflow-hidden">
-          {[6, 18, 31, 44, 57, 70, 83, 94].map((left, idx) => (
-            <span
-              key={left}
-              className="logica-petal"
-              style={{
-                left: `${left}%`,
-                animationDuration: `${14 + (idx % 4) * 2.5}s`,
-                animationDelay: `-${idx * 2.1}s`,
-              }}
-            />
-          ))}
-        </div>
-      )}
-
       {/* CONTENEDOR CENTRAL LIMPIO Y PROFESIONAL */}
-      <main className="max-w-5xl w-full mx-auto px-3 sm:px-4 pt-3 sm:pt-6 flex-1">
+      <main className="max-w-5xl w-full mx-auto px-3 sm:px-4 pt-3 sm:pt-5 flex-1">
         {toastMsg && (
           <div
             role="status"
             aria-live="polite"
-            className="fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-emerald-400 text-black font-black text-xs shadow-2xl flex items-center gap-1.5"
+            className="fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-emerald-400 text-black font-black text-xs shadow-2xl flex items-center gap-1.5 whitespace-nowrap"
           >
-            <CheckCircle2 className="w-4 h-4" />
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
             {toastMsg}
           </div>
         )}
@@ -539,8 +563,8 @@ export default function App() {
                 <p className="text-xs sm:text-sm font-black text-white leading-tight">
                   Instala EcoLógica IC en tu Celular o PC / Laptop
                 </p>
-                <p className="text-[11px] text-emerald-200/75 truncate">
-                  Acceso rápido desde tu pantalla de inicio, Android, iPhone y PC.
+                <p className="text-[11px] text-emerald-200/75 break-words">
+                  Acceso rápido desde tu pantalla de inicio en Android, iPhone y PC.
                 </p>
               </div>
             </div>
@@ -606,7 +630,7 @@ export default function App() {
                 autoCorrect="off"
                 autoCapitalize="characters"
                 spellCheck={false}
-                className="w-full pl-12 pr-12 py-4 rounded-2xl bg-[#081f12] border-2 border-emerald-500/35 focus:border-emerald-400 focus:outline-none font-mono font-black text-lg sm:text-xl text-white placeholder:text-emerald-100/30 placeholder:font-sans placeholder:font-medium placeholder:text-sm tracking-wide transition"
+                className="w-full pl-12 pr-12 py-4 rounded-2xl bg-[#081f12] border-2 border-emerald-500/35 focus:border-emerald-400 focus:outline-none font-mono font-black text-lg sm:text-xl text-white placeholder:text-emerald-100/35 placeholder:font-sans placeholder:font-medium placeholder:text-sm tracking-wide transition"
               />
               {query && (
                 <button
@@ -639,12 +663,12 @@ export default function App() {
               </div>
             )}
 
-            {/* TARJETA DE RESULTADO LIMPIA Y DIRECTA */}
+            {/* TARJETA DE RESULTADO LIMPIA, ACCESIBLE Y DIRECTA */}
             {activeResult && theme ? (
               <div
                 role="status"
                 aria-live="polite"
-                className={`rounded-3xl border-2 p-5 sm:p-6 shadow-2xl space-y-5 ${theme.card}`}
+                className={`rounded-3xl border-2 p-5 sm:p-6 shadow-2xl space-y-4 ${theme.card}`}
               >
                 {/* Aviso si se auto-corrigió un error óptico (ej. JZOO8 -> JZ008) */}
                 {activeResult.correctedTo && (
@@ -654,10 +678,10 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Fila Principal: Capacidad Gigante + Botón Sumar */}
+                {/* Fila Principal: Capacidad Gigante + Botones Voz / Editar / Sumar */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
                   <div>
-                    <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-emerald-300/70 block mb-1">
+                    <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-emerald-300/75 block mb-1">
                       Almacenamiento
                     </span>
                     <div
@@ -667,16 +691,28 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
                     <button
                       type="button"
                       onClick={() => speakChipResult(activeResult, true, false)}
                       aria-label="Repetir capacidad en voz alta"
                       className="p-3 rounded-2xl bg-black/40 hover:bg-black/60 border border-white/10 text-emerald-300 transition shrink-0"
-                      title="Escuchar voz"
+                      title="Escuchar capacidad en voz alta"
                     >
                       <Volume2 className="w-5 h-5" />
                     </button>
+
+                    <button
+                      type="button"
+                      onClick={() => openEditChipModal(activeResult)}
+                      aria-label="Editar información de este chip"
+                      className="px-3.5 py-3 rounded-2xl bg-white/5 hover:bg-white/15 border border-emerald-500/30 text-emerald-200 font-bold text-xs flex items-center gap-1.5 transition shrink-0"
+                      title="Editar este chip"
+                    >
+                      <Pencil className="w-4 h-4 text-emerald-400" />
+                      <span>Editar</span>
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => addChipToBatch(activeResult)}
@@ -687,31 +723,31 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 3 Datos Directos: Marca · RAM · Tipo */}
-                <div className="grid grid-cols-3 gap-2 sm:gap-2.5 pt-2 border-t border-white/10">
-                  <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-[#04120a] border border-white/5">
-                    <span className="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-300/60 block">
+                {/* 3 Datos Directos Adaptativos: Marca · RAM · Tipo */}
+                <div className="adaptive-meta-grid pt-2 border-t border-white/10">
+                  <div className="p-3 rounded-xl sm:rounded-2xl bg-[#04120a] border border-white/10">
+                    <span className="text-[10px] uppercase font-bold text-emerald-300/70 block">
                       Marca
                     </span>
-                    <span className="text-xs sm:text-base font-black text-white truncate block mt-0.5">
+                    <span className="text-xs sm:text-base font-black text-white break-words block mt-0.5">
                       {activeResult.manufacturer}
                     </span>
                   </div>
 
-                  <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-[#04120a] border border-white/5">
-                    <span className="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-300/60 block">
+                  <div className="p-3 rounded-xl sm:rounded-2xl bg-[#04120a] border border-white/10">
+                    <span className="text-[10px] uppercase font-bold text-emerald-300/70 block">
                       RAM
                     </span>
-                    <span className="text-xs sm:text-base font-black text-emerald-300 truncate block mt-0.5">
-                      {activeResult.ram || '—'}
+                    <span className="text-xs sm:text-base font-black text-emerald-300 break-words block mt-0.5">
+                      {activeResult.ram || 'Solo Memoria'}
                     </span>
                   </div>
 
-                  <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-[#04120a] border border-white/5">
-                    <span className="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-300/60 block">
+                  <div className="p-3 rounded-xl sm:rounded-2xl bg-[#04120a] border border-white/10">
+                    <span className="text-[10px] uppercase font-bold text-emerald-300/70 block">
                       Tipo
                     </span>
-                    <span className="text-xs sm:text-base font-black text-white truncate block mt-0.5">
+                    <span className="text-xs sm:text-base font-black text-white break-words block mt-0.5">
                       {activeResult.type}
                     </span>
                   </div>
@@ -719,20 +755,20 @@ export default function App() {
 
                 {/* Barra de Código con la Diferencia Remarcada */}
                 {activeDiff && (
-                  <div className="px-4 py-3 rounded-2xl bg-[#04120a] border border-emerald-500/25 flex items-center justify-between gap-2 text-xs">
-                    <div className="font-mono font-bold text-sm flex items-center">
-                      <span className="text-gray-400">{activeDiff.pre}</span>
+                  <div className="px-4 py-3 rounded-2xl bg-[#04120a] border border-emerald-500/25 flex items-center justify-between gap-2 flex-wrap text-xs">
+                    <div className="font-mono font-bold text-sm flex items-center flex-wrap break-all">
+                      <span className="text-gray-300">{activeDiff.pre}</span>
                       <span className={`px-1.5 py-0.5 mx-0.5 rounded font-black ${theme.badge}`}>
                         {activeDiff.highlight}
                       </span>
-                      <span className="text-gray-400">{activeDiff.post}</span>
+                      <span className="text-gray-300">{activeDiff.post}</span>
                     </div>
                     <span className="font-bold text-emerald-300">{activeDiff.why}</span>
                   </div>
                 )}
               </div>
             ) : query.trim().length >= 2 && suggestions.length === 0 && !cpuWarning ? (
-              <div className="p-4 rounded-2xl bg-[#081f12] border border-emerald-500/25 flex items-center justify-between gap-3">
+              <div className="p-4 rounded-2xl bg-[#081f12] border border-emerald-500/25 flex items-center justify-between gap-3 flex-wrap">
                 <span className="text-xs sm:text-sm font-bold text-white">
                   {isSearchingOnline
                     ? `Buscando "${query}"...`
@@ -740,10 +776,10 @@ export default function App() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => setIsAdminOpen(true)}
+                  onClick={openAddModal}
                   className="px-3.5 py-2 rounded-xl bg-emerald-400 text-black font-black text-xs shrink-0"
                 >
-                  + Agregar
+                  + Agregar Chip
                 </button>
               </div>
             ) : null}
@@ -762,14 +798,14 @@ export default function App() {
                       className="p-3.5 rounded-2xl bg-[#081f12] hover:bg-[#0b2918] border border-emerald-500/20 flex items-center justify-between gap-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
                     >
                       <div className="min-w-0">
-                        <div className="font-mono font-bold text-sm flex items-center">
+                        <div className="font-mono font-bold text-sm flex items-center flex-wrap break-all">
                           <span className="text-gray-300">{diff.pre}</span>
                           <span className={`px-1.5 py-0.2 mx-0.5 rounded font-black ${itemTheme.badge}`}>
                             {diff.highlight}
                           </span>
-                          <span className="text-gray-300 truncate">{diff.post}</span>
+                          <span className="text-gray-300">{diff.post}</span>
                         </div>
-                        <div className="text-xs text-emerald-200/70 mt-0.5">
+                        <div className="text-xs text-emerald-200/75 mt-0.5">
                           {item.manufacturer} · {diff.why}
                         </div>
                       </div>
@@ -788,10 +824,25 @@ export default function App() {
             {/* Acceso rápido a recientes cuando el buscador está vacío */}
             {!query && (
               <div className="space-y-2 pt-1">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300/60 px-1">
-                  Accesos Rápidos
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300/70">
+                    Accesos Rápidos Recientes
+                  </span>
+                  <button
+                    type="button"
+                    onClick={openAddModal}
+                    className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Agregar / Editar Chips
+                  </button>
+                </div>
+                <div
+                  className={`grid gap-2 ${
+                    textScale === 'xlarge'
+                      ? 'grid-cols-1 sm:grid-cols-2'
+                      : 'grid-cols-2 sm:grid-cols-3'
+                  }`}
+                >
                   {recentHistory.map((item) => {
                     const itemTheme = getCapacityTheme(item.storage);
                     const diff = highlightCodeDifference(item);
@@ -800,17 +851,17 @@ export default function App() {
                         key={item.code}
                         type="button"
                         onClick={() => handleSelectChip(item)}
-                        className="p-3 rounded-2xl bg-[#081f12] hover:bg-[#0b2918] border border-emerald-500/15 flex items-center justify-between gap-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                        className="p-3 rounded-2xl bg-[#081f12] hover:bg-[#0b2918] border border-emerald-500/20 flex items-center justify-between gap-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
                       >
                         <div className="min-w-0">
-                          <div className="font-mono font-bold text-xs flex items-center">
+                          <div className="font-mono font-bold text-xs flex items-center flex-wrap break-all">
                             <span className="text-gray-300">{diff.pre}</span>
                             <span className={`px-1 rounded font-black ${itemTheme.badge}`}>
                               {diff.highlight}
                             </span>
-                            <span className="text-gray-300 truncate">{diff.post}</span>
+                            <span className="text-gray-300">{diff.post}</span>
                           </div>
-                          <span className="text-[11px] text-emerald-300/60 block truncate mt-0.5">
+                          <span className="text-[11px] text-emerald-300/70 block truncate mt-0.5">
                             {item.manufacturer}
                           </span>
                         </div>
@@ -835,6 +886,8 @@ export default function App() {
           <BrandTablesView
             onSelectChip={handleSelectChip}
             onAddChipToBatch={addChipToBatch}
+            onEditChip={openEditChipModal}
+            catalogVersion={catalogVersion}
           />
         )}
 
@@ -857,7 +910,7 @@ export default function App() {
         )}
       </main>
 
-      {/* BARRA DE NAVEGACIÓN INFERIOR ESTILO iOS PARA iPHONE 14 PRO Y ANDROID */}
+      {/* BARRA DE NAVEGACIÓN INFERIOR PARA MÓVILES */}
       <nav
         className="md:hidden fixed bottom-0 inset-x-0 z-40 backdrop-blur-2xl bg-[#04120a]/95 border-t border-emerald-500/20 px-2 pb-[env(safe-area-inset-bottom,8px)] pt-1.5"
         role="tablist"
@@ -891,7 +944,7 @@ export default function App() {
         </div>
       </nav>
 
-      {/* MODAL DE INSTALACIÓN PARA ANDROID Y IPHONE */}
+      {/* MODAL DE INSTALACIÓN PARA ANDROID, IPHONE Y PC */}
       {isInstallModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4"
@@ -1110,7 +1163,7 @@ export default function App() {
               Aviso de Cookies y Almacenamiento Local
             </strong>
             <p className="leading-relaxed">
-              Esta aplicación utiliza almacenamiento local únicamente para guardar tus preferencias (como tu contador de lote e historial reciente), sin cookies de rastreo ni publicidad.{' '}
+              Esta aplicación utiliza almacenamiento local únicamente para guardar tus preferencias (como tu contador de lote, tamaño de letra e historial reciente), sin cookies de rastreo ni publicidad.{' '}
               <a
                 href="../aviso-privacidad.html#cookies"
                 className="text-emerald-400 underline font-bold hover:text-emerald-300"
@@ -1139,13 +1192,18 @@ export default function App() {
         </aside>
       )}
 
-      {/* MODAL BASE DE DATOS Y PIN ADMIN */}
+      {/* MODAL BASE DE DATOS, MULTI-ALTA Y EDICIÓN CON PIN ADMIN */}
       <AdminDatabaseModal
         isOpen={isAdminOpen}
-        onClose={() => setIsAdminOpen(false)}
+        onClose={() => {
+          setIsAdminOpen(false);
+          setEditingChipTarget(null);
+        }}
         initialCode={activeResult ? '' : query}
+        initialEditChip={editingChipTarget}
         onDatabaseUpdated={() => {
           setDbStats(getDatabaseStats());
+          setCatalogVersion((v) => v + 1);
           if (query) {
             const refreshed = decodeChipOffline(query);
             if (refreshed) setActiveResult(refreshed);
