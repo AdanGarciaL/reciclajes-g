@@ -646,8 +646,11 @@ export function addPendingSuggestion(suggestion) {
     notes: suggestion.notes || '',
     submittedBy: suggestion.submittedBy || 'Operador',
     createdAt: new Date().toISOString(),
+    isEdit: Boolean(suggestion.isEdit),
+    originalCode: suggestion.originalCode ? normalizeCode(suggestion.originalCode) : null,
+    originalData: suggestion.originalData || null,
   };
-  const next = [item, ...list.filter((x) => x.code !== code)];
+  const next = [item, ...list.filter((x) => x.code !== code && x.originalCode !== code)];
   safeSetStorage(STORAGE_KEYS.PENDING_SUGGESTIONS, next);
   return next;
 }
@@ -671,8 +674,11 @@ export function addMultiplePendingSuggestions(suggestionsArray) {
       notes: suggestion.notes || '',
       submittedBy: suggestion.submittedBy || 'Operador',
       createdAt: new Date().toISOString(),
+      isEdit: Boolean(suggestion.isEdit),
+      originalCode: suggestion.originalCode ? normalizeCode(suggestion.originalCode) : null,
+      originalData: suggestion.originalData || null,
     };
-    list = [item, ...list.filter((x) => x.code !== code)];
+    list = [item, ...list.filter((x) => x.code !== code && x.originalCode !== code)];
     count++;
   }
 
