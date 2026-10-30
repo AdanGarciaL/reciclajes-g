@@ -1,6 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { Plus, Search, X, Pencil, ArrowUpDown } from 'lucide-react';
-import { getAllEditableCatalog, capacityToGbNumber } from '../services/icEngine';
+import {
+  getAllEditableCatalog,
+  capacityToGbNumber,
+  getUsageProfile,
+  getMostSearchedChips,
+  normalizeCode,
+} from '../services/icEngine';
 
 // Extrae la parte exacta que define la capacidad con una etiqueta corta y clara
 export function highlightCodeDifference(item) {
@@ -151,6 +157,7 @@ export default function BrandTablesView({
   onAddChipToBatch,
   onEditChip,
   catalogVersion = 0,
+  usageVersion = 0,
 }) {
   const [selectedBrand, setSelectedBrand] = useState('ALL');
   const [selectedCapacity, setSelectedCapacity] = useState('ALL');
@@ -159,6 +166,7 @@ export default function BrandTablesView({
 
   const brandTabs = [
     { id: 'ALL', label: 'Todas' },
+    { id: 'MOST_SEARCHED', label: 'Más Buscados' },
     { id: 'Samsung', label: 'Samsung' },
     { id: 'Micron', label: 'Micron (JW/JX/JZ)' },
     { id: 'SK Hynix', label: 'SK Hynix' },
@@ -173,14 +181,22 @@ export default function BrandTablesView({
 
   const capacityTabs = ['ALL', '4GB', '8GB', '16GB', '32GB', '64GB', '128GB', '256GB', '512GB', '1TB', '2TB'];
 
+  const usageMap = useMemo(() => {
+    const profile = getUsageProfile();
+    return profile.chips || {};
+  }, [usageVersion, catalogVersion]);
+
   const allCatalog = useMemo(() => {
     return getAllEditableCatalog();
   }, [catalogVersion]);
 
   const filteredCatalog = useMemo(() => {
-    const filtered = allCatalog.filter((item) => {
+    const baseList =
+      selectedBrand === 'MOST_SEARCHED' ? getMostSearchedChips(24) : allCatalog;
+
+    const filtered = baseList.filter((item) => {
       const mfg = String(item.manufacturer || item.brand || '').toLowerCase();
-      if (selectedBrand !== 'ALL') {
+      if (selectedBrand !== 'ALL' && selectedBrand !== 'MOST_SEARCHED') {
         const b = selectedBrand.toLowerCase();
         if (selectedBrand === 'iPhone') {
           if (!mfg.includes('apple') && !mfg.includes('iphone')) {
@@ -241,7 +257,7 @@ export default function BrandTablesView({
       );
     }
     return filtered;
-  }, [allCatalog, selectedBrand, selectedCapacity, tableFilter, sortOrder]);
+  }, [allCatalog, selectedBrand, selectedCapacity, tableFilter, sortOrder, usageVersion]);
 
   function cycleSortOrder() {
     setSortOrder((prev) => (prev === 'default' ? 'desc' : prev === 'desc' ? 'asc' : 'default'));
@@ -370,6 +386,8 @@ export default function BrandTablesView({
             const diff = highlightCodeDifference(item);
             const storageVal = item.storage || item.capacity || '64GB';
             const pillStyle = getCapacityPillStyle(storageVal);
+            const stat = usageMap[normalizeCode(item.code)];
+            const totalUses = stat ? (stat.readCount || 0) + (stat.batchCount || 0) : 0;
             return (
               <div
                 key={item.code}
@@ -394,6 +412,11 @@ export default function BrandTablesView({
                     <span className="font-bold text-white">{item.manufacturer || item.brand}</span>
                     <span>·</span>
                     <span className="text-emerald-300 font-mono font-semibold">{diff.why}</span>
+                    {totalUses > 0 && (
+                      <span className="px-1.5 py-0.2 rounded bg-emerald-500/25 border border-emerald-400/40 text-emerald-300 font-mono font-black text-[10px]">
+                        {totalUses}× leído
+                      </span>
+                    )}
                     {item.ram && item.ram !== 'Sin RAM integrada' && (
                       <>
                         <span>·</span>

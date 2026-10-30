@@ -8,6 +8,7 @@ const STORAGE_KEYS = {
   ADMIN_PIN: 'eco_admin_pin_v2', // Actualizado a v2 con PIN maestro 252002
   RECENT_SEARCHES: 'eco_recent_searches_v1',
   BATCH_ITEMS: 'eco_batch_items_v1',
+  USAGE_PROFILE: 'eco_usage_intelligence_v1',
 };
 
 const DEFAULT_MASTER_PIN = '252002';
@@ -1512,33 +1513,85 @@ export function decodeChipOffline(rawQuery) {
   return null;
 }
 
-// Búsqueda instantánea de sugerencias con soporte de corrección óptica
+// Búsqueda instantánea de sugerencias con soporte de corrección óptica y aprendizaje de uso del usuario
 export function searchChipsInstant(rawQuery, limit = 10) {
   const candidates = generateOpticalCandidates(rawQuery);
   if (candidates.length === 0) return [];
 
+  const usageProfile = getUsageProfile();
+  const userChipsMap = usageProfile.chips || {};
+  const userPrefixesMap = usageProfile.prefixes || {};
+  const userBrandsMap = usageProfile.brands || {};
+
   const results = [];
   const seen = new Set();
+
+  const enrichWithUsage = (item) => {
+    const key = normalizeCode(item.code);
+    const stat = userChipsMap[key];
+    const prefInfo = extractChipPrefixInfo(item.code, item.manufacturer || item.brand);
+    const prefStat = userPrefixesMap[prefInfo.prefix];
+    const brandStat = userBrandsMap[String(item.manufacturer || item.brand || '').toUpperCase()];
+
+    const readCount = stat ? stat.readCount || 0 : 0;
+    const batchCount = stat ? stat.batchCount || 0 : 0;
+    const userScore = stat ? stat.score || readCount + batchCount * 2 : 0;
+    const prefixScore = prefStat ? prefStat.count || 0 : 0;
+    const brandScore = brandStat ? brandStat.count || 0 : 0;
+
+    return {
+      ...item,
+      userReadCount: readCount,
+      userBatchCount: batchCount,
+      userScore,
+      prefixScore,
+      brandScore,
+      isFrequentUserChip: readCount > 0 || batchCount > 0,
+    };
+  };
 
   const pushUnique = (item) => {
     if (!item || !item.code) return;
     const key = normalizeCode(item.code);
     if (seen.has(key)) return;
     seen.add(key);
-    results.push(item);
+    results.push(enrichWithUsage(item));
   };
+
+  // 1. Primero buscar en el perfil de uso real del usuario (incluso desde 1 sola letra escrita)
+  const userSavedChips = Object.values(userChipsMap).sort((a, b) => (b.score || 0) - (a.score || 0));
+  for (const q of candidates) {
+    if (q.length < 1) continue;
+    for (const uChip of userSavedChips) {
+      const codeNorm = normalizeCode(uChip.code);
+      const pnNorm = normalizeCode(uChip.partNumber || '');
+      if (codeNorm.startsWith(q) || (q.length >= 2 && (codeNorm.includes(q) || pnNorm.includes(q)))) {
+        pushUnique({
+          ...uChip,
+          storage: uChip.storage || uChip.capacity,
+          manufacturer: uChip.manufacturer || uChip.brand,
+          source: uChip.source || 'Frecuente en tu taller',
+        });
+      }
+    }
+  }
 
   const allLocal = [...getCustomDatabase(), ...getAutoLearnedDatabase(), ...SEED_IC_CATALOG];
 
   for (const q of candidates) {
-    if (q.length < 2) continue;
+    if (q.length < 1) continue;
 
     for (const item of allLocal) {
       const codeNorm = normalizeCode(item.code);
       const pnNorm = normalizeCode(item.partNumber || '');
-      const matchedAlias = Array.isArray(item.aliases)
-        ? item.aliases.find((al) => normalizeCode(al).includes(q))
-        : null;
+      if (q.length === 1) {
+        // Con 1 letra mostramos coincidencias por inicio de código
+        if (!codeNorm.startsWith(q)) continue;
+      }
+      const matchedAlias =
+        q.length >= 2 && Array.isArray(item.aliases)
+          ? item.aliases.find((al) => normalizeCode(al).includes(q))
+          : null;
       if (codeNorm.includes(q) || pnNorm.includes(q) || matchedAlias) {
         pushUnique({
           ...item,
@@ -1551,6 +1604,8 @@ export function searchChipsInstant(rawQuery, limit = 10) {
         });
       }
     }
+
+    if (q.length < 2) continue;
 
     const eng = getFdEngine();
     if (eng) {
@@ -1612,6 +1667,7 @@ export function searchChipsInstant(rawQuery, limit = 10) {
 
   if (results.length === 0) {
     for (const q of candidates) {
+      if (q.length < 2) continue;
       const heur = heuristicDecode(q);
       if (heur) {
         pushUnique(heur);
@@ -1620,15 +1676,29 @@ export function searchChipsInstant(rawQuery, limit = 10) {
     }
   }
 
-  // Ordenar resultados priorizando coincidencia exacta y después de MAYOR A MENOR capacidad (Capacidad Máxima primero)
+  // Ordenar resultados priorizando:
+  // 1) Coincidencia exacta
+  // 2) Chips que inician con lo escrito + Frecuencia de uso real del usuario (Aprendizaje)
+  // 3) Familia/Prefijo más usado por el usuario
+  // 4) Capacidad de MAYOR A MENOR (Capacidad Máxima primero)
   const primaryQuery = candidates[0] || '';
   results.sort((a, b) => {
     const aExact = normalizeCode(a.code) === primaryQuery || normalizeCode(a.partNumber) === primaryQuery ? 1 : 0;
     const bExact = normalizeCode(b.code) === primaryQuery || normalizeCode(b.partNumber) === primaryQuery ? 1 : 0;
     if (aExact !== bExact) return bExact - aExact;
+
     const aStarts = normalizeCode(a.code).startsWith(primaryQuery) ? 1 : 0;
     const bStarts = normalizeCode(b.code).startsWith(primaryQuery) ? 1 : 0;
     if (aStarts !== bStarts) return bStarts - aStarts;
+
+    if ((a.userScore || 0) !== (b.userScore || 0)) {
+      return (b.userScore || 0) - (a.userScore || 0);
+    }
+
+    if ((a.prefixScore || 0) !== (b.prefixScore || 0)) {
+      return (b.prefixScore || 0) - (a.prefixScore || 0);
+    }
+
     return capacityToGbNumber(b.storage) - capacityToGbNumber(a.storage);
   });
 
@@ -1905,5 +1975,302 @@ export function getDatabaseStats() {
     pendingCount,
     industrialCount,
     totalOfflineCount: industrialCount + seedCount + customCount + learnedCount,
+  };
+}
+
+// ============================================================================
+// MOTOR DE APRENDIZAJE DE USO Y "MÁS BUSCADOS" DEL USUARIO
+// Aprende automáticamente conforme el usuario lee, selecciona o suma chips al lote
+// ============================================================================
+
+const DEFAULT_HIGH_ROTATION_CODES = [
+  'KMDP6001DA-B425',
+  'KLMCG4JETD-B041',
+  'KM8V7001JM-B813',
+  'H9HP52ACPMMDAR',
+  'H9HQ15AECMMDAR',
+  'JXE77',
+  'JZ034',
+  'SDINBDA4-64G',
+  'KLUDG4UHDC-B0E1',
+  'THGAF8T0T43BAIR',
+];
+
+const DEFAULT_ADAPTIVE_PREFIXES = [
+  { prefix: 'KMDP', brand: 'Samsung eMCP' },
+  { prefix: 'KLMC', brand: 'Samsung eMMC' },
+  { prefix: 'KM8V', brand: 'Samsung uMCP' },
+  { prefix: 'KLUD', brand: 'Samsung UFS' },
+  { prefix: 'H9HP', brand: 'SK Hynix' },
+  { prefix: 'H9HQ', brand: 'SK Hynix' },
+  { prefix: 'HN8T', brand: 'SK Hynix UFS' },
+  { prefix: 'JXE', brand: 'Micron 128G' },
+  { prefix: 'JZ0', brand: 'Micron UFS' },
+  { prefix: 'SDIN', brand: 'SanDisk / WD' },
+  { prefix: 'THGA', brand: 'Kioxia / Toshiba' },
+  { prefix: 'FEMD', brand: 'FORESEE' },
+];
+
+export function extractChipPrefixInfo(rawCode, fallbackBrand = '') {
+  const code = normalizeCode(rawCode);
+  if (!code) return { prefix: '', brand: fallbackBrand || 'IC' };
+
+  if (/^KLM[48ABCDEFGH]G/.test(code)) {
+    return { prefix: code.slice(0, 4), brand: 'Samsung eMMC' };
+  }
+  if (/^KLU[BCDEFGH]G/.test(code)) {
+    return { prefix: code.slice(0, 4), brand: 'Samsung UFS' };
+  }
+  if (/^KM[A-Z0-9]{2}/.test(code)) {
+    return { prefix: code.slice(0, 4), brand: 'Samsung eMCP/uMCP' };
+  }
+  if (/^(H9HP|H9HQ|H9TQ|HN8T|H26M)/.test(code)) {
+    return { prefix: code.slice(0, 4), brand: 'SK Hynix' };
+  }
+  if (/^(JW|JX|JY|JZ|JC)[A-Z0-9]/.test(code)) {
+    return { prefix: code.slice(0, 3), brand: 'Micron FBGA' };
+  }
+  if (code.startsWith('MT29')) {
+    return { prefix: 'MT29', brand: 'Micron' };
+  }
+  if (code.startsWith('SDIN')) {
+    return { prefix: 'SDIN', brand: 'SanDisk / WD' };
+  }
+  if (/^THG[A-Z]/.test(code)) {
+    return { prefix: code.slice(0, 4), brand: 'Kioxia / Toshiba' };
+  }
+  if (/^(H23B|KICM|TSB)/.test(code)) {
+    return { prefix: code.slice(0, 4), brand: 'Apple NAND' };
+  }
+  if (/^(FEMD|FSEI|NCEM)/.test(code)) {
+    return { prefix: code.slice(0, 4), brand: 'FORESEE' };
+  }
+  if (code.startsWith('EMMC')) {
+    return { prefix: 'EMMC', brand: 'Kingston' };
+  }
+  if (/^YM[NU]/.test(code)) {
+    return { prefix: code.slice(0, 4), brand: 'YMTC' };
+  }
+
+  return {
+    prefix: code.slice(0, Math.min(4, code.length)),
+    brand: fallbackBrand || 'Memoria IC',
+  };
+}
+
+export function getUsageProfile() {
+  const saved = safeGetStorage(STORAGE_KEYS.USAGE_PROFILE, null);
+  if (saved && typeof saved === 'object' && saved.chips) {
+    return {
+      chips: saved.chips || {},
+      prefixes: saved.prefixes || {},
+      brands: saved.brands || {},
+      capacities: saved.capacities || {},
+      totalReads: saved.totalReads || 0,
+      updatedAt: saved.updatedAt || null,
+    };
+  }
+
+  return {
+    chips: {},
+    prefixes: {},
+    brands: {},
+    capacities: {},
+    totalReads: 0,
+    updatedAt: null,
+  };
+}
+
+export function recordChipUsage(chip, actionType = 'scan') {
+  if (!chip || !chip.code) return getUsageProfile();
+  const storage = chip.storage || chip.capacity;
+  if (!storage || chip.isPureDram) return getUsageProfile();
+
+  const code = normalizeCode(chip.code);
+  if (!code || code.length < 3) return getUsageProfile();
+
+  const profile = getUsageProfile();
+  const now = Date.now();
+  const mfg = chip.manufacturer || chip.brand || 'Memoria IC';
+
+  const existing = profile.chips[code] || {
+    code,
+    partNumber: chip.partNumber || code,
+    storage,
+    ram: chip.ram || null,
+    manufacturer: mfg,
+    type: chip.type || 'eMMC / UFS',
+    commonModels: chip.commonModels || chip.notes || '',
+    readCount: 0,
+    batchCount: 0,
+    score: 0,
+    firstUsedAt: now,
+    lastUsedAt: now,
+  };
+
+  if (actionType === 'batch') {
+    existing.batchCount = (existing.batchCount || 0) + 1;
+    existing.readCount = Math.max(1, existing.readCount || 0);
+    existing.score = (existing.score || 0) + 3;
+  } else if (actionType === 'select') {
+    existing.readCount = (existing.readCount || 0) + 1;
+    existing.score = (existing.score || 0) + 2;
+  } else {
+    existing.readCount = (existing.readCount || 0) + 1;
+    existing.score = (existing.score || 0) + 1;
+  }
+
+  existing.storage = storage;
+  existing.manufacturer = mfg;
+  existing.type = chip.type || existing.type || 'eMMC / UFS';
+  if (chip.ram) existing.ram = chip.ram;
+  if (chip.commonModels) existing.commonModels = chip.commonModels;
+  existing.lastUsedAt = now;
+
+  profile.chips[code] = existing;
+
+  // Aprender el prefijo/familia que más usa el usuario
+  const prefInfo = extractChipPrefixInfo(code, mfg);
+  if (prefInfo.prefix && prefInfo.prefix.length >= 2) {
+    const pKey = prefInfo.prefix;
+    const prevPref = profile.prefixes[pKey] || {
+      prefix: pKey,
+      brand: prefInfo.brand || mfg,
+      count: 0,
+      lastCapacity: storage,
+      lastCode: code,
+      lastUsedAt: now,
+    };
+    prevPref.count = (prevPref.count || 0) + (actionType === 'batch' ? 2 : 1);
+    prevPref.lastCapacity = storage;
+    prevPref.lastCode = code;
+    prevPref.lastUsedAt = now;
+    profile.prefixes[pKey] = prevPref;
+  }
+
+  // Aprender marca más trabajada
+  const brandKey = String(mfg).toUpperCase();
+  const prevBrand = profile.brands[brandKey] || { name: mfg, count: 0, lastUsedAt: now };
+  prevBrand.count = (prevBrand.count || 0) + 1;
+  prevBrand.lastUsedAt = now;
+  profile.brands[brandKey] = prevBrand;
+
+  // Aprender capacidad más trabajada
+  const capKey = String(storage).toUpperCase();
+  profile.capacities[capKey] = (profile.capacities[capKey] || 0) + 1;
+
+  profile.totalReads = (profile.totalReads || 0) + 1;
+  profile.updatedAt = now;
+
+  safeSetStorage(STORAGE_KEYS.USAGE_PROFILE, profile);
+  return profile;
+}
+
+export function getMostSearchedChips(limit = 8) {
+  const profile = getUsageProfile();
+  const userChips = Object.values(profile.chips || {})
+    .filter((c) => c && c.code && c.storage)
+    .sort((a, b) => {
+      if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
+      if ((b.readCount || 0) !== (a.readCount || 0)) return (b.readCount || 0) - (a.readCount || 0);
+      return (b.lastUsedAt || 0) - (a.lastUsedAt || 0);
+    })
+    .map((c) => ({
+      ...c,
+      isUserLearned: true,
+      totalUses: (c.readCount || 0) + (c.batchCount || 0),
+    }));
+
+  const results = [...userChips];
+  const seen = new Set(results.map((r) => normalizeCode(r.code)));
+
+  if (results.length < limit) {
+    for (const defaultCode of DEFAULT_HIGH_ROTATION_CODES) {
+      if (results.length >= limit) break;
+      const clean = normalizeCode(defaultCode);
+      if (seen.has(clean)) continue;
+      const found =
+        SEED_IC_CATALOG.find((item) => normalizeCode(item.code) === clean) ||
+        decodeChipOffline(clean);
+      if (found && (found.storage || found.capacity)) {
+        seen.add(clean);
+        results.push({
+          ...found,
+          code: found.code || clean,
+          storage: found.storage || found.capacity,
+          manufacturer: found.manufacturer || found.brand,
+          readCount: 0,
+          batchCount: 0,
+          totalUses: 0,
+          isUserLearned: false,
+        });
+      }
+    }
+  }
+
+  return results.slice(0, limit);
+}
+
+export function getAdaptiveQuickPrefixes(limit = 12) {
+  const profile = getUsageProfile();
+  const userPrefixes = profile.prefixes || {};
+
+  const mergedMap = new Map();
+
+  // Primero cargar los prefijos base
+  for (const def of DEFAULT_ADAPTIVE_PREFIXES) {
+    const stat = userPrefixes[def.prefix];
+    mergedMap.set(def.prefix, {
+      prefix: def.prefix,
+      brand: def.brand,
+      count: stat ? stat.count || 0 : 0,
+      lastUsedAt: stat ? stat.lastUsedAt || 0 : 0,
+      lastCode: stat ? stat.lastCode || null : null,
+      isUserLearned: Boolean(stat && stat.count > 0),
+    });
+  }
+
+  // Agregar cualquier prefijo nuevo que el usuario haya escaneado en su taller
+  for (const [prefKey, stat] of Object.entries(userPrefixes)) {
+    if (!mergedMap.has(prefKey) && prefKey.length >= 2) {
+      mergedMap.set(prefKey, {
+        prefix: prefKey,
+        brand: stat.brand || 'Frecuente',
+        count: stat.count || 0,
+        lastUsedAt: stat.lastUsedAt || 0,
+        lastCode: stat.lastCode || null,
+        isUserLearned: (stat.count || 0) > 0,
+      });
+    }
+  }
+
+  const allPrefixes = Array.from(mergedMap.values());
+  allPrefixes.sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
+    if (b.lastUsedAt !== a.lastUsedAt) return b.lastUsedAt - a.lastUsedAt;
+    return 0;
+  });
+
+  return allPrefixes.slice(0, limit);
+}
+
+export function getUsageSummary() {
+  const profile = getUsageProfile();
+  const learnedChipsCount = Object.keys(profile.chips || {}).length;
+  const totalReads = profile.totalReads || 0;
+
+  let topBrand = null;
+  let maxBrandCount = 0;
+  for (const b of Object.values(profile.brands || {})) {
+    if ((b.count || 0) > maxBrandCount) {
+      maxBrandCount = b.count;
+      topBrand = b.name;
+    }
+  }
+
+  return {
+    totalReads,
+    learnedChipsCount,
+    topBrand,
   };
 }

@@ -20,6 +20,7 @@ import {
   Pencil,
   ChevronRight,
   GitBranch,
+  TrendingUp,
 } from 'lucide-react';
 import {
   decodeChipOffline,
@@ -29,10 +30,13 @@ import {
   normalizeCode,
   detectCpuInsteadOfMemory,
   analyzeChipVariants,
+  recordChipUsage,
+  getMostSearchedChips,
+  getAdaptiveQuickPrefixes,
+  getUsageSummary,
   safeGetStorage,
   safeSetStorage,
 } from './services/icEngine';
-import { QUICK_PREFIXES, SEED_IC_CATALOG } from './data/seedCatalog';
 import { speakChipResult, playDetectionBeep } from './services/voiceService';
 import AdminDatabaseModal from './components/AdminDatabaseModal';
 import BatchCounterPanel, { normalizeBucketKey } from './components/BatchCounterPanel';
@@ -224,20 +228,23 @@ export default function App() {
     }
   }
 
+  const [usageVersion, setUsageVersion] = useState(0);
+
   const [recentHistory, setRecentHistory] = useState(() => {
     const saved = safeGetStorage('eco_recent_history_v1', null);
     if (Array.isArray(saved) && saved.length > 0) {
-      return saved.map((x) => ({
-        ...x,
-        storage: x.storage || x.capacity || '64GB',
-        manufacturer: x.manufacturer || x.brand || 'Samsung',
-      }));
+      // Ignorar si era únicamente el listado estático antiguo de 4GB/8GB
+      const isLegacySeedDefault =
+        saved[0]?.code === 'KLM4G1FE3B-B001' && saved[1]?.code === 'KLM8G1GETF-B041';
+      if (!isLegacySeedDefault) {
+        return saved.map((x) => ({
+          ...x,
+          storage: x.storage || x.capacity || '64GB',
+          manufacturer: x.manufacturer || x.brand || 'Samsung',
+        }));
+      }
     }
-    return SEED_IC_CATALOG.slice(0, 6).map((x) => ({
-      ...x,
-      storage: x.storage || x.capacity,
-      manufacturer: x.manufacturer || x.brand,
-    }));
+    return getMostSearchedChips(6);
   });
 
   const [batchCounts, setBatchCounts] = useState(() =>
@@ -310,6 +317,27 @@ export default function App() {
   const inputRef = useRef(null);
   const scannerTopRef = useRef(null);
   const lastSpokenCodeRef = useRef('');
+  const lastRecordedScanRef = useRef('');
+
+  const mostSearchedChips = useMemo(
+    () => getMostSearchedChips(8),
+    [usageVersion, catalogVersion]
+  );
+
+  const adaptivePrefixes = useMemo(
+    () => getAdaptiveQuickPrefixes(12),
+    [usageVersion, catalogVersion]
+  );
+
+  const usageSummary = useMemo(() => getUsageSummary(), [usageVersion]);
+
+  const dynamicSearchPlaceholder = useMemo(() => {
+    const topCodes = mostSearchedChips.slice(0, 3).map((c) => c.code);
+    if (topCodes.length > 0) {
+      return `Escribe el código · Más buscados: ${topCodes.join(', ')}`;
+    }
+    return 'Escribe el código del chip...';
+  }, [mostSearchedChips]);
 
   const totalBatchPieces = Object.values(batchCounts).reduce((acc, v) => acc + (v || 0), 0);
 
@@ -365,20 +393,28 @@ export default function App() {
 
   useEffect(() => {
     const clean = normalizeCode(query);
-    if (!clean || clean.length < 2) {
+    if (!clean || clean.length < 1) {
       setActiveResult(null);
       setCpuWarning(null);
       setSuggestions([]);
       setIsSearchingOnline(false);
       lastSpokenCodeRef.current = '';
+      lastRecordedScanRef.current = '';
+      return;
+    }
+
+    const instantList = searchChipsInstant(clean, 8);
+    setSuggestions(instantList);
+
+    if (clean.length < 2) {
+      setActiveResult(null);
+      setCpuWarning(null);
+      setIsSearchingOnline(false);
       return;
     }
 
     const cpuDetected = detectCpuInsteadOfMemory(clean);
     setCpuWarning(cpuDetected);
-
-    const instantList = searchChipsInstant(clean, 8);
-    setSuggestions(instantList);
 
     const direct = decodeChipOffline(clean);
     if (direct) {
@@ -439,7 +475,24 @@ export default function App() {
         clearTimeout(timer);
       };
     }
-  }, [query, catalogVersion]);
+  }, [query, catalogVersion, usageVersion]);
+
+  // Aprendizaje inteligente: registra la lectura cuando el usuario detiene la escritura sobre un chip válido
+  useEffect(() => {
+    if (!activeResult || !activeResult.code || !activeResult.storage) return;
+    const cleanTarget = normalizeCode(activeResult.code);
+    if (!cleanTarget || lastRecordedScanRef.current === cleanTarget) return;
+
+    const timer = setTimeout(() => {
+      if (lastRecordedScanRef.current !== cleanTarget) {
+        lastRecordedScanRef.current = cleanTarget;
+        recordChipUsage(activeResult, 'scan');
+        setUsageVersion((v) => v + 1);
+      }
+    }, 650);
+
+    return () => clearTimeout(timer);
+  }, [activeResult]);
 
   const variantReport = useMemo(() => {
     const clean = normalizeCode(query);
@@ -496,7 +549,11 @@ export default function App() {
     };
     if (full && full.storage) {
       setActiveResult(full);
-      lastSpokenCodeRef.current = `${normalizeCode(targetCode)}:${full.storage}`;
+      const cleanCode = normalizeCode(full.code || targetCode);
+      lastSpokenCodeRef.current = `${cleanCode}:${full.storage}`;
+      lastRecordedScanRef.current = cleanCode;
+      recordChipUsage(full, 'select');
+      setUsageVersion((v) => v + 1);
       playDetectionBeep(full.storage);
       speakChipResult(full, voiceEnabled, false);
       pushToRecent(full);
@@ -511,6 +568,8 @@ export default function App() {
       ...prev,
       [bucket]: (prev[bucket] || 0) + 1,
     }));
+    recordChipUsage({ ...chip, storage: cap }, 'batch');
+    setUsageVersion((v) => v + 1);
     playDetectionBeep(cap);
     speakChipResult({ ...chip, storage: cap }, voiceEnabled, true);
     setToastMsg(`+1 (${cap}) sumado al lote`);
@@ -759,7 +818,7 @@ export default function App() {
                   onBlur={() => setTimeout(() => setIsInputFocused(false), 180)}
                   onChange={(e) => setQuery(e.target.value.toUpperCase())}
                   onKeyDown={handleSearchKeyDown}
-                  placeholder="Escribe el código (ej. KMDP6001, JXE77, H9HP52, SDINBDA4)"
+                  placeholder={dynamicSearchPlaceholder}
                   aria-label="Código del chip"
                   autoComplete="off"
                   autoCorrect="off"
@@ -1056,22 +1115,113 @@ export default function App() {
                   </button>
                 </div>
               )}
+
+              {/* ============================================================= */}
+              {/* LOS MÁS BUSCADOS DENTRO DEL BUSCADOR (SE ADAPTA A TU USO)     */}
+              {/* ============================================================= */}
+              {!query && (
+                <div className="pt-1 space-y-2">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <span className="text-xs font-mono font-extrabold uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
+                      <TrendingUp className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>Más Buscados según tu Uso</span>
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-400/30 text-[10px] font-mono font-bold text-emerald-300">
+                      {usageSummary.totalReads > 0
+                        ? `Aprendizaje activo · ${usageSummary.totalReads} ${
+                            usageSummary.totalReads === 1 ? 'lectura' : 'lecturas'
+                          }`
+                        : 'Se adapta conforme lees códigos'}
+                    </span>
+                  </div>
+
+                  <div
+                    className={`grid gap-1.5 ${
+                      textScale === 'xlarge'
+                        ? 'grid-cols-1 sm:grid-cols-2'
+                        : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                    }`}
+                  >
+                    {mostSearchedChips.slice(0, 6).map((item) => {
+                      const cap = item.storage || item.capacity || '64GB';
+                      const itemTheme = getCapacityTheme(cap);
+                      const diff = highlightCodeDifference(item);
+                      return (
+                        <div
+                          key={item.code}
+                          className="p-2 rounded-xl pro-inset hover:border-emerald-400/50 flex items-center justify-between gap-2 transition"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleSelectChip(item)}
+                            className="min-w-0 flex-1 text-left"
+                          >
+                            <div className="font-mono font-bold text-xs flex items-center flex-wrap break-all">
+                              <span className="text-gray-300">{diff.pre}</span>
+                              <span className={`px-1 rounded font-black ${itemTheme.badge}`}>
+                                {diff.highlight}
+                              </span>
+                              <span className="text-gray-300">{diff.post}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                              <span className="text-[10px] text-emerald-200/75 truncate">
+                                {item.manufacturer || item.brand}
+                              </span>
+                              {item.isUserLearned && item.totalUses > 0 ? (
+                                <span className="px-1.5 py-0.2 rounded bg-emerald-500/25 border border-emerald-400/40 text-emerald-300 font-mono font-black text-[9px]">
+                                  {item.totalUses}× leído
+                                </span>
+                              ) : (
+                                <span className="text-[9px] font-mono text-gray-400">
+                                  Frecuente
+                                </span>
+                              )}
+                            </div>
+                          </button>
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleSelectChip(item)}
+                              className={`px-2 py-1 rounded-lg font-mono font-black text-xs border ${itemTheme.badge}`}
+                            >
+                              {cap}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => addChipToBatch(item)}
+                              title={`Sumar 1 (${cap}) al lote`}
+                              aria-label={`Sumar ${cap} al lote`}
+                              className="p-1.5 rounded-lg bg-white/10 hover:bg-emerald-400 hover:text-black text-emerald-300 transition"
+                            >
+                              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* ============================================================= */}
-            {/* SUGERENCIAS DE LA SERIE (SIN REPETIR EL ACTIVO)               */}
+            {/* SUGERENCIAS DE LA SERIE (PRIORIZA LOS MÁS USADOS POR TI)      */}
             {/* ============================================================= */}
             {visibleSuggestions.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                 {visibleSuggestions.map((item, idx) => {
                   const itemTheme = getCapacityTheme(item.storage);
                   const diff = highlightCodeDifference(item);
+                  const userUses = (item.userReadCount || 0) + (item.userBatchCount || 0);
                   return (
                     <button
                       key={`${item.code}-${item.partNumber}-${idx}`}
                       type="button"
                       onClick={() => handleSelectChip(item)}
-                      className="px-3.5 py-2.5 rounded-xl pro-panel hover:border-emerald-400/50 flex items-center justify-between gap-2 text-left transition"
+                      className={`px-3.5 py-2.5 rounded-xl pro-panel hover:border-emerald-400/50 flex items-center justify-between gap-2 text-left transition ${
+                        item.isFrequentUserChip ? 'border-emerald-400/45' : ''
+                      }`}
                     >
                       <div className="min-w-0">
                         <div className="font-mono font-bold text-xs sm:text-sm flex items-center flex-wrap break-all">
@@ -1081,8 +1231,15 @@ export default function App() {
                           </span>
                           <span className="text-gray-300">{diff.post}</span>
                         </div>
-                        <div className="text-[11px] text-emerald-200/70 truncate mt-0.5">
-                          {item.manufacturer} · {item.type}
+                        <div className="flex items-center gap-1.5 text-[11px] text-emerald-200/70 truncate mt-0.5">
+                          <span>
+                            {item.manufacturer} · {item.type}
+                          </span>
+                          {item.isFrequentUserChip && userUses > 0 && (
+                            <span className="px-1.5 py-0.2 rounded bg-emerald-500/25 border border-emerald-400/40 text-emerald-300 font-mono font-black text-[10px]">
+                              Más buscado ({userUses}×)
+                            </span>
+                          )}
                         </div>
                       </div>
 
@@ -1102,11 +1259,11 @@ export default function App() {
             {/* ============================================================= */}
             {!query && (
               <div className="space-y-3">
-                {/* 1. Prefijos Rápidos por Marca */}
+                {/* 1. Inicios de Serie Adaptativos según el Uso del Usuario */}
                 <div className="rounded-2xl pro-panel p-3.5 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono font-extrabold uppercase tracking-wider text-emerald-300">
-                      1. Toca el inicio del código para escribir más rápido
+                      1. Inicios de Código Más Usados por Ti
                     </span>
                     <button
                       type="button"
@@ -1119,24 +1276,30 @@ export default function App() {
                   </div>
 
                   <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-                    {QUICK_PREFIXES.map((p) => {
-                      const targetVal = p.value || p.label;
-                      return (
-                        <button
-                          key={p.label}
-                          type="button"
-                          onClick={() => handleSelectPrefix(targetVal)}
-                          className="px-3 py-2 rounded-xl pro-inset hover:border-emerald-400/60 flex flex-col items-start justify-center text-left transition group"
-                        >
+                    {adaptivePrefixes.map((p) => (
+                      <button
+                        key={p.prefix}
+                        type="button"
+                        onClick={() => handleSelectPrefix(p.prefix)}
+                        className={`px-3 py-2 rounded-xl pro-inset hover:border-emerald-400/60 flex flex-col items-start justify-center text-left transition group ${
+                          p.isUserLearned ? 'border-emerald-500/40' : ''
+                        }`}
+                      >
+                        <div className="w-full flex items-center justify-between gap-1">
                           <span className="font-mono font-black text-xs sm:text-sm text-white group-hover:text-emerald-300">
-                            {p.label}
+                            {p.prefix}
                           </span>
-                          <span className="text-[10px] text-emerald-200/65 truncate w-full">
-                            {p.brand}
-                          </span>
-                        </button>
-                      );
-                    })}
+                          {p.count > 0 && (
+                            <span className="px-1.5 py-0.2 rounded bg-emerald-400/20 text-emerald-300 font-mono font-black text-[9px]">
+                              {p.count}×
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-emerald-200/65 truncate w-full">
+                          {p.brand}
+                        </span>
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -1275,6 +1438,7 @@ export default function App() {
             onAddChipToBatch={addChipToBatch}
             onEditChip={openEditChipModal}
             catalogVersion={catalogVersion}
+            usageVersion={usageVersion}
           />
         )}
 
