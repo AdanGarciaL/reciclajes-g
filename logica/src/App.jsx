@@ -159,6 +159,11 @@ export default function App() {
       window.navigator.standalone === true
     );
   });
+  const [isIOS] = useState(() => {
+    if (typeof navigator === 'undefined') return false;
+    const ua = navigator.userAgent || '';
+    return /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  });
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [installBannerDismissed, setInstallBannerDismissed] = useState(() =>
     Boolean(safeGetStorage('eco_install_banner_dismissed_v1', false))
@@ -394,147 +399,210 @@ export default function App() {
     { id: 'batch', label: 'Mi Lote', icon: PackageCheck, badge: totalBatchPieces },
   ];
 
+  const headerShieldClass =
+    isStandalone && isIOS
+      ? 'ios-top-shield-standalone'
+      : isIOS
+        ? 'ios-top-shield-iphone'
+        : 'ios-top-shield';
+
   return (
-    <div className="min-h-dvh flex flex-col bg-[#04120a] text-white pb-24 md:pb-10">
-      {/* CABECERA MINIMALISTA, ACCESIBLE Y PROFESIONAL */}
-      <header className="sticky top-0 z-30 backdrop-blur-xl bg-[#04120a]/95 border-b border-emerald-500/20">
-        <div className="max-w-5xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2">
-          {/* Identidad Eco Lógica García + Regreso al sitio web */}
-          <div className="flex items-center gap-2 min-w-0">
-            {!isStandalone && (
-              <a
-                href="../index.html#app-logica"
-                title="Volver a ecologicagarcia.com"
-                aria-label="Volver a la página principal de Eco Lógica García"
-                className="p-2 sm:px-2.5 sm:py-2 rounded-xl bg-white/5 hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-400/40 text-emerald-300 text-xs font-bold flex items-center gap-1.5 transition shrink-0"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">Sitio</span>
-              </a>
-            )}
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shrink-0">
-              <Cpu className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="font-black tracking-tight text-white text-xs sm:text-base leading-none truncate">
-                ECO LÓGICA <span className="text-emerald-400">GARCÍA</span>
-              </h1>
-              <span className="text-[10px] sm:text-[11px] text-emerald-300/75 font-medium block truncate mt-0.5">
-                {dbStats.totalOfflineCount.toLocaleString()} chips registrados
-              </span>
-            </div>
-          </div>
-
-          {/* Navegación Desktop */}
-          <nav
-            className="hidden md:flex items-center gap-1 p-1 rounded-2xl bg-[#081f12] border border-emerald-500/20"
-            role="tablist"
-            aria-label="Secciones principales"
-          >
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const active = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
-                    active
-                      ? 'bg-emerald-400 text-black shadow'
-                      : 'text-emerald-100/75 hover:text-white'
-                  }`}
+    <div className="min-h-dvh flex flex-col bg-[#030e08] text-white pb-28 md:pb-10">
+      {/* CABECERA SÓLIDA DE ALTO CONTRASTE — ANTI-DIFUMINACIÓN PARA IPHONE 14 PRO (LIQUID GLASS / DYNAMIC ISLAND) Y ANDROID */}
+      <header className={`sticky top-0 z-30 ${headerShieldClass} pb-2 px-2.5 sm:px-4 border-b border-emerald-500/25 shadow-[0_10px_30px_rgba(0,0,0,0.9)]`}>
+        <div className="max-w-5xl mx-auto rounded-2xl bg-[#072214] border-2 border-emerald-400/50 shadow-2xl px-3 sm:px-4 py-2.5 space-y-2 md:space-y-0">
+          {/* Fila Principal: Identidad + Navegación Desktop + Botones Principales */}
+          <div className="flex items-center justify-between gap-2">
+            {/* Identidad Eco Lógica García */}
+            <div className="flex items-center gap-2 min-w-0">
+              {!isStandalone && (
+                <a
+                  href="../index.html#app-logica"
+                  title="Volver a ecologicagarcia.com"
+                  aria-label="Volver a la página principal de Eco Lógica García"
+                  className="hidden sm:inline-flex px-2.5 py-2 rounded-xl bg-[#04140b] hover:bg-emerald-500/20 border border-emerald-400/35 text-emerald-300 text-xs font-bold items-center gap-1.5 transition shrink-0"
                 >
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{item.label}</span>
-                  {item.badge > 0 && (
-                    <span
-                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                        active ? 'bg-black text-emerald-400' : 'bg-emerald-400 text-black'
-                      }`}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Sitio</span>
+                </a>
+              )}
+              <div className="w-9 h-9 rounded-xl bg-emerald-400 text-black flex items-center justify-center shrink-0 shadow">
+                <Cpu className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="font-black tracking-tight text-white text-sm sm:text-base leading-none truncate">
+                  ECO LÓGICA <span className="text-emerald-400">GARCÍA</span>
+                </h1>
+                <span className="text-[10px] sm:text-[11px] text-emerald-200 font-semibold block truncate mt-0.5">
+                  {dbStats.totalOfflineCount.toLocaleString()} chips · 4GB a 2TB
+                </span>
+              </div>
+            </div>
 
-          {/* Controles Rápidos: Tamaño de Letra (A / A+ / A++) + Instalar + Voz + Base de Datos */}
-          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-            {/* Selector de Tamaño de Texto para Vista Estándar o Vista Mayor */}
-            <div
-              className="flex items-center p-0.5 rounded-xl bg-[#081f12] border border-emerald-500/30"
-              role="group"
-              aria-label="Tamaño de letra"
+            {/* Navegación Desktop */}
+            <nav
+              className="hidden md:flex items-center gap-1 p-1 rounded-2xl bg-[#04140b] border border-emerald-500/30"
+              role="tablist"
+              aria-label="Secciones principales"
             >
-              {TEXT_SCALE_OPTIONS.map((opt) => {
-                const active = textScale === opt.id;
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const active = activeTab === item.id;
                 return (
                   <button
-                    key={opt.id}
+                    key={item.id}
                     type="button"
-                    onClick={() => handleSelectTextScale(opt.id)}
-                    title={opt.fullLabel}
-                    aria-label={opt.fullLabel}
-                    aria-pressed={active}
-                    className={`px-1.5 sm:px-2 py-1 rounded-lg font-mono text-[11px] sm:text-xs font-black transition ${
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
                       active
                         ? 'bg-emerald-400 text-black shadow'
-                        : 'text-emerald-200/75 hover:text-white'
+                        : 'text-emerald-100 hover:text-white'
                     }`}
                   >
-                    {opt.shortLabel}
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{item.label}</span>
+                    {item.badge > 0 && (
+                      <span
+                        className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                          active ? 'bg-black text-emerald-400' : 'bg-emerald-400 text-black'
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
                   </button>
                 );
               })}
-            </div>
+            </nav>
 
-            {!isStandalone && (
+            {/* Controles Rápidos Derecha */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* Selector de Tamaño de Texto en Desktop/Tablet */}
+              <div
+                className="hidden sm:flex items-center p-0.5 rounded-xl bg-[#04140b] border border-emerald-400/40"
+                role="group"
+                aria-label="Tamaño de letra"
+              >
+                {TEXT_SCALE_OPTIONS.map((opt) => {
+                  const active = textScale === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => handleSelectTextScale(opt.id)}
+                      title={opt.fullLabel}
+                      aria-label={opt.fullLabel}
+                      aria-pressed={active}
+                      className={`px-2 py-1 rounded-lg font-mono text-xs font-black transition ${
+                        active
+                          ? 'bg-emerald-400 text-black shadow'
+                          : 'text-emerald-200 hover:text-white'
+                      }`}
+                    >
+                      {opt.shortLabel}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {!isStandalone && (
+                <button
+                  type="button"
+                  onClick={handleInstallClick}
+                  aria-label="Instalar aplicación en el celular o PC"
+                  title="Instalar App en Android, iPhone o PC"
+                  className="hidden sm:flex px-2.5 py-2 rounded-xl bg-[#04140b] hover:bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-extrabold text-xs items-center gap-1 transition"
+                >
+                  <Download className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="hidden lg:inline">Instalar</span>
+                </button>
+              )}
+
               <button
                 type="button"
-                onClick={handleInstallClick}
-                aria-label="Instalar aplicación en el celular o PC"
-                title="Instalar App en Android, iPhone o PC"
-                className="px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/40 text-emerald-300 font-extrabold text-xs flex items-center gap-1 transition"
+                onClick={() => setVoiceEnabled(!voiceEnabled)}
+                aria-label={voiceEnabled ? 'Desactivar voz' : 'Activar voz'}
+                className={`p-2 rounded-xl border text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
+                  voiceEnabled
+                    ? 'bg-[#04140b] border-emerald-400/50 text-emerald-300'
+                    : 'bg-[#04140b] border-white/15 text-gray-400'
+                }`}
+                title={voiceEnabled ? 'Voz activada' : 'Voz en silencio'}
               >
-                <Download className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="hidden lg:inline">Instalar</span>
+                {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
               </button>
-            )}
 
-            <button
-              type="button"
-              onClick={() => setVoiceEnabled(!voiceEnabled)}
-              aria-label={voiceEnabled ? 'Desactivar voz' : 'Activar voz'}
-              className={`p-1.5 sm:p-2 rounded-xl border text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
-                voiceEnabled
-                  ? 'bg-emerald-500/15 border-emerald-400/40 text-emerald-300'
-                  : 'bg-white/5 border-white/10 text-gray-500'
-              }`}
-              title={voiceEnabled ? 'Voz activada' : 'Voz en silencio'}
-            >
-              {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-            </button>
+              <button
+                type="button"
+                onClick={openAddModal}
+                aria-label="Abrir Base de Datos y Gestión de Chips"
+                title="Agregar o editar chips en la Base de Datos (Con PIN)"
+                className="relative px-3 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs flex items-center gap-1.5 shadow-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              >
+                <Database className="w-3.5 h-3.5" />
+                <span>BD / +Chip</span>
+                {dbStats.pendingCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-amber-400 text-black text-[10px] font-black flex items-center justify-center border border-black">
+                    {dbStats.pendingCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
 
-            <button
-              type="button"
-              onClick={openAddModal}
-              aria-label="Abrir Base de Datos y Gestión de Chips"
-              title="Agregar o editar chips en la Base de Datos"
-              className="relative px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs flex items-center gap-1 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-            >
-              <Database className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">BD</span>
-              {dbStats.pendingCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-amber-400 text-black text-[10px] font-black flex items-center justify-center border border-black">
-                  {dbStats.pendingCount}
-                </span>
+          {/* Segunda Fila Exclusiva para Móvil (iPhone 14 Pro / Android): Letra A/A+/A++ + Instalar + Sitio */}
+          <div className="flex sm:hidden items-center justify-between gap-2 pt-2 border-t border-emerald-500/25">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-extrabold text-emerald-200">Letra:</span>
+              <div
+                className="flex items-center p-0.5 rounded-xl bg-[#04140b] border border-emerald-400/40"
+                role="group"
+                aria-label="Tamaño de letra móvil"
+              >
+                {TEXT_SCALE_OPTIONS.map((opt) => {
+                  const active = textScale === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => handleSelectTextScale(opt.id)}
+                      aria-pressed={active}
+                      className={`px-2.5 py-1 rounded-lg font-mono text-xs font-black transition ${
+                        active
+                          ? 'bg-emerald-400 text-black shadow'
+                          : 'text-emerald-200 hover:text-white'
+                      }`}
+                    >
+                      {opt.shortLabel}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              {!isStandalone && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleInstallClick}
+                    className="px-2.5 py-1.5 rounded-xl bg-[#04140b] border border-emerald-400/40 text-emerald-300 font-extrabold text-[11px] flex items-center gap-1"
+                  >
+                    <Download className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>App</span>
+                  </button>
+                  <a
+                    href="../index.html#app-logica"
+                    className="px-2.5 py-1.5 rounded-xl bg-[#04140b] border border-white/15 text-emerald-200 font-bold text-[11px] flex items-center gap-1"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Web</span>
+                  </a>
+                </>
               )}
-            </button>
+            </div>
           </div>
         </div>
       </header>
@@ -910,13 +978,13 @@ export default function App() {
         )}
       </main>
 
-      {/* BARRA DE NAVEGACIÓN INFERIOR PARA MÓVILES */}
+      {/* BARRA DE NAVEGACIÓN INFERIOR DE ALTO CONTRASTE PARA IPHONE 14 PRO (LIQUID GLASS) Y ANDROID */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 backdrop-blur-2xl bg-[#04120a]/95 border-t border-emerald-500/20 px-2 pb-[env(safe-area-inset-bottom,8px)] pt-1.5"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#030e08] border-t border-emerald-500/30 px-2.5 pt-2 ios-bottom-dock shadow-[0_-10px_30px_rgba(0,0,0,0.95)]"
         role="tablist"
         aria-label="Navegación móvil"
       >
-        <div className="grid grid-cols-4 gap-1 max-w-md mx-auto">
+        <div className="grid grid-cols-4 gap-1.5 max-w-md mx-auto p-1 rounded-2xl bg-[#072214] border-2 border-emerald-400/45 shadow-2xl">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = activeTab === item.id;
@@ -927,14 +995,20 @@ export default function App() {
                 role="tab"
                 aria-selected={active}
                 onClick={() => setActiveTab(item.id)}
-                className={`relative py-2 rounded-2xl flex flex-col items-center justify-center gap-1 transition ${
-                  active ? 'text-emerald-400 font-black' : 'text-gray-400 font-semibold'
+                className={`relative py-2 rounded-xl flex flex-col items-center justify-center gap-1 transition ${
+                  active
+                    ? 'bg-emerald-400 text-black font-black shadow'
+                    : 'text-emerald-100/80 hover:text-white font-semibold'
                 }`}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className="w-4 h-4" />
                 <span className="text-[11px] leading-none">{item.label}</span>
                 {item.badge > 0 && (
-                  <span className="absolute top-1 right-4 px-1.5 py-0.2 rounded-full bg-emerald-400 text-black font-mono font-black text-[10px]">
+                  <span
+                    className={`absolute top-1 right-2.5 px-1.5 py-0.2 rounded-full font-mono font-black text-[10px] ${
+                      active ? 'bg-black text-emerald-400' : 'bg-emerald-400 text-black'
+                    }`}
+                  >
                     {item.badge}
                   </span>
                 )}

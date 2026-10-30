@@ -10,16 +10,16 @@ export function highlightCodeDifference(item) {
   const code = String(item.code || '').toUpperCase();
   const cap = item.storage || '64GB';
 
-  if (/^KL[MU][ABCDEFG]G/.test(code)) {
+  if (/^KL[MU][48ABCDEFGH]G/.test(code)) {
     return {
       pre: code.slice(0, 3),
       highlight: code.slice(3, 4),
       post: code.slice(4),
-      why: `Letra "${code[3]}" = ${cap}`,
+      why: `Clave "${code[3]}" = ${cap}`,
     };
   }
 
-  if (/^KM8[VF][789]/.test(code)) {
+  if (/^KM[23589][VFP][6789]/.test(code)) {
     return {
       pre: code.slice(0, 4),
       highlight: code.slice(4, 5),
@@ -28,7 +28,7 @@ export function highlightCodeDifference(item) {
     };
   }
 
-  if (/^KM[A-Z]{2}/.test(code)) {
+  if (/^KM[A-Z0-9]{2}/.test(code)) {
     return {
       pre: 'KM',
       highlight: code.slice(2, 4),
@@ -37,7 +37,7 @@ export function highlightCodeDifference(item) {
     };
   }
 
-  if (/^(H9TQ|H9HP|H9HK|H9HQ|H26M|H28U|H28S)/.test(code) && code.length >= 6) {
+  if (/^(H9TP|H9TQ|H9HP|H9HK|H9HQ|H26M|H28U|H28S|HN8T)/.test(code) && code.length >= 6) {
     return {
       pre: code.slice(0, 4),
       highlight: code.slice(4, 6),
@@ -46,7 +46,7 @@ export function highlightCodeDifference(item) {
     };
   }
 
-  const sdinMatch = code.match(/^(SDIN[A-Z0-9]+-)(\d+G)(.*)$/);
+  const sdinMatch = code.match(/^(SDIN[A-Z0-9]+-)(\d+[GT])(.*)$/);
   if (sdinMatch) {
     return {
       pre: sdinMatch[1],
@@ -56,7 +56,7 @@ export function highlightCodeDifference(item) {
     };
   }
 
-  if (/^THG(BM|AF|BX|LF)/.test(code) && code.length >= 8) {
+  if (/^THG(BM|AF|BX|LF|JF)/.test(code) && code.length >= 8) {
     return {
       pre: code.slice(0, 6),
       highlight: code.slice(6, 8),
@@ -65,7 +65,7 @@ export function highlightCodeDifference(item) {
     };
   }
 
-  if (/^K[56]A[4567]/.test(code)) {
+  if (/^K[56][AB][3456789]/.test(code)) {
     return {
       pre: code.slice(0, 3),
       highlight: code.slice(3, 4),
@@ -80,6 +80,26 @@ export function highlightCodeDifference(item) {
       highlight: code.slice(2),
       post: '',
       why: `FBGA "${code}" = ${cap}`,
+    };
+  }
+
+  const foreseeM = code.match(/^(FEMDNN0*|FEUFS|NCEM[A-Z0-9]*-?)(\d+G)(.*)$/);
+  if (foreseeM) {
+    return {
+      pre: foreseeM[1],
+      highlight: foreseeM[2],
+      post: foreseeM[3] || '',
+      why: `FORESEE "${foreseeM[2]}" = ${cap}`,
+    };
+  }
+
+  const kingstonM = code.match(/^(EMMC0*|\d*EMCP|\d*UMCP)(\d+G?)(.*)$/);
+  if (kingstonM) {
+    return {
+      pre: kingstonM[1],
+      highlight: kingstonM[2],
+      post: kingstonM[3] || '',
+      why: `Kingston "${cap}"`,
     };
   }
 
@@ -117,11 +137,15 @@ export default function BrandTablesView({
     { id: 'Samsung', label: 'Samsung' },
     { id: 'SK Hynix', label: 'SK Hynix' },
     { id: 'Micron', label: 'Micron' },
-    { id: 'SanDisk', label: 'SanDisk' },
+    { id: 'SanDisk', label: 'SanDisk / WD' },
     { id: 'Kioxia', label: 'Toshiba / iPhone' },
+    { id: 'Kingston', label: 'Kingston' },
+    { id: 'FORESEE', label: 'FORESEE' },
+    { id: 'YMTC', label: 'YMTC (Huawei)' },
+    { id: 'RARE', label: 'BIWIN / Rayson / Otras' },
   ];
 
-  const capacityTabs = ['ALL', '8GB', '16GB', '32GB', '64GB', '128GB', '256GB', '512GB', '1TB'];
+  const capacityTabs = ['ALL', '4GB', '8GB', '16GB', '32GB', '64GB', '128GB', '256GB', '512GB', '1TB', '2TB'];
 
   const allCatalog = useMemo(() => {
     return getAllEditableCatalog();
@@ -134,6 +158,10 @@ export default function BrandTablesView({
         const b = selectedBrand.toLowerCase();
         if (b.includes('kioxia')) {
           if (!mfg.includes('kioxia') && !mfg.includes('toshiba') && !mfg.includes('iphone')) {
+            return false;
+          }
+        } else if (selectedBrand === 'RARE') {
+          if (!mfg.includes('biwin') && !mfg.includes('rayson') && !mfg.includes('skyhigh') && !mfg.includes('cypress')) {
             return false;
           }
         } else if (!mfg.includes(b)) {

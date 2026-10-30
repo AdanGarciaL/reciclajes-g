@@ -38,18 +38,21 @@ import {
   detectCpuInsteadOfMemory,
 } from '../services/icEngine';
 
-const CAPACITIES = ['8GB', '16GB', '32GB', '64GB', '128GB', '256GB', '512GB', '1TB'];
-const RAM_OPTIONS = ['', '1GB', '2GB', '3GB', '4GB', '6GB', '8GB', '12GB', '16GB'];
+const CAPACITIES = ['4GB', '8GB', '16GB', '32GB', '64GB', '128GB', '256GB', '512GB', '1TB', '2TB'];
+const RAM_OPTIONS = ['', '512MB', '1GB', '2GB', '3GB', '4GB', '6GB', '8GB', '12GB', '16GB', '24GB'];
 const BRANDS = [
   'Samsung',
   'Micron',
   'SK Hynix',
   'SanDisk / WD',
   'Kioxia / Toshiba',
-  'Kingston',
-  'Foresee',
-  'YMTC',
   'Apple / iPhone NAND',
+  'Kingston',
+  'FORESEE (Longsys)',
+  'YMTC (Yangtze Memory)',
+  'BIWIN',
+  'Rayson',
+  'SkyHigh / Cypress',
 ];
 const TYPES = ['eMCP', 'uMCP', 'eMMC', 'UFS', 'NVMe NAND', 'LPDDR RAM'];
 
@@ -1127,7 +1130,7 @@ export default function AdminDatabaseModal({
                             <label className="block text-xs font-bold text-emerald-300 mb-1.5">
                               Capacidad de Almacenamiento *
                             </label>
-                            <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                            <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5 sm:gap-2">
                               {CAPACITIES.map((cap) => (
                                 <button
                                   type="button"

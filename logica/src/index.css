@@ -69,14 +69,38 @@ html[data-text-scale="xlarge"] .text-\[11px\] {
 }
 
 body {
-  background-color: #04120a;
-  background-image: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.12) 0%, transparent 60%);
+  background-color: #030e08;
+  background-image: radial-gradient(circle at 50% 12%, rgba(16, 185, 129, 0.14) 0%, transparent 60%);
   background-attachment: fixed;
   min-height: 100dvh;
-  padding-top: env(safe-area-inset-top, 0px);
   -webkit-tap-highlight-color: transparent;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   overflow-x: hidden;
+}
+
+/* ==========================================================================
+   OPTIMIZACIÓN ESPECIAL PARA iPHONE 14 PRO / 15 PRO / 16 PRO (DYNAMIC ISLAND
+   Y LIQUID GLASS DE iOS) Y PANTALLAS ANDROID
+   Evita que la barra superior se pierda en la difuminación de iOS Liquid Glass
+   ========================================================================== */
+.ios-top-shield {
+  background-color: #030e08;
+  padding-top: max(env(safe-area-inset-top, 0px), 10px);
+}
+
+/* Cuando corre en iPhone Safari con Liquid Glass o como App Instalada (Standalone) */
+.ios-top-shield-iphone {
+  background-color: #030e08;
+  padding-top: max(calc(env(safe-area-inset-top, 0px) + 12px), 20px);
+}
+
+.ios-top-shield-standalone {
+  background-color: #030e08;
+  padding-top: max(calc(env(safe-area-inset-top, 0px) + 8px), 52px);
+}
+
+.ios-bottom-dock {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 10px);
 }
 
 /* Custom thin scrollbar */

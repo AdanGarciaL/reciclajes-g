@@ -17,8 +17,10 @@ const VISUAL_BRANDS = [
     },
     groups: [
       {
-        label: 'Serie KLM / KLU (4ª Letra = Capacidad)',
+        label: 'Serie KLM / KLU (4º Carácter = Capacidad, de 4GB a 2TB)',
         steps: [
+          { codePre: 'KLM', key: '4', codePost: 'G...', cap: '4 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'KLM', key: '8', codePost: 'G...', cap: '8 GB', color: 'bg-sky-400 text-black' },
           { codePre: 'KLM', key: 'A', codePost: 'G...', cap: '16 GB', color: 'bg-sky-400 text-black' },
           { codePre: 'KLM', key: 'B', codePost: 'G...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
           { codePre: 'KLM', key: 'C', codePost: 'G...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
@@ -26,6 +28,7 @@ const VISUAL_BRANDS = [
           { codePre: 'KLU', key: 'E', codePost: 'G...', cap: '256 GB', color: 'bg-purple-500 text-white' },
           { codePre: 'KLU', key: 'F', codePost: 'G...', cap: '512 GB', color: 'bg-rose-500 text-white' },
           { codePre: 'KLU', key: 'G', codePost: 'G...', cap: '1 TB', color: 'bg-rose-600 text-white' },
+          { codePre: 'KLU', key: 'H', codePost: 'G...', cap: '2 TB', color: 'bg-rose-700 text-white' },
         ],
       },
       {
@@ -159,12 +162,52 @@ const VISUAL_BRANDS = [
         ],
       },
       {
-        label: 'NAND de iPhone (K5A / K6A)',
+        label: 'NAND de iPhone (K5A / K6A / K6B)',
         steps: [
+          { codePre: 'K5A', key: '3', codePost: 'RB...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
           { codePre: 'K5A', key: '4', codePost: 'RB...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
           { codePre: 'K5A', key: '5', codePost: 'RB...', cap: '128 GB', color: 'bg-amber-400 text-black' },
           { codePre: 'K6A', key: '6', codePost: 'RB...', cap: '256 GB', color: 'bg-purple-500 text-white' },
           { codePre: 'K6A', key: '7', codePost: 'RB...', cap: '512 GB', color: 'bg-rose-500 text-white' },
+          { codePre: 'K6A', key: '8', codePost: 'RB...', cap: '1 TB', color: 'bg-rose-600 text-white' },
+          { codePre: 'K6B', key: '9', codePost: 'RB...', cap: '2 TB', color: 'bg-rose-700 text-white' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'otras',
+    name: 'FORESEE / Kingston / YMTC',
+    ruleTitle: 'En FORESEE, Kingston y BIWIN los GB vienen escritos en el código',
+    chip: {
+      top: 'FORESEE',
+      pre: 'FEMDNN',
+      key: '064G',
+      post: '-A3A56',
+      bot: 'L2145001',
+      result: '64 GB',
+    },
+    groups: [
+      {
+        label: 'FORESEE / Longsys (FEMDNN / NCEM)',
+        steps: [
+          { codePre: 'FEMDNN', key: '004G', codePost: '...', cap: '4 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'FEMDNN', key: '008G', codePost: '...', cap: '8 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'FEMDNN', key: '016G', codePost: '...', cap: '16 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'FEMDNN', key: '032G', codePost: '...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
+          { codePre: 'FEMDNN', key: '064G', codePost: '...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
+          { codePre: 'FEMDNN', key: '128G', codePost: '...', cap: '128 GB', color: 'bg-amber-400 text-black' },
+        ],
+      },
+      {
+        label: 'Kingston / BIWIN / YMTC (Huawei)',
+        steps: [
+          { codePre: 'EMMC', key: '04G', codePost: '-M627', cap: '4 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'EMMC', key: '32G', codePost: '-TX29', cap: '32 GB', color: 'bg-cyan-400 text-black' },
+          { codePre: '', key: '64EMCP', codePost: '32...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
+          { codePre: 'YMN09T', key: 'C', codePost: '1B1...', cap: '128 GB', color: 'bg-amber-400 text-black' },
+          { codePre: 'YMN09T', key: 'F', codePost: '1B1...', cap: '256 GB', color: 'bg-purple-500 text-white' },
+          { codePre: 'YMN10T', key: 'G', codePost: '1B1...', cap: '512 GB', color: 'bg-rose-500 text-white' },
         ],
       },
     ],

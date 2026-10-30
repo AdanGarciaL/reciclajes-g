@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { Plus, Minus, RotateCcw, Share2, Copy, Check } from 'lucide-react';
 
 const BUCKETS = [
-  { key: '16GB', label: '8 / 16 GB', accent: 'border-sky-400/40 bg-sky-500/10 text-sky-300' },
+  { key: '16GB', label: '4 / 8 / 16 GB', accent: 'border-sky-400/40 bg-sky-500/10 text-sky-300' },
   { key: '32GB', label: '32 GB', accent: 'border-cyan-400/40 bg-cyan-500/10 text-cyan-300' },
   { key: '64GB', label: '64 GB', accent: 'border-emerald-400/50 bg-emerald-500/15 text-emerald-300' },
   { key: '128GB', label: '128 GB', accent: 'border-amber-400/50 bg-amber-500/15 text-amber-300' },
   { key: '256GB', label: '256 GB', accent: 'border-purple-400/50 bg-purple-500/15 text-purple-300' },
-  { key: '512GB+', label: '512GB / 1TB', accent: 'border-rose-400/50 bg-rose-500/15 text-rose-300' },
+  { key: '512GB+', label: '512GB / 1TB+', accent: 'border-rose-400/50 bg-rose-500/15 text-rose-300' },
 ];
 
 export function normalizeBucketKey(storageStr) {
