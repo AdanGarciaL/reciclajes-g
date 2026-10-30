@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Search, X, Pencil } from 'lucide-react';
-import { getAllEditableCatalog } from '../services/icEngine';
+import { Plus, Search, X, Pencil, ArrowUpDown } from 'lucide-react';
+import { getAllEditableCatalog, capacityToGbNumber } from '../services/icEngine';
 
 // Extrae la parte exacta que define la capacidad con una etiqueta corta y clara
 export function highlightCodeDifference(item) {
@@ -10,7 +10,6 @@ export function highlightCodeDifference(item) {
   const code = String(item.code || '').toUpperCase();
   const cap = item.storage || item.capacity || '64GB';
 
-  // Si el catálogo semilla define ruleSegment explícito y aparece en el código, úsalo con precisión
   if (item.ruleSegment && code.includes(item.ruleSegment.toUpperCase())) {
     const seg = item.ruleSegment.toUpperCase();
     const idx = code.indexOf(seg);
@@ -156,6 +155,7 @@ export default function BrandTablesView({
   const [selectedBrand, setSelectedBrand] = useState('ALL');
   const [selectedCapacity, setSelectedCapacity] = useState('ALL');
   const [tableFilter, setTableFilter] = useState('');
+  const [sortOrder, setSortOrder] = useState('default'); // 'default' | 'desc' | 'asc'
 
   const brandTabs = [
     { id: 'ALL', label: 'Todas' },
@@ -178,7 +178,7 @@ export default function BrandTablesView({
   }, [catalogVersion]);
 
   const filteredCatalog = useMemo(() => {
-    return allCatalog.filter((item) => {
+    const filtered = allCatalog.filter((item) => {
       const mfg = String(item.manufacturer || item.brand || '').toLowerCase();
       if (selectedBrand !== 'ALL') {
         const b = selectedBrand.toLowerCase();
@@ -229,11 +229,29 @@ export default function BrandTablesView({
 
       return true;
     });
-  }, [allCatalog, selectedBrand, selectedCapacity, tableFilter]);
+
+    if (sortOrder === 'desc') {
+      return [...filtered].sort(
+        (a, b) => capacityToGbNumber(b.storage || b.capacity) - capacityToGbNumber(a.storage || a.capacity)
+      );
+    }
+    if (sortOrder === 'asc') {
+      return [...filtered].sort(
+        (a, b) => capacityToGbNumber(a.storage || a.capacity) - capacityToGbNumber(b.storage || b.capacity)
+      );
+    }
+    return filtered;
+  }, [allCatalog, selectedBrand, selectedCapacity, tableFilter, sortOrder]);
+
+  function cycleSortOrder() {
+    setSortOrder((prev) => (prev === 'default' ? 'desc' : prev === 'desc' ? 'asc' : 'default'));
+  }
+
+  const hasActiveFilter = selectedBrand !== 'ALL' || selectedCapacity !== 'ALL' || Boolean(tableFilter.trim());
 
   return (
     <div className="space-y-3">
-      {/* BARRA COMPACTA DE FILTROS */}
+      {/* BARRA DE FILTROS DEL CATÁLOGO */}
       <div className="rounded-2xl pro-panel-elevated p-3.5 sm:p-4 space-y-3">
         {/* Marcas + Buscador */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
@@ -279,9 +297,9 @@ export default function BrandTablesView({
           </div>
         </div>
 
-        {/* Filtro de Capacidades */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+        {/* Filtro de Capacidades + Ordenamiento */}
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-full">
             {capacityTabs.map((cap) => (
               <button
                 key={cap}
@@ -297,9 +315,36 @@ export default function BrandTablesView({
               </button>
             ))}
           </div>
-          <span className="hidden md:inline text-[11px] font-mono text-emerald-300/75 shrink-0">
-            {filteredCatalog.length} registros
-          </span>
+
+          <div className="flex items-center gap-2 ml-auto">
+            {hasActiveFilter && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedBrand('ALL');
+                  setSelectedCapacity('ALL');
+                  setTableFilter('');
+                }}
+                className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-xs font-bold text-gray-200"
+              >
+                Limpiar
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={cycleSortOrder}
+              className="px-2.5 py-1 rounded-lg pro-inset hover:border-emerald-400/50 text-[11px] font-mono font-bold text-emerald-300 flex items-center gap-1"
+            >
+              <ArrowUpDown className="w-3 h-3" />
+              <span>
+                {sortOrder === 'desc'
+                  ? 'Mayor a Menor'
+                  : sortOrder === 'asc'
+                    ? 'Menor a Mayor'
+                    : `${filteredCatalog.length} familias`}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -367,6 +412,13 @@ export default function BrandTablesView({
                       <span className="text-emerald-400/80 font-sans font-bold">Variantes: </span>
                       {item.aliases.slice(0, 4).join(', ')}
                       {item.aliases.length > 4 ? ` +${item.aliases.length - 4}` : ''}
+                    </div>
+                  )}
+
+                  {(item.commonModels || item.notes) && (
+                    <div className="mt-0.5 text-[11px] text-gray-400 truncate">
+                      <span className="text-emerald-300/75 font-semibold">Equipos: </span>
+                      {item.commonModels || item.notes}
                     </div>
                   )}
                 </button>

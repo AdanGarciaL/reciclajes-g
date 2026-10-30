@@ -596,11 +596,11 @@ export default function AdminDatabaseModal({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-3xl rounded-3xl bg-[#062011] border border-emerald-500/35 shadow-2xl overflow-hidden flex flex-col max-h-[92dvh]"
+        className="relative w-full max-w-3xl rounded-3xl pro-panel-elevated shadow-2xl overflow-hidden flex flex-col max-h-[92dvh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Superior */}
-        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 border-b border-emerald-500/20 bg-[#04160b]">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 border-b border-emerald-500/20 bg-black/40">
           <div className="flex items-center gap-3 min-w-0">
             <div className="p-2.5 rounded-2xl bg-emerald-500/20 text-emerald-400 shrink-0">
               <Database className="w-5 h-5" />
@@ -901,9 +901,9 @@ export default function AdminDatabaseModal({
                         </div>
 
                         {/* Columna Después (Nueva Información) */}
-                        <div className="p-3.5 rounded-2xl bg-[#082816] border-2 border-emerald-400/50 space-y-2 shadow-lg">
+                        <div className="p-3.5 rounded-2xl pro-panel border-2 border-emerald-400/50 space-y-2 shadow-lg">
                           <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider flex items-center gap-1">
-                            <Sparkles className="w-3.5 h-3.5" /> Nueva Información Revisada
+                            <ShieldCheck className="w-3.5 h-3.5" /> Nueva Información Revisada
                           </span>
                           <div className="space-y-1.5 text-xs font-mono">
                             <p className="text-emerald-100 flex items-center gap-1">

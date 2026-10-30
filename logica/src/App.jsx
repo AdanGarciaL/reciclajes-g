@@ -478,6 +478,13 @@ export default function App() {
     }));
   }
 
+  function handleSetBatchCount(bucketKey, exactVal) {
+    setBatchCounts((prev) => ({
+      ...prev,
+      [bucketKey]: Math.max(0, exactVal || 0),
+    }));
+  }
+
   function handleResetBatch() {
     setBatchCounts({ '16GB': 0, '32GB': 0, '64GB': 0, '128GB': 0, '256GB': 0, '512GB+': 0 });
   }
@@ -1133,7 +1140,7 @@ export default function App() {
         {/* ================================================================= */}
         {/* 3. VISTA GUÍA VISUAL                                              */}
         {/* ================================================================= */}
-        {activeTab === 'tutorial' && <VisualTutorialView />}
+        {activeTab === 'tutorial' && <VisualTutorialView onSelectChip={handleSelectChip} />}
 
         {/* ================================================================= */}
         {/* 4. VISTA LOTE                                                     */}
@@ -1142,6 +1149,7 @@ export default function App() {
           <BatchCounterPanel
             counts={batchCounts}
             onAdjustCount={handleAdjustBatchCount}
+            onSetCount={handleSetBatchCount}
             onResetBatch={handleResetBatch}
             clientName={clientName}
             setClientName={setClientName}
