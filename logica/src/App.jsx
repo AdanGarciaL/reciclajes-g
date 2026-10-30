@@ -5,6 +5,7 @@ import {
   VolumeX,
   Database,
   Plus,
+  Minus,
   Cpu,
   X,
   CheckCircle2,
@@ -17,6 +18,7 @@ import {
   Share,
   ArrowLeft,
   Pencil,
+  ChevronRight,
 } from 'lucide-react';
 import {
   decodeChipOffline,
@@ -25,7 +27,6 @@ import {
   getDatabaseStats,
   normalizeCode,
   detectCpuInsteadOfMemory,
-  capacityToGbNumber,
   safeGetStorage,
   safeSetStorage,
 } from './services/icEngine';
@@ -42,42 +43,63 @@ const TEXT_SCALE_OPTIONS = [
   { id: 'xlarge', shortLabel: 'A++', fullLabel: 'Letra Extra Grande' },
 ];
 
+const QUICK_LOT_BUCKETS = [
+  { key: '16GB', label: '4–16GB', pill: 'bg-sky-400 text-black border-sky-200', border: 'border-sky-500/35' },
+  { key: '32GB', label: '32GB', pill: 'bg-cyan-400 text-black border-cyan-200', border: 'border-cyan-500/35' },
+  { key: '64GB', label: '64GB', pill: 'bg-emerald-400 text-black border-emerald-200', border: 'border-emerald-500/45' },
+  { key: '128GB', label: '128GB', pill: 'bg-amber-400 text-black border-amber-200', border: 'border-amber-500/45' },
+  { key: '256GB', label: '256GB', pill: 'bg-purple-500 text-white border-purple-300', border: 'border-purple-500/45' },
+  { key: '512GB+', label: '512G–2TB', pill: 'bg-rose-500 text-white border-rose-300', border: 'border-rose-500/45' },
+];
+
 function getCapacityTheme(storageStr) {
   const s = String(storageStr || '').toUpperCase().trim();
   const num = parseInt(s.replace(/\D/g, ''), 10) || 0;
   if (s.includes('TB') || num >= 512) {
     return {
-      badge: 'bg-rose-500 text-white border-rose-300',
-      card: 'border-rose-500/60 bg-[#071d11]',
+      badge: 'bg-rose-500 text-white border-rose-300 shadow-[0_0_20px_rgba(244,63,94,0.35)]',
+      card: 'border-rose-500/65 bg-gradient-to-br from-[#1d0910] via-[#0d1510] to-[#070d09]',
+      accentText: 'text-rose-300',
+      dot: 'bg-rose-400',
     };
   }
   if (num === 256) {
     return {
-      badge: 'bg-purple-500 text-white border-purple-300',
-      card: 'border-purple-500/60 bg-[#071d11]',
+      badge: 'bg-purple-500 text-white border-purple-300 shadow-[0_0_20px_rgba(168,85,247,0.35)]',
+      card: 'border-purple-500/65 bg-gradient-to-br from-[#170b24] via-[#0d1510] to-[#070d09]',
+      accentText: 'text-purple-300',
+      dot: 'bg-purple-400',
     };
   }
   if (num === 128) {
     return {
-      badge: 'bg-amber-400 text-black border-amber-200',
-      card: 'border-amber-400/65 bg-[#071d11]',
+      badge: 'bg-amber-400 text-black border-amber-200 shadow-[0_0_20px_rgba(251,191,36,0.3)]',
+      card: 'border-amber-400/70 bg-gradient-to-br from-[#1f1606] via-[#0d1510] to-[#070d09]',
+      accentText: 'text-amber-300',
+      dot: 'bg-amber-400',
     };
   }
   if (num === 64) {
     return {
-      badge: 'bg-emerald-400 text-black border-emerald-200',
-      card: 'border-emerald-400/70 bg-[#071d11]',
+      badge: 'bg-emerald-400 text-black border-emerald-200 shadow-[0_0_22px_rgba(52,211,153,0.35)]',
+      card: 'border-emerald-400/75 bg-gradient-to-br from-[#072617] via-[#0b1911] to-[#060c08]',
+      accentText: 'text-emerald-300',
+      dot: 'bg-emerald-400',
     };
   }
   if (num === 32) {
     return {
-      badge: 'bg-cyan-400 text-black border-cyan-200',
-      card: 'border-cyan-400/60 bg-[#071d11]',
+      badge: 'bg-cyan-400 text-black border-cyan-200 shadow-[0_0_18px_rgba(34,211,238,0.3)]',
+      card: 'border-cyan-400/65 bg-gradient-to-br from-[#062026] via-[#0b1712] to-[#060c08]',
+      accentText: 'text-cyan-300',
+      dot: 'bg-cyan-400',
     };
   }
   return {
-    badge: 'bg-sky-400 text-black border-sky-200',
-    card: 'border-sky-400/60 bg-[#071d11]',
+    badge: 'bg-sky-400 text-black border-sky-200 shadow-[0_0_18px_rgba(56,189,248,0.3)]',
+    card: 'border-sky-400/65 bg-gradient-to-br from-[#071c29] via-[#0b1712] to-[#060c08]',
+    accentText: 'text-sky-300',
+    dot: 'bg-sky-400',
   };
 }
 
@@ -410,7 +432,7 @@ export default function App() {
     }));
     playDetectionBeep(cap);
     speakChipResult({ ...chip, storage: cap }, voiceEnabled, true);
-    setToastMsg(`+1 (${cap}) al lote`);
+    setToastMsg(`+1 (${cap}) sumado al lote`);
     setTimeout(() => setToastMsg(''), 1400);
   }
 
@@ -454,9 +476,9 @@ export default function App() {
   const compactKeyboardMode = isInputFocused || isKeyboardOpen;
 
   const navItems = [
-    { id: 'search', label: 'Buscador', icon: Search },
-    { id: 'tables', label: 'Tablas', icon: Table2 },
-    { id: 'tutorial', label: 'Guía', icon: Eye },
+    { id: 'search', label: 'Escáner', icon: Search },
+    { id: 'tables', label: 'Catálogo', icon: Table2 },
+    { id: 'tutorial', label: 'Guía IC', icon: Eye },
     { id: 'batch', label: 'Lote', icon: PackageCheck, badge: totalBatchPieces },
   ];
 
@@ -468,35 +490,43 @@ export default function App() {
         : 'ios-top-shield';
 
   return (
-    <div className="min-h-dvh flex flex-col bg-[#030e08] text-white pb-24 md:pb-10">
-      {/* CABECERA SÓLIDA — ANTI-DIFUMINACIÓN EN iOS Y COMPACTA CUANDO SE ABRE EL TECLADO */}
+    <div className="min-h-dvh flex flex-col text-white pb-24 md:pb-10">
+      {/* ===================================================================== */}
+      {/* CABECERA INDUSTRIAL DE ALTA PRECISIÓN — SÓLIDA EN iOS / ANDROID       */}
+      {/* ===================================================================== */}
       <header
-        className={`sticky top-0 z-30 ${headerShieldClass} pb-1.5 px-2.5 sm:px-4 border-b border-emerald-500/25 shadow-[0_8px_24px_rgba(0,0,0,0.9)]`}
+        className={`sticky top-0 z-30 ${headerShieldClass} pb-2 px-2.5 sm:px-4 border-b border-emerald-500/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)]`}
       >
-        <div className="max-w-5xl mx-auto rounded-2xl bg-[#072214] border border-emerald-400/45 px-3 sm:px-4 py-2 space-y-1.5 md:space-y-0">
+        <div className="max-w-5xl mx-auto rounded-2xl pro-panel px-3 sm:px-4 py-2">
           <div className="flex items-center justify-between gap-2">
-            {/* Identidad */}
-            <div className="flex items-center gap-2 min-w-0">
+            {/* Marca e Indicador de Sistema */}
+            <div className="flex items-center gap-2.5 min-w-0">
               {!isStandalone && (
                 <a
                   href="../index.html#app-logica"
                   title="Volver a ecologicagarcia.com"
-                  className="hidden sm:inline-flex px-2.5 py-1.5 rounded-xl bg-[#04140b] hover:bg-emerald-500/20 border border-emerald-400/35 text-emerald-300 text-xs font-bold items-center gap-1 transition shrink-0"
+                  className="hidden sm:inline-flex px-2.5 py-1.5 rounded-xl pro-inset hover:border-emerald-400/50 text-emerald-300 text-xs font-bold items-center gap-1 transition shrink-0"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Sitio</span>
+                  <span>Web</span>
                 </a>
               )}
-              <div className="w-8 h-8 rounded-xl bg-emerald-400 text-black flex items-center justify-center shrink-0">
-                <Cpu className="w-4 h-4 stroke-[2.5]" />
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-black flex items-center justify-center shadow-[0_0_16px_rgba(52,211,153,0.35)] shrink-0">
+                <Cpu className="w-5 h-5 stroke-[2.5]" />
               </div>
               <div className="min-w-0">
-                <h1 className="font-black tracking-tight text-white text-sm sm:text-base leading-none truncate">
-                  ECO LÓGICA <span className="text-emerald-400">GARCÍA</span>
-                </h1>
+                <div className="flex items-center gap-1.5">
+                  <h1 className="font-black tracking-tight text-white text-sm sm:text-base leading-none truncate">
+                    ECO LÓGICA <span className="text-emerald-400">GARCÍA</span>
+                  </h1>
+                  <span className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-400/30 text-[10px] font-mono font-bold text-emerald-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    PRO
+                  </span>
+                </div>
                 {!compactKeyboardMode && (
-                  <span className="text-[10px] text-emerald-200/80 font-semibold block truncate mt-0.5">
-                    {dbStats.totalOfflineCount.toLocaleString()} chips · 4GB a 2TB
+                  <span className="text-[10px] text-emerald-200/70 font-mono font-medium block truncate mt-0.5">
+                    {dbStats.totalOfflineCount.toLocaleString()} IC · 4GB–2TB
                   </span>
                 )}
               </div>
@@ -504,7 +534,7 @@ export default function App() {
 
             {/* Navegación Desktop */}
             <nav
-              className="hidden md:flex items-center gap-1 p-1 rounded-xl bg-[#04140b] border border-emerald-500/30"
+              className="hidden md:flex items-center gap-1 p-1 rounded-xl pro-inset"
               role="tablist"
             >
               {navItems.map((item) => {
@@ -518,14 +548,16 @@ export default function App() {
                     aria-selected={active}
                     onClick={() => setActiveTab(item.id)}
                     className={`px-3.5 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1.5 transition ${
-                      active ? 'bg-emerald-400 text-black' : 'text-emerald-100 hover:text-white'
+                      active
+                        ? 'bg-emerald-400 text-black shadow-[0_0_14px_rgba(52,211,153,0.35)]'
+                        : 'text-emerald-100/80 hover:text-white'
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5" />
                     <span>{item.label}</span>
                     {item.badge > 0 && (
                       <span
-                        className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                        className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-black ${
                           active ? 'bg-black text-emerald-400' : 'bg-emerald-400 text-black'
                         }`}
                       >
@@ -540,7 +572,7 @@ export default function App() {
             {/* Controles Rápidos */}
             <div className="flex items-center gap-1.5 shrink-0">
               <div
-                className="flex items-center p-0.5 rounded-xl bg-[#04140b] border border-emerald-400/35"
+                className="flex items-center p-0.5 rounded-xl pro-inset"
                 role="group"
                 aria-label="Tamaño de letra"
               >
@@ -554,7 +586,7 @@ export default function App() {
                       title={opt.fullLabel}
                       aria-pressed={active}
                       className={`px-2 py-1 rounded-lg font-mono text-xs font-black transition ${
-                        active ? 'bg-emerald-400 text-black' : 'text-emerald-200 hover:text-white'
+                        active ? 'bg-emerald-400 text-black' : 'text-emerald-200/80 hover:text-white'
                       }`}
                     >
                       {opt.shortLabel}
@@ -568,10 +600,10 @@ export default function App() {
                   type="button"
                   onClick={handleInstallClick}
                   title="Instalar App"
-                  className="p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-[#04140b] hover:bg-emerald-500/20 border border-emerald-400/35 text-emerald-300 font-bold text-xs flex items-center gap-1 transition"
+                  className="p-2 sm:px-2.5 sm:py-1.5 rounded-xl pro-inset hover:border-emerald-400/50 text-emerald-300 font-bold text-xs flex items-center gap-1 transition"
                 >
                   <Download className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="hidden lg:inline">Instalar</span>
+                  <span className="hidden lg:inline">App</span>
                 </button>
               )}
 
@@ -579,10 +611,8 @@ export default function App() {
                 type="button"
                 onClick={() => setVoiceEnabled(!voiceEnabled)}
                 aria-label={voiceEnabled ? 'Desactivar voz' : 'Activar voz'}
-                className={`p-2 rounded-xl border text-xs font-bold transition ${
-                  voiceEnabled
-                    ? 'bg-[#04140b] border-emerald-400/50 text-emerald-300'
-                    : 'bg-[#04140b] border-white/15 text-gray-400'
+                className={`p-2 rounded-xl pro-inset text-xs font-bold transition ${
+                  voiceEnabled ? 'text-emerald-300 border-emerald-400/40' : 'text-gray-500'
                 }`}
               >
                 {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
@@ -591,7 +621,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={openAddModal}
-                className="relative px-2.5 py-1.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs flex items-center gap-1 shadow transition"
+                className="relative px-2.5 py-1.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs flex items-center gap-1 shadow-[0_0_14px_rgba(52,211,153,0.3)] transition"
               >
                 <Database className="w-3.5 h-3.5" />
                 <span>+Chip</span>
@@ -606,10 +636,12 @@ export default function App() {
         </div>
       </header>
 
-      {/* CONTENEDOR PRINCIPAL — DISEÑADO PARA QUE EL TECLADO NUNCA TAPE LA CAPACIDAD */}
+      {/* ===================================================================== */}
+      {/* CONTENEDOR PRINCIPAL                                                  */}
+      {/* ===================================================================== */}
       <main
         ref={scannerTopRef}
-        className="max-w-5xl w-full mx-auto px-2.5 sm:px-4 pt-2 sm:pt-3 flex-1"
+        className="max-w-5xl w-full mx-auto px-2.5 sm:px-4 pt-2.5 sm:pt-3.5 flex-1"
       >
         {toastMsg && (
           <div
@@ -623,13 +655,40 @@ export default function App() {
         )}
 
         {/* ================================================================= */}
-        {/* 1. VISTA BUSCADOR (DIRECTA, AL GRANO Y A PRUEBA DE TECLADO MÓVIL)  */}
+        {/* 1. CONSOLA ESCÁNER (DIRECTA, INDUSTRIAL Y A PRUEBA DE TECLADO)    */}
         {/* ================================================================= */}
         {activeTab === 'search' && (
-          <div className="space-y-2.5">
-            {/* BLOQUE STICKY DE LECTURA: INPUT + CAPACIDAD INMEDIATA ARRIBA DEL TECLADO */}
-            <div className="rounded-2xl bg-[#072012] border border-emerald-500/35 p-2.5 sm:p-3.5 shadow-xl space-y-2">
-              {/* Input con indicador de capacidad integrado en la misma barra */}
+          <div className="space-y-3">
+            {/* MÓDULO PRINCIPAL DE LECTURA: INPUT + TELEMETRÍA DE CAPACIDAD */}
+            <div className="rounded-2xl pro-panel-elevated p-3 sm:p-4 space-y-2.5">
+              {/* Barra superior de estado del lector */}
+              {!compactKeyboardMode && (
+                <div className="flex items-center justify-between gap-2 px-0.5">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        cpuWarning
+                          ? 'bg-rose-500 animate-ping'
+                          : activeResult && theme
+                            ? theme.dot
+                            : 'bg-emerald-400'
+                      }`}
+                    />
+                    <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-300/90">
+                      {cpuWarning
+                        ? 'Alerta: Chip sin almacenamiento'
+                        : activeResult
+                          ? `Memoria detectada · ${activeResult.manufacturer}`
+                          : 'Lector de Código IC (eMMC · eMCP · UFS · NAND)'}
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-mono text-gray-400 hidden sm:inline">
+                    Prioridad: Capacidad Máxima
+                  </span>
+                </div>
+              )}
+
+              {/* Campo de entrada con badge en vivo integrado */}
               <div className="relative flex items-center">
                 <Search className="w-5 h-5 text-emerald-400 absolute left-3.5 pointer-events-none" />
                 <input
@@ -640,17 +699,17 @@ export default function App() {
                   onBlur={() => setTimeout(() => setIsInputFocused(false), 180)}
                   onChange={(e) => setQuery(e.target.value.toUpperCase())}
                   onKeyDown={handleSearchKeyDown}
-                  placeholder="Código del chip (ej. KMDP6001, JXE77, H9HP52)"
+                  placeholder="Escribe el código (ej. KMDP6001, JXE77, H9HP52, KLUFG8)"
                   aria-label="Código del chip"
                   autoComplete="off"
                   autoCorrect="off"
                   autoCapitalize="characters"
                   spellCheck={false}
-                  className="w-full pl-11 pr-32 py-3 sm:py-3.5 rounded-xl bg-[#031009] border-2 border-emerald-400/45 focus:border-emerald-300 focus:outline-none font-mono font-black text-base sm:text-xl text-white placeholder:text-emerald-100/35 placeholder:font-sans placeholder:font-medium placeholder:text-xs sm:placeholder:text-sm tracking-wide transition"
+                  className="w-full pl-11 pr-32 py-3 sm:py-3.5 rounded-xl pro-inset focus:border-emerald-400 focus:outline-none font-mono font-black text-base sm:text-xl text-white placeholder:text-emerald-100/35 placeholder:font-sans placeholder:font-medium placeholder:text-xs sm:placeholder:text-sm tracking-wider transition"
                 />
 
-                {/* Badge instantáneo dentro del input (visible incluso con teclado abierto) */}
-                <div className="absolute right-2 flex items-center gap-1">
+                {/* Badge instantáneo dentro del input (siempre visible arriba del teclado) */}
+                <div className="absolute right-2 flex items-center gap-1.5">
                   {activeResult && theme && (
                     <span
                       className={`px-2.5 py-1 rounded-lg font-mono font-black text-xs sm:text-sm border ${theme.badge}`}
@@ -659,8 +718,8 @@ export default function App() {
                     </span>
                   )}
                   {cpuWarning && (
-                    <span className="px-2 py-1 rounded-lg bg-rose-500 text-white font-mono font-black text-[11px]">
-                      {cpuWarning.isRamOnlyWarning ? 'SOLO RAM' : 'NO ES MEMORIA'}
+                    <span className="px-2 py-1 rounded-lg bg-rose-500 text-white font-mono font-black text-[11px] border border-rose-300">
+                      {cpuWarning.isRamOnlyWarning ? 'SOLO RAM' : 'CPU / NO NAND'}
                     </span>
                   )}
                   {query && (
@@ -680,97 +739,113 @@ export default function App() {
               </div>
 
               {/* ============================================================= */}
-              {/* RESULTADO INMEDIATO JUSTO DEBAJO DEL INPUT (SIEMPRE VISIBLE)  */}
+              {/* ALERTA DE CHIP EQUIVOCADO (PURA RAM O PROCESADOR)             */}
               {/* ============================================================= */}
               {cpuWarning && (
                 <div
                   role="alert"
-                  className="p-3 rounded-xl bg-rose-950/90 border-2 border-rose-400/80 flex items-center justify-between gap-3"
+                  className="p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-rose-950/95 to-[#16070b] border-2 border-rose-500/80 flex items-center justify-between gap-3"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-400/40 flex items-center justify-center shrink-0">
+                      <AlertTriangle className="w-5 h-5 text-rose-400" />
+                    </div>
                     <div className="min-w-0">
                       <div className="text-xs sm:text-sm font-black text-white truncate">
                         {cpuWarning.isRamOnlyWarning
-                          ? `Chip equivocado: Solo RAM (${cpuWarning.ramDetected || cpuWarning.cpuBrand})`
-                          : `Chip equivocado: ${cpuWarning.cpuType} (${cpuWarning.cpuBrand})`}
+                          ? `SOLO RAM (${cpuWarning.ramDetected || cpuWarning.cpuBrand}) — Sin Almacenamiento`
+                          : `${cpuWarning.cpuType} (${cpuWarning.cpuBrand}) — No es Memoria`}
                       </div>
-                      <p className="text-[11px] sm:text-xs text-rose-200 leading-snug">
-                        Lee el otro chip grande de la placa (KLM, KLU, KM, H9, HN8T, JZ, SDIN o THG).
+                      <p className="text-[11px] sm:text-xs text-rose-200/90 leading-snug mt-0.5">
+                        Busca el chip de memoria a un lado: <strong className="font-mono text-white">KLM, KLU, KM, H9, HN8T, JZ, SDIN, THG</strong>.
                       </p>
                     </div>
                   </div>
                   <span className="px-2.5 py-1 rounded-lg bg-rose-500 text-white font-mono font-black text-xs shrink-0">
-                    IGNORAR
+                    0 GB
                   </span>
                 </div>
               )}
 
+              {/* ============================================================= */}
+              {/* TARJETA DE TELEMETRÍA DE CAPACIDAD (SIEMPRE ARRIBA DEL TECLADO)*/}
+              {/* ============================================================= */}
               {activeResult && theme && (
                 <div
                   role="status"
                   aria-live="polite"
-                  className={`rounded-xl border-2 p-3 sm:p-4 ${theme.card}`}
+                  className={`rounded-xl border-2 p-3 sm:p-4 transition-all ${theme.card}`}
                 >
-                  <div className="flex items-center justify-between gap-3 flex-wrap">
-                    {/* Capacidad Gigante + Marca/Código al grano */}
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div
-                        className={`px-4 sm:px-5 py-2 rounded-xl border-2 font-mono font-black text-3xl sm:text-5xl tracking-tight shrink-0 ${theme.badge}`}
-                      >
-                        {activeResult.storage}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    {/* Bloque Izquierdo: Lectura Gigante de GB + Desglose de Código */}
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                      <div className="flex flex-col items-center justify-center shrink-0">
+                        <div
+                          className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl border-2 font-mono font-black text-3xl sm:text-5xl tracking-tight leading-none ${theme.badge}`}
+                        >
+                          {activeResult.storage}
+                        </div>
+                        <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-emerald-300/90 mt-1">
+                          Capacidad Máx
+                        </span>
                       </div>
 
-                      <div className="min-w-0 space-y-0.5">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="px-2 py-0.5 rounded bg-emerald-400/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-black uppercase">
-                            Capacidad Máxima
-                          </span>
-                          {activeResult.correctedTo && (
-                            <span className="text-[10px] font-mono text-amber-300 font-bold">
-                              ({activeResult.correctedFrom} → {activeResult.correctedTo})
+                      <div className="min-w-0 flex-1 space-y-1">
+                        {/* Código con segmento clave iluminado */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {activeDiff ? (
+                            <div className="font-mono font-black text-base sm:text-xl flex items-center flex-wrap break-all tracking-wide">
+                              <span className="text-gray-300">{activeDiff.pre}</span>
+                              <span
+                                className={`px-1.5 py-0.2 mx-0.5 rounded-md font-black text-sm sm:text-lg border ${theme.badge}`}
+                              >
+                                {activeDiff.highlight}
+                              </span>
+                              <span className="text-gray-300">{activeDiff.post}</span>
+                            </div>
+                          ) : (
+                            <div className="font-mono font-black text-base sm:text-xl text-white truncate">
+                              {activeResult.code}
+                            </div>
+                          )}
+
+                          {activeDiff?.why && (
+                            <span className="px-2 py-0.5 rounded-md bg-black/50 border border-white/15 font-mono text-[11px] font-bold text-emerald-300">
+                              {activeDiff.why}
                             </span>
                           )}
                         </div>
 
-                        {activeDiff ? (
-                          <div className="font-mono font-bold text-sm sm:text-base flex items-center flex-wrap break-all">
-                            <span className="text-gray-300">{activeDiff.pre}</span>
-                            <span className={`px-1.5 py-0.2 mx-0.5 rounded font-black text-xs sm:text-sm ${theme.badge}`}>
-                              {activeDiff.highlight}
-                            </span>
-                            <span className="text-gray-300">{activeDiff.post}</span>
-                          </div>
-                        ) : (
-                          <div className="font-mono font-black text-sm sm:text-base text-white truncate">
-                            {activeResult.code}
-                          </div>
-                        )}
-
-                        <div className="text-xs text-emerald-200/90 font-semibold flex items-center gap-1.5 flex-wrap">
-                          <span className="text-white font-bold">{activeResult.manufacturer}</span>
-                          <span>·</span>
-                          <span>{activeResult.type}</span>
+                        {/* Fila de Especificaciones Técnicas */}
+                        <div className="flex items-center gap-1.5 flex-wrap text-xs">
+                          <span className="px-2 py-0.5 rounded bg-white/10 text-white font-bold">
+                            {activeResult.manufacturer}
+                          </span>
+                          <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-emerald-200 font-mono font-semibold">
+                            {activeResult.type}
+                          </span>
                           {hasDualMemoryInChip && (
-                            <>
-                              <span>·</span>
-                              <span className="text-gray-400">
-                                RAM {activeResult.ram} (Ignorar RAM)
-                              </span>
-                            </>
+                            <span className="px-2 py-0.5 rounded bg-black/40 border border-white/10 text-gray-300 font-mono">
+                              RAM {activeResult.ram} (Ignorar)
+                            </span>
+                          )}
+                          {activeResult.correctedTo && (
+                            <span className="text-[11px] font-mono text-amber-300 font-bold">
+                              Corrige: {activeResult.correctedFrom} → {activeResult.correctedTo}
+                            </span>
                           )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Botones directos: Voz, Editar, +Lote */}
-                    <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
+                    {/* Bloque Derecho: Acciones Táctiles */}
+                    <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end pt-1 sm:pt-0 border-t sm:border-t-0 border-white/10">
                       <button
                         type="button"
                         onClick={() => speakChipResult(activeResult, true, false)}
                         aria-label="Escuchar capacidad"
-                        className="p-2.5 rounded-xl bg-[#04120a] hover:bg-black border border-white/15 text-emerald-300 transition"
-                        title="Voz"
+                        className="p-2.5 rounded-xl bg-black/50 hover:bg-black/80 border border-white/15 text-emerald-300 transition"
+                        title="Repetir voz"
                       >
                         <Volume2 className="w-4 h-4" />
                       </button>
@@ -779,7 +854,7 @@ export default function App() {
                         type="button"
                         onClick={() => openEditChipModal(activeResult)}
                         aria-label="Editar chip"
-                        className="px-3 py-2.5 rounded-xl bg-[#04120a] hover:bg-white/10 border border-emerald-500/30 text-emerald-200 font-bold text-xs flex items-center gap-1 transition"
+                        className="px-3 py-2.5 rounded-xl bg-black/50 hover:bg-white/10 border border-white/15 text-emerald-200 font-bold text-xs flex items-center gap-1 transition"
                       >
                         <Pencil className="w-3.5 h-3.5 text-emerald-400" />
                         <span>Editar</span>
@@ -788,7 +863,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => addChipToBatch(activeResult)}
-                        className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs sm:text-sm flex items-center justify-center gap-1 shadow transition"
+                        className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-[0_0_20px_rgba(52,211,153,0.4)] transition"
                       >
                         <Plus className="w-4 h-4 stroke-[3]" />
                         <span>Sumar {activeResult.storage}</span>
@@ -796,103 +871,202 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Aviso compacto solo si escribió un prefijo incompleto con varias capacidades */}
+                  {/* Si el usuario escribió solo el inicio del código y hay varias capacidades en esa familia */}
                   {Array.isArray(activeResult.alternativeCapacities) &&
                     activeResult.alternativeCapacities.length > 1 && (
-                      <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between gap-2 text-[11px] text-amber-200">
+                      <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between gap-2 flex-wrap text-[11px] font-mono text-amber-200">
                         <span>
-                          Variantes de esta serie: <strong>{activeResult.alternativeCapacities.join(' / ')}</strong> (Mostrando capacidad máxima: {activeResult.storage})
+                          Serie con variantes ({activeResult.alternativeCapacities.join(' · ')}) — priorizando capacidad máxima ({activeResult.storage}).
                         </span>
                       </div>
                     )}
                 </div>
               )}
 
+              {/* Estado sin coincidencias */}
               {query.trim().length >= 2 && !activeResult && suggestions.length === 0 && !cpuWarning && (
-                <div className="p-3 rounded-xl bg-[#04120a] border border-emerald-500/25 flex items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-gray-200">
-                    {isSearchingOnline ? `Buscando "${query}"...` : `Sin registro para "${query}"`}
+                <div className="p-3 rounded-xl pro-inset flex items-center justify-between gap-2">
+                  <span className="text-xs font-mono font-bold text-gray-300">
+                    {isSearchingOnline
+                      ? `Consultando código "${query}"...`
+                      : `Código "${query}" no registrado en catálogo`}
                   </span>
                   <button
                     type="button"
                     onClick={openAddModal}
-                    className="px-3 py-1.5 rounded-lg bg-emerald-400 text-black font-black text-xs shrink-0"
+                    className="px-3 py-1.5 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs shrink-0 transition"
                   >
-                    + Agregar
+                    + Registrar Chip
                   </button>
                 </div>
               )}
             </div>
 
-            {/* LISTA COMPACTA DE SUGERENCIAS (Mayor capacidad arriba) */}
+            {/* ============================================================= */}
+            {/* COINCIDENCIAS RÁPIDAS (ORDENADAS DE MAYOR A MENOR CAPACIDAD)  */}
+            {/* ============================================================= */}
             {suggestions.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                {suggestions.map((item, idx) => {
-                  const itemTheme = getCapacityTheme(item.storage);
-                  const diff = highlightCodeDifference(item);
-                  return (
-                    <button
-                      key={`${item.code}-${item.partNumber}-${idx}`}
-                      type="button"
-                      onClick={() => handleSelectChip(item)}
-                      className="px-3 py-2.5 rounded-xl bg-[#071f12] hover:bg-[#0b2918] border border-emerald-500/25 flex items-center justify-between gap-2 text-left transition"
-                    >
-                      <div className="min-w-0">
-                        <div className="font-mono font-bold text-xs sm:text-sm flex items-center flex-wrap break-all">
-                          <span className="text-gray-300">{diff.pre}</span>
-                          <span className={`px-1 py-0.2 mx-0.5 rounded font-black ${itemTheme.badge}`}>
-                            {diff.highlight}
-                          </span>
-                          <span className="text-gray-300">{diff.post}</span>
-                        </div>
-                        <div className="text-[11px] text-emerald-200/75 truncate">
-                          {item.manufacturer} · {item.type}
-                        </div>
-                      </div>
-
-                      <span
-                        className={`px-2.5 py-1 rounded-lg font-mono font-black text-xs sm:text-sm border shrink-0 ${itemTheme.badge}`}
-                      >
-                        {item.storage}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* ATAJOS Y RECIENTES (Solo cuando no está escribiendo) */}
-            {!query && (
-              <div className="space-y-3">
-                {/* Atajos Rápidos */}
-                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                  {QUICK_PREFIXES.map((p) => {
-                    const targetVal = p.value || p.label;
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-300/75">
+                    Coincidencias ({suggestions.length}) · Mayor capacidad primero
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {suggestions.map((item, idx) => {
+                    const itemTheme = getCapacityTheme(item.storage);
+                    const diff = highlightCodeDifference(item);
                     return (
                       <button
-                        key={p.label}
+                        key={`${item.code}-${item.partNumber}-${idx}`}
                         type="button"
-                        onClick={() => handleSelectChip({ code: targetVal })}
-                        className="px-2.5 py-1.5 rounded-xl bg-[#071f12] hover:bg-[#0b2918] text-emerald-200 border border-emerald-500/25 font-mono text-xs font-bold shrink-0 transition"
+                        onClick={() => handleSelectChip(item)}
+                        className="px-3.5 py-2.5 rounded-xl pro-panel hover:border-emerald-400/50 flex items-center justify-between gap-2 text-left transition"
                       >
-                        {p.label}
+                        <div className="min-w-0">
+                          <div className="font-mono font-bold text-xs sm:text-sm flex items-center flex-wrap break-all">
+                            <span className="text-gray-300">{diff.pre}</span>
+                            <span className={`px-1 py-0.2 mx-0.5 rounded font-black ${itemTheme.badge}`}>
+                              {diff.highlight}
+                            </span>
+                            <span className="text-gray-300">{diff.post}</span>
+                          </div>
+                          <div className="text-[11px] text-emerald-200/70 truncate mt-0.5">
+                            {item.manufacturer} · {item.type}
+                          </div>
+                        </div>
+
+                        <span
+                          className={`px-2.5 py-1 rounded-lg font-mono font-black text-xs sm:text-sm border shrink-0 ${itemTheme.badge}`}
+                        >
+                          {item.storage}
+                        </span>
                       </button>
                     );
                   })}
                 </div>
+              </div>
+            )}
 
-                {/* Recientes */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between px-1">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300/70">
-                      Recientes
+            {/* ============================================================= */}
+            {/* PANELES DE OPERACIÓN RÁPIDA (VISIBLES CUANDO NO SE ESCRIBE)   */}
+            {/* ============================================================= */}
+            {!query && (
+              <div className="space-y-3">
+                {/* 1. Prefijos Rápidos por Marca */}
+                <div className="rounded-2xl pro-panel p-3 sm:p-3.5 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-mono font-extrabold uppercase tracking-wider text-emerald-300/80">
+                      Acceso Rápido por Serie IC
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('tables')}
+                      className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-0.5"
+                    >
+                      <span>Ver catálogo completo</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                    {QUICK_PREFIXES.map((p) => {
+                      const targetVal = p.value || p.label;
+                      return (
+                        <button
+                          key={p.label}
+                          type="button"
+                          onClick={() => handleSelectChip({ code: targetVal })}
+                          className="px-2.5 py-2 rounded-xl pro-inset hover:border-emerald-400/60 flex flex-col items-start justify-center text-left transition group"
+                        >
+                          <span className="font-mono font-black text-xs sm:text-sm text-white group-hover:text-emerald-300">
+                            {p.label}
+                          </span>
+                          <span className="text-[10px] text-emerald-200/60 truncate w-full">
+                            {p.brand}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2. Barra de Conteo Rápido de Lote por Capacidad (4GB a 2TB) */}
+                <div className="rounded-2xl pro-panel p-3 sm:p-3.5 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-mono font-extrabold uppercase tracking-wider text-emerald-300/80">
+                        Conteo Rápido de Lote
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-400 text-black font-mono font-black text-[11px]">
+                        {totalBatchPieces} pzas
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('batch')}
+                      className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-0.5"
+                    >
+                      <span>Corte / WhatsApp</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-6 gap-1.5">
+                    {QUICK_LOT_BUCKETS.map((b) => {
+                      const count = batchCounts[b.key] || 0;
+                      return (
+                        <div
+                          key={b.key}
+                          className={`rounded-xl pro-inset p-2 border ${b.border} flex flex-col justify-between gap-2`}
+                        >
+                          <div className="flex items-center justify-between gap-1">
+                            <span
+                              className={`px-1.5 py-0.5 rounded font-mono font-black text-[10px] border ${b.pill}`}
+                            >
+                              {b.label}
+                            </span>
+                            <span className="font-mono font-black text-base sm:text-lg text-white">
+                              {count}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleAdjustBatchCount(b.key, -1)}
+                              disabled={count <= 0}
+                              aria-label={`Restar 1 a ${b.label}`}
+                              className="py-1 rounded-lg bg-white/5 hover:bg-white/15 disabled:opacity-25 text-white flex items-center justify-center transition"
+                            >
+                              <Minus className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleAdjustBatchCount(b.key, 1)}
+                              aria-label={`Sumar 1 a ${b.label}`}
+                              className="py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/35 border border-emerald-400/30 text-emerald-300 flex items-center justify-center transition"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. Historial de Lecturas Recientes */}
+                <div className="rounded-2xl pro-panel p-3 sm:p-3.5 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-mono font-extrabold uppercase tracking-wider text-emerald-300/80">
+                      Lecturas Recientes
                     </span>
                     <button
                       type="button"
                       onClick={openAddModal}
                       className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
                     >
-                      <Plus className="w-3.5 h-3.5" /> Administrar Base
+                      <Plus className="w-3.5 h-3.5" /> Base de Datos
                     </button>
                   </div>
 
@@ -912,7 +1086,7 @@ export default function App() {
                           key={item.code}
                           type="button"
                           onClick={() => handleSelectChip(item)}
-                          className="p-2.5 rounded-xl bg-[#071f12] hover:bg-[#0b2918] border border-emerald-500/20 flex items-center justify-between gap-2 text-left transition"
+                          className="p-2.5 rounded-xl pro-inset hover:border-emerald-400/50 flex items-center justify-between gap-2 text-left transition"
                         >
                           <div className="min-w-0">
                             <div className="font-mono font-bold text-xs flex items-center flex-wrap break-all">
@@ -922,7 +1096,7 @@ export default function App() {
                               </span>
                               <span className="text-gray-300">{diff.post}</span>
                             </div>
-                            <span className="text-[11px] text-emerald-300/70 block truncate mt-0.5">
+                            <span className="text-[10px] text-emerald-200/65 block truncate mt-0.5">
                               {item.manufacturer || item.brand}
                             </span>
                           </div>
@@ -942,7 +1116,7 @@ export default function App() {
         )}
 
         {/* ================================================================= */}
-        {/* 2. VISTA TABLAS POR MARCA                                         */}
+        {/* 2. VISTA CATÁLOGO POR MARCA                                       */}
         {/* ================================================================= */}
         {activeTab === 'tables' && (
           <BrandTablesView
@@ -972,14 +1146,16 @@ export default function App() {
         )}
       </main>
 
-      {/* BARRA INFERIOR MÓVIL — SE OCULTA AUTOMÁTICAMENTE AL ABRIR EL TECLADO PARA NO TAPAR NADA */}
+      {/* ===================================================================== */}
+      {/* BARRA INFERIOR MÓVIL — SE OCULTA AL ABRIR EL TECLADO                  */}
+      {/* ===================================================================== */}
       {!compactKeyboardMode && (
         <nav
-          className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#030e08] border-t border-emerald-500/30 px-2.5 pt-1.5 ios-bottom-dock shadow-[0_-8px_25px_rgba(0,0,0,0.95)]"
+          className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#050a07] border-t border-emerald-500/25 px-2.5 pt-1.5 ios-bottom-dock shadow-[0_-10px_30px_rgba(0,0,0,0.95)]"
           role="tablist"
           aria-label="Navegación móvil"
         >
-          <div className="grid grid-cols-4 gap-1.5 max-w-md mx-auto p-1 rounded-2xl bg-[#072214] border border-emerald-400/40">
+          <div className="grid grid-cols-4 gap-1.5 max-w-md mx-auto p-1 rounded-2xl pro-panel">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = activeTab === item.id;
@@ -992,8 +1168,8 @@ export default function App() {
                   onClick={() => setActiveTab(item.id)}
                   className={`relative py-2 rounded-xl flex flex-col items-center justify-center gap-0.5 transition ${
                     active
-                      ? 'bg-emerald-400 text-black font-black'
-                      : 'text-emerald-100/80 hover:text-white font-semibold'
+                      ? 'bg-emerald-400 text-black font-black shadow-[0_0_14px_rgba(52,211,153,0.35)]'
+                      : 'text-emerald-100/75 hover:text-white font-semibold'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -1023,10 +1199,10 @@ export default function App() {
           onClick={() => setIsInstallModalOpen(false)}
         >
           <div
-            className="relative w-full max-w-md rounded-3xl bg-[#062011] border border-emerald-500/35 shadow-2xl overflow-hidden"
+            className="relative w-full max-w-md rounded-3xl pro-panel-elevated overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-emerald-500/20 bg-[#04160b]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-emerald-500/20 bg-black/40">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400">
                   <Smartphone className="w-5 h-5" />
@@ -1045,7 +1221,7 @@ export default function App() {
             </div>
 
             <div className="p-5 space-y-4">
-              <div className="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-[#031209] border border-emerald-500/20">
+              <div className="grid grid-cols-3 gap-1.5 p-1 rounded-2xl pro-inset">
                 <button
                   type="button"
                   onClick={() => setInstallPlatformTab('android')}
@@ -1092,7 +1268,7 @@ export default function App() {
                       <Download className="w-4 h-4" /> Instalar ahora
                     </button>
                   )}
-                  <div className="p-3.5 rounded-2xl bg-[#031209] border border-emerald-500/20 space-y-2">
+                  <div className="p-3.5 rounded-2xl pro-inset space-y-2">
                     <p>1. Abre el menú de Chrome (⋮) arriba a la derecha.</p>
                     <p>2. Toca <strong>Instalar aplicación</strong> o <strong>Agregar a pantalla principal</strong>.</p>
                   </div>
@@ -1100,7 +1276,7 @@ export default function App() {
               )}
 
               {installPlatformTab === 'ios' && (
-                <div className="p-3.5 rounded-2xl bg-[#031209] border border-emerald-500/20 space-y-2 text-xs sm:text-sm text-emerald-100">
+                <div className="p-3.5 rounded-2xl pro-inset space-y-2 text-xs sm:text-sm text-emerald-100">
                   <p className="flex items-center gap-1 flex-wrap">
                     1. En Safari, toca <strong>Compartir</strong> <Share className="w-3.5 h-3.5 inline text-emerald-400" /> en la barra inferior.
                   </p>
@@ -1109,7 +1285,7 @@ export default function App() {
               )}
 
               {installPlatformTab === 'pc' && (
-                <div className="p-3.5 rounded-2xl bg-[#031209] border border-emerald-500/20 space-y-2 text-xs sm:text-sm text-emerald-100">
+                <div className="p-3.5 rounded-2xl pro-inset space-y-2 text-xs sm:text-sm text-emerald-100">
                   <p>1. En Chrome o Edge, haz clic en el ícono de instalar en la barra de direcciones.</p>
                   <p>2. Confirma en <strong>Instalar</strong>.</p>
                 </div>
@@ -1123,7 +1299,7 @@ export default function App() {
       {!cookieAccepted && !compactKeyboardMode && (
         <aside
           role="region"
-          className="fixed bottom-16 md:bottom-4 left-3 right-3 z-50 max-w-3xl mx-auto p-3.5 rounded-2xl bg-[#04160b] border border-emerald-400/40 shadow-2xl flex items-center justify-between gap-3 flex-wrap"
+          className="fixed bottom-16 md:bottom-4 left-3 right-3 z-50 max-w-3xl mx-auto p-3.5 rounded-2xl pro-panel-elevated flex items-center justify-between gap-3 flex-wrap"
         >
           <p className="text-xs text-emerald-100/90">
             Usamos almacenamiento local para guardar tu lote y preferencias.

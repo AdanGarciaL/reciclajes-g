@@ -277,18 +277,18 @@ export default function VisualTutorialView() {
   const brand = VISUAL_BRANDS.find((b) => b.id === activeId) || VISUAL_BRANDS[0];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       {/* SELECTOR DE MARCA LIMPIO */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
         {VISUAL_BRANDS.map((b) => (
           <button
             key={b.id}
             type="button"
             onClick={() => setActiveId(b.id)}
-            className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-black whitespace-nowrap border transition ${
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black whitespace-nowrap border transition ${
               activeId === b.id
-                ? 'bg-emerald-400 text-black border-emerald-200 shadow-lg'
-                : 'bg-[#081f12] text-emerald-100/80 border-emerald-500/20 hover:border-emerald-400/50'
+                ? 'bg-emerald-400 text-black border-emerald-200 shadow-[0_0_16px_rgba(52,211,153,0.3)]'
+                : 'pro-panel text-emerald-100/80 hover:border-emerald-400/50'
             }`}
           >
             {b.name}
@@ -297,18 +297,18 @@ export default function VisualTutorialView() {
       </div>
 
       {/* PANEL PRINCIPAL: CHIP ILUSTRADO + ESCALERA VISUAL */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
         {/* COLUMNA IZQUIERDA: ILUSTRACIÓN DEL CHIP (QUÉ RENGLÓN LEER) */}
-        <div className="lg:col-span-5 rounded-3xl bg-[#081f12] border border-emerald-500/25 p-5 flex flex-col items-center justify-between text-center">
+        <div className="lg:col-span-5 rounded-2xl pro-panel-elevated p-4 sm:p-5 flex flex-col items-center justify-between text-center">
           <div className="w-full flex items-center justify-between text-xs font-bold text-emerald-300/80 mb-3">
             <span>Anatomía del Chip {brand.name}</span>
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-mono text-[11px]">
               Renglón Central
             </span>
           </div>
 
           {/* Dibujo del Chip Físico */}
-          <div className="w-full max-w-[18.5rem] min-h-[16.5rem] rounded-3xl bg-gradient-to-b from-neutral-800 to-neutral-950 border-4 border-neutral-700 shadow-2xl p-4 sm:p-5 flex flex-col justify-between gap-2 my-1">
+          <div className="w-full max-w-[18.5rem] min-h-[16rem] rounded-2xl bg-gradient-to-b from-neutral-800 to-neutral-950 border-2 border-neutral-700 shadow-2xl p-4 sm:p-5 flex flex-col justify-between gap-2 my-1">
             <div className="flex items-center justify-between">
               <span className="w-3 h-3 rounded-full bg-neutral-500" />
               <span className="text-[10px] font-mono text-neutral-500 tracking-widest">
@@ -316,15 +316,15 @@ export default function VisualTutorialView() {
               </span>
             </div>
 
-            <div className="space-y-3 my-auto">
+            <div className="space-y-2.5 my-auto">
               {/* Renglón 1: Ignorar */}
-              <div className="px-3 py-1.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between text-xs font-mono text-gray-500">
+              <div className="px-3 py-1.5 rounded-xl bg-black/50 border border-white/5 flex items-center justify-between text-xs font-mono text-gray-500">
                 <span className="line-through">{brand.chip.top}</span>
-                <span className="text-[10px] text-rose-400/80 font-sans font-bold">✕ Lote</span>
+                <span className="text-[10px] text-rose-400/80 font-sans font-bold">Lote</span>
               </div>
 
               {/* Renglón 2: LEER ESTE */}
-              <div className="px-3 py-2.5 rounded-2xl bg-emerald-500/20 border-2 border-emerald-400 shadow-lg">
+              <div className="px-3 py-2.5 rounded-xl bg-emerald-500/20 border-2 border-emerald-400 shadow-lg">
                 <div className="font-mono text-base sm:text-lg font-black text-white flex items-center justify-center flex-wrap">
                   <span>{brand.chip.pre}</span>
                   <span className="px-2 py-0.5 mx-1 rounded-lg bg-emerald-400 text-black shadow">
@@ -332,15 +332,15 @@ export default function VisualTutorialView() {
                   </span>
                   <span>{brand.chip.post}</span>
                 </div>
-                <div className="text-[10px] text-emerald-300 font-bold mt-1 uppercase tracking-wider">
-                  ✓ Leer este renglón
+                <div className="text-[10px] text-emerald-300 font-mono font-bold mt-1 uppercase tracking-wider">
+                  Leer este renglón
                 </div>
               </div>
 
               {/* Renglón 3: Ignorar */}
-              <div className="px-3 py-1.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between text-xs font-mono text-gray-500">
+              <div className="px-3 py-1.5 rounded-xl bg-black/50 border border-white/5 flex items-center justify-between text-xs font-mono text-gray-500">
                 <span className="line-through">{brand.chip.bot}</span>
-                <span className="text-[10px] text-rose-400/80 font-sans font-bold">✕ Serie</span>
+                <span className="text-[10px] text-rose-400/80 font-sans font-bold">Serie</span>
               </div>
             </div>
 
@@ -356,10 +356,10 @@ export default function VisualTutorialView() {
         </div>
 
         {/* COLUMNA DERECHA: ESCALERA DE CAPACIDADES */}
-        <div className="lg:col-span-7 rounded-3xl bg-[#081f12] border border-emerald-500/25 p-5 flex flex-col justify-between space-y-4">
+        <div className="lg:col-span-7 rounded-2xl pro-panel-elevated p-4 sm:p-5 flex flex-col justify-between space-y-4">
           {brand.groups.map((grp, gIdx) => (
-            <div key={gIdx} className="space-y-2.5">
-              <div className="text-xs font-extrabold uppercase tracking-wider text-emerald-300">
+            <div key={gIdx} className="space-y-2">
+              <div className="text-xs font-mono font-extrabold uppercase tracking-wider text-emerald-300">
                 {grp.label}
               </div>
 
@@ -367,16 +367,14 @@ export default function VisualTutorialView() {
                 {grp.steps.map((st, sIdx) => (
                   <div
                     key={sIdx}
-                    className="p-3 rounded-2xl bg-[#04120a] border border-emerald-500/20 flex flex-col items-center justify-center gap-2 text-center"
+                    className="p-2.5 rounded-xl pro-inset flex flex-col items-center justify-center gap-1.5 text-center"
                   >
-                    {/* Capacidad grande */}
                     <span
-                      className={`px-3 py-0.5 rounded-lg font-mono font-black text-xs sm:text-sm ${st.color}`}
+                      className={`px-2.5 py-0.5 rounded-lg font-mono font-black text-xs sm:text-sm ${st.color}`}
                     >
                       {st.cap}
                     </span>
 
-                    {/* Código con parte remarcada */}
                     <div className="font-mono text-xs sm:text-sm font-bold flex items-center justify-center flex-wrap">
                       <span className="text-gray-400">{st.codePre}</span>
                       <span
@@ -392,15 +390,15 @@ export default function VisualTutorialView() {
             </div>
           ))}
 
-          {/* Regla rápida CPU vs Memoria en 1 línea limpia */}
-          <div className="p-3.5 rounded-2xl bg-[#04120a] border border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
+          {/* Regla rápida CPU vs Memoria */}
+          <div className="p-3 rounded-xl pro-inset flex flex-wrap items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-2 text-emerald-300 font-bold">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Lee el chip de Memoria (Samsung, Hynix, Micron, SanDisk, Kioxia, iPhone, FORESEE, Kingston, YMTC)</span>
+              <span>Memoria: Samsung, Hynix, Micron, SanDisk, Kioxia, iPhone, FORESEE, Kingston, YMTC</span>
             </div>
             <div className="flex items-center gap-1.5 text-rose-300/80 font-medium">
               <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
-              <span>Ignora el CPU (Qualcomm SM/MSM / MediaTek MT / Apple APL)</span>
+              <span>Ignorar CPU: Qualcomm SM/MSM, MediaTek MT, Apple APL</span>
             </div>
           </div>
         </div>

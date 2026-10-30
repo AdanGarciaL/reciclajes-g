@@ -34,8 +34,8 @@ export default function BatchCounterPanel({
   function buildSummaryText() {
     const dateStr = new Date().toLocaleDateString('es-MX');
     const lines = [
-      `🌿 *ECO LÓGICA GARCÍA — CORTE DE LÓGICAS*`,
-      clientName ? `👤 Cliente: *${clientName}*` : `📅 Fecha: ${dateStr}`,
+      `*ECO LÓGICA GARCÍA — CORTE DE LÓGICAS*`,
+      clientName ? `Cliente: *${clientName}*` : `Fecha: ${dateStr}`,
       `────────────────────`,
     ];
     for (const b of BUCKETS) {
@@ -45,7 +45,7 @@ export default function BatchCounterPanel({
       }
     }
     lines.push(`────────────────────`);
-    lines.push(`📦 *TOTAL:* ${totalBoards} lógicas`);
+    lines.push(`*TOTAL:* ${totalBoards} lógicas`);
     return lines.join('\n');
   }
 
@@ -65,14 +65,14 @@ export default function BatchCounterPanel({
   }
 
   return (
-    <div className="rounded-3xl bg-[#081f12] border border-emerald-500/25 p-5 space-y-5">
+    <div className="rounded-2xl pro-panel-elevated p-4 sm:p-5 space-y-4">
       {/* Cabecera limpia */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-black text-white flex items-center gap-2.5">
+          <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-2.5">
             Contador de Lote
-            <span className="px-3 py-0.5 rounded-full text-xs font-black bg-emerald-400 text-black">
-              {totalBoards} lógicas
+            <span className="px-3 py-0.5 rounded-full text-xs font-mono font-black bg-emerald-400 text-black">
+              {totalBoards} pzas
             </span>
           </h2>
         </div>
@@ -84,14 +84,14 @@ export default function BatchCounterPanel({
             onChange={(e) => setClientName(e.target.value)}
             placeholder="Nombre del cliente..."
             aria-label="Nombre del cliente o lote"
-            className="flex-1 sm:w-48 px-3.5 py-2 rounded-xl bg-[#04120a] border border-emerald-500/30 text-base sm:text-xs text-white focus:outline-none focus:border-emerald-400"
+            className="flex-1 sm:w-52 px-3.5 py-2 rounded-xl pro-inset text-base sm:text-xs text-white focus:outline-none focus:border-emerald-400"
           />
           {totalBoards > 0 && (
             <button
               type="button"
               onClick={onResetBatch}
               aria-label="Reiniciar conteo del lote"
-              className="p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 transition"
+              className="p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 transition"
               title="Reiniciar lote"
             >
               <RotateCcw className="w-4 h-4" />

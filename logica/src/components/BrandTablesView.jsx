@@ -203,9 +203,9 @@ export default function BrandTablesView({
   }, [allCatalog, selectedBrand, selectedCapacity, tableFilter]);
 
   return (
-    <div className="space-y-3.5">
+    <div className="space-y-3">
       {/* BARRA COMPACTA DE FILTROS */}
-      <div className="rounded-3xl bg-[#081f12] border border-emerald-500/25 p-4 space-y-3">
+      <div className="rounded-2xl pro-panel-elevated p-3.5 sm:p-4 space-y-3">
         {/* Marcas + Buscador */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar" role="tablist">
@@ -216,10 +216,10 @@ export default function BrandTablesView({
                 role="tab"
                 aria-selected={selectedBrand === b.id}
                 onClick={() => setSelectedBrand(b.id)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-black whitespace-nowrap border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-black whitespace-nowrap border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
                   selectedBrand === b.id
-                    ? 'bg-emerald-400 text-black border-emerald-200 shadow'
-                    : 'bg-[#04120a] text-emerald-100/80 border-emerald-500/20 hover:border-emerald-400/50'
+                    ? 'bg-emerald-400 text-black border-emerald-200 shadow-[0_0_14px_rgba(52,211,153,0.3)]'
+                    : 'pro-inset text-emerald-100/80 hover:border-emerald-400/50'
                 }`}
               >
                 {b.label}
@@ -233,9 +233,9 @@ export default function BrandTablesView({
               type="text"
               value={tableFilter}
               onChange={(e) => setTableFilter(e.target.value)}
-              placeholder="Buscar código, variante o celular..."
+              placeholder="Filtrar código, marca o equipo..."
               aria-label="Filtrar códigos en la tabla"
-              className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#04120a] border border-emerald-500/25 text-base sm:text-xs font-mono text-white focus:outline-none focus:border-emerald-400"
+              className="w-full pl-9 pr-8 py-2 rounded-xl pro-inset text-base sm:text-xs font-mono text-white focus:outline-none focus:border-emerald-400"
             />
             {tableFilter && (
               <button
@@ -251,27 +251,32 @@ export default function BrandTablesView({
         </div>
 
         {/* Filtro de Capacidades */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-          {capacityTabs.map((cap) => (
-            <button
-              key={cap}
-              type="button"
-              onClick={() => setSelectedCapacity(cap)}
-              className={`px-3 py-1 rounded-lg text-xs font-black font-mono border transition shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
-                selectedCapacity === cap
-                  ? 'bg-white text-black border-white'
-                  : 'bg-[#04120a] text-emerald-200/80 border-white/10 hover:border-emerald-400/50'
-              }`}
-            >
-              {cap === 'ALL' ? 'Todos los GB' : cap}
-            </button>
-          ))}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            {capacityTabs.map((cap) => (
+              <button
+                key={cap}
+                type="button"
+                onClick={() => setSelectedCapacity(cap)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-black font-mono border transition shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
+                  selectedCapacity === cap
+                    ? 'bg-white text-black border-white'
+                    : 'pro-inset text-emerald-200/80 hover:border-emerald-400/50'
+                }`}
+              >
+                {cap === 'ALL' ? 'Todos los GB' : cap}
+              </button>
+            ))}
+          </div>
+          <span className="hidden md:inline text-[11px] font-mono text-emerald-300/75 shrink-0">
+            {filteredCatalog.length} registros
+          </span>
         </div>
       </div>
 
       {/* GRID ADAPTATIVO O MENSAJE VACÍO */}
       {filteredCatalog.length === 0 ? (
-        <div className="rounded-3xl bg-[#081f12] border border-emerald-500/20 p-8 text-center space-y-2">
+        <div className="rounded-2xl pro-panel p-8 text-center space-y-2">
           <p className="text-sm font-bold text-white">No hay códigos con ese filtro exacto</p>
           <button
             type="button"
@@ -286,7 +291,7 @@ export default function BrandTablesView({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {filteredCatalog.map((item) => {
             const diff = highlightCodeDifference(item);
             const storageVal = item.storage || item.capacity || '64GB';
@@ -294,7 +299,7 @@ export default function BrandTablesView({
             return (
               <div
                 key={item.code}
-                className="p-3.5 rounded-2xl bg-[#081f12] hover:bg-[#0b2918] border border-emerald-500/20 flex items-center justify-between gap-2.5 flex-wrap sm:flex-nowrap transition"
+                className="p-3 rounded-2xl pro-panel hover:border-emerald-400/50 flex items-center justify-between gap-2.5 flex-wrap sm:flex-nowrap transition"
               >
                 <button
                   type="button"
@@ -311,35 +316,28 @@ export default function BrandTablesView({
                     <span className="text-gray-300">{diff.post}</span>
                   </div>
 
-                  <div className="flex items-center gap-2 mt-1.5 text-xs text-emerald-200/80 flex-wrap">
+                  <div className="flex items-center gap-1.5 mt-1 text-xs text-emerald-200/80 flex-wrap">
                     <span className="font-bold text-white">{item.manufacturer || item.brand}</span>
-                    <span>•</span>
-                    <span className="text-emerald-300 font-semibold">{diff.why}</span>
+                    <span>·</span>
+                    <span className="text-emerald-300 font-mono font-semibold">{diff.why}</span>
                     {item.ram && item.ram !== 'Sin RAM integrada' && (
                       <>
-                        <span>•</span>
-                        <span className="text-gray-300">RAM {item.ram}</span>
+                        <span>·</span>
+                        <span className="text-gray-400 font-mono">RAM {item.ram}</span>
                       </>
                     )}
                     {item.isCustom && (
                       <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[10px] font-bold">
-                        Editado / Propio
+                        Propio
                       </span>
                     )}
                   </div>
 
                   {Array.isArray(item.aliases) && item.aliases.length > 0 && (
-                    <div className="mt-1 text-[11px] font-mono text-gray-400 truncate">
+                    <div className="mt-0.5 text-[11px] font-mono text-gray-400 truncate">
                       <span className="text-emerald-400/80 font-sans font-bold">Variantes: </span>
                       {item.aliases.slice(0, 4).join(', ')}
                       {item.aliases.length > 4 ? ` +${item.aliases.length - 4}` : ''}
-                    </div>
-                  )}
-
-                  {(item.commonModels || item.notes) && (
-                    <div className="mt-0.5 text-[11px] text-gray-400 truncate">
-                      <span className="text-emerald-300/70 font-semibold">Equipos: </span>
-                      {item.commonModels || item.notes}
                     </div>
                   )}
                 </button>
@@ -355,8 +353,8 @@ export default function BrandTablesView({
                       type="button"
                       onClick={() => onEditChip(item)}
                       aria-label={`Editar chip ${item.code}`}
-                      className="p-2.5 rounded-xl bg-white/5 hover:bg-white/15 text-emerald-300 border border-emerald-500/25 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
-                      title="Editar este chip"
+                      className="p-2 rounded-xl pro-inset hover:border-emerald-400/50 text-emerald-300 transition"
+                      title="Editar"
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
@@ -365,7 +363,7 @@ export default function BrandTablesView({
                     type="button"
                     onClick={() => onAddChipToBatch(item)}
                     aria-label={`Sumar ${item.code} de ${storageVal} al lote`}
-                    className="p-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-black transition shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                    className="p-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black transition shadow"
                     title="Sumar +1 al lote"
                   >
                     <Plus className="w-4 h-4" />

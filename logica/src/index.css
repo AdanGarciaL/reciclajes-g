@@ -52,7 +52,7 @@ html[data-text-scale="xlarge"] .text-\[11px\] {
   line-height: 1.3rem !important;
 }
 
-/* Grid adaptativo para tarjetas de metadatos (Marca / RAM / Tipo) para que no se aprieten en Vista Mayor */
+/* Grid adaptativo para tarjetas de metadatos (Marca / RAM / Tipo) */
 .adaptive-meta-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -69,13 +69,40 @@ html[data-text-scale="xlarge"] .text-\[11px\] {
 }
 
 body {
-  background-color: #030e08;
-  background-image: radial-gradient(circle at 50% 12%, rgba(16, 185, 129, 0.14) 0%, transparent 60%);
+  background-color: #050a07;
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.14) 0%, transparent 55%),
+    linear-gradient(rgba(16, 185, 129, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 185, 129, 0.025) 1px, transparent 1px);
+  background-size: 100% 100%, 28px 28px, 28px 28px;
   background-attachment: fixed;
   min-height: 100dvh;
   -webkit-tap-highlight-color: transparent;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   overflow-x: hidden;
+}
+
+/* Superficies de precisión estilo instrumento de hardware */
+.pro-panel {
+  background: linear-gradient(180deg, #0c1710 0%, #08100b 100%);
+  border: 1px solid rgba(52, 211, 153, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 12px 28px -6px rgba(0, 0, 0, 0.7);
+}
+
+.pro-panel-elevated {
+  background: linear-gradient(180deg, #0f1d14 0%, #09130d 100%);
+  border: 1px solid rgba(52, 211, 153, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 16px 36px -8px rgba(0, 0, 0, 0.8);
+}
+
+.pro-inset {
+  background-color: #040906;
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.75);
 }
 
 /* ==========================================================================
@@ -84,18 +111,17 @@ body {
    Evita que la barra superior se pierda en la difuminación de iOS Liquid Glass
    ========================================================================== */
 .ios-top-shield {
-  background-color: #030e08;
+  background-color: #050a07;
   padding-top: max(env(safe-area-inset-top, 0px), 10px);
 }
 
-/* Cuando corre en iPhone Safari con Liquid Glass o como App Instalada (Standalone) */
 .ios-top-shield-iphone {
-  background-color: #030e08;
+  background-color: #050a07;
   padding-top: max(calc(env(safe-area-inset-top, 0px) + 12px), 20px);
 }
 
 .ios-top-shield-standalone {
-  background-color: #030e08;
+  background-color: #050a07;
   padding-top: max(calc(env(safe-area-inset-top, 0px) + 8px), 52px);
 }
 
