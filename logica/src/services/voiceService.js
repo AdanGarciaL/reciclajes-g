@@ -23,7 +23,9 @@ export function playDetectionBeep(storageStr) {
     const ctx = getAudioCtx();
     if (!ctx) return;
 
-    const num = parseInt(String(storageStr || '').replace(/\D/g, ''), 10) || 32;
+    const s = String(storageStr || '').toUpperCase().trim();
+    const rawNum = parseInt(s.replace(/\D/g, ''), 10) || 32;
+    const num = s.includes('TB') ? rawNum * 1024 : rawNum;
     // Frecuencia más aguda conforme mayor es la capacidad (64GB, 128GB, 256GB+)
     const baseFreq = num >= 256 ? 880 : num >= 128 ? 740 : num >= 64 ? 660 : 520;
 

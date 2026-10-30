@@ -81,10 +81,11 @@ export function detectCpuInsteadOfMemory(rawQuery) {
   // 1. Patrones de Procesadores (CPU), PMIC (Carga/Energía) y Radiofrecuencia (RF/WiFi)
   const cpuPatterns = [
     { regex: /^(SM|SDM|MSM|APQ|QCM)\d{3,4}[A-Z0-9]*$/, brand: 'Qualcomm Snapdragon', type: 'Procesador (CPU)', category: 'CPU' },
-    { regex: /^MT6[5789]\d{2}[A-Z0-9]*$/, brand: 'MediaTek Helio / Dimensity', type: 'Procesador (CPU) / PMIC', category: 'CPU' },
+    { regex: /^MT6[5789]\d{2}[A-Z0-9]*$/, brand: 'MediaTek Helio / Dimensity', type: 'Procesador (CPU)', category: 'CPU' },
+    { regex: /^MT63\d{2}[A-Z0-9]*$/, brand: 'MediaTek PMIC', type: 'Chip de Energía (PMIC)', category: 'PMIC' },
     { regex: /^MT8[1367]\d{2}[A-Z0-9]*$/, brand: 'MediaTek Tablet / SoC', type: 'Procesador (CPU)', category: 'CPU' },
     { regex: /^(SC98|SC77|UMS9|UMS5|T606|T610|T612|T616|T618|T700)\d*[A-Z0-9]*$/, brand: 'Unisoc / Spreadtrum', type: 'Procesador (CPU)', category: 'CPU' },
-    { regex: /^(S5E\d{4}|EXYNOS\d+)[A-Z0-9]*$/, brand: 'Samsung Exynos', type: 'Procesador (CPU)', category: 'CPU' },
+    { regex: /^(S5E\d{4}|EXYNOS\d+|SHANNON\d*)[A-Z0-9]*$/, brand: 'Samsung Exynos / Modem', type: 'Procesador / Modem', category: 'CPU' },
     { regex: /^(HI36\d{2}|HI62\d{2}|KIRIN\d+)[A-Z0-9]*$/, brand: 'Huawei HiSilicon Kirin', type: 'Procesador (CPU)', category: 'CPU' },
     { regex: /^APL\d{4}[A-Z0-9]*$/, brand: 'Apple Serie A (CPU iPhone)', type: 'Procesador (CPU)', category: 'CPU' },
     { regex: /^(PM|PMI|PMK|PMR|PMB|SMB)\d{3,4}[A-Z0-9]*$/, brand: 'Qualcomm PMIC', type: 'Chip de Carga / Energía (PMIC)', category: 'PMIC' },
@@ -103,8 +104,8 @@ export function detectCpuInsteadOfMemory(rawQuery) {
         code: q,
         cpuBrand: pat.brand,
         cpuType: pat.type,
-        title: `¡CHIP EQUIVOCADO! Detectado: ${pat.type} (${pat.brand})`,
-        message: `"${q}" NO es el chip de almacenamiento. En la placa hay varios chips: ignora este ${pat.type} y busca el chip grande de Memoria Flash (empieza con KLM, KLU, KM, H9, HN8T, JZ, SDIN, THG o KICM) para ver la Capacidad Máxima real.`,
+        title: `Chip equivocado: ${pat.type} (${pat.brand})`,
+        message: `"${q}" no tiene almacenamiento. Busca en la placa el chip de memoria (KLM, KLU, KM, H9, HN8T, JZ, SDIN, THG o KICM).`,
       };
     }
   }
@@ -115,9 +116,9 @@ export function detectCpuInsteadOfMemory(rawQuery) {
     { regex: /^K3(U|L|Q|R)[A-Z0-9]{4,}/, brand: 'Samsung LPDDR DRAM', type: 'Chip de PURA RAM (Sin Almacenamiento)' },
     { regex: /^H9(HC|TK|CC)NNN[A-Z0-9]*/, brand: 'SK Hynix LPDDR DRAM', type: 'Chip de PURA RAM (Sin Almacenamiento)' },
     { regex: /^H5(4G|TC|AN)[A-Z0-9]{3,}/, brand: 'SK Hynix DDR/LPDDR DRAM', type: 'Chip de PURA RAM (Sin Almacenamiento)' },
-    { regex: /^MT(53|52|40|41)[A-Z0-9]{3,}/, brand: 'Micron LPDDR DRAM', type: 'Chip de PURA RAM (Sin Almacenamiento)' },
+    { regex: /^MT(53|52|62|40|41)[A-Z0-9]{3,}/, brand: 'Micron LPDDR DRAM', type: 'Chip de PURA RAM (Sin Almacenamiento)' },
     { regex: /^EDF[A-Z0-9]{4,}/, brand: 'Micron / Elpida LPDDR DRAM', type: 'Chip de PURA RAM (Sin Almacenamiento)' },
-    { regex: /^D[89][A-Z]{3}$/, brand: 'Micron FBGA DRAM (D9/D8)', type: 'Chip de PURA RAM (Sin Almacenamiento)' },
+    { regex: /^D[89][A-Z0-9]{3}$/, brand: 'Micron FBGA DRAM (D9/D8)', type: 'Chip de PURA RAM (Sin Almacenamiento)' },
   ];
 
   for (const ramPat of pureRamPatterns) {
@@ -129,8 +130,8 @@ export function detectCpuInsteadOfMemory(rawQuery) {
         code: q,
         cpuBrand: ramPat.brand,
         cpuType: ramPat.type,
-        title: `¡CUIDADO! Estás leyendo el Chip de PURA RAM (${ramPat.brand})`,
-        message: `"${q}" es únicamente el chip de Memoria RAM (4GB/6GB/8GB/12GB) y NO indica la capacidad máxima del celular. Esta placa tiene 2 chips separados: busca el OTRO chip grande de almacenamiento (UFS / eMMC / NAND: empieza con KLU, KLM, HN8T, H28U, THGAF, SDIN, JZ, JC o KICM) para saber los GB máximos reales (64GB, 128GB, 256GB...).`,
+        title: `Chip equivocado: Solo RAM (${ramPat.brand})`,
+        message: `"${q}" es solo memoria RAM y no indica los GB del teléfono. Busca el otro chip de almacenamiento (KLU, KLM, HN8T, H28U, THGAF, SDIN, JZ o KICM).`,
       };
     }
   }
@@ -1337,6 +1338,25 @@ export function setAdminPin(newPin) {
 // MOTOR DE BÚSQUEDA Y DECODIFICACIÓN UNIFICADO CON AUTO-CORRECCIÓN ÓPTICA
 // ============================================================================
 
+function enrichWithSeedMetadata(resultObj) {
+  if (!resultObj || !resultObj.code) return resultObj;
+  if (resultObj.commonModels) return resultObj;
+  const norm = normalizeCode(resultObj.code);
+  const seedHit = SEED_IC_CATALOG.find(
+    (s) =>
+      normalizeCode(s.code) === norm ||
+      norm.startsWith(normalizeCode(s.code).slice(0, 6)) ||
+      (Array.isArray(s.aliases) && s.aliases.some((al) => normalizeCode(al) === norm))
+  );
+  if (seedHit && (seedHit.commonModels || seedHit.notes)) {
+    return {
+      ...resultObj,
+      commonModels: seedHit.commonModels || seedHit.notes,
+    };
+  }
+  return resultObj;
+}
+
 function decodeSingleCandidateOffline(q) {
   if (!q || q.length < 2) return null;
 
@@ -1367,12 +1387,13 @@ function decodeSingleCandidateOffline(q) {
       partNumber: exactSeed.partNumber || exactSeed.code,
       storage: exactSeed.storage || exactSeed.capacity,
       manufacturer: exactSeed.manufacturer || exactSeed.brand,
+      commonModels: exactSeed.commonModels || exactSeed.notes || '',
       notes: exactSeed.notes || exactSeed.commonModels || exactSeed.explanation || '',
       source: exactSeed.source || 'Catálogo Verificado',
     };
   }
 
-  // 3. Motor Industrial Offline @itxtech/fdnext-core
+  // 3. Decodificación Exacta en Motor Industrial Offline @itxtech/fdnext-core
   let pureDramCandidate = null;
   const eng = getFdEngine();
   if (eng) {
@@ -1380,81 +1401,82 @@ function decodeSingleCandidateOffline(q) {
       const fdRes = eng.decodePart({ query: q, lang: 'eng' });
       const parsed = parseFdnextDecodeResult(fdRes, q);
       if (parsed && parsed.storage) {
-        return parsed;
+        return enrichWithSeedMetadata(parsed);
       }
       if (parsed && parsed.isPureDram) {
         pureDramCandidate = parsed;
-      }
-
-      if (q.length >= 4) {
-        const searchRes = eng.searchParts({ query: q, lang: 'eng', limit: 12 });
-        if (searchRes?.status === 'ok' && Array.isArray(searchRes.items) && searchRes.items.length > 0) {
-          const decodedMatches = [];
-          for (const item of searchRes.items) {
-            const targetPart = item.device?.markingCode || item.device?.partNumber || item.label;
-            if (!targetPart) continue;
-            const fullDecode = eng.decodePart({ query: targetPart, lang: 'eng' });
-            const parsedItem = parseFdnextDecodeResult(fullDecode, targetPart);
-            if (parsedItem && parsedItem.storage) {
-              decodedMatches.push({
-                ...parsedItem,
-                matchedFromPartial: q !== normalizeCode(targetPart),
-              });
-            } else if (parsedItem && parsedItem.isPureDram && !pureDramCandidate) {
-              pureDramCandidate = parsedItem;
-            }
-          }
-
-          if (decodedMatches.length > 0) {
-            // Priorizar coincidencia exacta; si son parciales, priorizar SIEMPRE la CAPACIDAD MÁXIMA
-            decodedMatches.sort((a, b) => {
-              const aExact = normalizeCode(a.code) === q || normalizeCode(a.partNumber) === q ? 1 : 0;
-              const bExact = normalizeCode(b.code) === q || normalizeCode(b.partNumber) === q ? 1 : 0;
-              if (aExact !== bExact) return bExact - aExact;
-              return capacityToGbNumber(b.storage) - capacityToGbNumber(a.storage);
-            });
-            const best = decodedMatches[0];
-            const distinctCaps = Array.from(new Set(decodedMatches.map((m) => m.storage)));
-            return {
-              ...best,
-              alternativeCapacities: distinctCaps.length > 1 ? distinctCaps : null,
-            };
-          }
-        }
       }
     } catch {
       // Continuar a heurística
     }
   }
 
-  // 4. Motor Heurístico de Nomenclatura
+  // 4. Regla Oficial Determinística de Fabricante (KLM8G=8GB, KLMCG=64GB, KMDP=64GB, H9HP52=64GB, etc.)
   const heur = heuristicDecode(q);
-  if (heur) return heur;
+  if (heur) return enrichWithSeedMetadata(heur);
 
-  // 5. Si el código era parcial en el catálogo local y tiene varias capacidades, devolver la CAPACIDAD MÁXIMA
+  // 5. Búsqueda parcial por prefijo (cuando el usuario escribió los primeros 4+ caracteres de una serie)
   if (q.length >= 4) {
-    const partialMatches = combinedSeed
-      .filter((c) => {
-        const cNorm = normalizeCode(c.code);
-        const aliasHit =
-          Array.isArray(c.aliases) && c.aliases.some((al) => normalizeCode(al).startsWith(q));
-        return cNorm.startsWith(q) || aliasHit;
-      })
-      .map((c) => ({
-        ...c,
-        partNumber: c.partNumber || c.code,
-        storage: c.storage || c.capacity,
-        manufacturer: c.manufacturer || c.brand,
-        notes: c.notes || c.commonModels || c.explanation || '',
-        matchedFromPartial: true,
-        source: c.source || 'Catálogo Verificado',
-      }));
+    const partialCandidates = [];
 
-    if (partialMatches.length > 0) {
-      partialMatches.sort((a, b) => capacityToGbNumber(b.storage) - capacityToGbNumber(a.storage));
-      const distinctCaps = Array.from(new Set(partialMatches.map((m) => m.storage)));
+    for (const c of combinedSeed) {
+      const cNorm = normalizeCode(c.code);
+      const aliasHit =
+        Array.isArray(c.aliases) && c.aliases.find((al) => normalizeCode(al).startsWith(q));
+      if (cNorm.startsWith(q) || aliasHit) {
+        partialCandidates.push({
+          ...c,
+          code: aliasHit && !cNorm.startsWith(q) ? normalizeCode(aliasHit) : c.code,
+          partNumber: c.partNumber || c.code,
+          storage: c.storage || c.capacity,
+          manufacturer: c.manufacturer || c.brand,
+          commonModels: c.commonModels || c.notes || '',
+          notes: c.notes || c.commonModels || c.explanation || '',
+          matchedFromPartial: true,
+          source: c.source || 'Catálogo Verificado',
+        });
+      }
+    }
+
+    if (eng) {
+      try {
+        const searchRes = eng.searchParts({ query: q, lang: 'eng', limit: 12 });
+        if (searchRes?.status === 'ok' && Array.isArray(searchRes.items) && searchRes.items.length > 0) {
+          for (const item of searchRes.items) {
+            const targetPart = item.device?.markingCode || item.device?.partNumber || item.label;
+            if (!targetPart) continue;
+            const fullDecode = eng.decodePart({ query: targetPart, lang: 'eng' });
+            const parsedItem = parseFdnextDecodeResult(fullDecode, targetPart);
+            if (parsedItem && parsedItem.storage) {
+              partialCandidates.push(
+                enrichWithSeedMetadata({
+                  ...parsedItem,
+                  matchedFromPartial: q !== normalizeCode(targetPart),
+                })
+              );
+            } else if (parsedItem && parsedItem.isPureDram && !pureDramCandidate) {
+              pureDramCandidate = parsedItem;
+            }
+          }
+        }
+      } catch {
+        // Ignorar
+      }
+    }
+
+    if (partialCandidates.length > 0) {
+      // Ordenar priorizando coincidencia exacta y luego CAPACIDAD MÁXIMA primero
+      partialCandidates.sort((a, b) => {
+        const aExact = normalizeCode(a.code) === q || normalizeCode(a.partNumber) === q ? 1 : 0;
+        const bExact = normalizeCode(b.code) === q || normalizeCode(b.partNumber) === q ? 1 : 0;
+        if (aExact !== bExact) return bExact - aExact;
+        return capacityToGbNumber(b.storage) - capacityToGbNumber(a.storage);
+      });
+      const distinctCaps = Array.from(new Set(partialCandidates.map((m) => m.storage))).sort(
+        (a, b) => capacityToGbNumber(b) - capacityToGbNumber(a)
+      );
       return {
-        ...partialMatches[0],
+        ...partialCandidates[0],
         alternativeCapacities: distinctCaps.length > 1 ? distinctCaps : null,
       };
     }

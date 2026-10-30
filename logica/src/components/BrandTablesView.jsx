@@ -86,7 +86,36 @@ export function highlightCodeDifference(item) {
       pre: code.slice(0, 3),
       highlight: code.slice(3, 4),
       post: code.slice(4),
-      why: `Número "${code[3]}" = ${cap}`,
+      why: `Clave "${code[3]}" = ${cap}`,
+    };
+  }
+
+  if (/^KICM22[345678]/.test(code)) {
+    return {
+      pre: 'KICM',
+      highlight: code.slice(4, 7),
+      post: code.slice(7),
+      why: `Clave "${code.slice(4, 7)}" = ${cap}`,
+    };
+  }
+
+  const h23Match = code.match(/^(H23[QB0]|H2JTD)(DG8|EG8|EH8|FG8|1T8|158|2T8|4T8|8T8)(.*)$/);
+  if (h23Match) {
+    return {
+      pre: h23Match[1],
+      highlight: h23Match[2],
+      post: h23Match[3] || '',
+      why: `Clave "${h23Match[2]}" = ${cap}`,
+    };
+  }
+
+  const embeddedGbMatch = code.match(/^([A-Z0-9_-]*?)(004G|008G|016G|032G|064G|128G|256G|512G|4G|8G|16G|32G|64G|1T|2T)([A-Z0-9_-]*)$/);
+  if (embeddedGbMatch && embeddedGbMatch[1].length >= 2) {
+    return {
+      pre: embeddedGbMatch[1],
+      highlight: embeddedGbMatch[2],
+      post: embeddedGbMatch[3] || '',
+      why: `Clave "${embeddedGbMatch[2]}" = ${cap}`,
     };
   }
 

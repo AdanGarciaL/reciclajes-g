@@ -119,7 +119,7 @@ export default function App() {
   const [suggestions, setSuggestions] = useState([]);
   const [isSearchingOnline, setIsSearchingOnline] = useState(false);
 
-  // Detección de teclado móvil (Android / iPhone) para que nunca tape la capacidad
+  // Detección precisa de teclado móvil (Android / iPhone)
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
@@ -144,19 +144,33 @@ export default function App() {
     }
   }, [textScale]);
 
-  // Detectar apertura de teclado virtual en iOS y Android mediante visualViewport
+  // Detectar apertura de teclado virtual en iOS y Android soportando rotación de pantalla
   useEffect(() => {
     if (typeof window === 'undefined' || !window.visualViewport) return;
     const vv = window.visualViewport;
-    const initialHeight = window.innerHeight;
+    let baselineHeight = Math.max(window.innerHeight, vv.height);
 
     function handleViewportResize() {
-      const heightDiff = initialHeight - vv.height;
-      setIsKeyboardOpen(heightDiff > 130);
+      if (vv.height > baselineHeight) {
+        baselineHeight = vv.height;
+      }
+      const heightDiff = baselineHeight - vv.height;
+      setIsKeyboardOpen(heightDiff > 140);
+    }
+
+    function handleOrientationChange() {
+      setTimeout(() => {
+        baselineHeight = Math.max(window.innerHeight, vv.height);
+        setIsKeyboardOpen(false);
+      }, 250);
     }
 
     vv.addEventListener('resize', handleViewportResize);
-    return () => vv.removeEventListener('resize', handleViewportResize);
+    window.addEventListener('orientationchange', handleOrientationChange);
+    return () => {
+      vv.removeEventListener('resize', handleViewportResize);
+      window.removeEventListener('orientationchange', handleOrientationChange);
+    };
   }, []);
 
   function handleSelectTextScale(nextScale) {
@@ -401,12 +415,33 @@ export default function App() {
     });
   }
 
+  // Al tocar un botón de prefijo rápido (KLM, KLU, KM, JW, etc.), inserta el prefijo y enfoca el input para completar los siguientes caracteres
+  function handleSelectPrefix(prefixVal) {
+    if (!prefixVal) return;
+    setActiveTab('search');
+    setQuery(prefixVal);
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        const len = prefixVal.length;
+        try {
+          inputRef.current.setSelectionRange(len, len);
+        } catch {
+          // ignore
+        }
+      }
+    }, 20);
+  }
+
+  // Al seleccionar un chip completo de sugerencias, recientes o catálogo
   function handleSelectChip(chip) {
     if (!chip) return;
     const targetCode = chip.code || chip.partNumber || chip.value;
     if (!targetCode) return;
     setActiveTab('search');
     setQuery(targetCode);
+    setIsInputFocused(false);
+    inputRef.current?.blur();
     const full = decodeChipOffline(targetCode) || {
       ...chip,
       code: targetCode,
@@ -450,15 +485,16 @@ export default function App() {
   function handleSearchKeyDown(e) {
     if (e.key === 'Escape') {
       setQuery('');
+      setIsInputFocused(false);
       inputRef.current?.blur();
     } else if (e.key === 'Enter') {
       e.preventDefault();
       if (activeResult) {
         speakChipResult(activeResult, true, false);
+        setIsInputFocused(false);
         inputRef.current?.blur();
       } else if (suggestions.length > 0) {
         handleSelectChip(suggestions[0]);
-        inputRef.current?.blur();
       }
     }
   }
@@ -473,7 +509,12 @@ export default function App() {
       !String(activeResult.ram).toLowerCase().includes('sin ram')
   );
 
-  const compactKeyboardMode = isInputFocused || isKeyboardOpen;
+  // Filtrar sugerencias para no repetir exactamente el mismo código ya mostrado en activeResult
+  const visibleSuggestions = activeResult
+    ? suggestions.filter((s) => normalizeCode(s.code) !== normalizeCode(activeResult.code)).slice(0, 6)
+    : suggestions.slice(0, 8);
+
+  const compactKeyboardMode = activeTab === 'search' && (isInputFocused || isKeyboardOpen);
 
   const navItems = [
     { id: 'search', label: 'Escáner', icon: Search },
@@ -492,14 +533,14 @@ export default function App() {
   return (
     <div className="min-h-dvh flex flex-col text-white pb-24 md:pb-10">
       {/* ===================================================================== */}
-      {/* CABECERA INDUSTRIAL DE ALTA PRECISIÓN — SÓLIDA EN iOS / ANDROID       */}
+      {/* CABECERA SÓLIDA — ANTI-DIFUMINACIÓN EN iOS Y COMPACTA CON TECLADO     */}
       {/* ===================================================================== */}
       <header
-        className={`sticky top-0 z-30 ${headerShieldClass} pb-2 px-2.5 sm:px-4 border-b border-emerald-500/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)]`}
+        className={`sticky top-0 z-30 ${headerShieldClass} pb-1.5 px-2.5 sm:px-4 border-b border-emerald-500/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)]`}
       >
         <div className="max-w-5xl mx-auto rounded-2xl pro-panel px-3 sm:px-4 py-2">
           <div className="flex items-center justify-between gap-2">
-            {/* Marca e Indicador de Sistema */}
+            {/* Identidad */}
             <div className="flex items-center gap-2.5 min-w-0">
               {!isStandalone && (
                 <a
@@ -511,22 +552,16 @@ export default function App() {
                   <span>Web</span>
                 </a>
               )}
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-black flex items-center justify-center shadow-[0_0_16px_rgba(52,211,153,0.35)] shrink-0">
-                <Cpu className="w-5 h-5 stroke-[2.5]" />
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-black flex items-center justify-center shadow-[0_0_16px_rgba(52,211,153,0.35)] shrink-0">
+                <Cpu className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
               </div>
               <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <h1 className="font-black tracking-tight text-white text-sm sm:text-base leading-none truncate">
-                    ECO LÓGICA <span className="text-emerald-400">GARCÍA</span>
-                  </h1>
-                  <span className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-400/30 text-[10px] font-mono font-bold text-emerald-300">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    PRO
-                  </span>
-                </div>
+                <h1 className="font-black tracking-tight text-white text-sm sm:text-base leading-none truncate">
+                  ECO LÓGICA <span className="text-emerald-400">GARCÍA</span>
+                </h1>
                 {!compactKeyboardMode && (
                   <span className="text-[10px] text-emerald-200/70 font-mono font-medium block truncate mt-0.5">
-                    {dbStats.totalOfflineCount.toLocaleString()} IC · 4GB–2TB
+                    {dbStats.totalOfflineCount.toLocaleString()} chips · 4GB a 2TB
                   </span>
                 )}
               </div>
@@ -641,7 +676,7 @@ export default function App() {
       {/* ===================================================================== */}
       <main
         ref={scannerTopRef}
-        className="max-w-5xl w-full mx-auto px-2.5 sm:px-4 pt-2.5 sm:pt-3.5 flex-1"
+        className="max-w-5xl w-full mx-auto px-2.5 sm:px-4 pt-2 sm:pt-3 flex-1"
       >
         {toastMsg && (
           <div
@@ -655,40 +690,13 @@ export default function App() {
         )}
 
         {/* ================================================================= */}
-        {/* 1. CONSOLA ESCÁNER (DIRECTA, INDUSTRIAL Y A PRUEBA DE TECLADO)    */}
+        {/* 1. PÁGINA DE ESCÁNER — DIRECTA, CLARA E INFORMATIVA               */}
         {/* ================================================================= */}
         {activeTab === 'search' && (
-          <div className="space-y-3">
-            {/* MÓDULO PRINCIPAL DE LECTURA: INPUT + TELEMETRÍA DE CAPACIDAD */}
-            <div className="rounded-2xl pro-panel-elevated p-3 sm:p-4 space-y-2.5">
-              {/* Barra superior de estado del lector */}
-              {!compactKeyboardMode && (
-                <div className="flex items-center justify-between gap-2 px-0.5">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        cpuWarning
-                          ? 'bg-rose-500 animate-ping'
-                          : activeResult && theme
-                            ? theme.dot
-                            : 'bg-emerald-400'
-                      }`}
-                    />
-                    <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-300/90">
-                      {cpuWarning
-                        ? 'Alerta: Chip sin almacenamiento'
-                        : activeResult
-                          ? `Memoria detectada · ${activeResult.manufacturer}`
-                          : 'Lector de Código IC (eMMC · eMCP · UFS · NAND)'}
-                    </span>
-                  </div>
-                  <span className="text-[11px] font-mono text-gray-400 hidden sm:inline">
-                    Prioridad: Capacidad Máxima
-                  </span>
-                </div>
-              )}
-
-              {/* Campo de entrada con badge en vivo integrado */}
+          <div className="space-y-2.5">
+            {/* BLOQUE PRINCIPAL: INPUT + RESULTADO INMEDIATO ARRIBA DEL TECLADO */}
+            <div className="rounded-2xl pro-panel-elevated p-2.5 sm:p-3.5 space-y-2.5">
+              {/* Campo de búsqueda con indicador de capacidad integrado */}
               <div className="relative flex items-center">
                 <Search className="w-5 h-5 text-emerald-400 absolute left-3.5 pointer-events-none" />
                 <input
@@ -699,7 +707,7 @@ export default function App() {
                   onBlur={() => setTimeout(() => setIsInputFocused(false), 180)}
                   onChange={(e) => setQuery(e.target.value.toUpperCase())}
                   onKeyDown={handleSearchKeyDown}
-                  placeholder="Escribe el código (ej. KMDP6001, JXE77, H9HP52, KLUFG8)"
+                  placeholder="Código del chip (ej. KMDP6001, JXE77, H9HP52)"
                   aria-label="Código del chip"
                   autoComplete="off"
                   autoCorrect="off"
@@ -708,7 +716,7 @@ export default function App() {
                   className="w-full pl-11 pr-32 py-3 sm:py-3.5 rounded-xl pro-inset focus:border-emerald-400 focus:outline-none font-mono font-black text-base sm:text-xl text-white placeholder:text-emerald-100/35 placeholder:font-sans placeholder:font-medium placeholder:text-xs sm:placeholder:text-sm tracking-wider transition"
                 />
 
-                {/* Badge instantáneo dentro del input (siempre visible arriba del teclado) */}
+                {/* Lectura instantánea dentro del mismo input (siempre visible con teclado abierto) */}
                 <div className="absolute right-2 flex items-center gap-1.5">
                   {activeResult && theme && (
                     <span
@@ -719,7 +727,7 @@ export default function App() {
                   )}
                   {cpuWarning && (
                     <span className="px-2 py-1 rounded-lg bg-rose-500 text-white font-mono font-black text-[11px] border border-rose-300">
-                      {cpuWarning.isRamOnlyWarning ? 'SOLO RAM' : 'CPU / NO NAND'}
+                      {cpuWarning.isRamOnlyWarning ? 'SOLO RAM' : 'NO ES MEMORIA'}
                     </span>
                   )}
                   {query && (
@@ -744,20 +752,18 @@ export default function App() {
               {cpuWarning && (
                 <div
                   role="alert"
-                  className="p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-rose-950/95 to-[#16070b] border-2 border-rose-500/80 flex items-center justify-between gap-3"
+                  className="p-3 rounded-xl bg-gradient-to-r from-rose-950/95 to-[#16070b] border-2 border-rose-500/80 flex items-center justify-between gap-3"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-400/40 flex items-center justify-center shrink-0">
-                      <AlertTriangle className="w-5 h-5 text-rose-400" />
-                    </div>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
                     <div className="min-w-0">
                       <div className="text-xs sm:text-sm font-black text-white truncate">
                         {cpuWarning.isRamOnlyWarning
-                          ? `SOLO RAM (${cpuWarning.ramDetected || cpuWarning.cpuBrand}) — Sin Almacenamiento`
-                          : `${cpuWarning.cpuType} (${cpuWarning.cpuBrand}) — No es Memoria`}
+                          ? `Chip de pura RAM (${cpuWarning.ramDetected || cpuWarning.cpuBrand})`
+                          : `${cpuWarning.cpuType} (${cpuWarning.cpuBrand})`}
                       </div>
-                      <p className="text-[11px] sm:text-xs text-rose-200/90 leading-snug mt-0.5">
-                        Busca el chip de memoria a un lado: <strong className="font-mono text-white">KLM, KLU, KM, H9, HN8T, JZ, SDIN, THG</strong>.
+                      <p className="text-[11px] sm:text-xs text-rose-200/90 leading-snug">
+                        No tiene almacenamiento. Lee el otro chip grande: <strong className="font-mono text-white">KLM, KLU, KM, H9, HN8T, JZ, SDIN o THG</strong>.
                       </p>
                     </div>
                   </div>
@@ -768,7 +774,7 @@ export default function App() {
               )}
 
               {/* ============================================================= */}
-              {/* TARJETA DE TELEMETRÍA DE CAPACIDAD (SIEMPRE ARRIBA DEL TECLADO)*/}
+              {/* TARJETA DE RESULTADO CLARA Y AL GRANO                         */}
               {/* ============================================================= */}
               {activeResult && theme && (
                 <div
@@ -777,21 +783,16 @@ export default function App() {
                   className={`rounded-xl border-2 p-3 sm:p-4 transition-all ${theme.card}`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    {/* Bloque Izquierdo: Lectura Gigante de GB + Desglose de Código */}
+                    {/* Capacidad Gigante + Datos Clave */}
                     <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                      <div className="flex flex-col items-center justify-center shrink-0">
-                        <div
-                          className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl border-2 font-mono font-black text-3xl sm:text-5xl tracking-tight leading-none ${theme.badge}`}
-                        >
-                          {activeResult.storage}
-                        </div>
-                        <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-emerald-300/90 mt-1">
-                          Capacidad Máx
-                        </span>
+                      <div
+                        className={`px-4 sm:px-5 py-2.5 rounded-xl border-2 font-mono font-black text-3xl sm:text-5xl tracking-tight leading-none shrink-0 ${theme.badge}`}
+                      >
+                        {activeResult.storage}
                       </div>
 
                       <div className="min-w-0 flex-1 space-y-1">
-                        {/* Código con segmento clave iluminado */}
+                        {/* Código con los caracteres clave resaltados */}
                         <div className="flex items-center gap-2 flex-wrap">
                           {activeDiff ? (
                             <div className="font-mono font-black text-base sm:text-xl flex items-center flex-wrap break-all tracking-wide">
@@ -816,7 +817,7 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* Fila de Especificaciones Técnicas */}
+                        {/* Marca · Tipo · RAM */}
                         <div className="flex items-center gap-1.5 flex-wrap text-xs">
                           <span className="px-2 py-0.5 rounded bg-white/10 text-white font-bold">
                             {activeResult.manufacturer}
@@ -831,21 +832,29 @@ export default function App() {
                           )}
                           {activeResult.correctedTo && (
                             <span className="text-[11px] font-mono text-amber-300 font-bold">
-                              Corrige: {activeResult.correctedFrom} → {activeResult.correctedTo}
+                              {activeResult.correctedFrom} → {activeResult.correctedTo}
                             </span>
                           )}
                         </div>
+
+                        {/* Equipos de referencia en 1 línea limpia (si existen) */}
+                        {activeResult.commonModels && (
+                          <div className="text-[11px] text-gray-300/85 truncate">
+                            <span className="text-emerald-300/80 font-semibold">Equipos: </span>
+                            {activeResult.commonModels}
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Bloque Derecho: Acciones Táctiles */}
+                    {/* Botones de Acción Directa */}
                     <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end pt-1 sm:pt-0 border-t sm:border-t-0 border-white/10">
                       <button
                         type="button"
                         onClick={() => speakChipResult(activeResult, true, false)}
                         aria-label="Escuchar capacidad"
                         className="p-2.5 rounded-xl bg-black/50 hover:bg-black/80 border border-white/15 text-emerald-300 transition"
-                        title="Repetir voz"
+                        title="Voz"
                       >
                         <Volume2 className="w-4 h-4" />
                       </button>
@@ -871,12 +880,13 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Si el usuario escribió solo el inicio del código y hay varias capacidades en esa familia */}
-                  {Array.isArray(activeResult.alternativeCapacities) &&
+                  {/* Aviso conciso si solo escribió un prefijo parcial con varias capacidades */}
+                  {activeResult.matchedFromPartial &&
+                    Array.isArray(activeResult.alternativeCapacities) &&
                     activeResult.alternativeCapacities.length > 1 && (
-                      <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between gap-2 flex-wrap text-[11px] font-mono text-amber-200">
+                      <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between gap-2 text-[11px] font-mono text-amber-200">
                         <span>
-                          Serie con variantes ({activeResult.alternativeCapacities.join(' · ')}) — priorizando capacidad máxima ({activeResult.storage}).
+                          Código incompleto (variantes: {activeResult.alternativeCapacities.join(' / ')}) — escribe 1 o 2 letras más para confirmar.
                         </span>
                       </div>
                     )}
@@ -888,83 +898,76 @@ export default function App() {
                 <div className="p-3 rounded-xl pro-inset flex items-center justify-between gap-2">
                   <span className="text-xs font-mono font-bold text-gray-300">
                     {isSearchingOnline
-                      ? `Consultando código "${query}"...`
-                      : `Código "${query}" no registrado en catálogo`}
+                      ? `Buscando "${query}"...`
+                      : `Sin registro para "${query}"`}
                   </span>
                   <button
                     type="button"
                     onClick={openAddModal}
                     className="px-3 py-1.5 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs shrink-0 transition"
                   >
-                    + Registrar Chip
+                    + Agregar Chip
                   </button>
                 </div>
               )}
             </div>
 
             {/* ============================================================= */}
-            {/* COINCIDENCIAS RÁPIDAS (ORDENADAS DE MAYOR A MENOR CAPACIDAD)  */}
+            {/* SUGERENCIAS DE LA SERIE (SIN REPETIR EL ACTIVO)               */}
             {/* ============================================================= */}
-            {suggestions.length > 0 && (
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between px-1">
-                  <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-300/75">
-                    Coincidencias ({suggestions.length}) · Mayor capacidad primero
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                  {suggestions.map((item, idx) => {
-                    const itemTheme = getCapacityTheme(item.storage);
-                    const diff = highlightCodeDifference(item);
-                    return (
-                      <button
-                        key={`${item.code}-${item.partNumber}-${idx}`}
-                        type="button"
-                        onClick={() => handleSelectChip(item)}
-                        className="px-3.5 py-2.5 rounded-xl pro-panel hover:border-emerald-400/50 flex items-center justify-between gap-2 text-left transition"
-                      >
-                        <div className="min-w-0">
-                          <div className="font-mono font-bold text-xs sm:text-sm flex items-center flex-wrap break-all">
-                            <span className="text-gray-300">{diff.pre}</span>
-                            <span className={`px-1 py-0.2 mx-0.5 rounded font-black ${itemTheme.badge}`}>
-                              {diff.highlight}
-                            </span>
-                            <span className="text-gray-300">{diff.post}</span>
-                          </div>
-                          <div className="text-[11px] text-emerald-200/70 truncate mt-0.5">
-                            {item.manufacturer} · {item.type}
-                          </div>
+            {visibleSuggestions.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                {visibleSuggestions.map((item, idx) => {
+                  const itemTheme = getCapacityTheme(item.storage);
+                  const diff = highlightCodeDifference(item);
+                  return (
+                    <button
+                      key={`${item.code}-${item.partNumber}-${idx}`}
+                      type="button"
+                      onClick={() => handleSelectChip(item)}
+                      className="px-3.5 py-2.5 rounded-xl pro-panel hover:border-emerald-400/50 flex items-center justify-between gap-2 text-left transition"
+                    >
+                      <div className="min-w-0">
+                        <div className="font-mono font-bold text-xs sm:text-sm flex items-center flex-wrap break-all">
+                          <span className="text-gray-300">{diff.pre}</span>
+                          <span className={`px-1 py-0.2 mx-0.5 rounded font-black ${itemTheme.badge}`}>
+                            {diff.highlight}
+                          </span>
+                          <span className="text-gray-300">{diff.post}</span>
                         </div>
+                        <div className="text-[11px] text-emerald-200/70 truncate mt-0.5">
+                          {item.manufacturer} · {item.type}
+                        </div>
+                      </div>
 
-                        <span
-                          className={`px-2.5 py-1 rounded-lg font-mono font-black text-xs sm:text-sm border shrink-0 ${itemTheme.badge}`}
-                        >
-                          {item.storage}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                      <span
+                        className={`px-2.5 py-1 rounded-lg font-mono font-black text-xs sm:text-sm border shrink-0 ${itemTheme.badge}`}
+                      >
+                        {item.storage}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             )}
 
             {/* ============================================================= */}
-            {/* PANELES DE OPERACIÓN RÁPIDA (VISIBLES CUANDO NO SE ESCRIBE)   */}
+            {/* PANELES CUANDO EL BUSCADOR ESTÁ VACÍO                         */}
             {/* ============================================================= */}
             {!query && (
-              <div className="space-y-3">
-                {/* 1. Prefijos Rápidos por Marca */}
-                <div className="rounded-2xl pro-panel p-3 sm:p-3.5 space-y-2">
+              <div className="space-y-2.5">
+                {/* 1. Prefijos Rápidos: Toca uno para insertarlo y solo escribe las letras finales */}
+                <div className="rounded-2xl pro-panel p-3 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-mono font-extrabold uppercase tracking-wider text-emerald-300/80">
-                      Acceso Rápido por Serie IC
+                      Prefijos Rápidos (Toca para completar código)
                     </span>
                     <button
                       type="button"
                       onClick={() => setActiveTab('tables')}
                       className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-0.5"
                     >
-                      <span>Ver catálogo completo</span>
+                      <span>Catálogo</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -976,7 +979,7 @@ export default function App() {
                         <button
                           key={p.label}
                           type="button"
-                          onClick={() => handleSelectChip({ code: targetVal })}
+                          onClick={() => handleSelectPrefix(targetVal)}
                           className="px-2.5 py-2 rounded-xl pro-inset hover:border-emerald-400/60 flex flex-col items-start justify-center text-left transition group"
                         >
                           <span className="font-mono font-black text-xs sm:text-sm text-white group-hover:text-emerald-300">
@@ -991,12 +994,12 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 2. Barra de Conteo Rápido de Lote por Capacidad (4GB a 2TB) */}
-                <div className="rounded-2xl pro-panel p-3 sm:p-3.5 space-y-2.5">
+                {/* 2. Conteo Rápido de Lote por Capacidad */}
+                <div className="rounded-2xl pro-panel p-3 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] font-mono font-extrabold uppercase tracking-wider text-emerald-300/80">
-                        Conteo Rápido de Lote
+                        Lote Actual
                       </span>
                       <span className="px-2 py-0.5 rounded-full bg-emerald-400 text-black font-mono font-black text-[11px]">
                         {totalBatchPieces} pzas
@@ -1012,13 +1015,13 @@ export default function App() {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-6 gap-1.5">
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
                     {QUICK_LOT_BUCKETS.map((b) => {
                       const count = batchCounts[b.key] || 0;
                       return (
                         <div
                           key={b.key}
-                          className={`rounded-xl pro-inset p-2 border ${b.border} flex flex-col justify-between gap-2`}
+                          className={`rounded-xl pro-inset p-2 border ${b.border} flex flex-col justify-between gap-1.5`}
                         >
                           <div className="flex items-center justify-between gap-1">
                             <span
@@ -1026,7 +1029,7 @@ export default function App() {
                             >
                               {b.label}
                             </span>
-                            <span className="font-mono font-black text-base sm:text-lg text-white">
+                            <span className="font-mono font-black text-sm sm:text-base text-white">
                               {count}
                             </span>
                           </div>
@@ -1055,11 +1058,11 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 3. Historial de Lecturas Recientes */}
-                <div className="rounded-2xl pro-panel p-3 sm:p-3.5 space-y-2">
+                {/* 3. Recientes */}
+                <div className="rounded-2xl pro-panel p-3 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-mono font-extrabold uppercase tracking-wider text-emerald-300/80">
-                      Lecturas Recientes
+                      Recientes
                     </span>
                     <button
                       type="button"
