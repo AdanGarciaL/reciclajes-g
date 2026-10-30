@@ -60,32 +60,81 @@ export function normalizeCode(raw) {
     .replace(/\s+/g, '');
 }
 
-// Detecta si el usuario escribió por error el código del Procesador (CPU) en vez de la Memoria
+// Convierte cualquier cadena de capacidad ("4GB", "128GB", "1TB", "2TB") a número en GB para comparar Capacidad Máxima
+export function capacityToGbNumber(capStr) {
+  if (!capStr) return 0;
+  const s = String(capStr).toUpperCase().trim();
+  const tbMatch = s.match(/(\d+(?:\.\d+)?)\s*T/);
+  if (tbMatch) return parseFloat(tbMatch[1]) * 1024;
+  const gbMatch = s.match(/(\d+(?:\.\d+)?)\s*G/);
+  if (gbMatch) return parseFloat(gbMatch[1]);
+  const mbMatch = s.match(/(\d+(?:\.\d+)?)\s*M/);
+  if (mbMatch) return parseFloat(mbMatch[1]) / 1024;
+  return 0;
+}
+
+// Detecta si el usuario escribió por error el código del Procesador (CPU), PMIC, RF o el chip de PURA RAM en vez del Almacenamiento
 export function detectCpuInsteadOfMemory(rawQuery) {
   const q = normalizeCode(rawQuery);
-  if (!q || q.length < 4) return null;
+  if (!q || q.length < 3) return null;
 
+  // 1. Patrones de Procesadores (CPU), PMIC (Carga/Energía) y Radiofrecuencia (RF/WiFi)
   const cpuPatterns = [
-    { regex: /^(SM|SDM|MSM|APQ)\d{3,4}[A-Z0-9]*$/, brand: 'Qualcomm Snapdragon', type: 'Procesador (CPU)' },
-    { regex: /^MT6[5789]\d{2}[A-Z0-9]*$/, brand: 'MediaTek Helio / Dimensity', type: 'Procesador (CPU)' },
-    { regex: /^(SC98|SC77|UMS9|UMS5|T606|T610|T612|T616|T618)\d*[A-Z0-9]*$/, brand: 'Unisoc / Spreadtrum', type: 'Procesador (CPU)' },
-    { regex: /^(S5E\d{4}|EXYNOS\d+)[A-Z0-9]*$/, brand: 'Samsung Exynos', type: 'Procesador (CPU)' },
-    { regex: /^(HI36\d{2}|HI62\d{2}|KIRIN\d+)[A-Z0-9]*$/, brand: 'Huawei HiSilicon Kirin', type: 'Procesador (CPU)' },
-    { regex: /^APL\d{4}[A-Z0-9]*$/, brand: 'Apple Serie A (CPU iPhone)', type: 'Procesador (CPU)' },
-    { regex: /^PM(I|M)?\d{3,4}[A-Z0-9]*$/, brand: 'Qualcomm PMIC', type: 'Chip de Carga / Energía (PMIC)' },
+    { regex: /^(SM|SDM|MSM|APQ|QCM)\d{3,4}[A-Z0-9]*$/, brand: 'Qualcomm Snapdragon', type: 'Procesador (CPU)', category: 'CPU' },
+    { regex: /^MT6[5789]\d{2}[A-Z0-9]*$/, brand: 'MediaTek Helio / Dimensity', type: 'Procesador (CPU) / PMIC', category: 'CPU' },
+    { regex: /^MT8[1367]\d{2}[A-Z0-9]*$/, brand: 'MediaTek Tablet / SoC', type: 'Procesador (CPU)', category: 'CPU' },
+    { regex: /^(SC98|SC77|UMS9|UMS5|T606|T610|T612|T616|T618|T700)\d*[A-Z0-9]*$/, brand: 'Unisoc / Spreadtrum', type: 'Procesador (CPU)', category: 'CPU' },
+    { regex: /^(S5E\d{4}|EXYNOS\d+)[A-Z0-9]*$/, brand: 'Samsung Exynos', type: 'Procesador (CPU)', category: 'CPU' },
+    { regex: /^(HI36\d{2}|HI62\d{2}|KIRIN\d+)[A-Z0-9]*$/, brand: 'Huawei HiSilicon Kirin', type: 'Procesador (CPU)', category: 'CPU' },
+    { regex: /^APL\d{4}[A-Z0-9]*$/, brand: 'Apple Serie A (CPU iPhone)', type: 'Procesador (CPU)', category: 'CPU' },
+    { regex: /^(PM|PMI|PMK|PMR|PMB|SMB)\d{3,4}[A-Z0-9]*$/, brand: 'Qualcomm PMIC', type: 'Chip de Carga / Energía (PMIC)', category: 'PMIC' },
+    { regex: /^(S2MPU|S2MPS|S2DOS)\d+[A-Z0-9]*$/, brand: 'Samsung PMIC', type: 'Chip de Energía (PMIC)', category: 'PMIC' },
+    { regex: /^(HI64\d{2}|HI65\d{2})[A-Z0-9]*$/, brand: 'HiSilicon PMIC', type: 'Chip de Energía / Audio', category: 'PMIC' },
+    { regex: /^(338S|343S)\d+[A-Z0-9]*$/, brand: 'Apple PMIC / Audio IC', type: 'Chip de Energía / Audio (iPhone)', category: 'PMIC' },
+    { regex: /^(SDR|WTR|WCN|QET|QPM|QDM)\d{3,4}[A-Z0-9]*$/, brand: 'Qualcomm RF / WiFi', type: 'Chip de Señal / WiFi / RF', category: 'RF' },
+    { regex: /^(SKY\d{4,5}|QM\d{4,5})[A-Z0-9]*$/, brand: 'Skyworks / Qorvo', type: 'Amplificador de Señal (RF)', category: 'RF' },
   ];
 
   for (const pat of cpuPatterns) {
     if (pat.regex.test(q)) {
       return {
         isCpuWarning: true,
+        wrongChipCategory: pat.category,
         code: q,
         cpuBrand: pat.brand,
         cpuType: pat.type,
-        message: `"${q}" es un ${pat.type} (${pat.brand}). No contiene los GB de almacenamiento. Lee el chip de Memoria que está justo al lado (empieza con KLM, KM, H9, JZ, SDIN o THG).`,
+        title: `¡CHIP EQUIVOCADO! Detectado: ${pat.type} (${pat.brand})`,
+        message: `"${q}" NO es el chip de almacenamiento. En la placa hay varios chips: ignora este ${pat.type} y busca el chip grande de Memoria Flash (empieza con KLM, KLU, KM, H9, HN8T, JZ, SDIN, THG o KICM) para ver la Capacidad Máxima real.`,
       };
     }
   }
+
+  // 2. Patrones de Chips que son PURA MEMORIA RAM (DRAM LPDDR sin almacenamiento)
+  const pureRamPatterns = [
+    { regex: /^K4(U|F|E|B|A)[A-Z0-9]{4,}/, brand: 'Samsung LPDDR DRAM', type: 'Chip de PURA RAM (Sin Almacenamiento)' },
+    { regex: /^K3(U|L|Q|R)[A-Z0-9]{4,}/, brand: 'Samsung LPDDR DRAM', type: 'Chip de PURA RAM (Sin Almacenamiento)' },
+    { regex: /^H9(HC|TK|CC)NNN[A-Z0-9]*/, brand: 'SK Hynix LPDDR DRAM', type: 'Chip de PURA RAM (Sin Almacenamiento)' },
+    { regex: /^H5(4G|TC|AN)[A-Z0-9]{3,}/, brand: 'SK Hynix DDR/LPDDR DRAM', type: 'Chip de PURA RAM (Sin Almacenamiento)' },
+    { regex: /^MT(53|52|40|41)[A-Z0-9]{3,}/, brand: 'Micron LPDDR DRAM', type: 'Chip de PURA RAM (Sin Almacenamiento)' },
+    { regex: /^EDF[A-Z0-9]{4,}/, brand: 'Micron / Elpida LPDDR DRAM', type: 'Chip de PURA RAM (Sin Almacenamiento)' },
+    { regex: /^D[89][A-Z]{3}$/, brand: 'Micron FBGA DRAM (D9/D8)', type: 'Chip de PURA RAM (Sin Almacenamiento)' },
+  ];
+
+  for (const ramPat of pureRamPatterns) {
+    if (ramPat.regex.test(q)) {
+      return {
+        isCpuWarning: true,
+        isRamOnlyWarning: true,
+        wrongChipCategory: 'RAM_ONLY',
+        code: q,
+        cpuBrand: ramPat.brand,
+        cpuType: ramPat.type,
+        title: `¡CUIDADO! Estás leyendo el Chip de PURA RAM (${ramPat.brand})`,
+        message: `"${q}" es únicamente el chip de Memoria RAM (4GB/6GB/8GB/12GB) y NO indica la capacidad máxima del celular. Esta placa tiene 2 chips separados: busca el OTRO chip grande de almacenamiento (UFS / eMMC / NAND: empieza con KLU, KLM, HN8T, H28U, THGAF, SDIN, JZ, JC o KICM) para saber los GB máximos reales (64GB, 128GB, 256GB...).`,
+      };
+    }
+  }
+
   return null;
 }
 
@@ -288,6 +337,8 @@ function parseFdnextDecodeResult(res, queryFallback) {
   const code = dev.markingCode || dev.partNumber || queryFallback;
   const partNumber = dev.partNumber || code;
 
+  const isPureDram = dev.chipKind === 'dram' || (!storage && Boolean(ram));
+
   return {
     code,
     partNumber,
@@ -297,6 +348,7 @@ function parseFdnextDecodeResult(res, queryFallback) {
     type,
     tech: [storageTech, ramTech].filter(Boolean).join(' + ') || type,
     package: pkg || null,
+    isPureDram,
     source: 'Motor Industrial Offline',
   };
 }
@@ -1321,6 +1373,7 @@ function decodeSingleCandidateOffline(q) {
   }
 
   // 3. Motor Industrial Offline @itxtech/fdnext-core
+  let pureDramCandidate = null;
   const eng = getFdEngine();
   if (eng) {
     try {
@@ -1329,21 +1382,43 @@ function decodeSingleCandidateOffline(q) {
       if (parsed && parsed.storage) {
         return parsed;
       }
+      if (parsed && parsed.isPureDram) {
+        pureDramCandidate = parsed;
+      }
 
-      if (q.length >= 5) {
-        const searchRes = eng.searchParts({ query: q, lang: 'eng', limit: 5 });
+      if (q.length >= 4) {
+        const searchRes = eng.searchParts({ query: q, lang: 'eng', limit: 12 });
         if (searchRes?.status === 'ok' && Array.isArray(searchRes.items) && searchRes.items.length > 0) {
-          const bestItem = searchRes.items[0];
-          const targetPart = bestItem.device?.markingCode || bestItem.device?.partNumber || bestItem.label;
-          if (targetPart) {
+          const decodedMatches = [];
+          for (const item of searchRes.items) {
+            const targetPart = item.device?.markingCode || item.device?.partNumber || item.label;
+            if (!targetPart) continue;
             const fullDecode = eng.decodePart({ query: targetPart, lang: 'eng' });
-            const parsedBest = parseFdnextDecodeResult(fullDecode, targetPart);
-            if (parsedBest && parsedBest.storage) {
-              return {
-                ...parsedBest,
+            const parsedItem = parseFdnextDecodeResult(fullDecode, targetPart);
+            if (parsedItem && parsedItem.storage) {
+              decodedMatches.push({
+                ...parsedItem,
                 matchedFromPartial: q !== normalizeCode(targetPart),
-              };
+              });
+            } else if (parsedItem && parsedItem.isPureDram && !pureDramCandidate) {
+              pureDramCandidate = parsedItem;
             }
+          }
+
+          if (decodedMatches.length > 0) {
+            // Priorizar coincidencia exacta; si son parciales, priorizar SIEMPRE la CAPACIDAD MÁXIMA
+            decodedMatches.sort((a, b) => {
+              const aExact = normalizeCode(a.code) === q || normalizeCode(a.partNumber) === q ? 1 : 0;
+              const bExact = normalizeCode(b.code) === q || normalizeCode(b.partNumber) === q ? 1 : 0;
+              if (aExact !== bExact) return bExact - aExact;
+              return capacityToGbNumber(b.storage) - capacityToGbNumber(a.storage);
+            });
+            const best = decodedMatches[0];
+            const distinctCaps = Array.from(new Set(decodedMatches.map((m) => m.storage)));
+            return {
+              ...best,
+              alternativeCapacities: distinctCaps.length > 1 ? distinctCaps : null,
+            };
           }
         }
       }
@@ -1355,6 +1430,39 @@ function decodeSingleCandidateOffline(q) {
   // 4. Motor Heurístico de Nomenclatura
   const heur = heuristicDecode(q);
   if (heur) return heur;
+
+  // 5. Si el código era parcial en el catálogo local y tiene varias capacidades, devolver la CAPACIDAD MÁXIMA
+  if (q.length >= 4) {
+    const partialMatches = combinedSeed
+      .filter((c) => {
+        const cNorm = normalizeCode(c.code);
+        const aliasHit =
+          Array.isArray(c.aliases) && c.aliases.some((al) => normalizeCode(al).startsWith(q));
+        return cNorm.startsWith(q) || aliasHit;
+      })
+      .map((c) => ({
+        ...c,
+        partNumber: c.partNumber || c.code,
+        storage: c.storage || c.capacity,
+        manufacturer: c.manufacturer || c.brand,
+        notes: c.notes || c.commonModels || c.explanation || '',
+        matchedFromPartial: true,
+        source: c.source || 'Catálogo Verificado',
+      }));
+
+    if (partialMatches.length > 0) {
+      partialMatches.sort((a, b) => capacityToGbNumber(b.storage) - capacityToGbNumber(a.storage));
+      const distinctCaps = Array.from(new Set(partialMatches.map((m) => m.storage)));
+      return {
+        ...partialMatches[0],
+        alternativeCapacities: distinctCaps.length > 1 ? distinctCaps : null,
+      };
+    }
+  }
+
+  if (pureDramCandidate) {
+    return pureDramCandidate;
+  }
 
   return null;
 }
@@ -1419,16 +1527,18 @@ export function searchChipsInstant(rawQuery, limit = 10) {
           notes: item.notes || item.commonModels || item.explanation || '',
           source: item.source || 'Catálogo Eco Lógica García',
         });
-        if (results.length >= limit) return results;
       }
     }
 
     const eng = getFdEngine();
     if (eng) {
       try {
-        const searchRes = eng.searchParts({ query: q, lang: 'eng', limit: limit });
+        const searchRes = eng.searchParts({ query: q, lang: 'eng', limit: limit * 2 });
         if (searchRes?.status === 'ok' && Array.isArray(searchRes.items)) {
           for (const it of searchRes.items) {
+            // Ignorar chips que son únicamente memoria RAM sin almacenamiento en la lista de sugerencias
+            if (it.device?.chipKind === 'dram') continue;
+
             const marking = it.device?.markingCode;
             const pn = it.device?.partNumber || it.label;
             const displayCode = marking || pn;
@@ -1453,19 +1563,23 @@ export function searchChipsInstant(rawQuery, limit = 10) {
               fullDecoded = parseFdnextDecodeResult(dec, displayCode);
             }
 
-            pushUnique(
+            if (fullDecoded && fullDecoded.isPureDram) continue;
+
+            const candidateItem =
               fullDecoded || {
                 code: displayCode,
                 partNumber: pn,
-                storage: storage ? String(storage).toUpperCase().replace(/\s+/g, '') : 'Ver detalle',
+                storage: storage ? String(storage).toUpperCase().replace(/\s+/g, '') : null,
                 ram: ram,
                 manufacturer: it.device?.vendor?.name || 'Desconocido',
                 type: (it.device?.productType || 'IC').toUpperCase(),
                 tech: (it.badges || []).join(' · '),
                 source: 'Motor Industrial Offline',
-              }
-            );
-            if (results.length >= limit) return results;
+              };
+
+            if (candidateItem.storage) {
+              pushUnique(candidateItem);
+            }
           }
         }
       } catch {
@@ -1484,7 +1598,19 @@ export function searchChipsInstant(rawQuery, limit = 10) {
     }
   }
 
-  return results;
+  // Ordenar resultados priorizando coincidencia exacta y después de MAYOR A MENOR capacidad (Capacidad Máxima primero)
+  const primaryQuery = candidates[0] || '';
+  results.sort((a, b) => {
+    const aExact = normalizeCode(a.code) === primaryQuery || normalizeCode(a.partNumber) === primaryQuery ? 1 : 0;
+    const bExact = normalizeCode(b.code) === primaryQuery || normalizeCode(b.partNumber) === primaryQuery ? 1 : 0;
+    if (aExact !== bExact) return bExact - aExact;
+    const aStarts = normalizeCode(a.code).startsWith(primaryQuery) ? 1 : 0;
+    const bStarts = normalizeCode(b.code).startsWith(primaryQuery) ? 1 : 0;
+    if (aStarts !== bStarts) return bStarts - aStarts;
+    return capacityToGbNumber(b.storage) - capacityToGbNumber(a.storage);
+  });
+
+  return results.slice(0, limit);
 }
 
 // Auto-Aprendizaje Online Opcional
