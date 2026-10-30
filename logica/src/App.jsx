@@ -46,12 +46,48 @@ const TEXT_SCALE_OPTIONS = [
 ];
 
 const QUICK_LOT_BUCKETS = [
-  { key: '16GB', label: '4–16GB', pill: 'bg-sky-400 text-black border-sky-200', border: 'border-sky-500/35' },
-  { key: '32GB', label: '32GB', pill: 'bg-cyan-400 text-black border-cyan-200', border: 'border-cyan-500/35' },
-  { key: '64GB', label: '64GB', pill: 'bg-emerald-400 text-black border-emerald-200', border: 'border-emerald-500/45' },
-  { key: '128GB', label: '128GB', pill: 'bg-amber-400 text-black border-amber-200', border: 'border-amber-500/45' },
-  { key: '256GB', label: '256GB', pill: 'bg-purple-500 text-white border-purple-300', border: 'border-purple-500/45' },
-  { key: '512GB+', label: '512G–2TB', pill: 'bg-rose-500 text-white border-rose-300', border: 'border-rose-500/45' },
+  {
+    key: '16GB',
+    label: '4–16 GB',
+    sub: 'Básica',
+    pill: 'bg-sky-400 text-black border-sky-200',
+    border: 'border-sky-500/40 bg-sky-950/20',
+  },
+  {
+    key: '32GB',
+    label: '32 GB',
+    sub: 'Media',
+    pill: 'bg-cyan-400 text-black border-cyan-200',
+    border: 'border-cyan-500/40 bg-cyan-950/20',
+  },
+  {
+    key: '64GB',
+    label: '64 GB',
+    sub: 'Estándar',
+    pill: 'bg-emerald-400 text-black border-emerald-200',
+    border: 'border-emerald-500/50 bg-emerald-950/25',
+  },
+  {
+    key: '128GB',
+    label: '128 GB',
+    sub: 'Alta',
+    pill: 'bg-amber-400 text-black border-amber-200',
+    border: 'border-amber-500/50 bg-amber-950/25',
+  },
+  {
+    key: '256GB',
+    label: '256 GB',
+    sub: 'Superior',
+    pill: 'bg-purple-500 text-white border-purple-300',
+    border: 'border-purple-500/50 bg-purple-950/25',
+  },
+  {
+    key: '512GB+',
+    label: '512G–2TB',
+    sub: 'Máxima',
+    pill: 'bg-rose-500 text-white border-rose-300',
+    border: 'border-rose-500/50 bg-rose-950/25',
+  },
 ];
 
 export function getCapacityTheme(storageStr) {
@@ -59,49 +95,55 @@ export function getCapacityTheme(storageStr) {
   const num = parseInt(s.replace(/\D/g, ''), 10) || 0;
   if (s.includes('TB') || num >= 512) {
     return {
-      badge: 'bg-rose-500 text-white border-rose-300 shadow-[0_0_22px_rgba(244,63,94,0.4)]',
-      card: 'border-rose-500/70 bg-gradient-to-br from-[#200811] via-[#0c1510] to-[#060b08]',
+      badge: 'bg-rose-500 text-white border-rose-300 shadow-[0_0_24px_rgba(244,63,94,0.45)]',
+      card: 'border-rose-500/75 bg-gradient-to-br from-[#240812] via-[#0c1510] to-[#060b08]',
       accentText: 'text-rose-300',
       dot: 'bg-rose-400',
+      tierLabel: 'ALTA GAMA (512GB–2TB)',
     };
   }
   if (num === 256) {
     return {
-      badge: 'bg-purple-500 text-white border-purple-300 shadow-[0_0_22px_rgba(168,85,247,0.4)]',
-      card: 'border-purple-500/70 bg-gradient-to-br from-[#190a28] via-[#0c1510] to-[#060b08]',
+      badge: 'bg-purple-500 text-white border-purple-300 shadow-[0_0_24px_rgba(168,85,247,0.45)]',
+      card: 'border-purple-500/75 bg-gradient-to-br from-[#1b0a2c] via-[#0c1510] to-[#060b08]',
       accentText: 'text-purple-300',
       dot: 'bg-purple-400',
+      tierLabel: 'CAPACIDAD SUPERIOR (256GB)',
     };
   }
   if (num === 128) {
     return {
-      badge: 'bg-amber-400 text-black border-amber-200 shadow-[0_0_22px_rgba(251,191,36,0.35)]',
-      card: 'border-amber-400/75 bg-gradient-to-br from-[#211705] via-[#0c1510] to-[#060b08]',
+      badge: 'bg-amber-400 text-black border-amber-200 shadow-[0_0_24px_rgba(251,191,36,0.4)]',
+      card: 'border-amber-400/80 bg-gradient-to-br from-[#241905] via-[#0c1510] to-[#060b08]',
       accentText: 'text-amber-300',
       dot: 'bg-amber-400',
+      tierLabel: 'CAPACIDAD ALTA (128GB)',
     };
   }
   if (num === 64) {
     return {
-      badge: 'bg-emerald-400 text-black border-emerald-200 shadow-[0_0_24px_rgba(52,211,153,0.4)]',
-      card: 'border-emerald-400/80 bg-gradient-to-br from-[#062818] via-[#0a1810] to-[#050a07]',
+      badge: 'bg-emerald-400 text-black border-emerald-200 shadow-[0_0_26px_rgba(52,211,153,0.45)]',
+      card: 'border-emerald-400/85 bg-gradient-to-br from-[#062b1a] via-[#0a1810] to-[#050a07]',
       accentText: 'text-emerald-300',
       dot: 'bg-emerald-400',
+      tierLabel: 'CAPACIDAD ESTÁNDAR (64GB)',
     };
   }
   if (num === 32) {
     return {
-      badge: 'bg-cyan-400 text-black border-cyan-200 shadow-[0_0_20px_rgba(34,211,238,0.35)]',
-      card: 'border-cyan-400/70 bg-gradient-to-br from-[#062128] via-[#0a1711] to-[#050a07]',
+      badge: 'bg-cyan-400 text-black border-cyan-200 shadow-[0_0_22px_rgba(34,211,238,0.4)]',
+      card: 'border-cyan-400/75 bg-gradient-to-br from-[#06242b] via-[#0a1711] to-[#050a07]',
       accentText: 'text-cyan-300',
       dot: 'bg-cyan-400',
+      tierLabel: 'CAPACIDAD MEDIA (32GB)',
     };
   }
   return {
-    badge: 'bg-sky-400 text-black border-sky-200 shadow-[0_0_20px_rgba(56,189,248,0.35)]',
-    card: 'border-sky-400/70 bg-gradient-to-br from-[#061d2b] via-[#0a1711] to-[#050a07]',
+    badge: 'bg-sky-400 text-black border-sky-200 shadow-[0_0_22px_rgba(56,189,248,0.4)]',
+    card: 'border-sky-400/75 bg-gradient-to-br from-[#061f2e] via-[#0a1711] to-[#050a07]',
     accentText: 'text-sky-300',
     dot: 'bg-sky-400',
+    tierLabel: 'CAPACIDAD BÁSICA (4–16GB)',
   };
 }
 
@@ -121,7 +163,6 @@ export default function App() {
   const [suggestions, setSuggestions] = useState([]);
   const [isSearchingOnline, setIsSearchingOnline] = useState(false);
 
-  // Detección precisa de teclado móvil (Android / iPhone)
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
@@ -400,7 +441,6 @@ export default function App() {
     }
   }, [query, catalogVersion]);
 
-  // Análisis inteligente de variantes y terminaciones del chip activo
   const variantReport = useMemo(() => {
     const clean = normalizeCode(query);
     if (!clean || clean.length < 3 || cpuWarning) return null;
@@ -573,7 +613,7 @@ export default function App() {
                 </h1>
                 {!compactKeyboardMode && (
                   <span className="text-[10px] text-emerald-200/75 font-mono font-medium block truncate mt-0.5">
-                    {dbStats.totalOfflineCount.toLocaleString()} IC · Detector de Capacidad y Variantes
+                    {dbStats.totalOfflineCount.toLocaleString()} IC · Detector de Capacidad y Terminaciones
                   </span>
                 )}
               </div>
@@ -702,12 +742,12 @@ export default function App() {
         )}
 
         {/* ================================================================= */}
-        {/* 1. PÁGINA DE ESCÁNER — TELEMETRÍA Y RADAR DE TERMINACIONES        */}
+        {/* 1. PÁGINA DE ESCÁNER — VISUAL, CLARA Y ENTENDIBLE                 */}
         {/* ================================================================= */}
         {activeTab === 'search' && (
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {/* BLOQUE PRINCIPAL: INPUT + RESULTADO INMEDIATO ARRIBA DEL TECLADO */}
-            <div className="rounded-2xl pro-panel-elevated p-2.5 sm:p-3.5 space-y-2.5">
+            <div className="rounded-2xl pro-panel-elevated p-3 sm:p-4 space-y-3">
               {/* Campo de búsqueda con indicador de capacidad integrado */}
               <div className="relative flex items-center">
                 <Search className="w-5 h-5 text-emerald-400 absolute left-3.5 pointer-events-none" />
@@ -719,7 +759,7 @@ export default function App() {
                   onBlur={() => setTimeout(() => setIsInputFocused(false), 180)}
                   onChange={(e) => setQuery(e.target.value.toUpperCase())}
                   onKeyDown={handleSearchKeyDown}
-                  placeholder="Código del chip (ej. KMDP6001, JXE77, H9HP52, SDINBDA4)"
+                  placeholder="Escribe el código (ej. KMDP6001, JXE77, H9HP52, SDINBDA4)"
                   aria-label="Código del chip"
                   autoComplete="off"
                   autoCorrect="off"
@@ -759,114 +799,134 @@ export default function App() {
               </div>
 
               {/* ============================================================= */}
-              {/* ALERTA DE CHIP EQUIVOCADO (PURA RAM O PROCESADOR)             */}
+              {/* ALERTA VISUAL DE CHIP EQUIVOCADO (PURA RAM O PROCESADOR)      */}
               {/* ============================================================= */}
               {cpuWarning && (
                 <div
                   role="alert"
-                  className="p-3 rounded-xl bg-gradient-to-r from-rose-950/95 to-[#16070b] border-2 border-rose-500/80 flex items-center justify-between gap-3"
+                  className="p-3.5 rounded-xl bg-gradient-to-r from-rose-950/95 to-[#16070b] border-2 border-rose-500/80 flex items-center justify-between gap-3"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-11 h-11 rounded-xl bg-rose-500/20 border border-rose-400/50 flex items-center justify-center shrink-0">
+                      <AlertTriangle className="w-6 h-6 text-rose-400" />
+                    </div>
                     <div className="min-w-0">
                       <div className="text-xs sm:text-sm font-black text-white truncate">
                         {cpuWarning.isRamOnlyWarning
-                          ? `Chip de pura RAM (${cpuWarning.ramDetected || cpuWarning.cpuBrand})`
-                          : `${cpuWarning.cpuType} (${cpuWarning.cpuBrand})`}
+                          ? `CHIP EQUIVOCADO: SOLO RAM (${cpuWarning.ramDetected || cpuWarning.cpuBrand})`
+                          : `CHIP EQUIVOCADO: ${cpuWarning.cpuType.toUpperCase()} (${cpuWarning.cpuBrand})`}
                       </div>
-                      <p className="text-[11px] sm:text-xs text-rose-200/90 leading-snug">
-                        No tiene almacenamiento. Lee el otro chip grande: <strong className="font-mono text-white">KLM, KLU, KM, H9, HN8T, JZ, SDIN o THG</strong>.
+                      <p className="text-xs text-rose-200/95 leading-snug mt-0.5">
+                        Este chip no guarda almacenamiento. Busca el otro chip grande de memoria:{' '}
+                        <strong className="font-mono text-white underline">
+                          KLM, KLU, KM, H9, HN8T, JZ, SDIN o THG
+                        </strong>
+                        .
                       </p>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-lg bg-rose-500 text-white font-mono font-black text-xs shrink-0">
+                  <span className="px-3 py-1.5 rounded-xl bg-rose-500 text-white font-mono font-black text-xs sm:text-sm shrink-0">
                     0 GB
                   </span>
                 </div>
               )}
 
               {/* ============================================================= */}
-              {/* TARJETA DE RESULTADO + DETECTOR DE VARIANTES Y TERMINACIONES  */}
+              {/* TARJETA VISUAL DE CAPACIDAD Y TERMINACIONES                   */}
               {/* ============================================================= */}
               {activeResult && theme && (
                 <div
                   role="status"
                   aria-live="polite"
-                  className={`rounded-xl border-2 p-3 sm:p-4 transition-all space-y-3 ${theme.card}`}
+                  className={`rounded-2xl border-2 p-3.5 sm:p-4 transition-all space-y-3.5 ${theme.card}`}
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    {/* Capacidad Gigante + Datos Clave */}
-                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                      <div
-                        className={`px-4 sm:px-5 py-2.5 rounded-xl border-2 font-mono font-black text-3xl sm:text-5xl tracking-tight leading-none shrink-0 ${theme.badge}`}
-                      >
-                        {activeResult.storage}
+                  {/* FILA 1: CAPACIDAD GIGANTE + DESGLOSE VISUAL DEL CÓDIGO + BOTONES */}
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5">
+                    <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+                      {/* Medidor Gigante de GB */}
+                      <div className="flex flex-col items-center justify-center shrink-0">
+                        <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-emerald-300/90 mb-1">
+                          Almacenamiento
+                        </span>
+                        <div
+                          className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl border-2 font-mono font-black text-3xl sm:text-5xl tracking-tight leading-none ${theme.badge}`}
+                        >
+                          {activeResult.storage}
+                        </div>
                       </div>
 
-                      <div className="min-w-0 flex-1 space-y-1">
-                        {/* Código con los caracteres clave resaltados */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {activeDiff ? (
-                            <div className="font-mono font-black text-base sm:text-xl flex items-center flex-wrap break-all tracking-wide">
-                              <span className="text-gray-300">{activeDiff.pre}</span>
+                      {/* Anatomía del Código y Ficha Técnica */}
+                      <div className="min-w-0 flex-1 space-y-2">
+                        {/* Desglose Visual en 3 partes: Inicio | Clave de GB | Terminación */}
+                        {activeDiff && activeDiff.highlight ? (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1 flex-wrap font-mono">
+                              {activeDiff.pre && (
+                                <span className="px-2 py-1 rounded-lg bg-black/50 border border-white/10 text-gray-200 font-bold text-sm sm:text-lg">
+                                  {activeDiff.pre}
+                                </span>
+                              )}
                               <span
-                                className={`px-1.5 py-0.2 mx-0.5 rounded-md font-black text-sm sm:text-lg border ${theme.badge}`}
+                                className={`px-2.5 py-1 rounded-lg font-black text-sm sm:text-lg border-2 ${theme.badge}`}
+                                title="Caracteres que definen los GB"
                               >
                                 {activeDiff.highlight}
                               </span>
-                              <span className="text-gray-300">{activeDiff.post}</span>
+                              {activeDiff.post && (
+                                <span className="px-2 py-1 rounded-lg bg-black/50 border border-white/10 text-gray-300 font-bold text-sm sm:text-lg break-all">
+                                  {activeDiff.post}
+                                </span>
+                              )}
                             </div>
-                          ) : (
-                            <div className="font-mono font-black text-base sm:text-xl text-white truncate">
-                              {activeResult.code}
+                            <div className="flex items-center gap-2 flex-wrap text-[11px] font-mono">
+                              <span className="text-emerald-300 font-bold">
+                                ↑ {activeDiff.why}
+                              </span>
+                              {activeDiff.post && (
+                                <span className="text-gray-400">
+                                  · Terminación: <strong className="text-gray-200">{activeDiff.post}</strong>
+                                </span>
+                              )}
                             </div>
-                          )}
+                          </div>
+                        ) : (
+                          <div className="font-mono font-black text-lg sm:text-2xl text-white break-all">
+                            {activeResult.code}
+                          </div>
+                        )}
 
-                          {activeDiff?.why && (
-                            <span className="px-2 py-0.5 rounded-md bg-black/50 border border-white/15 font-mono text-[11px] font-bold text-emerald-300">
-                              {activeDiff.why}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Marca · Tipo · RAM */}
+                        {/* Etiquetas Claras: Marca, Tipo y Aviso de RAM */}
                         <div className="flex items-center gap-1.5 flex-wrap text-xs">
-                          <span className="px-2 py-0.5 rounded bg-white/10 text-white font-bold">
+                          <span className="px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 text-white font-black">
                             {activeResult.manufacturer}
                           </span>
-                          <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-emerald-200 font-mono font-semibold">
+                          <span className="px-2.5 py-1 rounded-lg bg-black/45 border border-emerald-400/30 text-emerald-300 font-mono font-bold">
                             {activeResult.type}
                           </span>
                           {hasDualMemoryInChip && (
-                            <span className="px-2 py-0.5 rounded bg-black/40 border border-white/10 text-gray-300 font-mono">
-                              RAM {activeResult.ram} (Ignorar)
-                            </span>
-                          )}
-                          {activeResult.correctedTo && (
-                            <span className="text-[11px] font-mono text-amber-300 font-bold">
-                              {activeResult.correctedFrom} → {activeResult.correctedTo}
+                            <span className="px-2.5 py-1 rounded-lg bg-black/55 border border-white/10 text-gray-300 font-mono font-semibold">
+                              RAM {activeResult.ram} (Ignorar RAM)
                             </span>
                           )}
                         </div>
 
-                        {/* Equipos de referencia en 1 línea limpia */}
                         {activeResult.commonModels && (
-                          <div className="text-[11px] text-gray-300/85 truncate">
-                            <span className="text-emerald-300/80 font-semibold">Equipos: </span>
+                          <div className="text-xs text-gray-300/90 truncate">
+                            <span className="text-emerald-300 font-bold">Sale en: </span>
                             {activeResult.commonModels}
                           </div>
                         )}
                       </div>
                     </div>
 
-                    {/* Botones de Acción Directa */}
-                    <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end pt-1 sm:pt-0 border-t sm:border-t-0 border-white/10">
+                    {/* Botones Grandes de Acción */}
+                    <div className="flex items-center gap-2 w-full md:w-auto justify-end pt-2 md:pt-0 border-t md:border-t-0 border-white/10">
                       <button
                         type="button"
                         onClick={() => speakChipResult(activeResult, true, false)}
                         aria-label="Escuchar capacidad"
-                        className="p-2.5 rounded-xl bg-black/50 hover:bg-black/80 border border-white/15 text-emerald-300 transition"
-                        title="Voz"
+                        className="p-3 rounded-xl bg-black/55 hover:bg-black/80 border border-white/15 text-emerald-300 transition"
+                        title="Escuchar voz"
                       >
                         <Volume2 className="w-4 h-4" />
                       </button>
@@ -875,7 +935,7 @@ export default function App() {
                         type="button"
                         onClick={() => openEditChipModal(activeResult)}
                         aria-label="Editar chip"
-                        className="px-3 py-2.5 rounded-xl bg-black/50 hover:bg-white/10 border border-white/15 text-emerald-200 font-bold text-xs flex items-center gap-1 transition"
+                        className="px-3.5 py-3 rounded-xl bg-black/55 hover:bg-white/10 border border-white/15 text-emerald-200 font-bold text-xs flex items-center gap-1.5 transition"
                       >
                         <Pencil className="w-3.5 h-3.5 text-emerald-400" />
                         <span>Editar</span>
@@ -884,7 +944,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => addChipToBatch(activeResult)}
-                        className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-[0_0_20px_rgba(52,211,153,0.4)] transition"
+                        className="flex-1 md:flex-none px-5 py-3 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-[0_0_22px_rgba(52,211,153,0.45)] transition"
                       >
                         <Plus className="w-4 h-4 stroke-[3]" />
                         <span>Sumar {activeResult.storage}</span>
@@ -893,35 +953,39 @@ export default function App() {
                   </div>
 
                   {/* ========================================================= */}
-                  {/* RADAR DE VARIANTES Y TERMINACIONES DIFERENTES             */}
+                  {/* BLOQUE VISUAL ENTENDIBLE DE VARIANTES Y TERMINACIONES     */}
                   {/* ========================================================= */}
                   {variantReport &&
                     (variantReport.sameCapacityVariants.length > 1 ||
                       variantReport.differentCapacityVariants.length > 0) && (
-                      <div className="pt-2.5 border-t border-white/10 space-y-2">
-                        {/* 1. Terminaciones diferentes del MISMO chip / MISMA capacidad */}
+                      <div className="pt-3 border-t border-white/15 grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+                        {/* CAJA 1: Terminaciones del mismo chip (Misma capacidad) */}
                         {variantReport.sameCapacityVariants.length > 1 && (
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-300 font-bold">
-                              <GitBranch className="w-3.5 h-3.5 shrink-0" />
-                              <span>
-                                Variantes con diferente terminación (Todas son {activeResult.storage}):
+                          <div className="p-3 rounded-xl bg-black/45 border border-emerald-400/35 space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-xs font-extrabold text-emerald-300 flex items-center gap-1.5">
+                                <GitBranch className="w-4 h-4 shrink-0" />
+                                <span>Terminaciones iguales en valor ({activeResult.storage})</span>
+                              </span>
+                              <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-black">
+                                MISMA CAPACIDAD
                               </span>
                             </div>
+
                             <div className="flex items-center gap-1.5 flex-wrap">
                               {variantReport.sameCapacityVariants.map((v) => (
                                 <button
                                   key={v.code}
                                   type="button"
                                   onClick={() => handleSelectChip(v)}
-                                  className={`px-2.5 py-1 rounded-lg font-mono text-xs border transition flex items-center ${
+                                  className={`px-2.5 py-1.5 rounded-lg font-mono text-xs border transition flex items-center gap-1 ${
                                     v.isCurrent
-                                      ? 'bg-emerald-500/20 border-emerald-400 text-white'
-                                      : 'bg-black/45 hover:bg-black/70 border-white/15 text-gray-300'
+                                      ? 'bg-emerald-500/25 border-emerald-400 text-white shadow'
+                                      : 'bg-black/60 hover:bg-black/80 border-white/15 text-gray-300'
                                   }`}
                                 >
                                   <span className="text-gray-400">{v.basePart}</span>
-                                  <span className="font-black text-emerald-300 underline decoration-emerald-400/60 ml-0.5">
+                                  <span className="px-1.5 py-0.2 rounded bg-emerald-400/20 border border-emerald-400/50 font-black text-emerald-300">
                                     {v.diffTermination}
                                   </span>
                                 </button>
@@ -930,15 +994,19 @@ export default function App() {
                           </div>
                         )}
 
-                        {/* 2. Variantes de la misma serie donde la terminación CAMBIA los GB */}
+                        {/* CAJA 2: Variantes donde la terminación CAMBIA los GB */}
                         {variantReport.differentCapacityVariants.length > 0 && (
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-1.5 text-[11px] font-mono text-amber-300 font-bold">
-                              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                              <span>
-                                Ojo: Variantes de esta serie donde la terminación cambia los GB:
+                          <div className="p-3 rounded-xl bg-black/45 border border-amber-400/35 space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-xs font-extrabold text-amber-300 flex items-center gap-1.5">
+                                <AlertTriangle className="w-4 h-4 shrink-0" />
+                                <span>Variantes donde la terminación cambia los GB</span>
+                              </span>
+                              <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono text-[10px] font-black">
+                                DIFERENTE GB
                               </span>
                             </div>
+
                             <div className="flex items-center gap-1.5 flex-wrap">
                               {variantReport.differentCapacityVariants.map((v) => {
                                 const vTheme = getCapacityTheme(v.storage);
@@ -947,16 +1015,16 @@ export default function App() {
                                     key={v.code}
                                     type="button"
                                     onClick={() => handleSelectChip(v)}
-                                    className="px-2 py-1 rounded-lg bg-black/50 hover:bg-black/80 border border-white/15 font-mono text-xs flex items-center gap-1.5 transition"
+                                    className="px-2.5 py-1.5 rounded-lg bg-black/65 hover:bg-black/90 border border-white/15 font-mono text-xs flex items-center gap-1.5 transition"
                                   >
                                     <span>
                                       <span className="text-gray-400">{v.basePart}</span>
-                                      <span className="font-black text-white underline decoration-amber-400">
+                                      <span className="px-1 py-0.2 mx-0.5 rounded bg-white/10 font-black text-white underline decoration-amber-400">
                                         {v.diffTermination}
                                       </span>
                                     </span>
                                     <span
-                                      className={`px-1.5 py-0.2 rounded text-[10px] font-black border ${vTheme.badge}`}
+                                      className={`px-2 py-0.5 rounded-md text-[11px] font-black border ${vTheme.badge}`}
                                     >
                                       {v.storage}
                                     </span>
@@ -973,7 +1041,7 @@ export default function App() {
 
               {/* Estado sin coincidencias */}
               {query.trim().length >= 2 && !activeResult && suggestions.length === 0 && !cpuWarning && (
-                <div className="p-3 rounded-xl pro-inset flex items-center justify-between gap-2">
+                <div className="p-3.5 rounded-xl pro-inset flex items-center justify-between gap-2">
                   <span className="text-xs font-mono font-bold text-gray-300">
                     {isSearchingOnline
                       ? `Buscando "${query}"...`
@@ -982,7 +1050,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={openAddModal}
-                    className="px-3 py-1.5 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs shrink-0 transition"
+                    className="px-3.5 py-1.5 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs shrink-0 transition"
                   >
                     + Agregar Chip
                   </button>
@@ -1033,19 +1101,19 @@ export default function App() {
             {/* PANELES CUANDO EL BUSCADOR ESTÁ VACÍO                         */}
             {/* ============================================================= */}
             {!query && (
-              <div className="space-y-2.5">
-                {/* 1. Prefijos Rápidos: Toca uno para insertarlo y solo escribe las letras finales */}
-                <div className="rounded-2xl pro-panel p-3 space-y-2">
+              <div className="space-y-3">
+                {/* 1. Prefijos Rápidos por Marca */}
+                <div className="rounded-2xl pro-panel p-3.5 space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono font-extrabold uppercase tracking-wider text-emerald-300/80">
-                      Prefijos Rápidos (Toca para completar código)
+                    <span className="text-xs font-mono font-extrabold uppercase tracking-wider text-emerald-300">
+                      1. Toca el inicio del código para escribir más rápido
                     </span>
                     <button
                       type="button"
                       onClick={() => setActiveTab('tables')}
                       className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-0.5"
                     >
-                      <span>Catálogo</span>
+                      <span>Ver Catálogo</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -1058,12 +1126,12 @@ export default function App() {
                           key={p.label}
                           type="button"
                           onClick={() => handleSelectPrefix(targetVal)}
-                          className="px-2.5 py-2 rounded-xl pro-inset hover:border-emerald-400/60 flex flex-col items-start justify-center text-left transition group"
+                          className="px-3 py-2 rounded-xl pro-inset hover:border-emerald-400/60 flex flex-col items-start justify-center text-left transition group"
                         >
                           <span className="font-mono font-black text-xs sm:text-sm text-white group-hover:text-emerald-300">
                             {p.label}
                           </span>
-                          <span className="text-[10px] text-emerald-200/60 truncate w-full">
+                          <span className="text-[10px] text-emerald-200/65 truncate w-full">
                             {p.brand}
                           </span>
                         </button>
@@ -1072,14 +1140,14 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 2. Conteo Rápido de Lote por Capacidad */}
-                <div className="rounded-2xl pro-panel p-3 space-y-2">
+                {/* 2. Escala de Colores y Conteo Rápido de Lote */}
+                <div className="rounded-2xl pro-panel p-3.5 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-mono font-extrabold uppercase tracking-wider text-emerald-300/80">
-                        Lote Actual
+                      <span className="text-xs font-mono font-extrabold uppercase tracking-wider text-emerald-300">
+                        2. Clasificación por Color y Lote Actual
                       </span>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-400 text-black font-mono font-black text-[11px]">
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-400 text-black font-mono font-black text-xs">
                         {totalBatchPieces} pzas
                       </span>
                     </div>
@@ -1093,21 +1161,23 @@ export default function App() {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                  <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
                     {QUICK_LOT_BUCKETS.map((b) => {
                       const count = batchCounts[b.key] || 0;
                       return (
                         <div
                           key={b.key}
-                          className={`rounded-xl pro-inset p-2 border ${b.border} flex flex-col justify-between gap-1.5`}
+                          className={`rounded-xl p-2.5 border ${b.border} flex flex-col justify-between gap-2`}
                         >
                           <div className="flex items-center justify-between gap-1">
-                            <span
-                              className={`px-1.5 py-0.5 rounded font-mono font-black text-[10px] border ${b.pill}`}
-                            >
-                              {b.label}
-                            </span>
-                            <span className="font-mono font-black text-sm sm:text-base text-white">
+                            <div>
+                              <span
+                                className={`px-2 py-0.5 rounded-md font-mono font-black text-xs border block text-center ${b.pill}`}
+                              >
+                                {b.label}
+                              </span>
+                            </div>
+                            <span className="font-mono font-black text-lg text-white">
                               {count}
                             </span>
                           </div>
@@ -1117,7 +1187,7 @@ export default function App() {
                               onClick={() => handleAdjustBatchCount(b.key, -1)}
                               disabled={count <= 0}
                               aria-label={`Restar 1 a ${b.label}`}
-                              className="py-1 rounded-lg bg-white/5 hover:bg-white/15 disabled:opacity-25 text-white flex items-center justify-center transition"
+                              className="py-1.5 rounded-lg bg-black/50 hover:bg-black/75 disabled:opacity-25 text-white flex items-center justify-center transition"
                             >
                               <Minus className="w-3.5 h-3.5" />
                             </button>
@@ -1125,7 +1195,7 @@ export default function App() {
                               type="button"
                               onClick={() => handleAdjustBatchCount(b.key, 1)}
                               aria-label={`Sumar 1 a ${b.label}`}
-                              className="py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/35 border border-emerald-400/30 text-emerald-300 flex items-center justify-center transition"
+                              className="py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition"
                             >
                               <Plus className="w-3.5 h-3.5" />
                             </button>
@@ -1137,22 +1207,22 @@ export default function App() {
                 </div>
 
                 {/* 3. Recientes */}
-                <div className="rounded-2xl pro-panel p-3 space-y-2">
+                <div className="rounded-2xl pro-panel p-3.5 space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono font-extrabold uppercase tracking-wider text-emerald-300/80">
-                      Recientes
+                    <span className="text-xs font-mono font-extrabold uppercase tracking-wider text-emerald-300">
+                      3. Últimos Chips Consultados
                     </span>
                     <button
                       type="button"
                       onClick={openAddModal}
                       className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
                     >
-                      <Plus className="w-3.5 h-3.5" /> Base de Datos
+                      <Plus className="w-3.5 h-3.5" /> Administrar Base
                     </button>
                   </div>
 
                   <div
-                    className={`grid gap-1.5 ${
+                    className={`grid gap-2 ${
                       textScale === 'xlarge'
                         ? 'grid-cols-1 sm:grid-cols-2'
                         : 'grid-cols-2 sm:grid-cols-3'
@@ -1177,7 +1247,7 @@ export default function App() {
                               </span>
                               <span className="text-gray-300">{diff.post}</span>
                             </div>
-                            <span className="text-[10px] text-emerald-200/65 block truncate mt-0.5">
+                            <span className="text-[10px] text-emerald-200/70 block truncate mt-0.5">
                               {item.manufacturer || item.brand}
                             </span>
                           </div>

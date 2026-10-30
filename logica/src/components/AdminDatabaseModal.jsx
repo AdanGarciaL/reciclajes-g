@@ -1163,11 +1163,11 @@ export default function AdminDatabaseModal({
                             (liveVariantCheck.exactMatchFound ||
                               liveVariantCheck.sameCapacityVariants.length > 0 ||
                               liveVariantCheck.differentCapacityVariants.length > 0) && (
-                              <div className="p-3 rounded-2xl pro-inset border border-emerald-500/35 space-y-2">
+                              <div className="p-3 rounded-2xl pro-inset border border-emerald-500/35 space-y-2.5">
                                 {liveVariantCheck.exactMatchFound && !editingOriginalCode && (
-                                  <div className="flex items-center justify-between gap-2 flex-wrap text-xs">
+                                  <div className="flex items-center justify-between gap-2 flex-wrap text-xs bg-amber-500/10 border border-amber-400/35 rounded-xl px-3 py-2">
                                     <span className="text-amber-300 font-bold">
-                                      Este código ya existe en la base:{' '}
+                                      Este código exacto ya existe:{' '}
                                       <strong className="font-mono text-white">
                                         {liveVariantCheck.exactMatchFound.code}
                                       </strong>{' '}
@@ -1183,67 +1183,84 @@ export default function AdminDatabaseModal({
                                   </div>
                                 )}
 
-                                {liveVariantCheck.sameCapacityVariants.length > 0 && (
-                                  <div className="space-y-1">
-                                    <div className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-300 font-bold">
-                                      <GitBranch className="w-3.5 h-3.5 shrink-0" />
-                                      <span>
-                                        Variantes registradas con terminación diferente (Misma capacidad):
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                      {liveVariantCheck.sameCapacityVariants.map((v) => (
-                                        <button
-                                          key={v.code}
-                                          type="button"
-                                          onClick={() => applyVariantSpecs(v)}
-                                          title="Toca para copiar capacidad, marca y RAM de esta variante"
-                                          className="px-2 py-1 rounded-lg bg-black/60 hover:bg-emerald-500/20 border border-emerald-500/30 font-mono text-xs flex items-center gap-1 transition"
-                                        >
-                                          <span>
-                                            <span className="text-gray-400">{v.basePart}</span>
-                                            <span className="font-black text-emerald-300 underline">
-                                              {v.diffTermination}
-                                            </span>
+                                {(liveVariantCheck.sameCapacityVariants.length > 0 ||
+                                  liveVariantCheck.differentCapacityVariants.length > 0) && (
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    {liveVariantCheck.sameCapacityVariants.length > 0 && (
+                                      <div className="p-2.5 rounded-xl bg-emerald-950/35 border border-emerald-500/30 space-y-1.5">
+                                        <div className="flex items-center justify-between gap-1.5 text-[11px] font-mono text-emerald-300 font-black">
+                                          <span className="flex items-center gap-1">
+                                            <GitBranch className="w-3.5 h-3.5 shrink-0" />
+                                            TERMINACIÓN DIFERENTE
                                           </span>
-                                          <span className="px-1.5 py-0.2 rounded bg-emerald-400 text-black text-[10px] font-black">
-                                            {v.storage}
+                                          <span className="px-1.5 py-0.5 rounded bg-emerald-400 text-black text-[9px] font-black">
+                                            MISMA CAPACIDAD
                                           </span>
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
+                                        </div>
+                                        <p className="text-[10px] text-emerald-100/75">
+                                          Toca una variante para autocompletar GB, marca y RAM:
+                                        </p>
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          {liveVariantCheck.sameCapacityVariants.map((v) => (
+                                            <button
+                                              key={v.code}
+                                              type="button"
+                                              onClick={() => applyVariantSpecs(v)}
+                                              title="Toca para copiar capacidad, marca y RAM de esta variante"
+                                              className="px-2 py-1 rounded-lg bg-black/65 hover:bg-emerald-500/20 border border-emerald-500/35 font-mono text-xs flex items-center gap-1.5 transition"
+                                            >
+                                              <span>
+                                                <span className="text-gray-400">{v.basePart}</span>
+                                                <span className="px-1 py-0.5 rounded bg-emerald-400/20 text-emerald-300 font-black border border-emerald-400/40">
+                                                  {v.diffTermination}
+                                                </span>
+                                              </span>
+                                              <span className="px-1.5 py-0.5 rounded bg-emerald-400 text-black text-[10px] font-black">
+                                                {v.storage}
+                                              </span>
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
 
-                                {liveVariantCheck.differentCapacityVariants.length > 0 && (
-                                  <div className="space-y-1">
-                                    <div className="flex items-center gap-1.5 text-[11px] font-mono text-amber-300 font-bold">
-                                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                                      <span>
-                                        Variantes de la misma serie donde la terminación cambia los GB:
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                      {liveVariantCheck.differentCapacityVariants.map((v) => (
-                                        <button
-                                          key={v.code}
-                                          type="button"
-                                          onClick={() => applyVariantSpecs(v)}
-                                          title="Toca para usar la capacidad de esta variante"
-                                          className="px-2 py-1 rounded-lg bg-black/60 hover:bg-white/10 border border-white/15 font-mono text-xs flex items-center gap-1 transition"
-                                        >
-                                          <span>
-                                            <span className="text-gray-400">{v.basePart}</span>
-                                            <span className="font-black text-white underline decoration-amber-400">
-                                              {v.diffTermination}
-                                            </span>
+                                    {liveVariantCheck.differentCapacityVariants.length > 0 && (
+                                      <div className="p-2.5 rounded-xl bg-amber-950/30 border border-amber-500/35 space-y-1.5">
+                                        <div className="flex items-center justify-between gap-1.5 text-[11px] font-mono text-amber-300 font-black">
+                                          <span className="flex items-center gap-1">
+                                            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                                            TERMINACIÓN CAMBIA GB
                                           </span>
-                                          <span className="px-1.5 py-0.2 rounded bg-amber-400 text-black text-[10px] font-black">
-                                            {v.storage}
+                                          <span className="px-1.5 py-0.5 rounded bg-amber-400 text-black text-[9px] font-black">
+                                            DIFERENTE GB
                                           </span>
-                                        </button>
-                                      ))}
-                                    </div>
+                                        </div>
+                                        <p className="text-[10px] text-amber-100/75">
+                                          Variantes de la misma serie con otra capacidad:
+                                        </p>
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          {liveVariantCheck.differentCapacityVariants.map((v) => (
+                                            <button
+                                              key={v.code}
+                                              type="button"
+                                              onClick={() => applyVariantSpecs(v)}
+                                              title="Toca para usar la capacidad de esta variante"
+                                              className="px-2 py-1 rounded-lg bg-black/65 hover:bg-amber-500/20 border border-amber-500/35 font-mono text-xs flex items-center gap-1.5 transition"
+                                            >
+                                              <span>
+                                                <span className="text-gray-400">{v.basePart}</span>
+                                                <span className="px-1 py-0.5 rounded bg-amber-400/20 text-amber-200 font-black border border-amber-400/40">
+                                                  {v.diffTermination}
+                                                </span>
+                                              </span>
+                                              <span className="px-1.5 py-0.5 rounded bg-amber-400 text-black text-[10px] font-black">
+                                                {v.storage}
+                                              </span>
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
                                 )}
                               </div>
