@@ -2,24 +2,36 @@ import React, { useState, useMemo } from 'react';
 import { Plus, Search, X, Pencil } from 'lucide-react';
 import { getAllEditableCatalog } from '../services/icEngine';
 
-// Extrae la parte exacta que define la capacidad con una etiqueta corta de 3 palabras
+// Extrae la parte exacta que define la capacidad con una etiqueta corta y clara
 export function highlightCodeDifference(item) {
   if (!item || !item.code) {
     return { pre: '', highlight: '', post: '', why: '' };
   }
   const code = String(item.code || '').toUpperCase();
-  const cap = item.storage || '64GB';
+  const cap = item.storage || item.capacity || '64GB';
+
+  // Si el catálogo semilla define ruleSegment explícito y aparece en el código, úsalo con precisión
+  if (item.ruleSegment && code.includes(item.ruleSegment.toUpperCase())) {
+    const seg = item.ruleSegment.toUpperCase();
+    const idx = code.indexOf(seg);
+    return {
+      pre: code.slice(0, idx),
+      highlight: code.slice(idx, idx + seg.length),
+      post: code.slice(idx + seg.length),
+      why: `Clave "${seg}" = ${cap}`,
+    };
+  }
 
   if (/^KL[MU][48ABCDEFGH]G/.test(code)) {
     return {
       pre: code.slice(0, 3),
-      highlight: code.slice(3, 4),
-      post: code.slice(4),
-      why: `Clave "${code[3]}" = ${cap}`,
+      highlight: code.slice(3, 5),
+      post: code.slice(5),
+      why: `Clave "${code.slice(3, 5)}" = ${cap}`,
     };
   }
 
-  if (/^KM[23589][VFP][6789]/.test(code)) {
+  if (/^KM[23589][VFPL][6789]/.test(code)) {
     return {
       pre: code.slice(0, 4),
       highlight: code.slice(4, 5),
@@ -31,13 +43,13 @@ export function highlightCodeDifference(item) {
   if (/^KM[A-Z0-9]{2}/.test(code)) {
     return {
       pre: 'KM',
-      highlight: code.slice(2, 4),
-      post: code.slice(4),
-      why: `Serie "${code.slice(2, 4)}" = ${cap}`,
+      highlight: code.slice(2, 5),
+      post: code.slice(5),
+      why: `Serie "${code.slice(2, 5)}" = ${cap}`,
     };
   }
 
-  if (/^(H9TP|H9TQ|H9HP|H9HK|H9HQ|H26M|H28U|H28S|HN8T)/.test(code) && code.length >= 6) {
+  if (/^(H9TP|H9TQ|H9HP|H9HK|H9HQ|H9QT|H9HR|H26M|H28U|H28S|HN8T)/.test(code) && code.length >= 6) {
     return {
       pre: code.slice(0, 4),
       highlight: code.slice(4, 6),
@@ -46,7 +58,7 @@ export function highlightCodeDifference(item) {
     };
   }
 
-  const sdinMatch = code.match(/^(SDIN[A-Z0-9]+-)(\d+[GT])(.*)$/);
+  const sdinMatch = code.match(/^(SDIN[A-Z0-9]+-)(\d+[GT]B?)(.*)$/);
   if (sdinMatch) {
     return {
       pre: sdinMatch[1],
@@ -56,13 +68,17 @@ export function highlightCodeDifference(item) {
     };
   }
 
-  if (/^THG(BM|AF|BX|LF|JF)/.test(code) && code.length >= 8) {
-    return {
-      pre: code.slice(0, 6),
-      highlight: code.slice(6, 8),
-      post: code.slice(8),
-      why: `Centro "${code.slice(6, 8)}" = ${cap}`,
-    };
+  if (/^THG(BM|AF|BX|LF|JF|BH)/.test(code) && code.length >= 8) {
+    const m = code.slice(4, 10).match(/(G[56789]|T[01234])/);
+    if (m) {
+      const idx = code.indexOf(m[1], 4);
+      return {
+        pre: code.slice(0, idx),
+        highlight: m[1],
+        post: code.slice(idx + 2),
+        why: `Centro "${m[1]}" = ${cap}`,
+      };
+    }
   }
 
   if (/^K[56][AB][3456789]/.test(code)) {
@@ -74,32 +90,12 @@ export function highlightCodeDifference(item) {
     };
   }
 
-  if (/^J[A-Z]\d{3}$/.test(code)) {
+  if (/^J[A-Z0-9]{4}$/.test(code)) {
     return {
       pre: code.slice(0, 2),
       highlight: code.slice(2),
       post: '',
       why: `FBGA "${code}" = ${cap}`,
-    };
-  }
-
-  const foreseeM = code.match(/^(FEMDNN0*|FEUFS|NCEM[A-Z0-9]*-?)(\d+G)(.*)$/);
-  if (foreseeM) {
-    return {
-      pre: foreseeM[1],
-      highlight: foreseeM[2],
-      post: foreseeM[3] || '',
-      why: `FORESEE "${foreseeM[2]}" = ${cap}`,
-    };
-  }
-
-  const kingstonM = code.match(/^(EMMC0*|\d*EMCP|\d*UMCP)(\d+G?)(.*)$/);
-  if (kingstonM) {
-    return {
-      pre: kingstonM[1],
-      highlight: kingstonM[2],
-      post: kingstonM[3] || '',
-      why: `Kingston "${cap}"`,
     };
   }
 
@@ -135,14 +131,15 @@ export default function BrandTablesView({
   const brandTabs = [
     { id: 'ALL', label: 'Todas' },
     { id: 'Samsung', label: 'Samsung' },
+    { id: 'Micron', label: 'Micron (JW/JX/JZ)' },
     { id: 'SK Hynix', label: 'SK Hynix' },
-    { id: 'Micron', label: 'Micron' },
     { id: 'SanDisk', label: 'SanDisk / WD' },
-    { id: 'Kioxia', label: 'Toshiba / iPhone' },
+    { id: 'Kioxia', label: 'Kioxia / Toshiba' },
+    { id: 'iPhone', label: 'Apple / iPhone NAND' },
     { id: 'Kingston', label: 'Kingston' },
-    { id: 'FORESEE', label: 'FORESEE' },
+    { id: 'FORESEE', label: 'FORESEE (Longsys)' },
     { id: 'YMTC', label: 'YMTC (Huawei)' },
-    { id: 'RARE', label: 'BIWIN / Rayson / Otras' },
+    { id: 'RARE', label: 'BIWIN / Rayson / Phison / Otras' },
   ];
 
   const capacityTabs = ['ALL', '4GB', '8GB', '16GB', '32GB', '64GB', '128GB', '256GB', '512GB', '1TB', '2TB'];
@@ -153,15 +150,29 @@ export default function BrandTablesView({
 
   const filteredCatalog = useMemo(() => {
     return allCatalog.filter((item) => {
-      const mfg = String(item.manufacturer || '').toLowerCase();
+      const mfg = String(item.manufacturer || item.brand || '').toLowerCase();
       if (selectedBrand !== 'ALL') {
         const b = selectedBrand.toLowerCase();
-        if (b.includes('kioxia')) {
-          if (!mfg.includes('kioxia') && !mfg.includes('toshiba') && !mfg.includes('iphone')) {
+        if (selectedBrand === 'iPhone') {
+          if (!mfg.includes('apple') && !mfg.includes('iphone')) {
+            return false;
+          }
+        } else if (selectedBrand === 'Kioxia') {
+          if ((!mfg.includes('kioxia') && !mfg.includes('toshiba')) || mfg.includes('iphone')) {
             return false;
           }
         } else if (selectedBrand === 'RARE') {
-          if (!mfg.includes('biwin') && !mfg.includes('rayson') && !mfg.includes('skyhigh') && !mfg.includes('cypress')) {
+          if (
+            !mfg.includes('biwin') &&
+            !mfg.includes('rayson') &&
+            !mfg.includes('scy') &&
+            !mfg.includes('phison') &&
+            !mfg.includes('silicon') &&
+            !mfg.includes('skyhigh') &&
+            !mfg.includes('cypress') &&
+            !mfg.includes('dosilicon') &&
+            !mfg.includes('xincun')
+          ) {
             return false;
           }
         } else if (!mfg.includes(b)) {
@@ -170,7 +181,8 @@ export default function BrandTablesView({
       }
 
       if (selectedCapacity !== 'ALL') {
-        if (String(item.storage || '').toUpperCase() !== selectedCapacity) {
+        const capNorm = String(item.storage || item.capacity || '').toUpperCase();
+        if (capNorm !== selectedCapacity) {
           return false;
         }
       }
@@ -179,8 +191,11 @@ export default function BrandTablesView({
         const q = tableFilter.toUpperCase().trim();
         const matchCode = String(item.code || '').toUpperCase().includes(q);
         const matchPn = String(item.partNumber || '').toUpperCase().includes(q);
-        const matchBrand = String(item.manufacturer || '').toUpperCase().includes(q);
-        if (!matchCode && !matchPn && !matchBrand) return false;
+        const matchBrand = String(item.manufacturer || item.brand || '').toUpperCase().includes(q);
+        const matchAliases =
+          Array.isArray(item.aliases) && item.aliases.some((al) => String(al).toUpperCase().includes(q));
+        const matchModels = String(item.commonModels || item.notes || '').toUpperCase().includes(q);
+        if (!matchCode && !matchPn && !matchBrand && !matchAliases && !matchModels) return false;
       }
 
       return true;
@@ -212,13 +227,13 @@ export default function BrandTablesView({
             ))}
           </div>
 
-          <div className="relative w-full sm:w-56 shrink-0">
+          <div className="relative w-full sm:w-64 shrink-0">
             <Search className="w-4 h-4 text-emerald-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={tableFilter}
               onChange={(e) => setTableFilter(e.target.value)}
-              placeholder="Filtrar en lista..."
+              placeholder="Buscar código, variante o celular..."
               aria-label="Filtrar códigos en la tabla"
               className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#04120a] border border-emerald-500/25 text-base sm:text-xs font-mono text-white focus:outline-none focus:border-emerald-400"
             />
@@ -274,7 +289,8 @@ export default function BrandTablesView({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
           {filteredCatalog.map((item) => {
             const diff = highlightCodeDifference(item);
-            const pillStyle = getCapacityPillStyle(item.storage);
+            const storageVal = item.storage || item.capacity || '64GB';
+            const pillStyle = getCapacityPillStyle(storageVal);
             return (
               <div
                 key={item.code}
@@ -296,10 +312,10 @@ export default function BrandTablesView({
                   </div>
 
                   <div className="flex items-center gap-2 mt-1.5 text-xs text-emerald-200/80 flex-wrap">
-                    <span className="font-bold text-white">{item.manufacturer}</span>
+                    <span className="font-bold text-white">{item.manufacturer || item.brand}</span>
                     <span>•</span>
                     <span className="text-emerald-300 font-semibold">{diff.why}</span>
-                    {item.ram && (
+                    {item.ram && item.ram !== 'Sin RAM integrada' && (
                       <>
                         <span>•</span>
                         <span className="text-gray-300">RAM {item.ram}</span>
@@ -311,13 +327,28 @@ export default function BrandTablesView({
                       </span>
                     )}
                   </div>
+
+                  {Array.isArray(item.aliases) && item.aliases.length > 0 && (
+                    <div className="mt-1 text-[11px] font-mono text-gray-400 truncate">
+                      <span className="text-emerald-400/80 font-sans font-bold">Variantes: </span>
+                      {item.aliases.slice(0, 4).join(', ')}
+                      {item.aliases.length > 4 ? ` +${item.aliases.length - 4}` : ''}
+                    </div>
+                  )}
+
+                  {(item.commonModels || item.notes) && (
+                    <div className="mt-0.5 text-[11px] text-gray-400 truncate">
+                      <span className="text-emerald-300/70 font-semibold">Equipos: </span>
+                      {item.commonModels || item.notes}
+                    </div>
+                  )}
                 </button>
 
                 <div className="flex items-center gap-1.5 shrink-0">
                   <span
                     className={`px-3 py-1.5 rounded-xl font-mono font-black text-sm sm:text-base border ${pillStyle}`}
                   >
-                    {item.storage}
+                    {storageVal}
                   </span>
                   {onEditChip && (
                     <button
@@ -333,7 +364,7 @@ export default function BrandTablesView({
                   <button
                     type="button"
                     onClick={() => onAddChipToBatch(item)}
-                    aria-label={`Sumar ${item.code} de ${item.storage} al lote`}
+                    aria-label={`Sumar ${item.code} de ${storageVal} al lote`}
                     className="p-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-black transition shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                     title="Sumar +1 al lote"
                   >

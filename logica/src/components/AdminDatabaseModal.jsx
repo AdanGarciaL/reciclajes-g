@@ -52,6 +52,8 @@ const BRANDS = [
   'YMTC (Yangtze Memory)',
   'BIWIN',
   'Rayson',
+  'Phison / Silicon Motion',
+  'SCY / Dosilicon / Xincun',
   'SkyHigh / Cypress',
 ];
 const TYPES = ['eMCP', 'uMCP', 'eMMC', 'UFS', 'NVMe NAND', 'LPDDR RAM'];

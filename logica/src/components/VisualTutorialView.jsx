@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { CheckCircle2, XCircle, Cpu } from 'lucide-react';
+import { CheckCircle2, XCircle } from 'lucide-react';
 
-// Guía 100% Visual, Directa y Sin Párrafos Largos
+// Guía Maestra 100% Visual, Directa y Completa (De 4GB a 2TB en todas las marcas)
 const VISUAL_BRANDS = [
   {
     id: 'samsung',
     name: 'Samsung',
-    ruleTitle: 'Mira la 4ª letra (KLM/KLU) o las letras 3 y 4 (KM)',
+    ruleTitle: 'Mira la 4ª letra en KLM/KLU (4G a HG) o las letras de serie en KM (eMCP/uMCP)',
     chip: {
       top: 'SEC 946 B041',
       pre: 'KLM',
@@ -17,31 +17,31 @@ const VISUAL_BRANDS = [
     },
     groups: [
       {
-        label: 'Serie KLM / KLU (4º Carácter = Capacidad, de 4GB a 2TB)',
+        label: 'Serie KLM (eMMC) y KLU (UFS) — 4º Carácter = Capacidad (4GB a 2TB)',
         steps: [
-          { codePre: 'KLM', key: '4', codePost: 'G...', cap: '4 GB', color: 'bg-sky-400 text-black' },
-          { codePre: 'KLM', key: '8', codePost: 'G...', cap: '8 GB', color: 'bg-sky-400 text-black' },
-          { codePre: 'KLM', key: 'A', codePost: 'G...', cap: '16 GB', color: 'bg-sky-400 text-black' },
-          { codePre: 'KLM', key: 'B', codePost: 'G...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
-          { codePre: 'KLM', key: 'C', codePost: 'G...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
-          { codePre: 'KLU', key: 'D', codePost: 'G...', cap: '128 GB', color: 'bg-amber-400 text-black' },
-          { codePre: 'KLU', key: 'E', codePost: 'G...', cap: '256 GB', color: 'bg-purple-500 text-white' },
-          { codePre: 'KLU', key: 'F', codePost: 'G...', cap: '512 GB', color: 'bg-rose-500 text-white' },
-          { codePre: 'KLU', key: 'G', codePost: 'G...', cap: '1 TB', color: 'bg-rose-600 text-white' },
-          { codePre: 'KLU', key: 'H', codePost: 'G...', cap: '2 TB', color: 'bg-rose-700 text-white' },
+          { codePre: 'KLM', key: '4G', codePost: '1FE...', cap: '4 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'KLM', key: '8G', codePost: '1GE...', cap: '8 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'KLM', key: 'AG', codePost: '1JE...', cap: '16 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'KLM', key: 'BG', codePost: '2JE...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
+          { codePre: 'KLM', key: 'CG', codePost: '4JE...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
+          { codePre: 'KLU', key: 'DG', codePost: '4UH...', cap: '128 GB', color: 'bg-amber-400 text-black' },
+          { codePre: 'KLU', key: 'EG', codePost: '8UH...', cap: '256 GB', color: 'bg-purple-500 text-white' },
+          { codePre: 'KLU', key: 'FG', codePost: '8RH...', cap: '512 GB', color: 'bg-rose-500 text-white' },
+          { codePre: 'KLU', key: 'GG', codePost: 'ARH...', cap: '1 TB', color: 'bg-rose-600 text-white' },
+          { codePre: 'KLU', key: 'HG', codePost: 'ARH...', cap: '2 TB', color: 'bg-rose-700 text-white' },
         ],
       },
       {
-        label: 'Serie KM (Memoria + RAM Juntos)',
+        label: 'Serie KM (eMCP / uMCP: Almacenamiento + RAM Juntos)',
         steps: [
-          { codePre: 'KM', key: 'QE', codePost: '6001...', cap: '16 GB', color: 'bg-sky-400 text-black' },
-          { codePre: 'KM', key: 'QD', codePost: '6001...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
-          { codePre: 'KM', key: 'GD', codePost: '6001...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
-          { codePre: 'KM', key: 'DP', codePost: '6001...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
-          { codePre: 'KM', key: 'DV', codePost: '6001...', cap: '128 GB', color: 'bg-amber-400 text-black' },
-          { codePre: 'KM8V', key: '7', codePost: '001...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
-          { codePre: 'KM8V', key: '8', codePost: '001...', cap: '128 GB', color: 'bg-amber-400 text-black' },
-          { codePre: 'KM8V', key: '9', codePost: '001...', cap: '256 GB', color: 'bg-purple-500 text-white' },
+          { codePre: 'KM', key: 'K5', codePost: 'X000...', cap: '4 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'KM', key: 'K7/FN', codePost: '1001...', cap: '8 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'KM', key: 'QE/R31', codePost: '6001...', cap: '16 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'KM', key: 'GD/DH/R82', codePost: '6001...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
+          { codePre: 'KM', key: 'DP/RP/RX', codePost: '6001...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
+          { codePre: 'KM', key: '8V7/5L9', codePost: '001...', cap: '128 GB', color: 'bg-amber-400 text-black' },
+          { codePre: 'KM', key: '8F9/5P9', codePost: '001...', cap: '256 GB', color: 'bg-purple-500 text-white' },
+          { codePre: 'KM', key: '9P9/9F9', codePost: '001...', cap: '512 GB', color: 'bg-rose-500 text-white' },
         ],
       },
     ],
@@ -49,7 +49,7 @@ const VISUAL_BRANDS = [
   {
     id: 'skhynix',
     name: 'SK Hynix',
-    ruleTitle: 'Mira los 2 números después de H9TQ / H9HP / H9HQ',
+    ruleTitle: 'Mira los 2 dígitos después de H26M / H28U / H9TQ / H9HP / H9HQ / HN8T',
     chip: {
       top: 'SK hynix KOR',
       pre: 'H9HP',
@@ -60,24 +60,38 @@ const VISUAL_BRANDS = [
     },
     groups: [
       {
-        label: 'Posición 5 y 6 (Los 2 números clave)',
+        label: 'eMMC (H26M) y UFS (H28U / H28S / HN8T) — De 4GB a 1TB',
         steps: [
-          { codePre: 'H9TQ', key: '64', codePost: 'A8...', cap: '8 GB', color: 'bg-sky-400 text-black' },
-          { codePre: 'H9TQ', key: '17', codePost: 'AB...', cap: '16 GB', color: 'bg-sky-400 text-black' },
-          { codePre: 'H9TQ', key: '26', codePost: 'AD...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
-          { codePre: 'H9TQ', key: '27', codePost: 'AD...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
-          { codePre: 'H9HP', key: '52', codePost: 'AC...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
-          { codePre: 'H9HQ', key: '15', codePost: 'AE...', cap: '128 GB', color: 'bg-amber-400 text-black' },
-          { codePre: 'H9HQ', key: '16', codePost: 'AE...', cap: '128 GB', color: 'bg-amber-400 text-black' },
-          { codePre: 'H9HQ', key: '21', codePost: 'AF...', cap: '256 GB', color: 'bg-purple-500 text-white' },
+          { codePre: 'H26M', key: '31', codePost: '003...', cap: '4 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'H26M', key: '41/42', codePost: '204...', cap: '8 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'H26M', key: '52/54', codePost: '208...', cap: '16 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'H26M', key: '64', codePost: '208...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
+          { codePre: 'H26M', key: '78', codePost: '208...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
+          { codePre: 'HN8T', key: '05', codePost: 'DEH...', cap: '128 GB', color: 'bg-amber-400 text-black' },
+          { codePre: 'HN8T', key: '15', codePost: 'DEH...', cap: '256 GB', color: 'bg-purple-500 text-white' },
+          { codePre: 'HN8T', key: '25', codePost: 'DEH...', cap: '512 GB', color: 'bg-rose-500 text-white' },
+          { codePre: 'HN8T', key: '35', codePost: 'DEH...', cap: '1 TB', color: 'bg-rose-600 text-white' },
+        ],
+      },
+      {
+        label: 'eMCP y uMCP (H9TP / H9TQ / H9HP / H9HQ / H9QT / H9HR)',
+        steps: [
+          { codePre: 'H9TP', key: '32', codePost: 'A4G...', cap: '4 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'H9TQ', key: '64', codePost: 'A8G...', cap: '8 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'H9TQ', key: '17', codePost: 'ABJ...', cap: '16 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'H9TQ', key: '26/27', codePost: 'ADF...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
+          { codePre: 'H9HP', key: '52/54', codePost: 'ACP...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
+          { codePre: 'H9HQ', key: '15/16', codePost: 'AEC...', cap: '128 GB', color: 'bg-amber-400 text-black' },
+          { codePre: 'H9HQ', key: '21', codePost: 'AEC...', cap: '256 GB', color: 'bg-purple-500 text-white' },
+          { codePre: 'H9HR', key: '56', codePost: 'JFA...', cap: '512 GB', color: 'bg-rose-500 text-white' },
         ],
       },
     ],
   },
   {
     id: 'micron',
-    name: 'Micron',
-    ruleTitle: 'Código corto de 5 caracteres (JZ/JW) en el renglón central',
+    name: 'Micron (JW/JX/JZ)',
+    ruleTitle: 'Escribe los 5 caracteres del código FBGA (JW, JX, JY, JZ, JC) en el buscador',
     chip: {
       top: '6MA92',
       pre: 'JZ',
@@ -88,33 +102,39 @@ const VISUAL_BRANDS = [
     },
     groups: [
       {
-        label: 'Códigos Cortos FBGA más comunes',
+        label: 'Códigos Cortos FBGA Micron (5 caracteres) — De 4GB a 1TB',
         steps: [
-          { codePre: 'JW', key: '962', codePost: '', cap: '8 GB', color: 'bg-sky-400 text-black' },
-          { codePre: 'JZ', key: '008', codePost: '', cap: '16 GB', color: 'bg-sky-400 text-black' },
-          { codePre: 'JZ', key: '005', codePost: '', cap: '16 GB', color: 'bg-sky-400 text-black' },
-          { codePre: 'JZ', key: '004', codePost: '', cap: '32 GB', color: 'bg-cyan-400 text-black' },
-          { codePre: 'JZ', key: '045', codePost: '', cap: '32 GB', color: 'bg-cyan-400 text-black' },
-          { codePre: 'JZ', key: '186', codePost: '', cap: '64 GB', color: 'bg-emerald-400 text-black' },
-          { codePre: 'JZ', key: '112', codePost: '', cap: '64 GB', color: 'bg-emerald-400 text-black' },
-          { codePre: 'JZ', key: '139', codePost: '', cap: '128 GB', color: 'bg-amber-400 text-black' },
+          { codePre: 'JW', key: '578', codePost: '', cap: '4 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'JW', key: '812', codePost: '', cap: '8 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'JWA', key: '61', codePost: '', cap: '16 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'JW', key: '968', codePost: '', cap: '32 GB', color: 'bg-cyan-400 text-black' },
+          { codePre: 'JXD', key: '89', codePost: '', cap: '64 GB', color: 'bg-emerald-400 text-black' },
+          { codePre: 'JXE', key: '77', codePost: '', cap: '128 GB', color: 'bg-amber-400 text-black' },
+          { codePre: 'JY', key: '010', codePost: '', cap: '128 GB', color: 'bg-amber-400 text-black' },
+          { codePre: 'JZ', key: '034', codePost: '', cap: '256 GB', color: 'bg-purple-500 text-white' },
+          { codePre: 'JC', key: '088', codePost: '', cap: '512 GB', color: 'bg-rose-500 text-white' },
+          { codePre: 'JC', key: '101', codePost: '', cap: '1 TB', color: 'bg-rose-600 text-white' },
         ],
       },
       {
-        label: 'Código Largo MT29 / MTFC',
+        label: 'Códigos Largos Micron (MTFC y MT29TZZZ)',
         steps: [
-          { codePre: 'MT29...', key: 'D6', codePost: '...', cap: '16 GB', color: 'bg-sky-400 text-black' },
-          { codePre: 'MT29...', key: 'D7', codePost: '...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
-          { codePre: 'MT29...', key: 'D8', codePost: '...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
-          { codePre: 'MT29...', key: 'D9', codePost: '...', cap: '128 GB', color: 'bg-amber-400 text-black' },
+          { codePre: 'MTFC', key: '4G', codePost: 'ACA...', cap: '4 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'MTFC', key: '16G', codePost: 'AKA...', cap: '16 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'MTFC', key: '32G', codePost: 'AKA...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
+          { codePre: 'MT29...', key: 'D8', codePost: 'JKF...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
+          { codePre: 'MT29...', key: 'D9', codePost: 'JKF...', cap: '128 GB', color: 'bg-amber-400 text-black' },
+          { codePre: 'MTFC', key: '256G', codePost: 'AXA...', cap: '256 GB', color: 'bg-purple-500 text-white' },
+          { codePre: 'MTFC', key: '512G', codePost: 'AXA...', cap: '512 GB', color: 'bg-rose-500 text-white' },
+          { codePre: 'MTFC', key: '1T', codePost: '0GA...', cap: '1 TB', color: 'bg-rose-600 text-white' },
         ],
       },
     ],
   },
   {
     id: 'sandisk',
-    name: 'SanDisk',
-    ruleTitle: 'Lee el número al final después del guion (-16G, -32G, -64G)',
+    name: 'SanDisk / WD',
+    ruleTitle: 'Lee el número al final después del guion (-4G, -16G, -32G, -64G, -128G, -1T)',
     chip: {
       top: 'SanDisk',
       pre: 'SDINBDA4-',
@@ -125,21 +145,25 @@ const VISUAL_BRANDS = [
     },
     groups: [
       {
-        label: 'Terminación directa en GB',
+        label: 'Series SDIN7 / SDIN8 / SDIN9 / SDINADF / SDINBDA / SDINBDD / SDINFD',
         steps: [
-          { codePre: 'SDIN...-', key: '16G', codePost: '', cap: '16 GB', color: 'bg-sky-400 text-black' },
-          { codePre: 'SDIN...-', key: '32G', codePost: '', cap: '32 GB', color: 'bg-cyan-400 text-black' },
-          { codePre: 'SDIN...-', key: '64G', codePost: '', cap: '64 GB', color: 'bg-emerald-400 text-black' },
-          { codePre: 'SDIN...-', key: '128G', codePost: '', cap: '128 GB', color: 'bg-amber-400 text-black' },
-          { codePre: 'SDIN...-', key: '256G', codePost: '', cap: '256 GB', color: 'bg-purple-500 text-white' },
+          { codePre: 'SDIN7DP2-', key: '4G', codePost: '', cap: '4 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'SDIN8DE2-', key: '8G', codePost: '', cap: '8 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'SDIN8DE4-', key: '16G', codePost: '', cap: '16 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'SDINBDA4-', key: '32G', codePost: '', cap: '32 GB', color: 'bg-cyan-400 text-black' },
+          { codePre: 'SDINBDA4-', key: '64G', codePost: '', cap: '64 GB', color: 'bg-emerald-400 text-black' },
+          { codePre: 'SDINBDA4-', key: '128G', codePost: '', cap: '128 GB', color: 'bg-amber-400 text-black' },
+          { codePre: 'SDINBDA4-', key: '256G', codePost: '', cap: '256 GB', color: 'bg-purple-500 text-white' },
+          { codePre: 'SDINFDQ6-', key: '512G', codePost: '', cap: '512 GB', color: 'bg-rose-500 text-white' },
+          { codePre: 'SDINFDO4-', key: '1T', codePost: '', cap: '1 TB', color: 'bg-rose-600 text-white' },
         ],
       },
     ],
   },
   {
     id: 'kioxia',
-    name: 'Toshiba / iPhone',
-    ruleTitle: 'Mira el código del centro: G7, G8, G9, T0, T1',
+    name: 'Kioxia / Toshiba',
+    ruleTitle: 'Mira los 2 caracteres centrales en THGBM / THGLF / THGAF / THGJF (G5 a T3)',
     chip: {
       top: 'TOSHIBA JPN',
       pre: 'THGBMJ',
@@ -150,35 +174,65 @@ const VISUAL_BRANDS = [
     },
     groups: [
       {
-        label: 'Toshiba / Kioxia (THG...)',
+        label: 'Código Central Toshiba / Kioxia (eMMC THGBM, eMCP THGLF y UFS THGAF / THGJF)',
         steps: [
-          { codePre: 'THGBM.', key: 'G6', codePost: '...', cap: '8 GB', color: 'bg-sky-400 text-black' },
-          { codePre: 'THGBM.', key: 'G7', codePost: '...', cap: '16 GB', color: 'bg-sky-400 text-black' },
-          { codePre: 'THGBM.', key: 'G8', codePost: '...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
-          { codePre: 'THGBM.', key: 'G9', codePost: '...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
-          { codePre: 'THGAF.', key: 'T0', codePost: '...', cap: '128 GB', color: 'bg-amber-400 text-black' },
-          { codePre: 'THGAF.', key: 'T1', codePost: '...', cap: '256 GB', color: 'bg-purple-500 text-white' },
-          { codePre: 'THGAF.', key: 'T2', codePost: '...', cap: '512 GB', color: 'bg-rose-500 text-white' },
+          { codePre: 'THGBMN', key: 'G5', codePost: 'D1L...', cap: '4 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'THGBMF', key: 'G6', codePost: 'C1L...', cap: '8 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'THGBMF', key: 'G7', codePost: 'C2L...', cap: '16 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'THGBMH', key: 'G8', codePost: 'C2L...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
+          { codePre: 'THGAF8', key: 'G9', codePost: 'T43...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
+          { codePre: 'THGAF8', key: 'T0', codePost: 'T43...', cap: '128 GB', color: 'bg-amber-400 text-black' },
+          { codePre: 'THGAF8', key: 'T1', codePost: 'T83...', cap: '256 GB', color: 'bg-purple-500 text-white' },
+          { codePre: 'THGJFG', key: 'T2', codePost: 'T84...', cap: '512 GB', color: 'bg-rose-500 text-white' },
+          { codePre: 'THGJFG', key: 'T3', codePost: 'T84...', cap: '1 TB', color: 'bg-rose-600 text-white' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'iphone',
+    name: 'Apple / iPhone NAND',
+    ruleTitle: 'Identifica NAND de iPhone (BGA60 / BGA70 / BGA110 / BGA315) de 16GB a 2TB',
+    chip: {
+      top: 'APPLE INC',
+      pre: 'H23B',
+      key: '1T8',
+      post: '2D7AEQ',
+      bot: 'BGA110 NAND',
+      result: '128 GB',
+    },
+    groups: [
+      {
+        label: 'SK Hynix (H23Q / H23B) y SanDisk (SDM / SDSB) para iPhone',
+        steps: [
+          { codePre: 'H23Q', key: 'DG8', codePost: 'UD1...', cap: '16 GB', color: 'bg-sky-400 text-black' },
+          { codePre: 'H23Q', key: 'EG8', codePost: 'I26...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
+          { codePre: 'H23Q', key: 'FG8', codePost: '2D6...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
+          { codePre: 'H23B', key: '1T8', codePost: '2D7...', cap: '128 GB', color: 'bg-amber-400 text-black' },
+          { codePre: 'H23Q', key: '2T8', codePost: '3G6...', cap: '256 GB', color: 'bg-purple-500 text-white' },
+          { codePre: 'H23Q', key: '4T8', codePost: '3G6...', cap: '512 GB', color: 'bg-rose-500 text-white' },
+          { codePre: 'H23Q', key: '8T8', codePost: '3G6...', cap: '1 TB', color: 'bg-rose-600 text-white' },
+          { codePre: 'SDM...-', key: '064G', codePost: '', cap: '64 GB', color: 'bg-emerald-400 text-black' },
         ],
       },
       {
-        label: 'NAND de iPhone (K5A / K6A / K6B)',
+        label: 'Toshiba / Kioxia para iPhone (KICM / TSB / K5A / K6A / K6B)',
         steps: [
-          { codePre: 'K5A', key: '3', codePost: 'RB...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
-          { codePre: 'K5A', key: '4', codePost: 'RB...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
-          { codePre: 'K5A', key: '5', codePost: 'RB...', cap: '128 GB', color: 'bg-amber-400 text-black' },
-          { codePre: 'K6A', key: '6', codePost: 'RB...', cap: '256 GB', color: 'bg-purple-500 text-white' },
-          { codePre: 'K6A', key: '7', codePost: 'RB...', cap: '512 GB', color: 'bg-rose-500 text-white' },
-          { codePre: 'K6A', key: '8', codePost: 'RB...', cap: '1 TB', color: 'bg-rose-600 text-white' },
-          { codePre: 'K6B', key: '9', codePost: 'RB...', cap: '2 TB', color: 'bg-rose-700 text-white' },
+          { codePre: 'TSB', key: '3243', codePost: '', cap: '64 GB', color: 'bg-emerald-400 text-black' },
+          { codePre: 'KICM', key: '223', codePost: '', cap: '64 GB', color: 'bg-emerald-400 text-black' },
+          { codePre: 'KICM', key: '224', codePost: ' / TSB4226', cap: '128 GB', color: 'bg-amber-400 text-black' },
+          { codePre: 'KICM', key: '225', codePost: ' / K6A6', cap: '256 GB', color: 'bg-purple-500 text-white' },
+          { codePre: 'KICM', key: '226', codePost: ' / K6A7', cap: '512 GB', color: 'bg-rose-500 text-white' },
+          { codePre: 'KICM', key: '227', codePost: ' / K6A8', cap: '1 TB', color: 'bg-rose-600 text-white' },
+          { codePre: 'K6B', key: '9', codePost: 'RB5896', cap: '2 TB', color: 'bg-rose-700 text-white' },
         ],
       },
     ],
   },
   {
     id: 'otras',
-    name: 'FORESEE / Kingston / YMTC',
-    ruleTitle: 'En FORESEE, Kingston y BIWIN los GB vienen escritos en el código',
+    name: 'FORESEE / Kingston / YMTC / Otras',
+    ruleTitle: 'En FORESEE, Kingston, BIWIN, Rayson, SCY y Phison los GB vienen directos en el código',
     chip: {
       top: 'FORESEE',
       pre: 'FEMDNN',
@@ -189,25 +243,29 @@ const VISUAL_BRANDS = [
     },
     groups: [
       {
-        label: 'FORESEE / Longsys (FEMDNN / NCEM)',
+        label: 'FORESEE (FEMDNN / NCEM / FEUFS) y Kingston (EMMC / EMCP / UFS)',
         steps: [
           { codePre: 'FEMDNN', key: '004G', codePost: '...', cap: '4 GB', color: 'bg-sky-400 text-black' },
-          { codePre: 'FEMDNN', key: '008G', codePost: '...', cap: '8 GB', color: 'bg-sky-400 text-black' },
           { codePre: 'FEMDNN', key: '016G', codePost: '...', cap: '16 GB', color: 'bg-sky-400 text-black' },
           { codePre: 'FEMDNN', key: '032G', codePost: '...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
           { codePre: 'FEMDNN', key: '064G', codePost: '...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
           { codePre: 'FEMDNN', key: '128G', codePost: '...', cap: '128 GB', color: 'bg-amber-400 text-black' },
+          { codePre: 'FEUFS', key: '256G', codePost: '...', cap: '256 GB', color: 'bg-purple-500 text-white' },
+          { codePre: 'EMMC', key: '64G', codePost: '-TY29', cap: '64 GB', color: 'bg-emerald-400 text-black' },
+          { codePre: '', key: '256UMCP', codePost: '64...', cap: '256 GB', color: 'bg-purple-500 text-white' },
         ],
       },
       {
-        label: 'Kingston / BIWIN / YMTC (Huawei)',
+        label: 'YMTC (Huawei), BIWIN, Rayson, SCY, Phison y Silicon Motion',
         steps: [
-          { codePre: 'EMMC', key: '04G', codePost: '-M627', cap: '4 GB', color: 'bg-sky-400 text-black' },
-          { codePre: 'EMMC', key: '32G', codePost: '-TX29', cap: '32 GB', color: 'bg-cyan-400 text-black' },
-          { codePre: '', key: '64EMCP', codePost: '32...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
-          { codePre: 'YMN09T', key: 'C', codePost: '1B1...', cap: '128 GB', color: 'bg-amber-400 text-black' },
-          { codePre: 'YMN09T', key: 'F', codePost: '1B1...', cap: '256 GB', color: 'bg-purple-500 text-white' },
-          { codePre: 'YMN10T', key: 'G', codePost: '1B1...', cap: '512 GB', color: 'bg-rose-500 text-white' },
+          { codePre: 'YMEC', key: '6A', codePost: '2TB...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
+          { codePre: 'YMEC', key: '7C', codePost: '0TG...', cap: '64 GB', color: 'bg-emerald-400 text-black' },
+          { codePre: 'YMN', key: '08T', codePost: 'E1B...', cap: '128 GB', color: 'bg-amber-400 text-black' },
+          { codePre: 'YMN', key: '09T', codePost: 'F1B...', cap: '256 GB', color: 'bg-purple-500 text-white' },
+          { codePre: 'YMN', key: '10T', codePost: 'G1B...', cap: '512 GB', color: 'bg-rose-500 text-white' },
+          { codePre: 'YMN', key: '11T', codePost: 'H1B...', cap: '1 TB', color: 'bg-rose-600 text-white' },
+          { codePre: 'BWCT...', key: '64G', codePost: '', cap: '64 GB', color: 'bg-emerald-400 text-black' },
+          { codePre: 'RS70B', key: '32G', codePost: '4S...', cap: '32 GB', color: 'bg-cyan-400 text-black' },
         ],
       },
     ],
@@ -267,7 +325,7 @@ export default function VisualTutorialView() {
 
               {/* Renglón 2: LEER ESTE */}
               <div className="px-3 py-2.5 rounded-2xl bg-emerald-500/20 border-2 border-emerald-400 shadow-lg">
-                <div className="font-mono text-base sm:text-lg font-black text-white flex items-center justify-center">
+                <div className="font-mono text-base sm:text-lg font-black text-white flex items-center justify-center flex-wrap">
                   <span>{brand.chip.pre}</span>
                   <span className="px-2 py-0.5 mx-1 rounded-lg bg-emerald-400 text-black shadow">
                     {brand.chip.key}
@@ -297,7 +355,7 @@ export default function VisualTutorialView() {
           <p className="text-xs font-bold text-emerald-200 mt-3">{brand.ruleTitle}</p>
         </div>
 
-        {/* COLUMNA DERECHA: ESCALERA DE CAPACIDADES (DIRECTA Y SIN MUCHO TEXTO) */}
+        {/* COLUMNA DERECHA: ESCALERA DE CAPACIDADES */}
         <div className="lg:col-span-7 rounded-3xl bg-[#081f12] border border-emerald-500/25 p-5 flex flex-col justify-between space-y-4">
           {brand.groups.map((grp, gIdx) => (
             <div key={gIdx} className="space-y-2.5">
@@ -319,7 +377,7 @@ export default function VisualTutorialView() {
                     </span>
 
                     {/* Código con parte remarcada */}
-                    <div className="font-mono text-xs sm:text-sm font-bold flex items-center justify-center">
+                    <div className="font-mono text-xs sm:text-sm font-bold flex items-center justify-center flex-wrap">
                       <span className="text-gray-400">{st.codePre}</span>
                       <span
                         className={`px-1.5 py-0.5 mx-0.5 rounded font-black text-xs sm:text-sm ${st.color}`}
@@ -338,11 +396,11 @@ export default function VisualTutorialView() {
           <div className="p-3.5 rounded-2xl bg-[#04120a] border border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-2 text-emerald-300 font-bold">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Lee el chip de Memoria (Samsung, Hynix, Micron, SanDisk, Toshiba)</span>
+              <span>Lee el chip de Memoria (Samsung, Hynix, Micron, SanDisk, Kioxia, iPhone, FORESEE, Kingston, YMTC)</span>
             </div>
             <div className="flex items-center gap-1.5 text-rose-300/80 font-medium">
               <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
-              <span>Ignora el CPU (Qualcomm / MediaTek)</span>
+              <span>Ignora el CPU (Qualcomm SM/MSM / MediaTek MT / Apple APL)</span>
             </div>
           </div>
         </div>

@@ -362,39 +362,69 @@ export function heuristicDecode(rawCode) {
     }
   }
 
-  // Samsung eMCP / uMCP familias comunes (4GB hasta 1TB)
+  // Samsung Apple NAND (KLACG...)
+  if (code.startsWith('KLACG')) {
+    return {
+      code,
+      partNumber: code,
+      storage: '64GB',
+      ram: null,
+      manufacturer: 'Apple / iPhone NAND (Samsung)',
+      type: 'NVMe NAND',
+      tech: 'Apple PCIe NAND (BGA110)',
+      package: 'BGA110',
+      source: 'Regla Oficial Apple/Samsung',
+    };
+  }
+
+  // Samsung eMCP / uMCP familias completas (4GB hasta 1TB)
   const samsungMcpPrefixes = [
     { prefix: 'KMK5', storage: '4GB', ram: '512MB', type: 'eMCP', tech: 'eMMC + LPDDR2' },
     { prefix: 'KMKJ', storage: '4GB', ram: '1GB', type: 'eMCP', tech: 'eMMC + LPDDR2' },
     { prefix: 'KMK7', storage: '8GB', ram: '1GB', type: 'eMCP', tech: 'eMMC + LPDDR2' },
+    { prefix: 'KMF7', storage: '8GB', ram: '1GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
+    { prefix: 'KMF8', storage: '8GB', ram: '1GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
     { prefix: 'KMFN', storage: '8GB', ram: '1GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
     { prefix: 'KMFJ', storage: '8GB', ram: '1GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
-    { prefix: 'KMQN', storage: '8GB', ram: '1GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
-    { prefix: 'KMK8', storage: '16GB', ram: '1GB', type: 'eMCP', tech: 'eMMC + LPDDR2' },
+    { prefix: 'KMK8', storage: '8GB', ram: '1GB', type: 'eMCP', tech: 'eMMC + LPDDR2' },
+    { prefix: 'KMQN', storage: '16GB', ram: '2GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
+    { prefix: 'KMKN', storage: '16GB', ram: '2GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
     { prefix: 'KMFE', storage: '16GB', ram: '2GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
     { prefix: 'KMQE', storage: '16GB', ram: '2GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
     { prefix: 'KMQ7', storage: '16GB', ram: '2GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
     { prefix: 'KMQ8', storage: '16GB', ram: '2GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
-    { prefix: 'KMQD', storage: '32GB', ram: '2GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
-    { prefix: 'KMQX', storage: '32GB', ram: '2GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
-    { prefix: 'KMGD', storage: '32GB', ram: '3GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
-    { prefix: 'KMDD', storage: '32GB', ram: '3GB', type: 'eMCP', tech: 'eMMC + LPDDR4X' },
-    { prefix: 'KMDP', storage: '64GB', ram: '4GB', type: 'eMCP', tech: 'eMMC + LPDDR4X' },
-    { prefix: 'KMDH', storage: '64GB', ram: '4GB', type: 'eMCP', tech: 'eMMC + LPDDR3/4X' },
-    { prefix: 'KMGX', storage: '64GB', ram: '4GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
-    { prefix: 'KMRP', storage: '64GB', ram: '4GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
-    { prefix: 'KMRC', storage: '64GB', ram: '4GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
-    { prefix: 'KMDV', storage: '128GB', ram: '4GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR4X' },
-    { prefix: 'KM2V7', storage: '64GB', ram: '4GB', type: 'uMCP', tech: 'UFS + LPDDR4X' },
-    { prefix: 'KM2V8', storage: '128GB', ram: '6GB', type: 'uMCP', tech: 'UFS + LPDDR4X' },
-    { prefix: 'KM3V6', storage: '128GB', ram: '6GB', type: 'uMCP', tech: 'UFS + LPDDR4X' },
-    { prefix: 'KM5P9', storage: '128GB', ram: '6GB', type: 'uMCP', tech: 'UFS 2.2 + LPDDR4X' },
-    { prefix: 'KM8V7', storage: '64GB', ram: '4GB', type: 'uMCP', tech: 'UFS + LPDDR4X' },
-    { prefix: 'KM8V8', storage: '128GB', ram: '6GB', type: 'uMCP', tech: 'UFS + LPDDR4X' },
-    { prefix: 'KM8V9', storage: '256GB', ram: '8GB', type: 'uMCP', tech: 'UFS + LPDDR4X' },
-    { prefix: 'KM8F8', storage: '128GB', ram: '6GB', type: 'uMCP', tech: 'UFS 3.1 + LPDDR5' },
+    { prefix: 'KMR31', storage: '16GB', ram: '2GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
+    { prefix: 'KMR4Z', storage: '16GB', ram: '2GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
+    { prefix: 'KMR82', storage: '32GB', ram: '3GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
+    { prefix: 'KMRD', storage: '32GB', ram: '3GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
+    { prefix: 'KMQD', storage: '32GB', ram: '3GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
+    { prefix: 'KMQX', storage: '32GB', ram: '2GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
+    { prefix: 'KMGD', storage: '32GB', ram: '3GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR4X' },
+    { prefix: 'KMGP', storage: '32GB', ram: '3GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR4X' },
+    { prefix: 'KMDD', storage: '32GB', ram: '3GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR4X' },
+    { prefix: 'KMDH', storage: '32GB', ram: '3GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR4X' },
+    { prefix: 'KMDV', storage: '32GB', ram: '4GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR4X' },
+    { prefix: 'KMDP', storage: '64GB', ram: '4GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR4X' },
+    { prefix: 'KMGX', storage: '64GB', ram: '4GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
+    { prefix: 'KMRP', storage: '64GB', ram: '4GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3/4X' },
+    { prefix: 'KMRX', storage: '64GB', ram: '4GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
+    { prefix: 'KMRC', storage: '64GB', ram: '4GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
+    { prefix: 'KM2V7', storage: '64GB', ram: '4GB', type: 'uMCP', tech: 'UFS 2.1 + LPDDR4X' },
+    { prefix: 'KM5V7', storage: '64GB', ram: '4GB', type: 'uMCP', tech: 'UFS 2.1 + LPDDR4X' },
+    { prefix: 'KM2V8', storage: '128GB', ram: '6GB', type: 'uMCP', tech: 'UFS 2.1 + LPDDR4X' },
+    { prefix: 'KM3V6', storage: '128GB', ram: '6GB', type: 'uMCP', tech: 'UFS 2.1 + LPDDR4X' },
+    { prefix: 'KM5V8', storage: '128GB', ram: '6GB', type: 'uMCP', tech: 'UFS 2.2 + LPDDR4X' },
+    { prefix: 'KM2L9', storage: '128GB', ram: '6GB', type: 'uMCP', tech: 'UFS 2.2 + LPDDR4X' },
+    { prefix: 'KM5L9', storage: '128GB', ram: '6GB', type: 'uMCP', tech: 'UFS 2.2 + LPDDR4X' },
+    { prefix: 'KM8L9', storage: '128GB', ram: '8GB', type: 'uMCP', tech: 'UFS 3.1 + LPDDR4X' },
+    { prefix: 'KM8V7', storage: '128GB', ram: '6GB', type: 'uMCP', tech: 'UFS 2.1 + LPDDR4X' },
+    { prefix: 'KM8V8', storage: '128GB', ram: '8GB', type: 'uMCP', tech: 'UFS 2.2 + LPDDR4X' },
+    { prefix: 'KM8V9', storage: '256GB', ram: '8GB', type: 'uMCP', tech: 'UFS 2.2 + LPDDR4X' },
+    { prefix: 'KM8F8', storage: '128GB', ram: '8GB', type: 'uMCP', tech: 'UFS 3.1 + LPDDR5' },
     { prefix: 'KM8F9', storage: '256GB', ram: '8GB', type: 'uMCP', tech: 'UFS 3.1 + LPDDR5' },
-    { prefix: 'KM9P9', storage: '512GB', ram: '12GB', type: 'uMCP', tech: 'UFS 3.1 + LPDDR5' },
+    { prefix: 'KM5P9', storage: '256GB', ram: '8GB', type: 'uMCP', tech: 'UFS 3.1 + LPDDR5' },
+    { prefix: 'KM9P9', storage: '512GB', ram: '12GB', type: 'uMCP', tech: 'UFS 3.1 + LPDDR5X' },
+    { prefix: 'KM9F9', storage: '512GB', ram: '12GB', type: 'uMCP', tech: 'UFS 4.0 + LPDDR5X' },
   ];
   for (const rule of samsungMcpPrefixes) {
     if (code.startsWith(rule.prefix)) {
@@ -412,9 +442,62 @@ export function heuristicDecode(rawCode) {
     }
   }
 
-  // 2. SK HYNIX eMCP / uMCP / eMMC / UFS (De 4GB a 1TB)
-  if (/^H9(TP|TQ|HP|HK|HQ|TU)/.test(code) && code.length >= 6) {
-    const isUfs = code.startsWith('H9HQ') || code.startsWith('H9TU');
+  // 2. SK HYNIX eMCP / uMCP / eMMC / UFS / Apple NAND (De 4GB a 1TB)
+  if (/^H9(TP|TQ|HP|HK|HQ|TU|QT|HR|AG)/.test(code) && code.length >= 6) {
+    if (code.startsWith('H9AG9G')) {
+      return {
+        code,
+        partNumber: code,
+        storage: '64GB',
+        ram: '4GB',
+        manufacturer: 'SK Hynix',
+        type: 'eMCP',
+        tech: 'eMMC 5.1 + LPDDR4X',
+        package: 'BGA254',
+        source: 'Regla Oficial SK Hynix',
+      };
+    }
+    if (code.startsWith('H9QT0G')) {
+      return {
+        code,
+        partNumber: code,
+        storage: '128GB',
+        ram: '6GB',
+        manufacturer: 'SK Hynix',
+        type: 'uMCP',
+        tech: 'UFS 2.2 + LPDDR4X',
+        package: 'BGA254',
+        source: 'Regla Oficial SK Hynix',
+      };
+    }
+    if (code.startsWith('H9QT1G')) {
+      return {
+        code,
+        partNumber: code,
+        storage: '256GB',
+        ram: '8GB',
+        manufacturer: 'SK Hynix',
+        type: 'uMCP',
+        tech: 'UFS 3.1 + LPDDR4X/5',
+        package: 'BGA254',
+        source: 'Regla Oficial SK Hynix',
+      };
+    }
+    if (code.startsWith('H9HR56')) {
+      return {
+        code,
+        partNumber: code,
+        storage: '512GB',
+        ram: '8GB',
+        manufacturer: 'SK Hynix',
+        type: 'uMCP',
+        tech: 'UFS 3.1 + LPDDR5',
+        package: 'BGA254',
+        source: 'Regla Oficial SK Hynix',
+      };
+    }
+
+    const isUfs = code.startsWith('H9HQ') || code.startsWith('H9TU') || code.startsWith('H9QT') || code.startsWith('H9HR');
     const codeDigits = code.slice(4, 6);
     const hynixCapMap = {
       '32': { storage: code.startsWith('H9TP') ? '4GB' : '32GB', ram: code.startsWith('H9TP') ? '1GB' : '3GB' },
@@ -426,6 +509,7 @@ export function heuristicDecode(rawCode) {
       '27': { storage: '32GB', ram: '3GB' },
       '52': { storage: '64GB', ram: '4GB' },
       '53': { storage: isUfs ? '256GB' : '64GB', ram: isUfs ? '8GB' : '4GB' },
+      '54': { storage: '64GB', ram: '4GB' },
       '15': { storage: '128GB', ram: '6GB' },
       '16': { storage: '128GB', ram: '4GB' },
       '21': { storage: '256GB', ram: '8GB' },
@@ -449,7 +533,16 @@ export function heuristicDecode(rawCode) {
 
   if (/^HN8T/.test(code) && code.length >= 6) {
     const c = code.slice(4, 6);
-    const ufsMap = { '05': '128GB', '15': '256GB', '25': '512GB', '35': '1TB' };
+    const ufsMap = {
+      '05': '128GB',
+      '06': '128GB',
+      '15': '256GB',
+      '16': '256GB',
+      '25': '512GB',
+      '26': '512GB',
+      '35': '1TB',
+      '36': '1TB',
+    };
     if (ufsMap[c]) {
       return {
         code,
@@ -459,6 +552,31 @@ export function heuristicDecode(rawCode) {
         manufacturer: 'SK Hynix',
         type: 'UFS',
         tech: 'UFS 3.1 / 4.0',
+        package: 'BGA153',
+        source: 'Regla Oficial SK Hynix',
+      };
+    }
+  }
+
+  if (/^H28[US]/.test(code) && code.length >= 6) {
+    const c = code.slice(4, 6);
+    const h28Map = {
+      '62': '32GB',
+      '6D': '32GB',
+      '74': '64GB',
+      '7Q': '64GB',
+      '88': '128GB',
+      '8Q': '128GB',
+    };
+    if (h28Map[c]) {
+      return {
+        code,
+        partNumber: code,
+        storage: h28Map[c],
+        ram: null,
+        manufacturer: 'SK Hynix',
+        type: 'UFS',
+        tech: 'UFS 2.1',
         package: 'BGA153',
         source: 'Regla Oficial SK Hynix',
       };
@@ -476,6 +594,7 @@ export function heuristicDecode(rawCode) {
       '64': '32GB',
       '78': '64GB',
       '91': '64GB',
+      '88': '128GB',
     };
     if (map[c]) {
       return {
@@ -492,6 +611,31 @@ export function heuristicDecode(rawCode) {
     }
   }
 
+  // SK Hynix Apple iPhone NAND (H23Q / H23B / H2JTD / H230)
+  if (/^H2(3Q|3B|30|JTD)/.test(code)) {
+    let appleCap = null;
+    if (code.includes('DG8')) appleCap = '16GB';
+    else if (code.includes('EG8') || code.includes('EH8')) appleCap = '32GB';
+    else if (code.includes('FG8')) appleCap = '64GB';
+    else if (code.includes('1T8') || code.includes('158')) appleCap = '128GB';
+    else if (code.includes('2T8')) appleCap = '256GB';
+    else if (code.includes('4T8')) appleCap = '512GB';
+    else if (code.includes('8T8')) appleCap = '1TB';
+    if (appleCap) {
+      return {
+        code,
+        partNumber: code,
+        storage: appleCap,
+        ram: null,
+        manufacturer: 'Apple / iPhone NAND (SK Hynix)',
+        type: 'NVMe NAND',
+        tech: 'Apple PCIe NAND (BGA70/110/315)',
+        package: 'BGA110',
+        source: 'Regla Oficial Apple/Hynix',
+      };
+    }
+  }
+
   // 3. MICRON MTFC / MT29 (4GB hasta 1TB)
   const mtfcMatch = code.match(/^MTFC(\d+)(G|T)/);
   if (mtfcMatch) {
@@ -504,6 +648,23 @@ export function heuristicDecode(rawCode) {
       manufacturer: 'Micron',
       type: Number(mtfcMatch[1]) >= 256 || unit === 'TB' ? 'UFS' : 'eMMC',
       tech: 'Managed Flash Micron',
+      package: 'BGA153',
+      source: 'Regla Oficial Micron',
+    };
+  }
+
+  if (/^MT29F(\d+)T08/.test(code)) {
+    const tbBits = Number(code.match(/^MT29F(\d+)T08/)[1]);
+    const gbBytes = (tbBits * 1024) / 8;
+    const capStr = gbBytes >= 1024 ? `${Math.round(gbBytes / 1024)}TB` : `${Math.round(gbBytes)}GB`;
+    return {
+      code,
+      partNumber: code,
+      storage: capStr,
+      ram: null,
+      manufacturer: 'Micron',
+      type: 'NAND / UFS',
+      tech: 'Micron 3D NAND',
       package: 'BGA153',
       source: 'Regla Oficial Micron',
     };
@@ -527,7 +688,7 @@ export function heuristicDecode(rawCode) {
     }
   }
 
-  // 4. SANDISK / WD (De 4GB hasta 1TB)
+  // 4. SANDISK / WD (De 4GB hasta 1TB + Apple SDM/SDSB)
   if (code.startsWith('SDIN')) {
     const tbMatch = code.match(/[-_]?(\d)T\b/);
     if (tbMatch) {
@@ -553,18 +714,50 @@ export function heuristicDecode(rawCode) {
         ram: null,
         manufacturer: 'SanDisk / WD',
         type: code.includes('DDH') || code.includes('FD') ? 'UFS' : 'eMMC',
-        tech: 'Managed Flash',
+        tech: 'iNAND Managed Flash',
         package: 'BGA153',
         source: 'Regla Oficial SanDisk',
       };
     }
   }
 
+  if (code.startsWith('SDM') || code.startsWith('SDSB')) {
+    if (code === 'SDMFLBCB') {
+      return {
+        code,
+        partNumber: code,
+        storage: '16GB',
+        ram: null,
+        manufacturer: 'Apple / iPhone NAND (SanDisk)',
+        type: 'NVMe NAND',
+        tech: 'Apple NAND (BGA60)',
+        package: 'BGA60',
+        source: 'Regla Oficial Apple/SanDisk',
+      };
+    }
+    const sdmCap = code.match(/0?(16|32|64|128|256|512)G/) || code.match(/(1|2)TB?/);
+    if (sdmCap) {
+      const isTb = code.includes('TB') || code.endsWith('1T') || code.endsWith('2T');
+      return {
+        code,
+        partNumber: code,
+        storage: isTb ? `${sdmCap[1]}TB` : `${sdmCap[1]}GB`,
+        ram: null,
+        manufacturer: 'Apple / iPhone NAND (SanDisk)',
+        type: 'NVMe NAND',
+        tech: 'Apple PCIe NAND (BGA70/110)',
+        package: 'BGA110',
+        source: 'Regla Oficial Apple/SanDisk',
+      };
+    }
+  }
+
   // 5. KIOXIA / TOSHIBA Y APPLE IPHONE NAND (De 4GB a 2TB)
-  if (/^THG(BM|AF|BX|LF|JF)/.test(code) && code.length >= 8) {
-    const isUfs = code.startsWith('THGAF') || code.startsWith('THGLF') || code.startsWith('THGJF');
-    const isIphone = code.startsWith('THGBX');
-    const densityCode = code.slice(6, 8);
+  if (/^THG(BM|AF|BX|LF|JF|BH)/.test(code) && code.length >= 7) {
+    const isUfs = code.startsWith('THGAF') || code.startsWith('THGJF');
+    const isEmcp = code.startsWith('THGLF');
+    const isIphone = code.startsWith('THGBX') || code.startsWith('THGBH');
+    const densityMatch = code.slice(4, 10).match(/(G[56789]|T[01234])/);
     const toshibaMap = {
       G5: '4GB',
       G6: '8GB',
@@ -577,27 +770,66 @@ export function heuristicDecode(rawCode) {
       T3: '1TB',
       T4: '2TB',
     };
-    if (toshibaMap[densityCode]) {
+    if (densityMatch && toshibaMap[densityMatch[1]]) {
       return {
         code,
         partNumber: code,
-        storage: toshibaMap[densityCode],
+        storage: toshibaMap[densityMatch[1]],
         ram: null,
-        manufacturer: isIphone ? 'Toshiba / Kioxia (iPhone)' : 'Kioxia / Toshiba',
-        type: isIphone ? 'NVMe NAND' : isUfs ? 'UFS' : 'eMMC',
+        manufacturer: isIphone ? 'Apple / iPhone NAND (Toshiba)' : 'Kioxia / Toshiba',
+        type: isIphone ? 'NVMe NAND' : isUfs ? 'UFS' : isEmcp ? 'eMCP' : 'eMMC',
         tech: isIphone ? 'Apple PCIe NAND' : isUfs ? 'UFS 2.1 / 3.1 / 4.0' : 'eMMC 5.1',
-        package: isIphone ? 'BGA110' : 'BGA153',
+        package: isIphone ? 'BGA70 / BGA110' : 'BGA153',
         source: 'Regla Oficial Kioxia/Toshiba',
+      };
+    }
+  }
+
+  // Apple Toshiba/Kioxia KICM / TSB / K5 / K6
+  if (code.startsWith('KICM22')) {
+    const kicmMap = { '3': '64GB', '4': '128GB', '5': '256GB', '6': '512GB', '7': '1TB', '8': '2TB' };
+    const cap = kicmMap[code[6]];
+    if (cap) {
+      return {
+        code,
+        partNumber: code,
+        storage: cap,
+        ram: null,
+        manufacturer: 'Apple / iPhone NAND (Kioxia)',
+        type: 'NVMe NAND',
+        tech: 'Apple PCIe NAND (BGA110/315)',
+        package: 'BGA110 / BGA315',
+        source: 'Regla Oficial Apple/Kioxia',
+      };
+    }
+  }
+
+  if (code.startsWith('TSB')) {
+    let tsbCap = null;
+    if (code.startsWith('TSB32')) tsbCap = '64GB';
+    else if (code.startsWith('TSB4226')) tsbCap = '128GB';
+    else if (code.startsWith('TSB4228')) tsbCap = '256GB';
+    if (tsbCap) {
+      return {
+        code,
+        partNumber: code,
+        storage: tsbCap,
+        ram: null,
+        manufacturer: 'Apple / iPhone NAND (Toshiba)',
+        type: 'NVMe NAND',
+        tech: 'Apple PCIe NAND (BGA110)',
+        package: 'BGA110',
+        source: 'Regla Oficial Apple/Toshiba',
       };
     }
   }
 
   if (/^K[56][AB]([3456789])/.test(code)) {
     const kMap = {
-      '3': '32GB',
-      '4': '64GB',
-      '5': '128GB',
-      '6': '256GB',
+      '3': '16GB',
+      '4': '32GB',
+      '5': '64GB',
+      '6': code.startsWith('K6') ? '256GB' : '128GB',
       '7': '512GB',
       '8': '1TB',
       '9': '2TB',
@@ -609,31 +841,31 @@ export function heuristicDecode(rawCode) {
         partNumber: code,
         storage: cap,
         ram: null,
-        manufacturer: 'Kioxia (Apple iPhone NAND)',
+        manufacturer: 'Apple / iPhone NAND (Kioxia)',
         type: 'NVMe NAND',
         tech: 'Apple PCIe NAND',
-        package: 'BGA110',
+        package: 'BGA110 / BGA315',
         source: 'Regla Oficial Apple/Kioxia',
       };
     }
   }
 
-  // 6. KINGSTON (EMMC04G..128G, 08EMCP..128EMCP, UMCP128..256)
-  const kingstonEmmc = code.match(/^EMMC0?(4|8|16|32|64|128|256)G?/);
+  // 6. KINGSTON (EMMC04G..256G, UFS32G..256G, 08EMCP..256UMCP, 32EM16, 64EM32)
+  const kingstonEmmc = code.match(/^(EMMC|UFS)0?(4|8|16|32|64|128|256)G?/);
   if (kingstonEmmc) {
     return {
       code,
       partNumber: code,
-      storage: `${kingstonEmmc[1]}GB`,
+      storage: `${kingstonEmmc[2]}GB`,
       ram: null,
       manufacturer: 'Kingston',
-      type: 'eMMC',
-      tech: 'eMMC 5.1',
+      type: kingstonEmmc[1],
+      tech: kingstonEmmc[1] === 'UFS' ? 'UFS 2.2 / 3.1' : 'eMMC 5.1',
       package: 'BGA153',
       source: 'Regla Oficial Kingston',
     };
   }
-  const kingstonEmcp = code.match(/^0?(4|8|16|32|64|128|256)(EMCP|UMCP)/);
+  const kingstonEmcp = code.match(/^0?(4|8|16|32|64|128|256)(EMCP|UMCP|EM\d{2})/);
   if (kingstonEmcp) {
     return {
       code,
@@ -641,15 +873,15 @@ export function heuristicDecode(rawCode) {
       storage: `${kingstonEmcp[1]}GB`,
       ram: null,
       manufacturer: 'Kingston',
-      type: kingstonEmcp[2],
+      type: kingstonEmcp[2].startsWith('U') ? 'uMCP' : 'eMCP',
       tech: 'Kingston MCP',
       package: 'BGA221 / BGA254',
       source: 'Regla Oficial Kingston',
     };
   }
 
-  // 7. FORESEE / LONGSYS (FEMDNN004G..512G, NCEM...16G..256G, FEUFS...)
-  const foreseeFemd = code.match(/^FEMDNN0*(4|8|16|32|64|128|256|512)G/);
+  // 7. FORESEE / LONGSYS (FEMDNN004G..512G, FEMDRM, NCEM...04G..256G, FEUFS...)
+  const foreseeFemd = code.match(/^FEMD[A-Z]{1,2}0*(4|8|16|32|64|128|256|512)G/);
   if (foreseeFemd) {
     return {
       code,
@@ -664,7 +896,7 @@ export function heuristicDecode(rawCode) {
     };
   }
   if (code.startsWith('NCEM') || code.startsWith('FEUFS')) {
-    const capM = code.match(/(4|8|16|32|64|128|256|512)G/);
+    const capM = code.match(/0?(4|8|16|32|64|128|256|512)G/);
     if (capM) {
       return {
         code,
@@ -680,7 +912,7 @@ export function heuristicDecode(rawCode) {
     }
   }
 
-  // 8. BIWIN (BWEMMC / BWUFS)
+  // 8. BIWIN (BWEMMC / BWUFS / BWCT...)
   const biwinMatch = code.match(/^BW(EMMC|UFS)0*(4|8|16|32|64|128|256|512)G/);
   if (biwinMatch) {
     return {
@@ -695,22 +927,125 @@ export function heuristicDecode(rawCode) {
       source: 'Regla Oficial BIWIN',
     };
   }
-
-  // 9. YMTC (Yangtze Memory — YMN08 / YMN09 / YMN10 / YMN11)
-  if (code.startsWith('YMN')) {
-    const ymtcMap = { E: '64GB', C: '128GB', F: '256GB', G: '512GB', H: '1TB' };
-    const codeChar = code[6];
-    if (ymtcMap[codeChar]) {
+  if (code.startsWith('BWCT')) {
+    const bwCap = code.match(/(4|8|16|32|64|128|256)G$/);
+    if (bwCap) {
       return {
         code,
         partNumber: code,
-        storage: ymtcMap[codeChar],
+        storage: `${bwCap[1]}GB`,
+        ram: null,
+        manufacturer: 'BIWIN',
+        type: 'eMMC',
+        tech: 'BIWIN eMMC 5.1',
+        package: 'BGA153',
+        source: 'Regla Oficial BIWIN',
+      };
+    }
+  }
+
+  // 9. YMTC (Yangtze Memory — YMEC6A/7C/8C & YMN08/09/10/11)
+  if (code.startsWith('YMEC')) {
+    const ymecMap = { '6': '32GB', '7': '64GB', '8': '128GB', '9': '256GB' };
+    if (ymecMap[code[4]]) {
+      return {
+        code,
+        partNumber: code,
+        storage: ymecMap[code[4]],
+        ram: null,
+        manufacturer: 'YMTC (Yangtze Memory)',
+        type: 'eMMC',
+        tech: 'YMTC Xtacking eMMC 5.1',
+        package: 'BGA153',
+        source: 'Regla Oficial YMTC',
+      };
+    }
+  }
+  if (code.startsWith('YMN')) {
+    const numPrefix = code.slice(3, 5);
+    const numMap = { '08': '128GB', '09': '256GB', '10': '512GB', '11': '1TB' };
+    const charMap = { E: '128GB', C: '128GB', F: '256GB', G: '512GB', H: '1TB' };
+    const resolvedCap = numMap[numPrefix] || charMap[code[6]];
+    if (resolvedCap) {
+      return {
+        code,
+        partNumber: code,
+        storage: resolvedCap,
         ram: null,
         manufacturer: 'YMTC (Yangtze Memory)',
         type: 'UFS',
-        tech: 'YMTC 3D NAND',
+        tech: 'YMTC 3D NAND UFS',
         package: 'BGA153',
         source: 'Regla Oficial YMTC',
+      };
+    }
+  }
+
+  // 10. RAYSON, SCY, PHISON, SILICON MOTION (SMI), SPECTEK, DOSILICON, XINCUN, SKYHIGH
+  if (code.startsWith('RS70B') || code.startsWith('RSUFS')) {
+    const rsCap = code.match(/0?(4|8|16|32|64|128|256)G/);
+    if (rsCap) {
+      return {
+        code,
+        partNumber: code,
+        storage: `${rsCap[1]}GB`,
+        ram: null,
+        manufacturer: 'Rayson',
+        type: code.startsWith('RSUFS') ? 'UFS' : 'eMMC / eMCP',
+        tech: 'Rayson Embedded Flash',
+        package: 'BGA153 / BGA254',
+        source: 'Regla Oficial Rayson',
+      };
+    }
+  }
+
+  if (/^(SCY|DSEMMC|XCE|FBNL)/.test(code)) {
+    const genCap = code.match(/0?(4|8|16|32|64|128|256)G/);
+    if (genCap) {
+      return {
+        code,
+        partNumber: code,
+        storage: `${genCap[1]}GB`,
+        ram: null,
+        manufacturer: 'SCY / Dosilicon / Xincun',
+        type: 'eMMC',
+        tech: 'eMMC 5.1',
+        package: 'BGA153',
+        source: 'Regla Oficial OEM',
+      };
+    }
+  }
+
+  if (/^(PPE|PSE|PTE|SM66)/.test(code)) {
+    const phCap = code.match(/[-_]?0?(4|8|16|32|64|128|256)G/);
+    if (phCap) {
+      return {
+        code,
+        partNumber: code,
+        storage: `${phCap[1]}GB`,
+        ram: null,
+        manufacturer: code.startsWith('SM66') ? 'Silicon Motion (SMI)' : 'Phison',
+        type: 'eMMC',
+        tech: 'eMMC 5.1 Industrial',
+        package: 'BGA153',
+        source: 'Regla Oficial Phison/SMI',
+      };
+    }
+  }
+
+  if (code.startsWith('S4041-')) {
+    const skyCap = code.match(/S4041-(\d+)B/);
+    if (skyCap) {
+      return {
+        code,
+        partNumber: code,
+        storage: `${skyCap[1]}GB`,
+        ram: null,
+        manufacturer: 'SkyHigh / Cypress',
+        type: 'eMMC',
+        tech: 'eMMC 5.0',
+        package: 'BGA153',
+        source: 'Regla Oficial SkyHigh',
       };
     }
   }
@@ -840,7 +1175,13 @@ export function getAllEditableCatalog() {
     const k = normalizeCode(item.code);
     if (!k || seen.has(k)) continue;
     seen.add(k);
-    merged.push({ ...item, isSeed: true });
+    merged.push({
+      ...item,
+      storage: item.storage || item.capacity,
+      manufacturer: item.manufacturer || item.brand,
+      notes: item.notes || item.commonModels || item.explanation || '',
+      isSeed: true,
+    });
   }
   return merged;
 }
@@ -956,18 +1297,25 @@ function decodeSingleCandidateOffline(q) {
     return { ...exactCustom, source: 'Base Eco Lógica García (Admin)' };
   }
 
-  // 2. Catálogo Semilla Curado y Auto-Aprendido
+  // 2. Catálogo Semilla Curado y Auto-Aprendido (incluyendo todos los alias de cada familia)
   const autoList = getAutoLearnedDatabase();
   const combinedSeed = [...autoList, ...SEED_IC_CATALOG];
   const exactSeed = combinedSeed.find(
     (c) =>
       normalizeCode(c.code) === q ||
       (c.partNumber && normalizeCode(c.partNumber) === q) ||
-      normalizeCode(c.code).split('-')[0] === q
+      normalizeCode(c.code).split('-')[0] === q ||
+      (Array.isArray(c.aliases) &&
+        c.aliases.some((al) => normalizeCode(al) === q || normalizeCode(al).split('-')[0] === q))
   );
   if (exactSeed) {
     return {
       ...exactSeed,
+      code: q,
+      partNumber: exactSeed.partNumber || exactSeed.code,
+      storage: exactSeed.storage || exactSeed.capacity,
+      manufacturer: exactSeed.manufacturer || exactSeed.brand,
+      notes: exactSeed.notes || exactSeed.commonModels || exactSeed.explanation || '',
       source: exactSeed.source || 'Catálogo Verificado',
     };
   }
@@ -1058,9 +1406,17 @@ export function searchChipsInstant(rawQuery, limit = 10) {
     for (const item of allLocal) {
       const codeNorm = normalizeCode(item.code);
       const pnNorm = normalizeCode(item.partNumber || '');
-      if (codeNorm.includes(q) || pnNorm.includes(q)) {
+      const matchedAlias = Array.isArray(item.aliases)
+        ? item.aliases.find((al) => normalizeCode(al).includes(q))
+        : null;
+      if (codeNorm.includes(q) || pnNorm.includes(q) || matchedAlias) {
         pushUnique({
           ...item,
+          code: matchedAlias && !codeNorm.includes(q) ? normalizeCode(matchedAlias) : item.code,
+          partNumber: item.partNumber || item.code,
+          storage: item.storage || item.capacity,
+          manufacturer: item.manufacturer || item.brand,
+          notes: item.notes || item.commonModels || item.explanation || '',
           source: item.source || 'Catálogo Eco Lógica García',
         });
         if (results.length >= limit) return results;
