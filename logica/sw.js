@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ecologica-garcia-ic-v9';
+const CACHE_NAME = 'ecologica-garcia-ic-v10';
 const ASSETS = [
   './',
   './index.html',
@@ -10,7 +10,7 @@ const ASSETS = [
   './assets/apple-touch-icon-q66XNoox.png',
   './assets/icon-192--oFsYMjq.png',
   './assets/icon-DBmVwXEj.svg',
-  './assets/index-C_15S6Fr.js',
+  './assets/index-C8PsP82G.js',
   './assets/manifest-i-u5wQwz.json',
 ];
 
