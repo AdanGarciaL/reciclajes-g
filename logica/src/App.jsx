@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Search,
   Volume2,
@@ -19,6 +19,7 @@ import {
   ArrowLeft,
   Pencil,
   ChevronRight,
+  GitBranch,
 } from 'lucide-react';
 import {
   decodeChipOffline,
@@ -27,6 +28,7 @@ import {
   getDatabaseStats,
   normalizeCode,
   detectCpuInsteadOfMemory,
+  analyzeChipVariants,
   safeGetStorage,
   safeSetStorage,
 } from './services/icEngine';
@@ -52,52 +54,52 @@ const QUICK_LOT_BUCKETS = [
   { key: '512GB+', label: '512G–2TB', pill: 'bg-rose-500 text-white border-rose-300', border: 'border-rose-500/45' },
 ];
 
-function getCapacityTheme(storageStr) {
+export function getCapacityTheme(storageStr) {
   const s = String(storageStr || '').toUpperCase().trim();
   const num = parseInt(s.replace(/\D/g, ''), 10) || 0;
   if (s.includes('TB') || num >= 512) {
     return {
-      badge: 'bg-rose-500 text-white border-rose-300 shadow-[0_0_20px_rgba(244,63,94,0.35)]',
-      card: 'border-rose-500/65 bg-gradient-to-br from-[#1d0910] via-[#0d1510] to-[#070d09]',
+      badge: 'bg-rose-500 text-white border-rose-300 shadow-[0_0_22px_rgba(244,63,94,0.4)]',
+      card: 'border-rose-500/70 bg-gradient-to-br from-[#200811] via-[#0c1510] to-[#060b08]',
       accentText: 'text-rose-300',
       dot: 'bg-rose-400',
     };
   }
   if (num === 256) {
     return {
-      badge: 'bg-purple-500 text-white border-purple-300 shadow-[0_0_20px_rgba(168,85,247,0.35)]',
-      card: 'border-purple-500/65 bg-gradient-to-br from-[#170b24] via-[#0d1510] to-[#070d09]',
+      badge: 'bg-purple-500 text-white border-purple-300 shadow-[0_0_22px_rgba(168,85,247,0.4)]',
+      card: 'border-purple-500/70 bg-gradient-to-br from-[#190a28] via-[#0c1510] to-[#060b08]',
       accentText: 'text-purple-300',
       dot: 'bg-purple-400',
     };
   }
   if (num === 128) {
     return {
-      badge: 'bg-amber-400 text-black border-amber-200 shadow-[0_0_20px_rgba(251,191,36,0.3)]',
-      card: 'border-amber-400/70 bg-gradient-to-br from-[#1f1606] via-[#0d1510] to-[#070d09]',
+      badge: 'bg-amber-400 text-black border-amber-200 shadow-[0_0_22px_rgba(251,191,36,0.35)]',
+      card: 'border-amber-400/75 bg-gradient-to-br from-[#211705] via-[#0c1510] to-[#060b08]',
       accentText: 'text-amber-300',
       dot: 'bg-amber-400',
     };
   }
   if (num === 64) {
     return {
-      badge: 'bg-emerald-400 text-black border-emerald-200 shadow-[0_0_22px_rgba(52,211,153,0.35)]',
-      card: 'border-emerald-400/75 bg-gradient-to-br from-[#072617] via-[#0b1911] to-[#060c08]',
+      badge: 'bg-emerald-400 text-black border-emerald-200 shadow-[0_0_24px_rgba(52,211,153,0.4)]',
+      card: 'border-emerald-400/80 bg-gradient-to-br from-[#062818] via-[#0a1810] to-[#050a07]',
       accentText: 'text-emerald-300',
       dot: 'bg-emerald-400',
     };
   }
   if (num === 32) {
     return {
-      badge: 'bg-cyan-400 text-black border-cyan-200 shadow-[0_0_18px_rgba(34,211,238,0.3)]',
-      card: 'border-cyan-400/65 bg-gradient-to-br from-[#062026] via-[#0b1712] to-[#060c08]',
+      badge: 'bg-cyan-400 text-black border-cyan-200 shadow-[0_0_20px_rgba(34,211,238,0.35)]',
+      card: 'border-cyan-400/70 bg-gradient-to-br from-[#062128] via-[#0a1711] to-[#050a07]',
       accentText: 'text-cyan-300',
       dot: 'bg-cyan-400',
     };
   }
   return {
-    badge: 'bg-sky-400 text-black border-sky-200 shadow-[0_0_18px_rgba(56,189,248,0.3)]',
-    card: 'border-sky-400/65 bg-gradient-to-br from-[#071c29] via-[#0b1712] to-[#060c08]',
+    badge: 'bg-sky-400 text-black border-sky-200 shadow-[0_0_20px_rgba(56,189,248,0.35)]',
+    card: 'border-sky-400/70 bg-gradient-to-br from-[#061d2b] via-[#0a1711] to-[#050a07]',
     accentText: 'text-sky-300',
     dot: 'bg-sky-400',
   };
@@ -144,7 +146,6 @@ export default function App() {
     }
   }, [textScale]);
 
-  // Detectar apertura de teclado virtual en iOS y Android soportando rotación de pantalla
   useEffect(() => {
     if (typeof window === 'undefined' || !window.visualViewport) return;
     const vv = window.visualViewport;
@@ -399,6 +400,13 @@ export default function App() {
     }
   }, [query, catalogVersion]);
 
+  // Análisis inteligente de variantes y terminaciones del chip activo
+  const variantReport = useMemo(() => {
+    const clean = normalizeCode(query);
+    if (!clean || clean.length < 3 || cpuWarning) return null;
+    return analyzeChipVariants(clean, activeResult);
+  }, [query, activeResult, cpuWarning, catalogVersion]);
+
   function pushToRecent(chip) {
     if (!chip || !chip.code) return;
     const normalizedChip = {
@@ -415,7 +423,6 @@ export default function App() {
     });
   }
 
-  // Al tocar un botón de prefijo rápido (KLM, KLU, KM, JW, etc.), inserta el prefijo y enfoca el input para completar los siguientes caracteres
   function handleSelectPrefix(prefixVal) {
     if (!prefixVal) return;
     setActiveTab('search');
@@ -433,7 +440,6 @@ export default function App() {
     }, 20);
   }
 
-  // Al seleccionar un chip completo de sugerencias, recientes o catálogo
   function handleSelectChip(chip) {
     if (!chip) return;
     const targetCode = chip.code || chip.partNumber || chip.value;
@@ -516,7 +522,6 @@ export default function App() {
       !String(activeResult.ram).toLowerCase().includes('sin ram')
   );
 
-  // Filtrar sugerencias para no repetir exactamente el mismo código ya mostrado en activeResult
   const visibleSuggestions = activeResult
     ? suggestions.filter((s) => normalizeCode(s.code) !== normalizeCode(activeResult.code)).slice(0, 6)
     : suggestions.slice(0, 8);
@@ -543,7 +548,7 @@ export default function App() {
       {/* CABECERA SÓLIDA — ANTI-DIFUMINACIÓN EN iOS Y COMPACTA CON TECLADO     */}
       {/* ===================================================================== */}
       <header
-        className={`sticky top-0 z-30 ${headerShieldClass} pb-1.5 px-2.5 sm:px-4 border-b border-emerald-500/20 shadow-[0_10px_30px_rgba(0,0,0,0.85)]`}
+        className={`sticky top-0 z-30 ${headerShieldClass} pb-1.5 px-2.5 sm:px-4 border-b border-emerald-500/20 shadow-[0_12px_32px_rgba(0,0,0,0.88)]`}
       >
         <div className="max-w-5xl mx-auto rounded-2xl pro-panel px-3 sm:px-4 py-2">
           <div className="flex items-center justify-between gap-2">
@@ -559,7 +564,7 @@ export default function App() {
                   <span>Web</span>
                 </a>
               )}
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-black flex items-center justify-center shadow-[0_0_16px_rgba(52,211,153,0.35)] shrink-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-black flex items-center justify-center shadow-[0_0_18px_rgba(52,211,153,0.4)] shrink-0">
                 <Cpu className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
               </div>
               <div className="min-w-0">
@@ -567,8 +572,8 @@ export default function App() {
                   ECO LÓGICA <span className="text-emerald-400">GARCÍA</span>
                 </h1>
                 {!compactKeyboardMode && (
-                  <span className="text-[10px] text-emerald-200/70 font-mono font-medium block truncate mt-0.5">
-                    {dbStats.totalOfflineCount.toLocaleString()} chips · 4GB a 2TB
+                  <span className="text-[10px] text-emerald-200/75 font-mono font-medium block truncate mt-0.5">
+                    {dbStats.totalOfflineCount.toLocaleString()} IC · Detector de Capacidad y Variantes
                   </span>
                 )}
               </div>
@@ -591,7 +596,7 @@ export default function App() {
                     onClick={() => setActiveTab(item.id)}
                     className={`px-3.5 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1.5 transition ${
                       active
-                        ? 'bg-emerald-400 text-black shadow-[0_0_14px_rgba(52,211,153,0.35)]'
+                        ? 'bg-emerald-400 text-black shadow-[0_0_16px_rgba(52,211,153,0.4)]'
                         : 'text-emerald-100/80 hover:text-white'
                     }`}
                   >
@@ -663,7 +668,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={openAddModal}
-                className="relative px-2.5 py-1.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs flex items-center gap-1 shadow-[0_0_14px_rgba(52,211,153,0.3)] transition"
+                className="relative px-2.5 py-1.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs flex items-center gap-1 shadow-[0_0_16px_rgba(52,211,153,0.35)] transition"
               >
                 <Database className="w-3.5 h-3.5" />
                 <span>+Chip</span>
@@ -697,7 +702,7 @@ export default function App() {
         )}
 
         {/* ================================================================= */}
-        {/* 1. PÁGINA DE ESCÁNER — DIRECTA, CLARA E INFORMATIVA               */}
+        {/* 1. PÁGINA DE ESCÁNER — TELEMETRÍA Y RADAR DE TERMINACIONES        */}
         {/* ================================================================= */}
         {activeTab === 'search' && (
           <div className="space-y-2.5">
@@ -714,7 +719,7 @@ export default function App() {
                   onBlur={() => setTimeout(() => setIsInputFocused(false), 180)}
                   onChange={(e) => setQuery(e.target.value.toUpperCase())}
                   onKeyDown={handleSearchKeyDown}
-                  placeholder="Código del chip (ej. KMDP6001, JXE77, H9HP52)"
+                  placeholder="Código del chip (ej. KMDP6001, JXE77, H9HP52, SDINBDA4)"
                   aria-label="Código del chip"
                   autoComplete="off"
                   autoCorrect="off"
@@ -781,13 +786,13 @@ export default function App() {
               )}
 
               {/* ============================================================= */}
-              {/* TARJETA DE RESULTADO CLARA Y AL GRANO                         */}
+              {/* TARJETA DE RESULTADO + DETECTOR DE VARIANTES Y TERMINACIONES  */}
               {/* ============================================================= */}
               {activeResult && theme && (
                 <div
                   role="status"
                   aria-live="polite"
-                  className={`rounded-xl border-2 p-3 sm:p-4 transition-all ${theme.card}`}
+                  className={`rounded-xl border-2 p-3 sm:p-4 transition-all space-y-3 ${theme.card}`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     {/* Capacidad Gigante + Datos Clave */}
@@ -844,7 +849,7 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* Equipos de referencia en 1 línea limpia (si existen) */}
+                        {/* Equipos de referencia en 1 línea limpia */}
                         {activeResult.commonModels && (
                           <div className="text-[11px] text-gray-300/85 truncate">
                             <span className="text-emerald-300/80 font-semibold">Equipos: </span>
@@ -887,14 +892,80 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Aviso conciso si solo escribió un prefijo parcial con varias capacidades */}
-                  {activeResult.matchedFromPartial &&
-                    Array.isArray(activeResult.alternativeCapacities) &&
-                    activeResult.alternativeCapacities.length > 1 && (
-                      <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between gap-2 text-[11px] font-mono text-amber-200">
-                        <span>
-                          Código incompleto (variantes: {activeResult.alternativeCapacities.join(' / ')}) — escribe 1 o 2 letras más para confirmar.
-                        </span>
+                  {/* ========================================================= */}
+                  {/* RADAR DE VARIANTES Y TERMINACIONES DIFERENTES             */}
+                  {/* ========================================================= */}
+                  {variantReport &&
+                    (variantReport.sameCapacityVariants.length > 1 ||
+                      variantReport.differentCapacityVariants.length > 0) && (
+                      <div className="pt-2.5 border-t border-white/10 space-y-2">
+                        {/* 1. Terminaciones diferentes del MISMO chip / MISMA capacidad */}
+                        {variantReport.sameCapacityVariants.length > 1 && (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-300 font-bold">
+                              <GitBranch className="w-3.5 h-3.5 shrink-0" />
+                              <span>
+                                Variantes con diferente terminación (Todas son {activeResult.storage}):
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {variantReport.sameCapacityVariants.map((v) => (
+                                <button
+                                  key={v.code}
+                                  type="button"
+                                  onClick={() => handleSelectChip(v)}
+                                  className={`px-2.5 py-1 rounded-lg font-mono text-xs border transition flex items-center ${
+                                    v.isCurrent
+                                      ? 'bg-emerald-500/20 border-emerald-400 text-white'
+                                      : 'bg-black/45 hover:bg-black/70 border-white/15 text-gray-300'
+                                  }`}
+                                >
+                                  <span className="text-gray-400">{v.basePart}</span>
+                                  <span className="font-black text-emerald-300 underline decoration-emerald-400/60 ml-0.5">
+                                    {v.diffTermination}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 2. Variantes de la misma serie donde la terminación CAMBIA los GB */}
+                        {variantReport.differentCapacityVariants.length > 0 && (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 text-[11px] font-mono text-amber-300 font-bold">
+                              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                              <span>
+                                Ojo: Variantes de esta serie donde la terminación cambia los GB:
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {variantReport.differentCapacityVariants.map((v) => {
+                                const vTheme = getCapacityTheme(v.storage);
+                                return (
+                                  <button
+                                    key={v.code}
+                                    type="button"
+                                    onClick={() => handleSelectChip(v)}
+                                    className="px-2 py-1 rounded-lg bg-black/50 hover:bg-black/80 border border-white/15 font-mono text-xs flex items-center gap-1.5 transition"
+                                  >
+                                    <span>
+                                      <span className="text-gray-400">{v.basePart}</span>
+                                      <span className="font-black text-white underline decoration-amber-400">
+                                        {v.diffTermination}
+                                      </span>
+                                    </span>
+                                    <span
+                                      className={`px-1.5 py-0.2 rounded text-[10px] font-black border ${vTheme.badge}`}
+                                    >
+                                      {v.storage}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                 </div>
@@ -1162,7 +1233,7 @@ export default function App() {
       {/* ===================================================================== */}
       {!compactKeyboardMode && (
         <nav
-          className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#050a07] border-t border-emerald-500/25 px-2.5 pt-1.5 ios-bottom-dock shadow-[0_-10px_30px_rgba(0,0,0,0.95)]"
+          className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#040806] border-t border-emerald-500/25 px-2.5 pt-1.5 ios-bottom-dock shadow-[0_-10px_30px_rgba(0,0,0,0.95)]"
           role="tablist"
           aria-label="Navegación móvil"
         >

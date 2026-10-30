@@ -1680,6 +1680,217 @@ export async function lookupOnlineFallbackAndLearn(rawQuery) {
   return null;
 }
 
+// ============================================================================
+// DETECTOR INTELIGENTE DE VARIANTES Y TERMINACIONES DIFERENTES
+// Detecta:
+// 1) Variantes del mismo chip con diferente terminación/sufijo (Misma Capacidad)
+// 2) Variantes de la misma familia donde la terminación/clave cambia los GB
+// ============================================================================
+
+export function splitVariantTermination(referenceStem, targetCode) {
+  const ref = normalizeCode(referenceStem);
+  const code = normalizeCode(targetCode);
+  if (!code) return { base: '', termination: '' };
+
+  // Si tiene guion (ej. KMDP6001DA-B425 o SDINBDA4-64G), resaltar desde el último bloque o sufijo
+  let commonLen = 0;
+  const maxLen = Math.min(ref.length, code.length);
+  while (commonLen < maxLen && ref[commonLen] === code[commonLen]) {
+    commonLen++;
+  }
+
+  // Asegurar que al menos dejemos visible la terminación distinta (mínimo 2 caracteres finales si son iguales)
+  if (commonLen >= code.length && code.length > 4) {
+    const dashIdx = code.indexOf('-');
+    if (dashIdx > 1) {
+      return { base: code.slice(0, dashIdx), termination: code.slice(dashIdx) };
+    }
+    return { base: code.slice(0, code.length - 4), termination: code.slice(code.length - 4) };
+  }
+
+  if (commonLen < 2) {
+    return { base: code.slice(0, 3), termination: code.slice(3) };
+  }
+
+  return {
+    base: code.slice(0, commonLen),
+    termination: code.slice(commonLen),
+  };
+}
+
+export function analyzeChipVariants(rawQuery, activeChip = null) {
+  const q = normalizeCode(rawQuery || activeChip?.code || '');
+  if (!q || q.length < 3) {
+    return {
+      exactMatchFound: null,
+      sameCapacityVariants: [],
+      differentCapacityVariants: [],
+      sameCapStem: '',
+      seriesStem: '',
+    };
+  }
+
+  const resolvedActive = activeChip && activeChip.storage ? activeChip : decodeChipOffline(q);
+  const targetStorage = resolvedActive?.storage || null;
+  const refCode = normalizeCode(resolvedActive?.code || q);
+
+  // Determinar raíz de mismo chip (sameCapStem) y raíz de serie (seriesStem)
+  let sameCapStem = q.slice(0, Math.min(q.length, 6));
+  let seriesStem = q.slice(0, Math.min(q.length, 4));
+
+  if (q.startsWith('SDIN')) {
+    const dashIdx = q.indexOf('-');
+    seriesStem = dashIdx > 3 ? q.slice(0, dashIdx + 1) : q.slice(0, Math.min(q.length, 8));
+    sameCapStem = dashIdx > 3 ? q : seriesStem;
+  } else if (/^KL[MU]/.test(q)) {
+    sameCapStem = q.slice(0, Math.min(q.length, 5)); // ej. KLMCG, KLUDG
+    seriesStem = q.slice(0, 3); // KLM o KLU
+  } else if (q.startsWith('KM')) {
+    sameCapStem = q.slice(0, Math.min(q.length, 5)); // ej. KMDP6, KM8V7
+    seriesStem = q.slice(0, Math.min(q.length, 4)); // ej. KMDP, KM8V, KMD
+    if (/^KM[DGRQ]/.test(q)) seriesStem = q.slice(0, 3);
+  } else if (/^(H9|H26|H28|HN8T)/.test(q)) {
+    sameCapStem = q.slice(0, Math.min(q.length, 6)); // ej. H9HP52, HN8T05
+    seriesStem = q.slice(0, 4); // ej. H9HP, HN8T, H9HQ
+  } else if (q.startsWith('THG')) {
+    sameCapStem = q.slice(0, Math.min(q.length, 8)); // ej. THGAF8G9
+    seriesStem = q.slice(0, Math.min(q.length, 6)); // ej. THGAF8
+  } else if (/^(FEMD|FEUFS|NCEM)/.test(q)) {
+    sameCapStem = q.slice(0, Math.min(q.length, 9));
+    seriesStem = q.slice(0, Math.min(q.length, 6));
+  } else if (/^J[WXYZC][A-Z0-9]{1,3}$/.test(q)) {
+    sameCapStem = q.slice(0, 3);
+    seriesStem = q.slice(0, 2);
+  } else if (q.startsWith('KICM')) {
+    sameCapStem = q.slice(0, Math.min(q.length, 7));
+    seriesStem = 'KICM22';
+  }
+
+  // Recolectar todos los códigos y sus variantes/aliases conocidos
+  const pool = [];
+  const seenCodes = new Set();
+
+  const addPoolItem = (codeStr, storage, manufacturer, type, ram) => {
+    const cNorm = normalizeCode(codeStr);
+    if (!cNorm || cNorm.length < 3 || !storage || seenCodes.has(cNorm)) return;
+    seenCodes.add(cNorm);
+    pool.push({
+      code: cNorm,
+      storage: String(storage).toUpperCase().trim(),
+      manufacturer: manufacturer || 'Desconocido',
+      type: type || 'IC',
+      ram: ram || null,
+    });
+  };
+
+  for (const item of getCustomDatabase()) {
+    addPoolItem(item.code, item.storage, item.manufacturer, item.type, item.ram);
+  }
+  for (const item of getAutoLearnedDatabase()) {
+    addPoolItem(item.code, item.storage, item.manufacturer, item.type, item.ram);
+  }
+  for (const item of SEED_IC_CATALOG) {
+    const cap = item.storage || item.capacity;
+    const mfg = item.manufacturer || item.brand;
+    addPoolItem(item.code, cap, mfg, item.type, item.ram);
+    if (Array.isArray(item.aliases)) {
+      for (const al of item.aliases) {
+        addPoolItem(al, cap, mfg, item.type, item.ram);
+      }
+    }
+  }
+
+  // Consultar también variantes reales en el motor industrial fdnext-core
+  const eng = getFdEngine();
+  if (eng && sameCapStem.length >= 3) {
+    try {
+      const queriesToRun = sameCapStem !== seriesStem && seriesStem.length >= 3
+        ? [sameCapStem, seriesStem]
+        : [sameCapStem];
+
+      for (const sq of queriesToRun) {
+        const sRes = eng.searchParts({ query: sq, lang: 'eng', limit: 12 });
+        if (sRes?.status === 'ok' && Array.isArray(sRes.items)) {
+          for (const it of sRes.items) {
+            if (it.device?.chipKind === 'dram') continue;
+            const targetPart = it.device?.markingCode || it.device?.partNumber || it.label;
+            if (!targetPart) continue;
+            const normTarget = normalizeCode(targetPart);
+            if (seenCodes.has(normTarget)) continue;
+            const dec = eng.decodePart({ query: targetPart, lang: 'eng' });
+            const parsed = parseFdnextDecodeResult(dec, targetPart);
+            if (parsed && parsed.storage && !parsed.isPureDram) {
+              addPoolItem(parsed.code, parsed.storage, parsed.manufacturer, parsed.type, parsed.ram);
+            }
+          }
+        }
+      }
+    } catch {
+      // Ignorar errores de búsqueda
+    }
+  }
+
+  let exactMatchFound = null;
+  const sameCapacityVariants = [];
+  const differentCapacityVariants = [];
+
+  for (const cand of pool) {
+    if (cand.code === q || cand.code.split('-')[0] === q) {
+      if (!exactMatchFound) exactMatchFound = cand;
+    }
+
+    const matchesSameStem =
+      cand.code.startsWith(sameCapStem) ||
+      (sameCapStem.length >= 4 && refCode.startsWith(sameCapStem) && cand.code.startsWith(sameCapStem));
+
+    const matchesSeriesStem =
+      seriesStem.length >= 2 && cand.code.startsWith(seriesStem);
+
+    if (!matchesSameStem && !matchesSeriesStem) continue;
+
+    if (targetStorage && cand.storage === targetStorage && matchesSameStem) {
+      const parts = splitVariantTermination(sameCapStem, cand.code);
+      sameCapacityVariants.push({
+        ...cand,
+        basePart: parts.base,
+        diffTermination: parts.termination || cand.code.slice(-3),
+        isCurrent: cand.code === refCode || cand.code === q,
+      });
+    } else if (matchesSeriesStem && (!targetStorage || cand.storage !== targetStorage)) {
+      const parts = splitVariantTermination(seriesStem, cand.code);
+      differentCapacityVariants.push({
+        ...cand,
+        basePart: parts.base,
+        diffTermination: parts.termination || cand.code.slice(seriesStem.length),
+      });
+    }
+  }
+
+  // Ordenar variantes de diferente capacidad de MAYOR A MENOR (Capacidad Máxima primero)
+  differentCapacityVariants.sort(
+    (a, b) => capacityToGbNumber(b.storage) - capacityToGbNumber(a.storage)
+  );
+
+  // Dejar hasta 1 variante representativa por capacidad o hasta 8 variantes clave para que sea directo y limpio
+  const deduplicatedDiffCap = [];
+  const capCountMap = {};
+  for (const v of differentCapacityVariants) {
+    const count = capCountMap[v.storage] || 0;
+    if (count < 2 && deduplicatedDiffCap.length < 8) {
+      capCountMap[v.storage] = count + 1;
+      deduplicatedDiffCap.push(v);
+    }
+  }
+
+  return {
+    exactMatchFound,
+    sameCapacityVariants: sameCapacityVariants.slice(0, 8),
+    differentCapacityVariants: deduplicatedDiffCap,
+    sameCapStem,
+    seriesStem,
+  };
+}
+
 export function getDatabaseStats() {
   const customCount = getCustomDatabase().length;
   const learnedCount = getAutoLearnedDatabase().length;

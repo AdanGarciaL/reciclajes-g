@@ -23,7 +23,6 @@ html[data-text-scale="xlarge"] {
   font-size: 21px;
 }
 
-/* En móviles pequeños (< 380px), ajustamos ligeramente el modo Extra Grande para que nunca desborde */
 @media (max-width: 380px) {
   html[data-text-scale="large"] {
     font-size: 17.5px;
@@ -33,7 +32,6 @@ html[data-text-scale="xlarge"] {
   }
 }
 
-/* Escalar también clases arbitrarias de 10px y 11px cuando el usuario elige Letra Grande o Extra Grande */
 html[data-text-scale="large"] .text-\[10px\] {
   font-size: 0.75rem !important;
   line-height: 1.15rem !important;
@@ -52,7 +50,6 @@ html[data-text-scale="xlarge"] .text-\[11px\] {
   line-height: 1.3rem !important;
 }
 
-/* Grid adaptativo para tarjetas de metadatos (Marca / RAM / Tipo) */
 .adaptive-meta-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -69,12 +66,12 @@ html[data-text-scale="xlarge"] .text-\[11px\] {
 }
 
 body {
-  background-color: #050a07;
+  background-color: #040806;
   background-image:
-    radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.14) 0%, transparent 55%),
-    linear-gradient(rgba(16, 185, 129, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(16, 185, 129, 0.025) 1px, transparent 1px);
-  background-size: 100% 100%, 28px 28px, 28px 28px;
+    radial-gradient(ellipse 80% 45% at 50% -10%, rgba(16, 185, 129, 0.18) 0%, transparent 70%),
+    radial-gradient(circle at 85% 20%, rgba(6, 182, 212, 0.06) 0%, transparent 45%),
+    radial-gradient(rgba(52, 211, 153, 0.08) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 22px 22px;
   background-attachment: fixed;
   min-height: 100dvh;
   -webkit-tap-highlight-color: transparent;
@@ -82,46 +79,49 @@ body {
   overflow-x: hidden;
 }
 
-/* Superficies de precisión estilo instrumento de hardware */
+/* Superficies de telemetría de próxima generación */
 .pro-panel {
-  background: linear-gradient(180deg, #0c1710 0%, #08100b 100%);
+  background: linear-gradient(180deg, rgba(13, 25, 18, 0.96) 0%, rgba(7, 14, 10, 0.98) 100%);
   border: 1px solid rgba(52, 211, 153, 0.22);
+  border-top-color: rgba(110, 231, 183, 0.34);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 12px 28px -6px rgba(0, 0, 0, 0.7);
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 12px 30px -8px rgba(0, 0, 0, 0.78);
 }
 
 .pro-panel-elevated {
-  background: linear-gradient(180deg, #0f1d14 0%, #09130d 100%);
+  background: linear-gradient(180deg, rgba(16, 31, 22, 0.98) 0%, rgba(8, 16, 11, 0.99) 100%);
   border: 1px solid rgba(52, 211, 153, 0.34);
+  border-top-color: rgba(110, 231, 183, 0.5);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 16px 36px -8px rgba(0, 0, 0, 0.8);
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 18px 42px -10px rgba(0, 0, 0, 0.88);
 }
 
 .pro-inset {
-  background-color: #040906;
+  background: linear-gradient(180deg, #030705 0%, #060d09 100%);
   border: 1px solid rgba(52, 211, 153, 0.2);
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.75);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.85),
+    0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 /* ==========================================================================
    OPTIMIZACIÓN ESPECIAL PARA iPHONE 14 PRO / 15 PRO / 16 PRO (DYNAMIC ISLAND
    Y LIQUID GLASS DE iOS) Y PANTALLAS ANDROID
-   Evita que la barra superior se pierda en la difuminación de iOS Liquid Glass
    ========================================================================== */
 .ios-top-shield {
-  background-color: #050a07;
+  background-color: #040806;
   padding-top: max(env(safe-area-inset-top, 0px), 10px);
 }
 
 .ios-top-shield-iphone {
-  background-color: #050a07;
+  background-color: #040806;
   padding-top: max(calc(env(safe-area-inset-top, 0px) + 12px), 20px);
 }
 
 .ios-top-shield-standalone {
-  background-color: #050a07;
+  background-color: #040806;
   padding-top: max(calc(env(safe-area-inset-top, 0px) + 8px), 52px);
 }
 

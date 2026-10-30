@@ -20,6 +20,7 @@ import {
   ArrowRight,
   ClipboardCheck,
   FileCheck,
+  GitBranch,
 } from 'lucide-react';
 import {
   getCustomDatabase,
@@ -36,6 +37,7 @@ import {
   getDatabaseStats,
   normalizeCode,
   detectCpuInsteadOfMemory,
+  analyzeChipVariants,
 } from '../services/icEngine';
 
 const CAPACITIES = ['4GB', '8GB', '16GB', '32GB', '64GB', '128GB', '256GB', '512GB', '1TB', '2TB'];
@@ -561,6 +563,34 @@ export default function AdminDatabaseModal({
     a.download = `ecologica_garcia_chips_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  // Detector en vivo de variantes y terminaciones al escribir un código en Agregar / Editar
+  const liveVariantCheck = useMemo(() => {
+    const firstToken = String(code || '').split(/[,;\s\r\n]+/)[0];
+    const clean = normalizeCode(firstToken);
+    if (!clean || clean.length < 3) return null;
+    return analyzeChipVariants(clean);
+  }, [code, customList]);
+
+  function applyVariantSpecs(variantItem) {
+    if (!variantItem) return;
+    if (variantItem.storage && CAPACITIES.includes(variantItem.storage)) {
+      setStorage(variantItem.storage);
+    }
+    if (variantItem.manufacturer) {
+      const matchedBrand =
+        BRANDS.find((b) =>
+          b.toLowerCase().includes(String(variantItem.manufacturer).toLowerCase())
+        ) || variantItem.manufacturer;
+      setManufacturer(matchedBrand);
+    }
+    if (variantItem.ram && RAM_OPTIONS.includes(variantItem.ram)) {
+      setRam(variantItem.ram);
+    }
+    if (variantItem.type && TYPES.includes(variantItem.type)) {
+      setType(variantItem.type);
+    }
   }
 
   // Lista filtrada para la pestaña Catálogo / Editar
@@ -1127,6 +1157,97 @@ export default function AdminDatabaseModal({
                               </select>
                             </div>
                           </div>
+
+                          {/* DETECTOR EN VIVO DE VARIANTES Y TERMINACIONES AL ESCRIBIR UN CHIP */}
+                          {liveVariantCheck &&
+                            (liveVariantCheck.exactMatchFound ||
+                              liveVariantCheck.sameCapacityVariants.length > 0 ||
+                              liveVariantCheck.differentCapacityVariants.length > 0) && (
+                              <div className="p-3 rounded-2xl pro-inset border border-emerald-500/35 space-y-2">
+                                {liveVariantCheck.exactMatchFound && !editingOriginalCode && (
+                                  <div className="flex items-center justify-between gap-2 flex-wrap text-xs">
+                                    <span className="text-amber-300 font-bold">
+                                      Este código ya existe en la base:{' '}
+                                      <strong className="font-mono text-white">
+                                        {liveVariantCheck.exactMatchFound.code}
+                                      </strong>{' '}
+                                      ({liveVariantCheck.exactMatchFound.storage})
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => startEditingChip(liveVariantCheck.exactMatchFound)}
+                                      className="px-2.5 py-1 rounded-lg bg-amber-400 text-black font-black text-[11px]"
+                                    >
+                                      Editar existente
+                                    </button>
+                                  </div>
+                                )}
+
+                                {liveVariantCheck.sameCapacityVariants.length > 0 && (
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-300 font-bold">
+                                      <GitBranch className="w-3.5 h-3.5 shrink-0" />
+                                      <span>
+                                        Variantes registradas con terminación diferente (Misma capacidad):
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      {liveVariantCheck.sameCapacityVariants.map((v) => (
+                                        <button
+                                          key={v.code}
+                                          type="button"
+                                          onClick={() => applyVariantSpecs(v)}
+                                          title="Toca para copiar capacidad, marca y RAM de esta variante"
+                                          className="px-2 py-1 rounded-lg bg-black/60 hover:bg-emerald-500/20 border border-emerald-500/30 font-mono text-xs flex items-center gap-1 transition"
+                                        >
+                                          <span>
+                                            <span className="text-gray-400">{v.basePart}</span>
+                                            <span className="font-black text-emerald-300 underline">
+                                              {v.diffTermination}
+                                            </span>
+                                          </span>
+                                          <span className="px-1.5 py-0.2 rounded bg-emerald-400 text-black text-[10px] font-black">
+                                            {v.storage}
+                                          </span>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {liveVariantCheck.differentCapacityVariants.length > 0 && (
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-1.5 text-[11px] font-mono text-amber-300 font-bold">
+                                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                                      <span>
+                                        Variantes de la misma serie donde la terminación cambia los GB:
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      {liveVariantCheck.differentCapacityVariants.map((v) => (
+                                        <button
+                                          key={v.code}
+                                          type="button"
+                                          onClick={() => applyVariantSpecs(v)}
+                                          title="Toca para usar la capacidad de esta variante"
+                                          className="px-2 py-1 rounded-lg bg-black/60 hover:bg-white/10 border border-white/15 font-mono text-xs flex items-center gap-1 transition"
+                                        >
+                                          <span>
+                                            <span className="text-gray-400">{v.basePart}</span>
+                                            <span className="font-black text-white underline decoration-amber-400">
+                                              {v.diffTermination}
+                                            </span>
+                                          </span>
+                                          <span className="px-1.5 py-0.2 rounded bg-amber-400 text-black text-[10px] font-black">
+                                            {v.storage}
+                                          </span>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
 
                           <div>
                             <label className="block text-xs font-bold text-emerald-300 mb-1.5">
