@@ -67,6 +67,18 @@ function formatCapacityForSpeech(cap) {
   return s;
 }
 
+function formatChipTypeForSpeech(rawType) {
+  if (!rawType) return '';
+  const t = String(rawType).toUpperCase().trim();
+  if (t.includes('UMCP')) return 'tipo U M C P';
+  if (t.includes('EMCP')) return 'tipo E M C P';
+  if (t.includes('EMMC')) return 'tipo E M M C';
+  if (t.includes('UFS')) return 'tipo U F S';
+  if (t.includes('NVME') || t.includes('NAND')) return 'tipo NAND';
+  if (t.includes('LPDDR') || t.includes('DRAM')) return 'solo RAM';
+  return `tipo ${rawType}`;
+}
+
 export function speakChipResult(chip, enabled = true, shortMode = false) {
   if (!enabled || !chip || typeof window === 'undefined' || !('speechSynthesis' in window)) {
     return;
@@ -75,16 +87,23 @@ export function speakChipResult(chip, enabled = true, shortMode = false) {
   try {
     window.speechSynthesis.cancel();
 
-    const storageText = formatCapacityForSpeech(chip.storage);
-    const ramText = chip.ram ? `${formatCapacityForSpeech(chip.ram)} de RAM` : '';
-    const brandText = chip.manufacturer ? chip.manufacturer.replace('/', ' ') : '';
+    const storageText = formatCapacityForSpeech(chip.storage || chip.capacity);
+    const typeText = formatChipTypeForSpeech(chip.type);
+    const cleanRam =
+      chip.ram && !String(chip.ram).toLowerCase().includes('sin ram') ? chip.ram : '';
+    const ramText = cleanRam ? `${formatCapacityForSpeech(cleanRam)} de RAM` : '';
+    const brandRaw = chip.manufacturer || chip.brand || '';
+    const brandText = brandRaw
+      ? brandRaw.replace(/\s*\/.*$/, '').replace(/\(.*\)/, '').trim()
+      : '';
 
     let phrase = '';
     if (shortMode) {
-      phrase = storageText || ramText || chip.code;
+      phrase = [storageText, typeText].filter(Boolean).join(', ') || chip.code;
     } else {
       const parts = [];
       if (storageText) parts.push(storageText);
+      if (typeText) parts.push(typeText);
       if (brandText && brandText !== 'Desconocido') parts.push(brandText);
       if (ramText) parts.push(ramText);
       phrase = parts.join(', ');
