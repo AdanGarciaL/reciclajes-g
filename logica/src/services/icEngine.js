@@ -1,9 +1,9 @@
 import { createEngine } from '@itxtech/fdnext-core';
-import { SEED_IC_CATALOG } from '../data/seedCatalog';
+import { SEED_IC_CATALOG } from '../data/seedCatalog.js';
 
 const STORAGE_KEYS = {
   CUSTOM_DB: 'eco_custom_db_v1',
-  AUTO_LEARNED_DB: 'eco_auto_learned_db_v1',
+  AUTO_LEARNED_DB: 'eco_auto_learned_db_v2',
   PENDING_SUGGESTIONS: 'eco_pending_suggestions_v1',
   ADMIN_PIN: 'eco_admin_pin_v2', // Actualizado a v2 con PIN maestro 252002
   RECENT_SEARCHES: 'eco_recent_searches_v1',
@@ -222,7 +222,7 @@ export function generateOpticalCandidates(rawInput) {
   return candidates;
 }
 
-// Convierte densidades en Mbit o Gb (gigabits) a GB legibles (ej. 32Gb -> 4GB)
+// Convierte densidades en Mbit, Gb (gigabits) o Tb (terabits) a GB/TB legibles (ej. 32Gb -> 4GB, 512Gb -> 64GB, 1Tb -> 128GB)
 function formatStorageCapacity(rawVal, unit) {
   if (!rawVal && rawVal !== 0) return null;
   if (typeof rawVal === 'number') {
@@ -233,19 +233,28 @@ function formatStorageCapacity(rawVal, unit) {
       return `${Math.round(gb * 1024)}MB`;
     }
   }
-  const str = String(rawVal).toUpperCase().trim();
-  const tbMatch = str.match(/(\d+(?:\.\d+)?)\s*TB/i);
+  const origStr = String(rawVal).trim();
+
+  // Primero detectar bits explícitos (Gb / Tb con 'b' minúscula) antes de pasar a mayúsculas
+  const tbitMatch = origStr.match(/(\d+(?:\.\d+)?)\s*Tb\b/);
+  if (tbitMatch) {
+    const gb = ( parseFloat(tbitMatch[1]) * 1024 ) / 8;
+    return gb >= 1024 ? `${Math.round(gb / 1024)}TB` : `${Math.round(gb)}GB`;
+  }
+  const gbitMatch = origStr.match(/(\d+(?:\.\d+)?)\s*Gb\b/);
+  if (gbitMatch) {
+    const bytes = parseFloat(gbitMatch[1]) / 8;
+    if (bytes >= 1024) return `${Math.round(bytes / 1024)}TB`;
+    return bytes >= 1 ? `${Math.round(bytes)}GB` : `${Math.round(bytes * 1024)}MB`;
+  }
+
+  const str = origStr.toUpperCase();
+  const tbMatch = str.match(/(\d+(?:\.\d+)?)\s*TB\b/);
   if (tbMatch) return `${tbMatch[1]}TB`;
 
-  const gbMatch = str.match(/(\d+(?:\.\d+)?)\s*GB/i);
-  if (gbMatch) {
-    const origMatch = String(rawVal).match(/(\d+(?:\.\d+)?)\s*(GB|Gb)/);
-    if (origMatch && origMatch[2] === 'Gb') {
-      const bytes = Number(origMatch[1]) / 8;
-      return bytes >= 1 ? `${bytes}GB` : `${Math.round(bytes * 1024)}MB`;
-    }
-    return `${gbMatch[1]}GB`;
-  }
+  const gbMatch = str.match(/(\d+(?:\.\d+)?)\s*GB\b/);
+  if (gbMatch) return `${gbMatch[1]}GB`;
+
   return str.split(' ')[0];
 }
 
@@ -282,11 +291,12 @@ function parseFdnextDecodeResult(res, queryFallback) {
     if (!Array.isArray(b.fields)) continue;
     for (const f of b.fields) {
       if (f.key === 'storage_density' || f.key === 'density') {
-        storage = f.display || formatStorageCapacity(f.value, f.unit);
         if (typeof f.value === 'string' && f.value.includes(' ')) {
           const parts = f.value.split(' ');
-          storage = parts[0];
+          storage = formatStorageCapacity(parts[0], f.unit);
           if (!storageTech && parts[1]) storageTech = parts.slice(1).join(' ');
+        } else {
+          storage = formatStorageCapacity(f.display || f.value, f.unit);
         }
       }
       if (f.key === 'storage_interface' || f.key === 'product_version') {
@@ -305,7 +315,8 @@ function parseFdnextDecodeResult(res, queryFallback) {
   }
 
   if (!storage && res.subtitle) {
-    const m = res.subtitle.match(/\b(\d+\s*(?:GB|TB))\b/i);
+    // Importante: SIN flag /i para no confundir "48Gb" (DRAM en gigabits) con "48GB" (Almacenamiento)
+    const m = res.subtitle.match(/\b(\d+\s*(?:GB|TB))\b/);
     if (m) storage = m[1].toUpperCase().replace(/\s+/g, '');
   }
   if (!ram && res.subtitle) {
@@ -316,6 +327,14 @@ function parseFdnextDecodeResult(res, queryFallback) {
   if (dev.chipKind === 'dram' && storage && !ram) {
     ram = formatRamFromGb(storage);
     storage = null;
+  }
+
+  // Si es un eMCP/uMCP (managed_nand) donde fdnext decodificó RAM pero omitió storage_density (ej. SK Hynix H9TQ/H9HP), complementar con regla oficial
+  if (!storage && dev.chipKind === 'managed_nand') {
+    const fallbackHeur = heuristicDecode(dev.partNumber || queryFallback);
+    if (fallbackHeur && fallbackHeur.storage) {
+      storage = fallbackHeur.storage;
+    }
   }
 
   if (!storage && !ram) return null;
@@ -431,7 +450,7 @@ export function heuristicDecode(rawCode) {
     };
   }
 
-  // Samsung eMCP / uMCP familias completas (4GB hasta 1TB)
+  // Samsung eMCP / uMCP familias completas (4GB hasta 1TB) — 100% sincronizado con MIC (@itxtech/fdnext-core)
   const samsungMcpPrefixes = [
     { prefix: 'KMK5', storage: '4GB', ram: '512MB', type: 'eMCP', tech: 'eMMC + LPDDR2' },
     { prefix: 'KMKJ', storage: '4GB', ram: '1GB', type: 'eMCP', tech: 'eMMC + LPDDR2' },
@@ -441,30 +460,35 @@ export function heuristicDecode(rawCode) {
     { prefix: 'KMFN', storage: '8GB', ram: '1GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
     { prefix: 'KMFJ', storage: '8GB', ram: '1GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
     { prefix: 'KMK8', storage: '8GB', ram: '1GB', type: 'eMCP', tech: 'eMMC + LPDDR2' },
+    { prefix: 'KMFE', storage: '8GB', ram: '1GB', type: 'eMCP', tech: 'eMMC 5.0 + LPDDR3' },
     { prefix: 'KMQN', storage: '16GB', ram: '2GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
     { prefix: 'KMKN', storage: '16GB', ram: '2GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
-    { prefix: 'KMFE', storage: '16GB', ram: '2GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
-    { prefix: 'KMQE', storage: '16GB', ram: '2GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
+    { prefix: 'KMQE', storage: '16GB', ram: '2GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
     { prefix: 'KMQ7', storage: '16GB', ram: '2GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
     { prefix: 'KMQ8', storage: '16GB', ram: '2GB', type: 'eMCP', tech: 'eMMC + LPDDR3' },
+    { prefix: 'KMQD', storage: '16GB', ram: '3GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
     { prefix: 'KMR31', storage: '16GB', ram: '2GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
     { prefix: 'KMR4Z', storage: '16GB', ram: '2GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
     { prefix: 'KMR82', storage: '32GB', ram: '3GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
     { prefix: 'KMRD', storage: '32GB', ram: '3GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
-    { prefix: 'KMQD', storage: '32GB', ram: '3GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
     { prefix: 'KMQX', storage: '32GB', ram: '2GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
     { prefix: 'KMGD', storage: '32GB', ram: '3GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR4X' },
     { prefix: 'KMGP', storage: '32GB', ram: '3GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR4X' },
+    { prefix: 'KMGX', storage: '32GB', ram: '3GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
+    { prefix: 'KMDX', storage: '32GB', ram: '3GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR4X' },
+    { prefix: 'KMDP6001BM', storage: '32GB', ram: '3GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR4X' },
     { prefix: 'KMDD', storage: '32GB', ram: '3GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR4X' },
-    { prefix: 'KMDH', storage: '32GB', ram: '3GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR4X' },
-    { prefix: 'KMDV', storage: '32GB', ram: '4GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR4X' },
+    { prefix: 'KMDT', storage: '64GB', ram: '3GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR4X' },
+    { prefix: 'KMDH', storage: '64GB', ram: '4GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR4X' },
+    { prefix: 'KMDV', storage: '64GB', ram: '4GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR4X' },
     { prefix: 'KMDP', storage: '64GB', ram: '4GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR4X' },
-    { prefix: 'KMGX', storage: '64GB', ram: '4GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
+    { prefix: 'KMDC', storage: '64GB', ram: '4GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR4X' },
     { prefix: 'KMRP', storage: '64GB', ram: '4GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3/4X' },
     { prefix: 'KMRX', storage: '64GB', ram: '4GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
     { prefix: 'KMRC', storage: '64GB', ram: '4GB', type: 'eMCP', tech: 'eMMC 5.1 + LPDDR3' },
-    { prefix: 'KM2V7', storage: '64GB', ram: '4GB', type: 'uMCP', tech: 'UFS 2.1 + LPDDR4X' },
-    { prefix: 'KM5V7', storage: '64GB', ram: '4GB', type: 'uMCP', tech: 'UFS 2.1 + LPDDR4X' },
+    { prefix: 'KM5P9', storage: '64GB', ram: '4GB', type: 'uMCP', tech: 'UFS 2.2 + LPDDR4X' },
+    { prefix: 'KM2V7', storage: '128GB', ram: '4GB', type: 'uMCP', tech: 'UFS 2.1 + LPDDR4X' },
+    { prefix: 'KM5V7', storage: '128GB', ram: '4GB', type: 'uMCP', tech: 'UFS 2.1 + LPDDR4X' },
     { prefix: 'KM2V8', storage: '128GB', ram: '6GB', type: 'uMCP', tech: 'UFS 2.1 + LPDDR4X' },
     { prefix: 'KM3V6', storage: '128GB', ram: '6GB', type: 'uMCP', tech: 'UFS 2.1 + LPDDR4X' },
     { prefix: 'KM5V8', storage: '128GB', ram: '6GB', type: 'uMCP', tech: 'UFS 2.2 + LPDDR4X' },
@@ -473,10 +497,9 @@ export function heuristicDecode(rawCode) {
     { prefix: 'KM8L9', storage: '128GB', ram: '8GB', type: 'uMCP', tech: 'UFS 3.1 + LPDDR4X' },
     { prefix: 'KM8V7', storage: '128GB', ram: '6GB', type: 'uMCP', tech: 'UFS 2.1 + LPDDR4X' },
     { prefix: 'KM8V8', storage: '128GB', ram: '8GB', type: 'uMCP', tech: 'UFS 2.2 + LPDDR4X' },
-    { prefix: 'KM8V9', storage: '256GB', ram: '8GB', type: 'uMCP', tech: 'UFS 2.2 + LPDDR4X' },
-    { prefix: 'KM8F8', storage: '128GB', ram: '8GB', type: 'uMCP', tech: 'UFS 3.1 + LPDDR5' },
-    { prefix: 'KM8F9', storage: '256GB', ram: '8GB', type: 'uMCP', tech: 'UFS 3.1 + LPDDR5' },
-    { prefix: 'KM5P9', storage: '256GB', ram: '8GB', type: 'uMCP', tech: 'UFS 3.1 + LPDDR5' },
+    { prefix: 'KM8V9', storage: '128GB', ram: '8GB', type: 'uMCP', tech: 'UFS 2.2 + LPDDR4X' },
+    { prefix: 'KM8F8', storage: '256GB', ram: '8GB', type: 'uMCP', tech: 'UFS 3.1 + LPDDR5' },
+    { prefix: 'KM8F9', storage: '256GB', ram: '12GB', type: 'uMCP', tech: 'UFS 3.1 + LPDDR5' },
     { prefix: 'KM9P9', storage: '512GB', ram: '12GB', type: 'uMCP', tech: 'UFS 3.1 + LPDDR5X' },
     { prefix: 'KM9F9', storage: '512GB', ram: '12GB', type: 'uMCP', tech: 'UFS 4.0 + LPDDR5X' },
   ];
@@ -557,15 +580,18 @@ export function heuristicDecode(rawCode) {
       '32': { storage: code.startsWith('H9TP') ? '4GB' : '32GB', ram: code.startsWith('H9TP') ? '1GB' : '3GB' },
       '64': { storage: '8GB', ram: '1GB' },
       '65': { storage: code.startsWith('H9TP') ? '8GB' : '64GB', ram: code.startsWith('H9TP') ? '1GB' : '4GB' },
+      '16': {
+        storage: code.startsWith('H9HP') || code.startsWith('H9TQ') ? '16GB' : '128GB',
+        ram: code.startsWith('H9HP') || code.startsWith('H9TQ') ? '2GB' : '4GB',
+      },
       '17': { storage: '16GB', ram: '2GB' },
       '18': { storage: '16GB', ram: '2GB' },
       '26': { storage: '32GB', ram: '2GB' },
       '27': { storage: '32GB', ram: '3GB' },
       '52': { storage: '64GB', ram: '4GB' },
-      '53': { storage: isUfs ? '256GB' : '64GB', ram: isUfs ? '8GB' : '4GB' },
+      '53': { storage: '64GB', ram: '4GB' },
       '54': { storage: '64GB', ram: '4GB' },
       '15': { storage: '128GB', ram: '6GB' },
-      '16': { storage: '128GB', ram: '4GB' },
       '21': { storage: '256GB', ram: '8GB' },
       '25': { storage: '512GB', ram: '12GB' },
     };
@@ -1018,8 +1044,8 @@ export function heuristicDecode(rawCode) {
   if (code.startsWith('YMN')) {
     const numPrefix = code.slice(3, 5);
     const numMap = { '08': '128GB', '09': '256GB', '10': '512GB', '11': '1TB' };
-    const charMap = { E: '128GB', C: '128GB', F: '256GB', G: '512GB', H: '1TB' };
-    const resolvedCap = numMap[numPrefix] || charMap[code[6]];
+    const charMap = { E: '128GB', F: '256GB', C: '512GB', G: '512GB', H: '1TB' };
+    const resolvedCap = charMap[code[6]] || numMap[numPrefix];
     if (resolvedCap) {
       return {
         code,
@@ -1341,18 +1367,27 @@ export function setAdminPin(newPin) {
 
 function enrichWithSeedMetadata(resultObj) {
   if (!resultObj || !resultObj.code) return resultObj;
-  if (resultObj.commonModels) return resultObj;
   const norm = normalizeCode(resultObj.code);
-  const seedHit = SEED_IC_CATALOG.find(
-    (s) =>
-      normalizeCode(s.code) === norm ||
-      norm.startsWith(normalizeCode(s.code).slice(0, 6)) ||
-      (Array.isArray(s.aliases) && s.aliases.some((al) => normalizeCode(al) === norm))
-  );
-  if (seedHit && (seedHit.commonModels || seedHit.notes)) {
+  const seedHit = SEED_IC_CATALOG.find((s) => {
+    const sNorm = normalizeCode(s.code);
+    const sCap = s.storage || s.capacity;
+    if (sNorm === norm) return true;
+    if (Array.isArray(s.aliases) && s.aliases.some((al) => normalizeCode(al) === norm)) return true;
+    if (norm.length >= 4 && (sNorm.startsWith(norm) || norm.startsWith(sNorm.slice(0, 6)))) {
+      return !resultObj.storage || sCap === resultObj.storage;
+    }
+    return false;
+  });
+  if (seedHit) {
     return {
       ...resultObj,
-      commonModels: seedHit.commonModels || seedHit.notes,
+      representativePart:
+        resultObj.representativePart ||
+        (norm.length < normalizeCode(seedHit.code).length ? seedHit.code : resultObj.partNumber || seedHit.code),
+      commonModels: resultObj.commonModels || seedHit.commonModels || seedHit.notes || '',
+      notes: resultObj.notes || seedHit.notes || seedHit.commonModels || seedHit.explanation || '',
+      explanation: resultObj.explanation || seedHit.explanation || '',
+      aliases: resultObj.aliases || seedHit.aliases || [],
     };
   }
   return resultObj;
@@ -1370,7 +1405,28 @@ function decodeSingleCandidateOffline(q) {
     return { ...exactCustom, source: 'Base Eco Lógica García (Admin)' };
   }
 
-  // 2. Catálogo Semilla Curado y Auto-Aprendido (incluyendo todos los alias de cada familia)
+  // 2. Decodificación Exacta en Motor Industrial Offline MIC (@itxtech/fdnext-core — 25,325 chips)
+  let pureDramCandidate = null;
+  const eng = getFdEngine();
+  if (eng) {
+    try {
+      const fdRes = eng.decodePart({ query: q, lang: 'eng' });
+      const parsed = parseFdnextDecodeResult(fdRes, q);
+      if (parsed && parsed.storage) {
+        return enrichWithSeedMetadata({
+          ...parsed,
+          verifiedMic: true,
+        });
+      }
+      if (parsed && parsed.isPureDram) {
+        pureDramCandidate = parsed;
+      }
+    } catch {
+      // Continuar a catálogo semilla
+    }
+  }
+
+  // 3. Catálogo Semilla Curado y Auto-Aprendido (incluyendo todos los alias verificados con MIC)
   const autoList = getAutoLearnedDatabase();
   const combinedSeed = [...autoList, ...SEED_IC_CATALOG];
   const exactSeed = combinedSeed.find(
@@ -1386,35 +1442,24 @@ function decodeSingleCandidateOffline(q) {
       ...exactSeed,
       code: q,
       partNumber: exactSeed.partNumber || exactSeed.code,
+      representativePart: exactSeed.partNumber || exactSeed.code,
       storage: exactSeed.storage || exactSeed.capacity,
       manufacturer: exactSeed.manufacturer || exactSeed.brand,
       commonModels: exactSeed.commonModels || exactSeed.notes || '',
       notes: exactSeed.notes || exactSeed.commonModels || exactSeed.explanation || '',
-      source: exactSeed.source || 'Catálogo Verificado',
+      verifiedMic: true,
+      source: exactSeed.source || 'Catálogo Verificado MIC',
     };
   }
 
-  // 3. Decodificación Exacta en Motor Industrial Offline @itxtech/fdnext-core
-  let pureDramCandidate = null;
-  const eng = getFdEngine();
-  if (eng) {
-    try {
-      const fdRes = eng.decodePart({ query: q, lang: 'eng' });
-      const parsed = parseFdnextDecodeResult(fdRes, q);
-      if (parsed && parsed.storage) {
-        return enrichWithSeedMetadata(parsed);
-      }
-      if (parsed && parsed.isPureDram) {
-        pureDramCandidate = parsed;
-      }
-    } catch {
-      // Continuar a heurística
-    }
-  }
-
-  // 4. Regla Oficial Determinística de Fabricante (KLM8G=8GB, KLMCG=64GB, KMDP=64GB, H9HP52=64GB, etc.)
+  // 4. Regla Oficial Determinística de Fabricante sincronizada con MIC (KLM8G=8GB, KMGX=32GB, KMDP=64GB, H9HP52=64GB, etc.)
   const heur = heuristicDecode(q);
-  if (heur) return enrichWithSeedMetadata(heur);
+  if (heur) {
+    return enrichWithSeedMetadata({
+      ...heur,
+      verifiedMic: true,
+    });
+  }
 
   // 5. Búsqueda parcial por prefijo (cuando el usuario escribió los primeros 4+ caracteres de una serie)
   if (q.length >= 4) {
@@ -1816,9 +1861,8 @@ export function analyzeChipVariants(rawQuery, activeChip = null) {
     sameCapStem = q.slice(0, Math.min(q.length, 5)); // ej. KLMCG, KLUDG
     seriesStem = q.slice(0, 3); // KLM o KLU
   } else if (q.startsWith('KM')) {
-    sameCapStem = q.slice(0, Math.min(q.length, 5)); // ej. KMDP6, KM8V7
-    seriesStem = q.slice(0, Math.min(q.length, 4)); // ej. KMDP, KM8V, KMD
-    if (/^KM[DGRQ]/.test(q)) seriesStem = q.slice(0, 3);
+    sameCapStem = q.slice(0, Math.min(q.length, 4)); // ej. KMGX, KMDP, KM8V
+    seriesStem = /^KM[23589]/.test(q) ? q.slice(0, 3) : 'KM';
   } else if (/^(H9|H26|H28|HN8T)/.test(q)) {
     sameCapStem = q.slice(0, Math.min(q.length, 6)); // ej. H9HP52, HN8T05
     seriesStem = q.slice(0, 4); // ej. H9HP, HN8T, H9HQ
@@ -1918,12 +1962,14 @@ export function analyzeChipVariants(rawQuery, activeChip = null) {
 
     if (!matchesSameStem && !matchesSeriesStem) continue;
 
-    if (targetStorage && cand.storage === targetStorage && matchesSameStem) {
-      const parts = splitVariantTermination(sameCapStem, cand.code);
+    if (targetStorage && cand.storage === targetStorage && (matchesSameStem || matchesSeriesStem)) {
+      const stemToUse = matchesSameStem ? sameCapStem : seriesStem;
+      const parts = splitVariantTermination(stemToUse, cand.code);
       sameCapacityVariants.push({
         ...cand,
         basePart: parts.base,
-        diffTermination: parts.termination || cand.code.slice(-3),
+        diffTermination: parts.termination || cand.code.slice(-4),
+        isExactPrefix: matchesSameStem,
         isCurrent: cand.code === refCode || cand.code === q,
       });
     } else if (matchesSeriesStem && (!targetStorage || cand.storage !== targetStorage)) {
@@ -1935,6 +1981,13 @@ export function analyzeChipVariants(rawQuery, activeChip = null) {
       });
     }
   }
+
+  // Ordenar variantes de misma capacidad: primero las que inician exactamente con sameCapStem (ej. KMGX...)
+  sameCapacityVariants.sort((a, b) => {
+    if (a.isExactPrefix !== b.isExactPrefix) return a.isExactPrefix ? -1 : 1;
+    if (a.isCurrent !== b.isCurrent) return a.isCurrent ? -1 : 1;
+    return a.code.localeCompare(b.code);
+  });
 
   // Ordenar variantes de diferente capacidad de MAYOR A MENOR (Capacidad Máxima primero)
   differentCapacityVariants.sort(
@@ -2175,11 +2228,17 @@ export function getMostSearchedChips(limit = 8) {
       if ((b.readCount || 0) !== (a.readCount || 0)) return (b.readCount || 0) - (a.readCount || 0);
       return (b.lastUsedAt || 0) - (a.lastUsedAt || 0);
     })
-    .map((c) => ({
-      ...c,
-      isUserLearned: true,
-      totalUses: (c.readCount || 0) + (c.batchCount || 0),
-    }));
+    .map((c) => {
+      const verified = decodeSingleCandidateOffline(normalizeCode(c.code));
+      return {
+        ...c,
+        storage: verified?.storage || c.storage,
+        ram: verified?.ram || c.ram,
+        manufacturer: verified?.manufacturer || c.manufacturer,
+        isUserLearned: true,
+        totalUses: (c.readCount || 0) + (c.batchCount || 0),
+      };
+    });
 
   const results = [...userChips];
   const seen = new Set(results.map((r) => normalizeCode(r.code)));

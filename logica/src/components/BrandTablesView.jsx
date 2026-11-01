@@ -8,58 +8,63 @@ import {
   normalizeCode,
 } from '../services/icEngine';
 
-// Extrae la parte exacta que define la capacidad con una etiqueta corta y clara
+// Extrae la anatomía exacta del código (Inicio + Clave de Capacidad + Terminación) y explicación técnica MIC
 export function highlightCodeDifference(item) {
   if (!item || !item.code) {
-    return { pre: '', highlight: '', post: '', why: '' };
+    return { pre: '', highlight: '', post: '', why: '', ruleDetail: '' };
   }
-  const code = String(item.code || '').toUpperCase();
+  const rawCode = String(item.code || '').toUpperCase();
+  const repCode = String(item.representativePart || item.partNumber || rawCode).toUpperCase();
+  const code = rawCode.length < 7 && repCode.startsWith(rawCode) ? repCode : rawCode;
+  const isCompletedFromPrefix = code !== rawCode;
   const cap = item.storage || item.capacity || '64GB';
 
-  if (item.ruleSegment && code.includes(item.ruleSegment.toUpperCase())) {
-    const seg = item.ruleSegment.toUpperCase();
-    const idx = code.indexOf(seg);
-    return {
-      pre: code.slice(0, idx),
-      highlight: code.slice(idx, idx + seg.length),
-      post: code.slice(idx + seg.length),
-      why: `Clave "${seg}" = ${cap}`,
-    };
-  }
-
   if (/^KL[MU][48ABCDEFGH]G/.test(code)) {
+    const seg = code.slice(3, 5);
     return {
       pre: code.slice(0, 3),
-      highlight: code.slice(3, 5),
+      highlight: seg,
       post: code.slice(5),
-      why: `Clave "${code.slice(3, 5)}" = ${cap}`,
+      isCompletedFromPrefix,
+      why: `Clave "${seg}" = ${cap}`,
+      ruleDetail: `Regla Samsung ${code.startsWith('KLU') ? 'UFS' : 'eMMC'}: las letras "${seg}" en la posición 4–5 definen ${cap} (4G=4GB, 8G=8GB, AG=16GB, BG=32GB, CG=64GB, DG=128GB, EG=256GB, FG=512GB, GG=1TB).`,
     };
   }
 
-  if (/^KM[23589][VFPL][6789]/.test(code)) {
+  if (/^KM[23589][VFPLHBC][6789]/.test(code)) {
+    const seg = code.slice(3, 5);
     return {
-      pre: code.slice(0, 4),
-      highlight: code.slice(4, 5),
+      pre: code.slice(0, 3),
+      highlight: seg,
       post: code.slice(5),
-      why: `Dígito "${code[4]}" = ${cap}`,
+      isCompletedFromPrefix,
+      why: `Clave "${seg}" = ${cap}`,
+      ruleDetail: `Regla Samsung uMCP (MIC): la 4.ª letra "${code[3]}" define el almacenamiento UFS (${code[3]} = ${cap}; P/H/C=64GB, V/L=128GB, F/B=256GB) y el 5.º dígito "${code[4]}" define la RAM (${item.ram || 'LPDDR4X/5'}).`,
     };
   }
 
   if (/^KM[A-Z0-9]{2}/.test(code)) {
+    const seg = code.slice(2, 4);
+    const ninth = code.length >= 10 ? code.slice(8, 10) : '';
     return {
       pre: 'KM',
-      highlight: code.slice(2, 5),
-      post: code.slice(5),
-      why: `Serie "${code.slice(2, 5)}" = ${cap}`,
+      highlight: seg,
+      post: code.slice(4),
+      isCompletedFromPrefix,
+      why: `Serie "${seg}" = ${cap}`,
+      ruleDetail: `Regla Samsung eMCP (MIC): la serie "KM${seg}"${ninth ? ` con bloque "${ninth}"` : ''} corresponde a ${cap} de almacenamiento Flash eMMC + ${item.ram ? `${item.ram} RAM` : 'RAM integrada'}.`,
     };
   }
 
   if (/^(H9TP|H9TQ|H9HP|H9HK|H9HQ|H9QT|H9HR|H26M|H28U|H28S|HN8T)/.test(code) && code.length >= 6) {
+    const seg = code.slice(4, 6);
     return {
       pre: code.slice(0, 4),
-      highlight: code.slice(4, 6),
+      highlight: seg,
       post: code.slice(6),
-      why: `Código "${code.slice(4, 6)}" = ${cap}`,
+      isCompletedFromPrefix,
+      why: `Código "${seg}" = ${cap}`,
+      ruleDetail: `Regla SK Hynix (MIC): los caracteres "${seg}" en la posición 5–6 de "${code.slice(0, 6)}" indican ${cap} de almacenamiento Flash.`,
     };
   }
 
@@ -69,7 +74,9 @@ export function highlightCodeDifference(item) {
       pre: sdinMatch[1],
       highlight: sdinMatch[2],
       post: sdinMatch[3] || '',
+      isCompletedFromPrefix,
       why: `Final "${sdinMatch[2]}" = ${cap}`,
+      ruleDetail: `Regla SanDisk / WD iNAND: el número después del guion ("-${sdinMatch[2]}") indica directamente ${cap} de almacenamiento.`,
     };
   }
 
@@ -81,7 +88,9 @@ export function highlightCodeDifference(item) {
         pre: code.slice(0, idx),
         highlight: m[1],
         post: code.slice(idx + 2),
+        isCompletedFromPrefix,
         why: `Centro "${m[1]}" = ${cap}`,
+        ruleDetail: `Regla Kioxia / Toshiba: el código central "${m[1]}" define ${cap} (G5=4GB, G6=8GB, G7=16GB, G8=32GB, G9=64GB, T0=128GB, T1=256GB, T2=512GB, T3=1TB).`,
       };
     }
   }
@@ -91,7 +100,9 @@ export function highlightCodeDifference(item) {
       pre: code.slice(0, 3),
       highlight: code.slice(3, 4),
       post: code.slice(4),
+      isCompletedFromPrefix,
       why: `Clave "${code[3]}" = ${cap}`,
+      ruleDetail: `Regla Apple / Kioxia NAND: el 4.º carácter "${code[3]}" define directamente ${cap} de almacenamiento NAND.`,
     };
   }
 
@@ -100,7 +111,9 @@ export function highlightCodeDifference(item) {
       pre: 'KICM',
       highlight: code.slice(4, 7),
       post: code.slice(7),
+      isCompletedFromPrefix,
       why: `Clave "${code.slice(4, 7)}" = ${cap}`,
+      ruleDetail: `Regla Apple / Kioxia NAND: el bloque "${code.slice(4, 7)}" indica ${cap} de almacenamiento.`,
     };
   }
 
@@ -110,7 +123,9 @@ export function highlightCodeDifference(item) {
       pre: h23Match[1],
       highlight: h23Match[2],
       post: h23Match[3] || '',
+      isCompletedFromPrefix,
       why: `Clave "${h23Match[2]}" = ${cap}`,
+      ruleDetail: `Regla Apple / SK Hynix NAND: el bloque "${h23Match[2]}" indica ${cap} (DG8=16GB, EG8=32GB, FG8=64GB, 1T8=128GB, 2T8=256GB, 4T8=512GB).`,
     };
   }
 
@@ -120,16 +135,33 @@ export function highlightCodeDifference(item) {
       pre: embeddedGbMatch[1],
       highlight: embeddedGbMatch[2],
       post: embeddedGbMatch[3] || '',
+      isCompletedFromPrefix,
       why: `Clave "${embeddedGbMatch[2]}" = ${cap}`,
+      ruleDetail: `El bloque numérico "${embeddedGbMatch[2]}" dentro del código indica directamente ${cap} de almacenamiento.`,
     };
   }
 
-  if (/^J[A-Z0-9]{4}$/.test(code)) {
+  if (/^J[A-Z0-9]{4}$/.test(rawCode)) {
     return {
-      pre: code.slice(0, 2),
-      highlight: code.slice(2),
-      post: '',
-      why: `FBGA "${code}" = ${cap}`,
+      pre: rawCode.slice(0, 2),
+      highlight: rawCode.slice(2),
+      post: item.partNumber && item.partNumber !== rawCode ? ` → ${item.partNumber}` : '',
+      isCompletedFromPrefix: false,
+      why: `FBGA "${rawCode}" = ${cap}`,
+      ruleDetail: `Código corto FBGA de Micron ("${rawCode}") decodificado en base oficial MIC${item.partNumber && item.partNumber !== rawCode ? ` como ${item.partNumber}` : ''} = ${cap}.`,
+    };
+  }
+
+  if (item.ruleSegment && code.includes(item.ruleSegment.toUpperCase())) {
+    const seg = item.ruleSegment.toUpperCase();
+    const idx = code.indexOf(seg);
+    return {
+      pre: code.slice(0, idx),
+      highlight: code.slice(idx, idx + seg.length),
+      post: code.slice(idx + seg.length),
+      isCompletedFromPrefix,
+      why: `Clave "${seg}" = ${cap}`,
+      ruleDetail: item.explanation || `El segmento "${seg}" identifica la capacidad de ${cap} en esta serie.`,
     };
   }
 
@@ -137,7 +169,9 @@ export function highlightCodeDifference(item) {
     pre: '',
     highlight: code,
     post: '',
+    isCompletedFromPrefix,
     why: `Capacidad ${cap}`,
+    ruleDetail: item.explanation || item.notes || `Memoria verificada de ${cap}.`,
   };
 }
 
