@@ -79,7 +79,20 @@ function formatChipTypeForSpeech(rawType) {
   return `tipo ${rawType}`;
 }
 
-export function speakChipResult(chip, enabled = true, shortMode = false) {
+function resolveBoxTierSpeech(chip) {
+  const typeStr = String(chip?.type || '').toUpperCase();
+  const techStr = String(chip?.tech || '').toUpperCase();
+  const mfg = String(chip?.manufacturer || chip?.brand || '').toUpperCase();
+  if (mfg.includes('APPLE') || mfg.includes('IPHONE') || typeStr.includes('NVME') || techStr.includes('PCIE')) {
+    return 'caja iPhone';
+  }
+  if (typeStr.includes('UMCP') || typeStr.includes('UFS') || techStr.includes('UFS') || techStr.includes('UMCP')) {
+    return 'caja UFS';
+  }
+  return 'caja eMMC';
+}
+
+export function speakChipResult(chip, enabled = true, shortMode = false, includeBox = true) {
   if (!enabled || !chip || typeof window === 'undefined' || !('speechSynthesis' in window)) {
     return;
   }
@@ -89,6 +102,7 @@ export function speakChipResult(chip, enabled = true, shortMode = false) {
 
     const storageText = formatCapacityForSpeech(chip.storage || chip.capacity);
     const typeText = formatChipTypeForSpeech(chip.type);
+    const boxText = includeBox ? resolveBoxTierSpeech(chip) : '';
     const cleanRam =
       chip.ram && !String(chip.ram).toLowerCase().includes('sin ram') ? chip.ram : '';
     const ramText = cleanRam ? `${formatCapacityForSpeech(cleanRam)} de RAM` : '';
@@ -99,12 +113,13 @@ export function speakChipResult(chip, enabled = true, shortMode = false) {
 
     let phrase = '';
     if (shortMode) {
-      phrase = [storageText, typeText].filter(Boolean).join(', ') || chip.code;
+      phrase = [storageText, typeText, boxText].filter(Boolean).join(', ') || chip.code;
     } else {
       const parts = [];
       if (storageText) parts.push(storageText);
       if (typeText) parts.push(typeText);
       if (brandText && brandText !== 'Desconocido') parts.push(brandText);
+      if (boxText) parts.push(boxText);
       if (ramText) parts.push(ramText);
       phrase = parts.join(', ');
     }

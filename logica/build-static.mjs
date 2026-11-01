@@ -72,7 +72,7 @@ const assetFiles = fs.existsSync(distAssetsDir)
   ? fs.readdirSync(distAssetsDir).map((f) => `./assets/${f}`)
   : [];
 
-const swContent = `const CACHE_NAME = 'ecologica-garcia-ic-v18';
+const swContent = `const CACHE_NAME = 'ecologica-garcia-ic-v19';
 const ASSETS = [
   './',
   './index.html',

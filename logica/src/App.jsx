@@ -21,6 +21,8 @@ import {
   ChevronRight,
   GitBranch,
   TrendingUp,
+  Zap,
+  Box,
 } from 'lucide-react';
 import {
   decodeChipOffline,
@@ -163,6 +165,77 @@ function getChipTypeInfo(chip) {
   return { badge: chip?.type || 'IC', desc: 'Flash IC' };
 }
 
+export function getBoardTierInfo(chip) {
+  if (!chip) return null;
+  const typeStr = String(chip.type || '').toUpperCase();
+  const techStr = String(chip.tech || '').toUpperCase();
+  const mfg = String(chip.manufacturer || chip.brand || '').toUpperCase();
+
+  // 1. Apple iPhone NVMe NAND (BGA60 / 70 / 110 / 315)
+  if (
+    mfg.includes('APPLE') ||
+    mfg.includes('IPHONE') ||
+    typeStr.includes('NVME') ||
+    techStr.includes('PCIE') ||
+    techStr.includes('APPLE')
+  ) {
+    return {
+      tierKey: 'IPHONE',
+      tierName: 'Apple NVMe NAND',
+      boxLabel: 'Caja iPhone · Alta Cotización',
+      shortBox: 'Caja iPhone',
+      voiceBox: 'caja iPhone',
+      badgeClass: 'bg-amber-400 text-black border-amber-200',
+      boxClass: 'border-amber-400/70 bg-amber-950/40 text-amber-300',
+      pillClass: 'bg-amber-500/20 text-amber-300 border-amber-400/40',
+      isModernUfs: false,
+      isApple: true,
+    };
+  }
+
+  // 2. UFS / uMCP (Generación Moderna 2018–2026, alta velocidad)
+  if (
+    typeStr.includes('UMCP') ||
+    typeStr.includes('UFS') ||
+    techStr.includes('UFS') ||
+    techStr.includes('UMCP')
+  ) {
+    const isUmcp = typeStr.includes('UMCP') || techStr.includes('UMCP');
+    const genMatch =
+      techStr.match(/UFS\s*(4\.0|3\.1|2\.2|2\.1|2\.0)/i) ||
+      typeStr.match(/UFS\s*(4\.0|3\.1|2\.2|2\.1)/i);
+    const gen = genMatch ? genMatch[0].toUpperCase() : isUmcp ? 'uMCP' : 'UFS';
+    return {
+      tierKey: 'UFS',
+      tierName: isUmcp ? `uMCP (${gen})` : `UFS Flash (${gen})`,
+      boxLabel: 'Caja UFS / uMCP · Placa Moderna',
+      shortBox: 'Caja UFS/uMCP',
+      voiceBox: 'caja UFS',
+      badgeClass: 'bg-emerald-400 text-black border-emerald-200',
+      boxClass: 'border-emerald-400/70 bg-emerald-950/40 text-emerald-300',
+      pillClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40',
+      isModernUfs: true,
+      isApple: false,
+    };
+  }
+
+  // 3. eMMC / eMCP (Generación Estándar)
+  const isEmcp = typeStr.includes('EMCP') || techStr.includes('EMCP');
+  const gen = techStr.includes('5.1') ? 'eMMC 5.1' : techStr.includes('5.0') ? 'eMMC 5.0' : 'eMMC';
+  return {
+    tierKey: 'EMMC',
+    tierName: isEmcp ? `eMCP (${gen} + RAM)` : `eMMC (${gen})`,
+    boxLabel: 'Caja eMMC / eMCP · Estándar',
+    shortBox: 'Caja eMMC/eMCP',
+    voiceBox: 'caja eMMC',
+    badgeClass: 'bg-sky-400 text-black border-sky-200',
+    boxClass: 'border-sky-400/60 bg-sky-950/35 text-sky-300',
+    pillClass: 'bg-sky-500/20 text-sky-300 border-sky-400/40',
+    isModernUfs: false,
+    isApple: false,
+  };
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('search');
 
@@ -238,6 +311,20 @@ export default function App() {
       setToastMsg(found.fullLabel);
       setTimeout(() => setToastMsg(''), 1500);
     }
+  }
+
+  const [isHudMode, setIsHudMode] = useState(() => {
+    return Boolean(safeGetStorage('eco_hud_mode_v1', false));
+  });
+
+  function toggleHudMode() {
+    setIsHudMode((prev) => {
+      const next = !prev;
+      safeSetStorage('eco_hud_mode_v1', next);
+      setToastMsg(next ? '⚡ Modo Mesa Activado (Operador Rápido)' : 'Modo Estándar');
+      setTimeout(() => setToastMsg(''), 1400);
+      return next;
+    });
   }
 
   const [usageVersion, setUsageVersion] = useState(0);
@@ -590,6 +677,10 @@ export default function App() {
     speakChipResult({ ...chip, storage: cap }, voiceEnabled, true);
     setToastMsg(`+1 (${cap}) sumado al lote`);
     setTimeout(() => setToastMsg(''), 1400);
+    if (isHudMode) {
+      setQuery('');
+      setTimeout(() => inputRef.current?.focus(), 60);
+    }
   }
 
   function handleAdjustBatchCount(bucketKey, delta) {
@@ -608,6 +699,18 @@ export default function App() {
 
   function handleResetBatch() {
     setBatchCounts({ '16GB': 0, '32GB': 0, '64GB': 0, '128GB': 0, '256GB': 0, '512GB+': 0 });
+  }
+
+  function handleAddDirectBucket(capKey) {
+    const bucket = normalizeBucketKey(capKey);
+    setBatchCounts((prev) => ({
+      ...prev,
+      [bucket]: (prev[bucket] || 0) + 1,
+    }));
+    playDetectionBeep(capKey);
+    speakChipResult({ code: capKey, storage: capKey, type: 'Flash' }, voiceEnabled, true, false);
+    setToastMsg(`+1 (${capKey}) sumado al lote`);
+    setTimeout(() => setToastMsg(''), 1400);
   }
 
   function handleSearchKeyDown(e) {
@@ -630,6 +733,7 @@ export default function App() {
   const theme = activeResult ? getCapacityTheme(activeResult.storage) : null;
   const activeDiff = activeResult ? highlightCodeDifference(activeResult) : null;
   const activeTypeInfo = activeResult ? getChipTypeInfo(activeResult) : null;
+  const activeBoardTier = activeResult ? getBoardTierInfo(activeResult) : null;
 
   const hasDualMemoryInChip = Boolean(
     activeResult &&
@@ -783,6 +887,22 @@ export default function App() {
 
               <button
                 type="button"
+                onClick={toggleHudMode}
+                title={isHudMode ? 'Volver a modo completo' : 'Activar Modo Mesa (Operador Rápido)'}
+                aria-pressed={isHudMode}
+                className={`px-2.5 py-1.5 rounded-xl font-black text-xs flex items-center gap-1 transition shrink-0 ${
+                  isHudMode
+                    ? 'bg-amber-400 text-black border border-amber-300 shadow-[0_0_16px_rgba(251,191,36,0.5)]'
+                    : 'pro-inset hover:border-emerald-400/50 text-emerald-300'
+                }`}
+              >
+                <Zap className="w-3.5 h-3.5 fill-current" />
+                <span className="hidden sm:inline">Modo Mesa</span>
+                <span className="sm:hidden">Mesa</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={openAddModal}
                 className="relative px-2.5 py-1.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs flex items-center gap-1 shadow-[0_0_16px_rgba(52,211,153,0.35)] transition"
               >
@@ -822,11 +942,45 @@ export default function App() {
         {/* ================================================================= */}
         {activeTab === 'search' && (
           <div className="space-y-3">
+            {/* BANNER HUD CUANDO EL MODO MESA ESTÁ ACTIVO */}
+            {isHudMode && (
+              <div className="p-2.5 sm:p-3 rounded-2xl bg-gradient-to-r from-amber-950/80 via-black to-emerald-950/80 border-2 border-amber-400/70 shadow-[0_0_24px_rgba(251,191,36,0.22)] flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-amber-400 text-black flex items-center justify-center font-black shrink-0">
+                    <Zap className="w-4 h-4 fill-current" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-mono font-black text-xs sm:text-sm text-white flex items-center gap-1.5 truncate">
+                      <span>MODO MESA ACTIVO</span>
+                      <span className="px-1.5 py-0.2 rounded bg-amber-400 text-black text-[9px] font-black uppercase shrink-0">
+                        Rápido
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-emerald-300 font-mono block truncate">
+                      Voz con tipo y caja de separación · Suma y limpia en un toque
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="px-2.5 py-1 rounded-xl bg-black/70 border border-emerald-400/50 font-mono text-xs font-black text-emerald-300">
+                    Lote: {totalBatchPieces}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={toggleHudMode}
+                    className="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-gray-200 font-mono text-xs font-bold transition"
+                  >
+                    ✕ Salir
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* BLOQUE PRINCIPAL: INPUT + RESULTADO INMEDIATO ARRIBA DEL TECLADO */}
-            <div className="rounded-2xl pro-panel-elevated p-3 sm:p-4 space-y-3">
+            <div className={`rounded-2xl pro-panel-elevated p-3 sm:p-4 space-y-3 ${isHudMode ? 'border-amber-400/40' : ''}`}>
               {/* Campo de búsqueda con indicador de capacidad integrado */}
               <div className="relative flex items-center">
-                <Search className="w-5 h-5 text-emerald-400 absolute left-3.5 pointer-events-none" />
+                <Search className={`w-5 h-5 absolute left-3.5 pointer-events-none ${isHudMode ? 'text-amber-400' : 'text-emerald-400'}`} />
                 <input
                   ref={inputRef}
                   type="text"
@@ -835,20 +989,22 @@ export default function App() {
                   onBlur={() => setTimeout(() => setIsInputFocused(false), 180)}
                   onChange={(e) => setQuery(e.target.value.toUpperCase())}
                   onKeyDown={handleSearchKeyDown}
-                  placeholder={dynamicSearchPlaceholder}
+                  placeholder={isHudMode ? 'Escribe chip (KMDP, KMGX, H9, JZ...)' : dynamicSearchPlaceholder}
                   aria-label="Código del chip"
                   autoComplete="off"
                   autoCorrect="off"
                   autoCapitalize="characters"
                   spellCheck={false}
-                  className="w-full pl-11 pr-36 sm:pr-44 py-3 sm:py-3.5 rounded-xl pro-inset focus:border-emerald-400 focus:outline-none font-mono font-black text-base sm:text-xl text-white placeholder:text-emerald-100/35 placeholder:font-sans placeholder:font-medium placeholder:text-xs sm:placeholder:text-sm tracking-wider transition"
+                  className={`w-full pl-11 pr-36 sm:pr-44 py-3 sm:py-3.5 rounded-xl pro-inset focus:outline-none font-mono font-black text-base sm:text-xl text-white placeholder:text-emerald-100/35 placeholder:font-sans placeholder:font-medium placeholder:text-xs sm:placeholder:text-sm tracking-wider transition ${
+                    isHudMode ? 'focus:border-amber-400 border-amber-400/30' : 'focus:border-emerald-400'
+                  }`}
                 />
 
                 {/* Lectura instantánea dentro del mismo input (Tipo + GB) */}
                 <div className="absolute right-2 flex items-center gap-1.5">
-                  {activeResult && activeTypeInfo && (
-                    <span className="hidden xs:inline-flex px-2 py-1 rounded-lg bg-emerald-950/90 border border-emerald-400/40 text-emerald-300 font-mono font-black text-xs">
-                      {activeTypeInfo.badge}
+                  {activeResult && activeBoardTier && (
+                    <span className={`hidden xs:inline-flex px-2 py-1 rounded-lg border font-mono font-black text-xs ${activeBoardTier.pillClass}`}>
+                      {activeBoardTier.shortBox}
                     </span>
                   )}
                   {activeResult && theme && (
@@ -912,9 +1068,108 @@ export default function App() {
               )}
 
               {/* ============================================================= */}
-              {/* TARJETA DE RESULTADO — DIRECTA AL GRANO (GB + TIPO + CLAVE)   */}
+              {/* MODO MESA / HUD DE OPERADOR RÁPIDO (PANTALLA LIMPIA)          */}
               {/* ============================================================= */}
-              {activeResult && theme && activeTypeInfo && (
+              {isHudMode && activeResult && theme && activeTypeInfo && activeBoardTier && (
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className="rounded-2xl border-2 border-amber-400/80 bg-gradient-to-b from-[#141006] via-black to-[#05130b] p-3.5 sm:p-4 shadow-[0_0_30px_rgba(251,191,36,0.22)] space-y-3"
+                >
+                  {/* Banner Gigante de Caja de Separación */}
+                  <div className={`p-2.5 sm:p-3 rounded-xl border-2 flex items-center justify-between gap-2 ${activeBoardTier.boxClass}`}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Box className="w-5 h-5 shrink-0" />
+                      <span className="font-mono font-black text-xs sm:text-sm uppercase tracking-wide truncate">
+                        {activeBoardTier.boxLabel}
+                      </span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded bg-black/70 font-mono text-[10px] font-black shrink-0">
+                      {activeBoardTier.tierName}
+                    </span>
+                  </div>
+
+                  {/* Bloque Central: Capacidad Gigante + Tipo + Botón Táctil de Suma Inmediata */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className={`px-4 sm:px-6 py-2.5 sm:py-3.5 rounded-2xl border-2 font-mono font-black text-4xl sm:text-6xl tracking-tight leading-none shrink-0 ${theme.badge}`}
+                      >
+                        {activeResult.storage}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-mono font-black text-lg sm:text-2xl text-white truncate">
+                          {activeTypeInfo.badge}
+                        </div>
+                        <div className="text-xs font-mono text-gray-300 truncate">
+                          {activeResult.manufacturer} {hasDualMemoryInChip ? `· RAM ${activeResult.ram}` : ''}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Botones: Voz + Botón Gigante de Sumar y Limpiar */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => speakChipResult(activeResult, true, false, true)}
+                        aria-label="Escuchar capacidad y caja"
+                        className="p-3 sm:p-3.5 rounded-xl bg-black/70 border border-emerald-400/40 text-emerald-300 hover:bg-black transition shrink-0"
+                        title="Escuchar capacidad, tipo y caja"
+                      >
+                        <Volume2 className="w-5 h-5" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => addChipToBatch(activeResult)}
+                        className="px-4 sm:px-7 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-emerald-400 to-emerald-300 hover:from-emerald-300 hover:to-emerald-200 text-black font-black text-sm sm:text-base flex items-center gap-1.5 shadow-[0_0_25px_rgba(52,211,153,0.5)] active:scale-95 transition"
+                      >
+                        <Plus className="w-5 h-5 stroke-[3]" />
+                        <span>+1 SUMAR</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Botonera de Mesa Rápida táctil en modo HUD */}
+              {isHudMode && (
+                <div className="p-3 rounded-2xl bg-black/80 border border-amber-400/30 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="text-gray-300 font-bold flex items-center gap-1.5">
+                      <Box className="w-3.5 h-3.5 text-amber-400" />
+                      <span>CONTEO DE MESA (Toca para sumar directo)</span>
+                    </span>
+                    <span className="text-emerald-400 font-black">Total: {totalBatchPieces} piezas</span>
+                  </div>
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                    {['16GB', '32GB', '64GB', '128GB', '256GB', '512GB+'].map((cap) => {
+                      const count = batchCounts[cap] || 0;
+                      const bTheme = getCapacityTheme(cap === '16GB' ? '16GB' : cap === '512GB+' ? '512GB' : cap);
+                      return (
+                        <button
+                          key={cap}
+                          type="button"
+                          onClick={() => handleAddDirectBucket(cap)}
+                          className={`p-2 rounded-xl border flex flex-col items-center justify-center transition active:scale-95 ${
+                            count > 0 ? `${bTheme.badge} border-opacity-70 shadow` : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
+                          }`}
+                        >
+                          <span className="font-mono font-black text-xs">{cap === '16GB' ? '4-16GB' : cap}</span>
+                          <span className="font-mono font-extrabold text-sm sm:text-base mt-0.5">
+                            {count > 0 ? `${count} pz` : '+1'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* ============================================================= */}
+              {/* TARJETA DE RESULTADO ESTÁNDAR (CON CAJA DE SEPARACIÓN)        */}
+              {/* ============================================================= */}
+              {!isHudMode && activeResult && theme && activeTypeInfo && (
                 <div
                   role="status"
                   aria-live="polite"
@@ -971,6 +1226,15 @@ export default function App() {
 
                         <div className="flex items-center gap-1.5 flex-wrap text-[11px] font-mono">
                           <span className="text-white font-bold">{activeResult.manufacturer}</span>
+                          {activeBoardTier && (
+                            <span
+                              className={`px-2 py-0.5 rounded-md font-mono font-black border text-[10px] flex items-center gap-1 ${activeBoardTier.pillClass}`}
+                              title="Caja de separación según tecnología de placa"
+                            >
+                              <Box className="w-3 h-3 shrink-0" />
+                              <span>{activeBoardTier.boxLabel}</span>
+                            </span>
+                          )}
                           {activeDiff?.why && (
                             <span className="text-emerald-300 font-bold">· {activeDiff.why}</span>
                           )}
@@ -982,10 +1246,10 @@ export default function App() {
                     <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/10">
                       <button
                         type="button"
-                        onClick={() => speakChipResult(activeResult, true, false)}
+                        onClick={() => speakChipResult(activeResult, true, false, true)}
                         aria-label="Escuchar capacidad y tipo"
                         className="px-3 py-2.5 rounded-xl bg-black/60 hover:bg-black/80 border border-emerald-400/40 text-emerald-300 font-mono font-bold text-xs flex items-center gap-1.5 transition shrink-0"
-                        title="Escuchar capacidad y tipo de chip"
+                        title="Escuchar capacidad, tipo y caja de separación"
                       >
                         <Volume2 className="w-4 h-4" />
                         <span>Voz</span>
@@ -1012,7 +1276,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* FILA 2: 4 CELDAS DIVIDIDAS (ALMACENAMIENTO | TIPO | RAM | MARCA) */}
+                  {/* FILA 2: 4 CELDAS DIVIDIDAS (ALMACENAMIENTO | TIPO / SEPARACIÓN | RAM | MARCA) */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1">
                     <div className="px-2.5 py-1.5 sm:py-2 rounded-xl bg-emerald-950/50 border border-emerald-400/40 flex flex-col justify-between min-h-[52px]">
                       <span className="text-[10px] font-mono font-bold text-emerald-300 uppercase tracking-tight">
@@ -1025,11 +1289,18 @@ export default function App() {
 
                     <div className="px-2.5 py-1.5 sm:py-2 rounded-xl bg-black/50 border border-white/15 flex flex-col justify-between min-h-[52px]">
                       <span className="text-[10px] font-mono font-bold text-emerald-300 uppercase tracking-tight">
-                        Tipo Chip
+                        Tipo / Separación
                       </span>
-                      <span className="font-mono font-black text-sm sm:text-base text-white leading-tight">
-                        {activeTypeInfo.badge}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-mono font-black text-sm sm:text-base text-white leading-tight">
+                          {activeTypeInfo.badge}
+                        </span>
+                        {activeBoardTier && (
+                          <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono font-black border ${activeBoardTier.pillClass}`}>
+                            {activeBoardTier.shortBox}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div className="px-2.5 py-1.5 sm:py-2 rounded-xl bg-black/50 border border-white/10 flex flex-col justify-between min-h-[52px]">
@@ -1151,7 +1422,7 @@ export default function App() {
               {/* ============================================================= */}
               {/* MÁS BUSCADOS                                                  */}
               {/* ============================================================= */}
-              {!query && (
+              {!query && !isHudMode && (
                 <div className="pt-1 space-y-2">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-mono font-extrabold uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
@@ -1278,7 +1549,7 @@ export default function App() {
             {/* ============================================================= */}
             {/* PANELES CUANDO EL BUSCADOR ESTÁ VACÍO                         */}
             {/* ============================================================= */}
-            {!query && (
+            {!query && !isHudMode && (
               <div className="space-y-3">
                 {/* Prefijos Rápidos */}
                 <div className="rounded-2xl pro-panel p-3.5 space-y-2.5">
