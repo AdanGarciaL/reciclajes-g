@@ -10,7 +10,7 @@ const ASSETS = [
   './assets/apple-touch-icon-q66XNoox.png',
   './assets/icon-192--oFsYMjq.png',
   './assets/icon-DBmVwXEj.svg',
-  './assets/index-GGdUbro1.js',
+  './assets/index-Cgh1wUkQ.js',
   './assets/manifest-i-u5wQwz.json',
 ];
 

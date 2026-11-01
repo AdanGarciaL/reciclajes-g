@@ -841,7 +841,7 @@ export default function App() {
                   autoCorrect="off"
                   autoCapitalize="characters"
                   spellCheck={false}
-                  className="w-full pl-11 pr-32 py-3 sm:py-3.5 rounded-xl pro-inset focus:border-emerald-400 focus:outline-none font-mono font-black text-base sm:text-xl text-white placeholder:text-emerald-100/35 placeholder:font-sans placeholder:font-medium placeholder:text-xs sm:placeholder:text-sm tracking-wider transition"
+                  className="w-full pl-11 pr-36 sm:pr-44 py-3 sm:py-3.5 rounded-xl pro-inset focus:border-emerald-400 focus:outline-none font-mono font-black text-base sm:text-xl text-white placeholder:text-emerald-100/35 placeholder:font-sans placeholder:font-medium placeholder:text-xs sm:placeholder:text-sm tracking-wider transition"
                 />
 
                 {/* Lectura instantánea dentro del mismo input (Tipo + GB) */}
@@ -1014,38 +1014,38 @@ export default function App() {
 
                   {/* FILA 2: 4 CELDAS DIVIDIDAS (ALMACENAMIENTO | TIPO | RAM | MARCA) */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1">
-                    <div className="px-2.5 py-2 rounded-xl bg-emerald-950/50 border border-emerald-400/40 flex items-center justify-between">
-                      <span className="text-[10px] font-mono font-bold text-emerald-300 uppercase">
+                    <div className="px-2.5 py-1.5 sm:py-2 rounded-xl bg-emerald-950/50 border border-emerald-400/40 flex flex-col justify-between min-h-[52px]">
+                      <span className="text-[10px] font-mono font-bold text-emerald-300 uppercase tracking-tight">
                         Almacenamiento
                       </span>
-                      <span className="font-mono font-black text-sm text-white">
+                      <span className="font-mono font-black text-sm sm:text-base text-white leading-tight">
                         {activeResult.storage}
                       </span>
                     </div>
 
-                    <div className="px-2.5 py-2 rounded-xl bg-black/50 border border-white/15 flex items-center justify-between">
-                      <span className="text-[10px] font-mono font-bold text-emerald-300 uppercase">
+                    <div className="px-2.5 py-1.5 sm:py-2 rounded-xl bg-black/50 border border-white/15 flex flex-col justify-between min-h-[52px]">
+                      <span className="text-[10px] font-mono font-bold text-emerald-300 uppercase tracking-tight">
                         Tipo Chip
                       </span>
-                      <span className="font-mono font-black text-sm text-white">
+                      <span className="font-mono font-black text-sm sm:text-base text-white leading-tight">
                         {activeTypeInfo.badge}
                       </span>
                     </div>
 
-                    <div className="px-2.5 py-2 rounded-xl bg-black/50 border border-white/10 flex items-center justify-between">
-                      <span className="text-[10px] font-mono font-bold text-gray-400 uppercase">
+                    <div className="px-2.5 py-1.5 sm:py-2 rounded-xl bg-black/50 border border-white/10 flex flex-col justify-between min-h-[52px]">
+                      <span className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-tight">
                         RAM (Ignorar)
                       </span>
-                      <span className="font-mono font-bold text-xs text-gray-200">
+                      <span className="font-mono font-bold text-xs sm:text-sm text-gray-200 leading-tight truncate">
                         {hasDualMemoryInChip ? activeResult.ram : 'Sin RAM'}
                       </span>
                     </div>
 
-                    <div className="px-2.5 py-2 rounded-xl bg-black/50 border border-white/10 flex items-center justify-between gap-1">
-                      <span className="text-[10px] font-mono font-bold text-gray-400 uppercase shrink-0">
+                    <div className="px-2.5 py-1.5 sm:py-2 rounded-xl bg-black/50 border border-white/10 flex flex-col justify-between min-h-[52px]">
+                      <span className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-tight">
                         Marca
                       </span>
-                      <span className="font-bold text-xs text-white truncate">
+                      <span className="font-bold text-xs sm:text-sm text-white truncate leading-tight">
                         {activeResult.manufacturer}
                       </span>
                     </div>

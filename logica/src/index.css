@@ -8,46 +8,51 @@
 }
 
 /* ==========================================================================
-   SISTEMA ACCESIBLE Y ADAPTATIVO DE TAMAÑO DE TEXTO (VISTA ESTÁNDAR / MAYOR)
-   Escala todo proporcionalmente usando rem sin deformar ni romper el diseño
+   SISTEMA ACCESIBLE Y ADAPTATIVO DE TAMAÑO DE TEXTO (A / A+ / A++)
+   Escala texto y componentes de forma fluida sin desbordar pantallas móviles
    ========================================================================== */
 html[data-text-scale="normal"] {
   font-size: 16px;
 }
 
 html[data-text-scale="large"] {
-  font-size: 18.5px;
+  font-size: 17.5px;
 }
 
 html[data-text-scale="xlarge"] {
-  font-size: 21px;
+  font-size: 19.5px;
 }
 
-@media (max-width: 380px) {
+@media (max-width: 420px) {
   html[data-text-scale="large"] {
-    font-size: 17.5px;
+    font-size: 17px;
   }
   html[data-text-scale="xlarge"] {
-    font-size: 19.5px;
+    font-size: 18.5px;
   }
 }
 
-html[data-text-scale="large"] .text-\[10px\] {
-  font-size: 0.75rem !important;
-  line-height: 1.15rem !important;
-}
-html[data-text-scale="large"] .text-\[11px\] {
-  font-size: 0.8125rem !important;
-  line-height: 1.2rem !important;
+/* Evitar desbordes en badges y etiquetas técnicas al aumentar la fuente */
+html[data-text-scale="large"] .text-\[10px\],
+html[data-text-scale="large"] .text-\[9px\] {
+  font-size: 0.7rem !important;
+  line-height: 1.05rem !important;
 }
 
-html[data-text-scale="xlarge"] .text-\[10px\] {
-  font-size: 0.82rem !important;
-  line-height: 1.25rem !important;
+html[data-text-scale="xlarge"] .text-\[10px\],
+html[data-text-scale="xlarge"] .text-\[9px\] {
+  font-size: 0.75rem !important;
+  line-height: 1.1rem !important;
 }
+
+html[data-text-scale="large"] .text-\[11px\] {
+  font-size: 0.775rem !important;
+  line-height: 1.15rem !important;
+}
+
 html[data-text-scale="xlarge"] .text-\[11px\] {
-  font-size: 0.875rem !important;
-  line-height: 1.3rem !important;
+  font-size: 0.825rem !important;
+  line-height: 1.2rem !important;
 }
 
 .adaptive-meta-grid {
