@@ -313,6 +313,13 @@ export default function App() {
     }
   }
 
+  function cycleTextScale() {
+    const scales = ['normal', 'large', 'xlarge'];
+    const currentIdx = Math.max(0, scales.indexOf(textScale));
+    const nextScale = scales[(currentIdx + 1) % scales.length];
+    handleSelectTextScale(nextScale);
+  }
+
   const [isHudMode, setIsHudMode] = useState(() => {
     return Boolean(safeGetStorage('eco_hud_mode_v1', false));
   });
@@ -768,34 +775,32 @@ export default function App() {
       {/* CABECERA SÓLIDA — ANTI-DIFUMINACIÓN EN iOS Y COMPACTA CON TECLADO     */}
       {/* ===================================================================== */}
       <header
-        className={`sticky top-0 z-30 ${headerShieldClass} pb-1.5 px-2.5 sm:px-4 border-b border-emerald-500/20 shadow-[0_12px_32px_rgba(0,0,0,0.88)]`}
+        className={`sticky top-0 z-30 ${headerShieldClass} pb-1 px-2 sm:px-4 border-b border-emerald-500/20 shadow-[0_12px_32px_rgba(0,0,0,0.88)]`}
       >
-        <div className="max-w-5xl mx-auto rounded-2xl pro-panel px-3 sm:px-4 py-2">
+        <div className="max-w-5xl mx-auto rounded-2xl pro-panel px-2.5 sm:px-4 py-1.5 sm:py-2">
           <div className="flex items-center justify-between gap-2">
             {/* Identidad */}
-            <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
               {!isStandalone && (
                 <a
                   href="../index.html#app-logica"
                   title="Volver a ecologicagarcia.com"
-                  className="hidden sm:inline-flex px-2.5 py-1.5 rounded-xl pro-inset hover:border-emerald-400/50 text-emerald-300 text-xs font-bold items-center gap-1 transition shrink-0"
+                  className="hidden md:inline-flex px-2 py-1 rounded-xl pro-inset hover:border-emerald-400/50 text-emerald-300 text-xs font-bold items-center gap-1 transition shrink-0"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Web</span>
                 </a>
               )}
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-black flex items-center justify-center shadow-[0_0_18px_rgba(52,211,153,0.4)] shrink-0">
-                <Cpu className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-black flex items-center justify-center shadow-[0_0_14px_rgba(52,211,153,0.4)] shrink-0">
+                <Cpu className="w-4 h-4 stroke-[2.5]" />
               </div>
               <div className="min-w-0">
-                <h1 className="font-black tracking-tight text-white text-sm sm:text-base leading-none truncate">
+                <h1 className="font-black tracking-tight text-white text-xs sm:text-base leading-none truncate">
                   ECO LÓGICA <span className="text-emerald-400">GARCÍA</span>
                 </h1>
-                {!compactKeyboardMode && (
-                  <span className="text-[10px] text-emerald-200/75 font-mono font-medium block truncate mt-0.5">
-                    {dbStats.totalOfflineCount.toLocaleString()} IC · Detector de Capacidad y Terminaciones
-                  </span>
-                )}
+                <span className="hidden sm:block text-[10px] text-emerald-200/75 font-mono font-medium truncate mt-0.5">
+                  {dbStats.totalOfflineCount.toLocaleString()} IC · Detector de Capacidad
+                </span>
               </div>
             </div>
 
@@ -814,7 +819,7 @@ export default function App() {
                     role="tab"
                     aria-selected={active}
                     onClick={() => setActiveTab(item.id)}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1.5 transition ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1.5 transition ${
                       active
                         ? 'bg-emerald-400 text-black shadow-[0_0_16px_rgba(52,211,153,0.4)]'
                         : 'text-emerald-100/80 hover:text-white'
@@ -837,9 +842,20 @@ export default function App() {
             </nav>
 
             {/* Controles Rápidos */}
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+              {/* Botón táctil para ciclar letra en móvil (A -> A+ -> A++) */}
+              <button
+                type="button"
+                onClick={cycleTextScale}
+                title="Cambiar tamaño de letra (A / A+ / A++)"
+                className="sm:hidden px-2 py-1 rounded-lg pro-inset font-mono text-xs font-black text-emerald-300 hover:text-white transition"
+              >
+                {TEXT_SCALE_OPTIONS.find((o) => o.id === textScale)?.shortLabel || 'A'}
+              </button>
+
+              {/* Segmented control en tablet/desktop */}
               <div
-                className="flex items-center p-0.5 rounded-xl pro-inset"
+                className="hidden sm:flex items-center p-0.5 rounded-xl pro-inset"
                 role="group"
                 aria-label="Tamaño de letra"
               >
@@ -867,10 +883,10 @@ export default function App() {
                   type="button"
                   onClick={handleInstallClick}
                   title="Instalar App"
-                  className="p-2 sm:px-2.5 sm:py-1.5 rounded-xl pro-inset hover:border-emerald-400/50 text-emerald-300 font-bold text-xs flex items-center gap-1 transition"
+                  className="hidden md:inline-flex p-2 sm:px-2.5 sm:py-1.5 rounded-xl pro-inset hover:border-emerald-400/50 text-emerald-300 font-bold text-xs items-center gap-1 transition"
                 >
                   <Download className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="hidden lg:inline">App</span>
+                  <span>App</span>
                 </button>
               )}
 
@@ -878,6 +894,7 @@ export default function App() {
                 type="button"
                 onClick={() => setVoiceEnabled(!voiceEnabled)}
                 aria-label={voiceEnabled ? 'Desactivar voz' : 'Activar voz'}
+                title={voiceEnabled ? 'Voz activada' : 'Voz desactivada'}
                 className={`p-2 rounded-xl pro-inset text-xs font-bold transition ${
                   voiceEnabled ? 'text-emerald-300 border-emerald-400/40' : 'text-gray-500'
                 }`}
@@ -890,24 +907,23 @@ export default function App() {
                 onClick={toggleHudMode}
                 title={isHudMode ? 'Volver a modo completo' : 'Activar Modo Mesa (Operador Rápido)'}
                 aria-pressed={isHudMode}
-                className={`px-2.5 py-1.5 rounded-xl font-black text-xs flex items-center gap-1 transition shrink-0 ${
+                className={`px-2 sm:px-2.5 py-1.5 rounded-xl font-black text-xs flex items-center gap-1 transition shrink-0 ${
                   isHudMode
                     ? 'bg-amber-400 text-black border border-amber-300 shadow-[0_0_16px_rgba(251,191,36,0.5)]'
                     : 'pro-inset hover:border-emerald-400/50 text-emerald-300'
                 }`}
               >
                 <Zap className="w-3.5 h-3.5 fill-current" />
-                <span className="hidden sm:inline">Modo Mesa</span>
-                <span className="sm:hidden">Mesa</span>
+                <span className="hidden xs:inline">Mesa</span>
               </button>
 
               <button
                 type="button"
                 onClick={openAddModal}
-                className="relative px-2.5 py-1.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs flex items-center gap-1 shadow-[0_0_16px_rgba(52,211,153,0.35)] transition"
+                className="relative px-2 sm:px-2.5 py-1.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs flex items-center gap-1 shadow-[0_0_16px_rgba(52,211,153,0.35)] transition"
               >
                 <Database className="w-3.5 h-3.5" />
-                <span>+Chip</span>
+                <span className="hidden xs:inline">+Chip</span>
                 {dbStats.pendingCount > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-amber-400 text-black text-[10px] font-black flex items-center justify-center border border-black">
                     {dbStats.pendingCount}
@@ -1129,6 +1145,18 @@ export default function App() {
                       </button>
                     </div>
                   </div>
+
+                  {/* Desglose de Código en HUD Mode */}
+                  <div className="p-2 rounded-xl bg-black/60 border border-white/10 flex items-center justify-between gap-2 font-mono text-xs">
+                    <span className="text-gray-300 truncate">
+                      {activeResult.code}
+                    </span>
+                    {activeDiff?.why && (
+                      <span className="text-amber-300 font-bold shrink-0">
+                        {activeDiff.why}
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -1167,30 +1195,46 @@ export default function App() {
               )}
 
               {/* ============================================================= */}
-              {/* TARJETA DE RESULTADO ESTÁNDAR (CON CAJA DE SEPARACIÓN)        */}
+              {/* TARJETA DE RESULTADO ESTÁNDAR (RESPONSIVA, SIN COLISIÓN)     */}
               {/* ============================================================= */}
               {!isHudMode && activeResult && theme && activeTypeInfo && (
                 <div
                   role="status"
                   aria-live="polite"
-                  className={`rounded-2xl border-2 p-3 sm:p-4 transition-all space-y-2.5 ${theme.card}`}
+                  className={`rounded-2xl border-2 p-3 sm:p-4 transition-all space-y-3 ${theme.card}`}
                 >
-                  {/* FILA 1: CAPACIDAD + TIPO DE CHIP + CÓDIGO + ACCIONES */}
+                  {/* SECCIÓN 1: BANNER DE CAJA DE DESTINO (ARRIBA, ANCHO COMPLETO) */}
+                  {activeBoardTier && (
+                    <div className={`p-2 sm:p-2.5 rounded-xl border flex items-center justify-between gap-2 ${activeBoardTier.boxClass}`}>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Box className="w-4 h-4 shrink-0" />
+                        <span className="font-mono font-black text-xs sm:text-sm uppercase tracking-wide truncate">
+                          {activeBoardTier.boxLabel}
+                        </span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded bg-black/60 font-mono text-[10px] sm:text-xs font-black shrink-0">
+                        {activeBoardTier.tierName}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* SECCIÓN 2: HERO (GB GIGANTES + TIPO + MARCA + BOTONES DE ACCIÓN) */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    {/* Almacenamiento + Tipo + Info corta */}
                     <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
                       {/* Capacidad Gigante */}
                       <div
-                        className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl border-2 font-mono font-black text-3xl sm:text-5xl tracking-tight leading-none shrink-0 ${theme.badge}`}
+                        className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl border-2 font-mono font-black text-3xl sm:text-4xl tracking-tight leading-none shrink-0 shadow-md ${theme.badge}`}
                       >
                         {activeResult.storage}
                       </div>
 
-                      {/* Tipo de Chip Destacado */}
-                      <div className="px-3 py-2 rounded-2xl bg-black/65 border-2 border-emerald-400/60 flex flex-col items-center justify-center shrink-0">
-                        <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-emerald-300/90 leading-none">
+                      {/* Tipo de Chip */}
+                      <div className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-black/65 border border-emerald-400/50 flex flex-col justify-center shrink-0">
+                        <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-emerald-300 leading-none">
                           TIPO
                         </span>
-                        <span className="font-mono font-black text-lg sm:text-2xl text-white leading-tight mt-0.5">
+                        <span className="font-mono font-black text-base sm:text-xl text-white leading-tight mt-0.5">
                           {activeTypeInfo.badge}
                         </span>
                         <span className="text-[9px] font-mono text-emerald-300 leading-none">
@@ -1198,57 +1242,24 @@ export default function App() {
                         </span>
                       </div>
 
-                      {/* Desglose directo del código */}
-                      <div className="min-w-0 flex-1 space-y-1">
-                        {activeDiff && activeDiff.highlight ? (
-                          <div className="flex items-center gap-1 flex-wrap font-mono">
-                            {activeDiff.pre && (
-                              <span className="px-2 py-0.5 rounded-md bg-black/55 border border-white/10 text-gray-200 font-bold text-xs sm:text-base">
-                                {activeDiff.pre}
-                              </span>
-                            )}
-                            <span
-                              className={`px-2 py-0.5 rounded-md font-black text-xs sm:text-base border ${theme.badge}`}
-                            >
-                              {activeDiff.highlight}
-                            </span>
-                            {activeDiff.post && (
-                              <span className="px-2 py-0.5 rounded-md bg-black/55 border border-white/10 text-gray-300 font-bold text-xs sm:text-base break-all">
-                                {activeDiff.post}
-                              </span>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="font-mono font-black text-sm sm:text-lg text-white break-all">
-                            {activeResult.code}
-                          </div>
-                        )}
-
-                        <div className="flex items-center gap-1.5 flex-wrap text-[11px] font-mono">
-                          <span className="text-white font-bold">{activeResult.manufacturer}</span>
-                          {activeBoardTier && (
-                            <span
-                              className={`px-2 py-0.5 rounded-md font-mono font-black border text-[10px] flex items-center gap-1 ${activeBoardTier.pillClass}`}
-                              title="Caja de separación según tecnología de placa"
-                            >
-                              <Box className="w-3 h-3 shrink-0" />
-                              <span>{activeBoardTier.boxLabel}</span>
-                            </span>
-                          )}
-                          {activeDiff?.why && (
-                            <span className="text-emerald-300 font-bold">· {activeDiff.why}</span>
-                          )}
+                      {/* Fabricante y RAM */}
+                      <div className="min-w-0">
+                        <div className="font-black text-sm sm:text-base text-white truncate">
+                          {activeResult.manufacturer}
+                        </div>
+                        <div className="text-[11px] font-mono text-gray-300 truncate">
+                          {hasDualMemoryInChip ? `RAM ${activeResult.ram}` : 'Sin RAM'}
                         </div>
                       </div>
                     </div>
 
-                    {/* Botones de Acción */}
+                    {/* Botones de Acción (Voz, Editar, Sumar) */}
                     <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/10">
                       <button
                         type="button"
                         onClick={() => speakChipResult(activeResult, true, false, true)}
                         aria-label="Escuchar capacidad y tipo"
-                        className="px-3 py-2.5 rounded-xl bg-black/60 hover:bg-black/80 border border-emerald-400/40 text-emerald-300 font-mono font-bold text-xs flex items-center gap-1.5 transition shrink-0"
+                        className="px-3 py-2 rounded-xl bg-black/60 hover:bg-black/80 border border-emerald-400/40 text-emerald-300 font-mono font-bold text-xs flex items-center gap-1.5 transition shrink-0"
                         title="Escuchar capacidad, tipo y caja de separación"
                       >
                         <Volume2 className="w-4 h-4" />
@@ -1259,7 +1270,7 @@ export default function App() {
                         type="button"
                         onClick={() => openEditChipModal(activeResult)}
                         aria-label="Editar chip"
-                        className="px-3 py-2.5 rounded-xl bg-black/55 hover:bg-white/10 border border-white/15 text-emerald-200 font-bold text-xs flex items-center gap-1 transition shrink-0"
+                        className="px-3 py-2 rounded-xl bg-black/55 hover:bg-white/10 border border-white/15 text-emerald-200 font-bold text-xs flex items-center gap-1 transition shrink-0"
                       >
                         <Pencil className="w-3.5 h-3.5 text-emerald-400" />
                         <span>Editar</span>
@@ -1268,7 +1279,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => addChipToBatch(activeResult)}
-                        className="flex-1 sm:flex-none px-4 sm:px-5 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-[0_0_20px_rgba(52,211,153,0.4)] transition"
+                        className="flex-1 sm:flex-none px-4 sm:px-5 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-[0_0_20px_rgba(52,211,153,0.4)] active:scale-95 transition"
                       >
                         <Plus className="w-4 h-4 stroke-[3]" />
                         <span>Sumar {activeResult.storage}</span>
@@ -1276,9 +1287,47 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* FILA 2: 4 CELDAS DIVIDIDAS (ALMACENAMIENTO | TIPO / SEPARACIÓN | RAM | MARCA) */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1">
-                    <div className="px-2.5 py-1.5 sm:py-2 rounded-xl bg-emerald-950/50 border border-emerald-400/40 flex flex-col justify-between min-h-[52px]">
+                  {/* SECCIÓN 3: DESGLOSE DEL CÓDIGO (ANCHO COMPLETO - NUNCA SE APLASTA) */}
+                  <div className="p-2.5 rounded-xl bg-black/55 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                    <div className="flex items-center gap-1.5 font-mono flex-wrap">
+                      <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">
+                        DESGLOSE:
+                      </span>
+                      {activeDiff && activeDiff.highlight ? (
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {activeDiff.pre && (
+                            <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/15 text-gray-200 font-bold text-xs sm:text-sm">
+                              {activeDiff.pre}
+                            </span>
+                          )}
+                          <span
+                            className={`px-2 py-0.5 rounded-md font-black text-xs sm:text-sm border ${theme.badge}`}
+                          >
+                            {activeDiff.highlight}
+                          </span>
+                          {activeDiff.post && (
+                            <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/15 text-gray-300 font-bold text-xs sm:text-sm break-all">
+                              {activeDiff.post}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="font-mono font-black text-xs sm:text-sm text-white break-all">
+                          {activeResult.code}
+                        </span>
+                      )}
+                    </div>
+
+                    {activeDiff?.why && (
+                      <div className="font-mono text-xs font-bold text-emerald-300 flex items-center gap-1">
+                        <span>{activeDiff.why}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SECCIÓN 4: 4 CELDAS TÉCNICAS (ALMACENAMIENTO | CAJA DESTINO | RAM | MARCA) */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-0.5">
+                    <div className="px-2.5 py-1.5 sm:py-2 rounded-xl bg-emerald-950/45 border border-emerald-400/40 flex flex-col justify-between min-h-[50px]">
                       <span className="text-[10px] font-mono font-bold text-emerald-300 uppercase tracking-tight">
                         Almacenamiento
                       </span>
@@ -1287,23 +1336,16 @@ export default function App() {
                       </span>
                     </div>
 
-                    <div className="px-2.5 py-1.5 sm:py-2 rounded-xl bg-black/50 border border-white/15 flex flex-col justify-between min-h-[52px]">
+                    <div className="px-2.5 py-1.5 sm:py-2 rounded-xl bg-black/50 border border-white/15 flex flex-col justify-between min-h-[50px]">
                       <span className="text-[10px] font-mono font-bold text-emerald-300 uppercase tracking-tight">
-                        Tipo / Separación
+                        Caja Destino
                       </span>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-mono font-black text-sm sm:text-base text-white leading-tight">
-                          {activeTypeInfo.badge}
-                        </span>
-                        {activeBoardTier && (
-                          <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono font-black border ${activeBoardTier.pillClass}`}>
-                            {activeBoardTier.shortBox}
-                          </span>
-                        )}
-                      </div>
+                      <span className="font-mono font-bold text-xs sm:text-sm text-sky-300 leading-tight truncate">
+                        {activeBoardTier ? activeBoardTier.shortBox : 'Estándar'}
+                      </span>
                     </div>
 
-                    <div className="px-2.5 py-1.5 sm:py-2 rounded-xl bg-black/50 border border-white/10 flex flex-col justify-between min-h-[52px]">
+                    <div className="px-2.5 py-1.5 sm:py-2 rounded-xl bg-black/50 border border-white/10 flex flex-col justify-between min-h-[50px]">
                       <span className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-tight">
                         RAM (Ignorar)
                       </span>
@@ -1312,7 +1354,7 @@ export default function App() {
                       </span>
                     </div>
 
-                    <div className="px-2.5 py-1.5 sm:py-2 rounded-xl bg-black/50 border border-white/10 flex flex-col justify-between min-h-[52px]">
+                    <div className="px-2.5 py-1.5 sm:py-2 rounded-xl bg-black/50 border border-white/10 flex flex-col justify-between min-h-[50px]">
                       <span className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-tight">
                         Marca
                       </span>
