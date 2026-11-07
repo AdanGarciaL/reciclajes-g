@@ -36,6 +36,7 @@ import {
   getMostSearchedChips,
   getAdaptiveQuickPrefixes,
   getUsageSummary,
+  pullCloudDatabase,
   safeGetStorage,
   safeSetStorage,
 } from './services/icEngine';
@@ -374,6 +375,47 @@ export default function App() {
   const [editingChipTarget, setEditingChipTarget] = useState(null);
   const [catalogVersion, setCatalogVersion] = useState(0);
   const [dbStats, setDbStats] = useState(() => getDatabaseStats());
+
+  // Sincronización automática en segundo plano con la Base Global (para todos los celulares y PCs)
+  useEffect(() => {
+    let cancelled = false;
+    let lastCheckMs = 0;
+
+    async function syncFromGlobalCloud(force = false) {
+      const now = Date.now();
+      if (!force && now - lastCheckMs < 45000) return;
+      lastCheckMs = now;
+      try {
+        const res = await pullCloudDatabase();
+        if (cancelled || !res?.ok) return;
+        setDbStats(getDatabaseStats());
+        if (res.hasChanged) {
+          setCatalogVersion((v) => v + 1);
+        }
+      } catch {
+        // Continúa 100% offline sin interrumpir al usuario
+      }
+    }
+
+    syncFromGlobalCloud(true);
+
+    function handleVisibility() {
+      if (document.visibilityState === 'visible') {
+        syncFromGlobalCloud(false);
+      }
+    }
+    function handleOnline() {
+      syncFromGlobalCloud(true);
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('online', handleOnline);
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, []);
 
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isStandalone, setIsStandalone] = useState(() => {
@@ -939,13 +981,18 @@ export default function App() {
               <button
                 type="button"
                 onClick={openAddModal}
+                title={
+                  (dbStats.unsyncedCount || 0) > 0
+                    ? `Tienes ${dbStats.unsyncedCount} chip(s) en este celular sin subir a la Base Global`
+                    : 'Agregar o editar chips IC / Base Global'
+                }
                 className="relative px-2 sm:px-2.5 py-1.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs flex items-center gap-1 shadow-[0_0_16px_rgba(52,211,153,0.35)] transition"
               >
                 <Database className="w-3.5 h-3.5" />
                 <span className="hidden xs:inline">+Chip</span>
-                {dbStats.pendingCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-amber-400 text-black text-[10px] font-black flex items-center justify-center border border-black">
-                    {dbStats.pendingCount}
+                {dbStats.pendingCount + (dbStats.unsyncedCount || 0) > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-amber-400 text-black text-[10px] font-black flex items-center justify-center border border-black">
+                    {dbStats.pendingCount + (dbStats.unsyncedCount || 0)}
                   </span>
                 )}
               </button>

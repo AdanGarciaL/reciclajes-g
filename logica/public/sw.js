@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ecologica-garcia-ic-v21';
+const CACHE_NAME = 'ecologica-garcia-ic-v22';
 const ASSETS = [
   './',
   './index.html',
@@ -10,7 +10,7 @@ const ASSETS = [
   './assets/apple-touch-icon-q66XNoox.png',
   './assets/icon-192--oFsYMjq.png',
   './assets/icon-DBmVwXEj.svg',
-  './assets/index-CmGHEtB7.js',
+  './assets/index-BOTxUfFz.js',
   './assets/manifest-i-u5wQwz.json',
 ];
 
@@ -29,7 +29,13 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
+  if (
+    event.request.method !== 'GET' ||
+    !event.request.url.startsWith(self.location.origin) ||
+    event.request.url.includes('custom-chips.json')
+  ) {
+    return;
+  }
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {

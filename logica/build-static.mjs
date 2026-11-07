@@ -72,7 +72,7 @@ const assetFiles = fs.existsSync(distAssetsDir)
   ? fs.readdirSync(distAssetsDir).map((f) => `./assets/${f}`)
   : [];
 
-const swContent = `const CACHE_NAME = 'ecologica-garcia-ic-v21';
+const swContent = `const CACHE_NAME = 'ecologica-garcia-ic-v22';
 const ASSETS = [
   './',
   './index.html',
@@ -99,7 +99,13 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
+  if (
+    event.request.method !== 'GET' ||
+    !event.request.url.startsWith(self.location.origin) ||
+    event.request.url.includes('custom-chips.json')
+  ) {
+    return;
+  }
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {

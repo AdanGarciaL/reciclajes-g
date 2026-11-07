@@ -21,6 +21,9 @@ import {
   ClipboardCheck,
   FileCheck,
   GitBranch,
+  Cloud,
+  RefreshCw,
+  Globe,
 } from 'lucide-react';
 import {
   getCustomDatabase,
@@ -38,6 +41,11 @@ import {
   normalizeCode,
   detectCpuInsteadOfMemory,
   analyzeChipVariants,
+  getCloudSyncStatus,
+  connectCloudGitHubToken,
+  disconnectCloudGitHubToken,
+  pullCloudDatabase,
+  pushChangesToCloudDatabase,
 } from '../services/icEngine';
 
 const CAPACITIES = ['4GB', '8GB', '16GB', '32GB', '64GB', '128GB', '256GB', '512GB', '1TB', '2TB'];
@@ -117,6 +125,9 @@ export default function AdminDatabaseModal({
   const [allCatalogList, setAllCatalogList] = useState([]);
   const [pendingList, setPendingList] = useState([]);
   const [stats, setStats] = useState(getDatabaseStats());
+  const [syncStatus, setSyncStatus] = useState(() => getCloudSyncStatus());
+  const [isSyncingCloud, setIsSyncingCloud] = useState(false);
+  const [ghTokenInput, setGhTokenInput] = useState('');
 
   // Filtros en pestaña Catálogo / Editar
   const [catalogViewScope, setCatalogViewScope] = useState('custom'); // 'custom' | 'all'
@@ -132,6 +143,13 @@ export default function AdminDatabaseModal({
       setErrorMsg('');
       setPinError('');
       setReviewData(null);
+
+      // Consultar la Base Global al abrir para detectar cambios nuevos
+      pullCloudDatabase()
+        .then(() => {
+          refreshLists();
+        })
+        .catch(() => {});
 
       if (initialEditChip && initialEditChip.code) {
         startEditingChip(initialEditChip);
@@ -168,7 +186,148 @@ export default function AdminDatabaseModal({
     setAllCatalogList(getAllEditableCatalog());
     setPendingList(getPendingSuggestions());
     setStats(getDatabaseStats());
+    setSyncStatus(getCloudSyncStatus());
     if (onDatabaseUpdated) onDatabaseUpdated();
+  }
+
+  async function autoSyncAfterLocalChange(reasonNote, localSuccessMsg) {
+    const currentSync = getCloudSyncStatus();
+    if (!currentSync.isConnected) {
+      setStatusMsg(
+        `${localSuccessMsg} (Guardado en este celular · Toca "Conectar y Subir" arriba para publicarlo en la Base Global).`
+      );
+      return;
+    }
+
+    setIsSyncingCloud(true);
+    setStatusMsg(`${localSuccessMsg} Subiendo automáticamente a la Base Global...`);
+    try {
+      const res = await pushChangesToCloudDatabase(reasonNote);
+      refreshLists();
+      setStatusMsg(
+        `✓ ${localSuccessMsg} Subido a la Base Global (${res.totalCount} chips activos en todos los equipos).`
+      );
+    } catch (err) {
+      refreshLists();
+      setStatusMsg(
+        `${localSuccessMsg} (Guardado en tu celular; no se pudo subir ahora: ${err?.message || 'sin red'}. Puedes tocar "Subir mis cambios" cuando tengas señal).`
+      );
+    } finally {
+      setIsSyncingCloud(false);
+    }
+  }
+
+  async function handleManualPushToCloud(reasonNote = 'subir cambios desde celular') {
+    setErrorMsg('');
+    const currentSync = getCloudSyncStatus();
+    if (!currentSync.isConnected) {
+      setReviewData(null);
+      setActiveTab('cloud');
+      setErrorMsg('Conecta tu llave de GitHub una sola vez aquí abajo para poder subir tus cambios.');
+      return;
+    }
+
+    setIsSyncingCloud(true);
+    try {
+      const res = await pushChangesToCloudDatabase(reasonNote);
+      refreshLists();
+      setStatusMsg(
+        `✓ ¡Listo! Tus cambios ya están en la Base Global (${res.totalCount} chip(s) personalizados activos en todos los celulares y PCs).`
+      );
+    } catch (err) {
+      refreshLists();
+      setErrorMsg(err?.message || 'No se pudieron subir los cambios en este momento.');
+    } finally {
+      setIsSyncingCloud(false);
+    }
+  }
+
+  async function handleManualPullFromCloud() {
+    setErrorMsg('');
+    setIsSyncingCloud(true);
+    try {
+      const res = await pullCloudDatabase();
+      refreshLists();
+      if (!res.ok) {
+        setErrorMsg('No hay conexión a internet en este momento para consultar la Base Global.');
+      } else if (res.hasChanged) {
+        setStatusMsg(
+          `✓ Base Global descargada: se actualizaron los chips en este equipo (${res.cloudCount} en nube).`
+        );
+      } else {
+        setStatusMsg(`✓ Este equipo ya tiene la versión más reciente de la Base Global (${res.cloudCount} chips en nube).`);
+      }
+    } catch (err) {
+      setErrorMsg(err?.message || 'Error al consultar la Base Global.');
+    } finally {
+      setIsSyncingCloud(false);
+    }
+  }
+
+  async function handleConnectAndAutoUpload(e) {
+    if (e) e.preventDefault();
+    setErrorMsg('');
+    setStatusMsg('');
+    setIsSyncingCloud(true);
+    try {
+      const res = await connectCloudGitHubToken(ghTokenInput);
+      setGhTokenInput('');
+      refreshLists();
+      const postConnectSync = getCloudSyncStatus();
+      if (postConnectSync.unsyncedCount > 0 || postConnectSync.localCount > 0) {
+        const upRes = await pushChangesToCloudDatabase('sincronización inicial desde celular');
+        refreshLists();
+        setStatusMsg(
+          `✓ Celular conectado (@${res.username}) y ${upRes.totalCount} chip(s) subidos automáticamente a la Base Global.`
+        );
+      } else {
+        setStatusMsg(
+          `✓ Celular conectado (@${res.username}). Cada cambio que hagas aquí se subirá a la Base Global.`
+        );
+      }
+    } catch (err) {
+      setErrorMsg(err?.message || 'No se pudo conectar la llave de GitHub.');
+    } finally {
+      setIsSyncingCloud(false);
+    }
+  }
+
+  async function handlePasteClipboardToken() {
+    setErrorMsg('');
+    try {
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        const clip = await navigator.clipboard.readText();
+        if (clip && clip.trim()) {
+          setGhTokenInput(clip.trim());
+          return;
+        }
+      }
+      setErrorMsg('Mantén presionado dentro del cuadro de texto y toca "Pegar".');
+    } catch {
+      setErrorMsg('Tu navegador pidió permiso manual: mantén presionado el cuadro y toca "Pegar".');
+    }
+  }
+
+  function handleDisconnectCloud() {
+    disconnectCloudGitHubToken();
+    refreshLists();
+    setStatusMsg('Se desconectó la llave de este equipo. Tus chips siguen guardados intactos.');
+  }
+
+  function formatSyncDate(isoStr) {
+    if (!isoStr) return 'Sin registros aún';
+    const ms = Date.parse(isoStr);
+    if (!Number.isFinite(ms)) return 'Reciente';
+    try {
+      return new Date(ms).toLocaleString('es-MX', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return isoStr;
+    }
   }
 
   function startEditingChip(chip, pendingId = null) {
@@ -345,12 +504,16 @@ export default function AdminDatabaseModal({
   function handleConfirmAndApplyOfficial() {
     if (!reviewData) return;
 
+    let localMessage = '';
+    let reasonNote = '';
+
     if (reviewData.type === 'edit') {
       addOrUpdateCustomChip(reviewData.payload, reviewData.originalCode);
       if (editingPendingId) {
         removePendingSuggestion(editingPendingId);
       }
-      setStatusMsg(`Revisión aprobada: Chip ${reviewData.payload.code} actualizado en la Base Oficial.`);
+      localMessage = `Revisión aprobada: Chip ${reviewData.payload.code} (${reviewData.payload.storage}) actualizado.`;
+      reasonNote = `actualizar ${reviewData.payload.code} (${reviewData.payload.storage})`;
       setEditingOriginalCode(null);
       setEditingPendingId(null);
       setOriginalChipData(null);
@@ -358,7 +521,11 @@ export default function AdminDatabaseModal({
       setNotes('');
     } else if (reviewData.type === 'single' || reviewData.type === 'multi') {
       const count = addMultipleCustomChips(reviewData.chips);
-      setStatusMsg(`Revisión aprobada: ${count} chip(s) guardados en la Base Oficial.`);
+      localMessage = `Revisión aprobada: ${count} chip(s) guardados.`;
+      reasonNote =
+        count === 1 && reviewData.chips[0]?.code
+          ? `agregar ${reviewData.chips[0].code} (${reviewData.chips[0].storage})`
+          : `agregar ${count} chips`;
       setCode('');
       setNotes('');
       setMultiRows([
@@ -368,12 +535,16 @@ export default function AdminDatabaseModal({
       ]);
     } else if (reviewData.type === 'import') {
       const count = addMultipleCustomChips(reviewData.chips);
-      setStatusMsg(`Revisión aprobada: ${count} chip(s) importados en la Base Oficial.`);
+      localMessage = `Revisión aprobada: ${count} chip(s) importados.`;
+      reasonNote = `importar ${count} chips`;
       setBulkText('');
     }
 
     setReviewData(null);
     refreshLists();
+    if (localMessage) {
+      autoSyncAfterLocalChange(reasonNote, localMessage);
+    }
   }
 
   // PASO 2B: Guardar en Buzón de Revisión (Pendiente para verificación posterior)
@@ -453,11 +624,15 @@ export default function AdminDatabaseModal({
     }
     removePendingSuggestion(sug.id);
     refreshLists();
-    setStatusMsg(`Revisión concluida: Código ${sug.code} aprobado y activo.`);
+    autoSyncAfterLocalChange(
+      `aprobar ${sug.code} (${sug.storage})`,
+      `Revisión concluida: Código ${sug.code} aprobado.`
+    );
   }
 
   function handleApproveAllSuggestions() {
     if (pendingList.length === 0) return;
+    const totalApproved = pendingList.length;
     for (const sug of pendingList) {
       if (sug.isEdit && sug.originalCode) {
         addOrUpdateCustomChip(
@@ -484,7 +659,10 @@ export default function AdminDatabaseModal({
       removePendingSuggestion(sug.id);
     }
     refreshLists();
-    setStatusMsg(`Se revisaron y aprobaron los ${pendingList.length} registros pendientes.`);
+    autoSyncAfterLocalChange(
+      `aprobar ${totalApproved} chips del buzón`,
+      `Se revisaron y aprobaron ${totalApproved} registros pendientes.`
+    );
   }
 
   function handleBulkImportProceed() {
@@ -626,7 +804,7 @@ export default function AdminDatabaseModal({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-3xl rounded-3xl pro-panel-elevated shadow-2xl overflow-hidden flex flex-col max-h-[92dvh]"
+        className="relative w-full min-w-0 max-w-3xl rounded-3xl pro-panel-elevated shadow-2xl overflow-hidden flex flex-col max-h-[92dvh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Superior */}
@@ -717,10 +895,10 @@ export default function AdminDatabaseModal({
              ========================================================================= */
           <>
             {/* Barra de Sesión Admin Verificada */}
-            <div className="px-4 sm:px-5 py-2.5 bg-emerald-500/15 border-b border-emerald-500/30 flex items-center justify-between gap-2">
-              <span className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+            <div className="px-4 sm:px-5 py-2 bg-emerald-500/15 border-b border-emerald-500/30 flex items-center justify-between gap-2">
+              <span className="text-xs font-bold text-emerald-300 flex items-center gap-1.5 min-w-0 truncate">
                 <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                PIN Verificado — Cada alta o edición pasará por un paso de revisión antes de aplicar
+                <span className="truncate">PIN Verificado — Revisión obligatoria activa</span>
               </span>
               <button
                 type="button"
@@ -734,8 +912,112 @@ export default function AdminDatabaseModal({
               </button>
             </div>
 
+            {/* Barra Rápida de Sincronización con Base Global (Nube) */}
+            <div
+              className={`px-4 sm:px-5 py-2.5 border-b flex flex-wrap items-center justify-between gap-2 ${
+                !syncStatus.isConnected
+                  ? syncStatus.localCount > 0
+                    ? 'bg-amber-500/15 border-amber-400/35'
+                    : 'bg-[#04180d] border-emerald-500/20'
+                  : syncStatus.unsyncedCount > 0
+                  ? 'bg-amber-500/15 border-amber-400/40'
+                  : 'bg-emerald-950/45 border-emerald-500/25'
+              }`}
+            >
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <Cloud
+                  className={`w-4 h-4 shrink-0 ${
+                    !syncStatus.isConnected || syncStatus.unsyncedCount > 0
+                      ? 'text-amber-300'
+                      : 'text-emerald-400'
+                  }`}
+                />
+                <span className="text-xs font-semibold text-white leading-snug">
+                  {!syncStatus.isConnected ? (
+                    syncStatus.localCount > 0 ? (
+                      <>
+                        Tienes <strong className="text-amber-300">{syncStatus.localCount}</strong>{' '}
+                        chip(s) en este celular sin subir a la Base Global
+                      </>
+                    ) : (
+                      <>Base Global desconectada · Conecta tu celular una vez para subir cambios</>
+                    )
+                  ) : syncStatus.unsyncedCount > 0 ? (
+                    <>
+                      Tienes{' '}
+                      <strong className="text-amber-300">{syncStatus.unsyncedCount}</strong>{' '}
+                      cambio(s) en este celular listos para subir a la Base Global
+                    </>
+                  ) : (
+                    <>
+                      Base Global al día
+                      {syncStatus.githubUser ? ` (@${syncStatus.githubUser})` : ''} ·{' '}
+                      <strong className="text-emerald-300">{syncStatus.cloudCount}</strong> chip(s)
+                      en todos los equipos
+                    </>
+                  )}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                {!syncStatus.isConnected ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReviewData(null);
+                      setActiveTab('cloud');
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-black font-black text-xs shadow transition flex items-center gap-1.5"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>
+                      {syncStatus.localCount > 0
+                        ? `Conectar y Subir (${syncStatus.localCount})`
+                        : 'Conectar Nube'}
+                    </span>
+                  </button>
+                ) : syncStatus.unsyncedCount > 0 ? (
+                  <button
+                    type="button"
+                    disabled={isSyncingCloud}
+                    onClick={() => handleManualPushToCloud('subir cambios guardados en celular')}
+                    className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 disabled:opacity-60 text-black font-black text-xs shadow transition flex items-center gap-1.5"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isSyncingCloud ? 'animate-spin' : ''}`} />
+                    <span>
+                      {isSyncingCloud
+                        ? 'Subiendo...'
+                        : `Subir mis cambios (${syncStatus.unsyncedCount})`}
+                    </span>
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      disabled={isSyncingCloud}
+                      onClick={() => handleManualPushToCloud('resincronizar celular con Base Global')}
+                      className="px-2.5 py-1 rounded-xl bg-emerald-400 hover:bg-emerald-300 disabled:opacity-60 text-black font-extrabold text-[11px] transition flex items-center gap-1"
+                      title="Subir todos los chips de este celular a la Base Global"
+                    >
+                      <Upload className="w-3 h-3" />
+                      <span>{isSyncingCloud ? 'Subiendo...' : 'Subir'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isSyncingCloud}
+                      onClick={handleManualPullFromCloud}
+                      className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-60 text-emerald-200 transition"
+                      title="Descargar últimos chips de la Base Global"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isSyncingCloud ? 'animate-spin' : ''}`} />
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
             {/* Pestañas de Navegación */}
-            <div className="flex overflow-x-auto no-scrollbar gap-1.5 px-4 sm:px-5 pt-3 border-b border-emerald-500/20 bg-[#051a0e]">
+            <div className="w-full min-w-0 flex overflow-x-auto no-scrollbar gap-1.5 px-4 sm:px-5 pt-3 border-b border-emerald-500/20 bg-[#051a0e]">
               <button
                 type="button"
                 onClick={() => {
@@ -754,6 +1036,27 @@ export default function AdminDatabaseModal({
                   <PlusCircle className="w-4 h-4" />
                 )}
                 {editingOriginalCode ? `Editando: ${editingOriginalCode}` : 'Agregar Chips'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setReviewData(null);
+                  setActiveTab('cloud');
+                }}
+                className={`px-3.5 py-2 rounded-t-xl text-xs font-bold whitespace-nowrap border-b-2 transition flex items-center gap-1.5 ${
+                  activeTab === 'cloud'
+                    ? 'border-emerald-400 text-emerald-300 bg-emerald-500/10'
+                    : 'border-transparent text-gray-400 hover:text-white'
+                }`}
+              >
+                <Cloud className="w-4 h-4 text-emerald-400" />
+                <span>Base Global</span>
+                {syncStatus.unsyncedCount > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-black text-[10px] font-black">
+                    {syncStatus.unsyncedCount}
+                  </span>
+                )}
               </button>
 
               <button
@@ -1597,7 +1900,10 @@ export default function AdminDatabaseModal({
                                     onClick={() => {
                                       deleteCustomChip(item.code);
                                       refreshLists();
-                                      setStatusMsg(`Chip personalizado ${item.code} eliminado.`);
+                                      autoSyncAfterLocalChange(
+                                        `eliminar ${item.code}`,
+                                        `Chip personalizado ${item.code} eliminado.`
+                                      );
                                     }}
                                     className="p-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/30 text-rose-300 transition"
                                     title="Eliminar código personalizado"
@@ -1740,6 +2046,243 @@ export default function AdminDatabaseModal({
                           </button>
                         </div>
                       </div>
+                    </div>
+                  )}
+
+                  {/* TAB NUBE: BASE GLOBAL (SUBIR DESDE CELULAR A TODOS LOS EQUIPOS) */}
+                  {activeTab === 'cloud' && (
+                    <div className="space-y-4">
+                      {/* Resumen en 3 contadores */}
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="p-3 rounded-2xl bg-[#031209] border border-emerald-500/25 text-center">
+                          <span className="block text-[10px] uppercase font-bold text-emerald-300/75 tracking-wider">
+                            En este celular
+                          </span>
+                          <span className="font-mono font-black text-lg sm:text-xl text-white">
+                            {syncStatus.localCount}
+                          </span>
+                        </div>
+                        <div className="p-3 rounded-2xl bg-[#031209] border border-emerald-500/25 text-center">
+                          <span className="block text-[10px] uppercase font-bold text-emerald-300/75 tracking-wider">
+                            En Base Global
+                          </span>
+                          <span className="font-mono font-black text-lg sm:text-xl text-emerald-300">
+                            {syncStatus.cloudCount}
+                          </span>
+                        </div>
+                        <div
+                          className={`p-3 rounded-2xl border text-center ${
+                            syncStatus.unsyncedCount > 0
+                              ? 'bg-amber-500/15 border-amber-400/45'
+                              : 'bg-[#031209] border-emerald-500/25'
+                          }`}
+                        >
+                          <span className="block text-[10px] uppercase font-bold text-amber-200/80 tracking-wider">
+                            Sin subir
+                          </span>
+                          <span
+                            className={`font-mono font-black text-lg sm:text-xl ${
+                              syncStatus.unsyncedCount > 0 ? 'text-amber-300' : 'text-emerald-400'
+                            }`}
+                          >
+                            {syncStatus.unsyncedCount}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Si aún NO está conectado: mostrar la caja de conexión arriba para pegar en 1 toque */}
+                      {!syncStatus.isConnected && (
+                        <div className="p-4 rounded-2xl bg-[#031209] border-2 border-amber-400/40 space-y-3 shadow-lg">
+                          <form onSubmit={handleConnectAndAutoUpload} className="space-y-3">
+                            <div className="space-y-1">
+                              <h4 className="font-extrabold text-sm text-white flex items-center gap-1.5">
+                                <KeyRound className="w-4 h-4 text-amber-300 shrink-0" />
+                                <span>Conectar este celular (1 sola vez)</span>
+                              </h4>
+                              <p className="text-xs text-emerald-200/80 leading-relaxed">
+                                Pega la misma llave de GitHub que usas en tu Panel Admin (
+                                <code className="text-emerald-300">github_pat_...</code> o{' '}
+                                <code className="text-emerald-300">ghp_...</code>). Al conectar,
+                                subiremos automáticamente los{' '}
+                                <strong className="text-amber-300">{syncStatus.localCount}</strong>{' '}
+                                chip(s) guardados en tu celular.
+                              </p>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <div className="flex-1 flex gap-1.5 min-w-0">
+                                <input
+                                  type="password"
+                                  value={ghTokenInput}
+                                  onChange={(e) => setGhTokenInput(e.target.value)}
+                                  placeholder="Pega tu llave github_pat_..."
+                                  aria-label="Llave de GitHub para Base Global"
+                                  className="w-full flex-1 min-w-0 px-3 py-2.5 rounded-xl bg-[#062011] border border-emerald-500/35 font-mono text-base sm:text-xs text-white focus:outline-none focus:border-emerald-400"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={handlePasteClipboardToken}
+                                  className="px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-emerald-200 font-bold text-xs shrink-0"
+                                >
+                                  Pegar
+                                </button>
+                              </div>
+
+                              <button
+                                type="submit"
+                                disabled={isSyncingCloud || !ghTokenInput.trim()}
+                                className="py-3 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 disabled:opacity-50 text-black font-black text-xs sm:text-sm shadow transition shrink-0"
+                              >
+                                {isSyncingCloud
+                                  ? 'Conectando y subiendo...'
+                                  : syncStatus.localCount > 0
+                                  ? `Conectar y Subir mis ${syncStatus.localCount} Chip(s)`
+                                  : 'Guardar y Conectar'}
+                              </button>
+                            </div>
+                          </form>
+                        </div>
+                      )}
+
+                      {/* Tarjeta de Subida / Sincronización Principal */}
+                      <div className="p-4 rounded-2xl bg-[#031209] border border-emerald-500/30 space-y-3">
+                        <div className="flex items-start justify-between gap-2 flex-wrap">
+                          <div className="space-y-0.5">
+                            <h4 className="font-extrabold text-sm text-white flex items-center gap-1.5">
+                              <Globe className="w-4 h-4 text-emerald-400 shrink-0" />
+                              <span>Subir mis códigos del celular a la Base Global</span>
+                            </h4>
+                            <p className="text-xs text-emerald-200/75">
+                              Todo lo que subas aquí queda guardado en el servidor de Eco Lógica
+                              García y se descarga solo en los demás celulares y computadoras.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <button
+                            type="button"
+                            disabled={isSyncingCloud}
+                            onClick={() =>
+                              handleManualPushToCloud('subir cambios guardados desde celular')
+                            }
+                            className={`flex-1 py-3.5 px-4 rounded-2xl font-black text-xs sm:text-sm shadow-lg transition flex items-center justify-center gap-2 disabled:opacity-60 ${
+                              syncStatus.unsyncedCount > 0
+                                ? 'bg-amber-400 hover:bg-amber-300 text-black'
+                                : 'bg-emerald-400 hover:bg-emerald-300 text-black'
+                            }`}
+                          >
+                            <Upload className="w-4 h-4 shrink-0" />
+                            <span>
+                              {isSyncingCloud
+                                ? 'Sincronizando con Base Global...'
+                                : syncStatus.unsyncedCount > 0
+                                ? `Subir mis ${syncStatus.unsyncedCount} cambio(s) a la Base Global`
+                                : 'Subir / Sincronizar este celular con la Base Global'}
+                            </span>
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={isSyncingCloud}
+                            onClick={handleManualPullFromCloud}
+                            className="py-3 px-4 rounded-2xl bg-white/10 hover:bg-white/15 disabled:opacity-60 text-white font-bold text-xs transition flex items-center justify-center gap-1.5"
+                          >
+                            <RefreshCw
+                              className={`w-4 h-4 text-emerald-300 shrink-0 ${
+                                isSyncingCloud ? 'animate-spin' : ''
+                              }`}
+                            />
+                            <span>Descargar últimos</span>
+                          </button>
+                        </div>
+
+                        <div className="text-[11px] text-emerald-300/70 flex flex-wrap items-center justify-between gap-1 pt-1 border-t border-emerald-500/15">
+                          <span>
+                            Última subida global: <strong>{formatSyncDate(syncStatus.cloudUpdatedAt)}</strong>
+                            {syncStatus.cloudUpdatedBy ? ` · ${syncStatus.cloudUpdatedBy}` : ''}
+                          </span>
+                          <span>Total activos: {customList.length} chip(s)</span>
+                        </div>
+                      </div>
+
+                      {/* Vista previa de los chips pendientes de subir en este celular */}
+                      {(syncStatus.unsyncedItems.length > 0 ||
+                        syncStatus.unsyncedDeletes.length > 0) && (
+                        <div className="p-3.5 rounded-2xl bg-amber-950/25 border border-amber-400/35 space-y-2">
+                          <p className="text-xs font-extrabold text-amber-200">
+                            Cambios detectados en este celular listos para subir (
+                            {syncStatus.unsyncedCount}):
+                          </p>
+                          <div className="max-h-44 overflow-y-auto space-y-1.5 pr-1">
+                            {syncStatus.unsyncedItems.map((it) => (
+                              <div
+                                key={it.code}
+                                className="px-3 py-2 rounded-xl bg-black/55 border border-amber-400/25 flex items-center justify-between gap-2"
+                              >
+                                <div className="min-w-0">
+                                  <span className="font-mono font-bold text-white text-xs sm:text-sm break-all">
+                                    {it.code}
+                                  </span>
+                                  <span className="text-[11px] text-emerald-200/75 block">
+                                    {it.manufacturer} · {it.type}
+                                    {it.previousStorage && it.previousStorage !== it.storage
+                                      ? ` (antes ${it.previousStorage})`
+                                      : ''}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-200 text-[10px] font-bold uppercase">
+                                    {it.syncReason === 'editado' ? 'Editado' : 'Nuevo'}
+                                  </span>
+                                  <span className="px-2 py-0.5 rounded-lg bg-emerald-400 text-black font-black text-xs">
+                                    {it.storage}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                            {syncStatus.unsyncedDeletes.map((delCode) => (
+                              <div
+                                key={delCode}
+                                className="px-3 py-2 rounded-xl bg-black/55 border border-rose-400/25 flex items-center justify-between gap-2"
+                              >
+                                <span className="font-mono font-bold text-rose-200 text-xs line-through">
+                                  {delCode}
+                                </span>
+                                <span className="px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 text-[10px] font-bold uppercase">
+                                  Eliminado
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Estado de conexión activa cuando ya tiene la llave guardada */}
+                      {syncStatus.isConnected && (
+                        <div className="p-4 rounded-2xl bg-[#031209] border border-emerald-500/25 flex flex-wrap items-center justify-between gap-3">
+                          <div className="space-y-1 min-w-0">
+                            <div className="text-xs font-extrabold text-emerald-300 flex items-center gap-1.5">
+                              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                              <span>
+                                Celular conectado para subir cambios
+                                {syncStatus.githubUser ? ` (@${syncStatus.githubUser})` : ''}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-emerald-200/70">
+                              Cada chip que agregues o edites aquí se sube solo a la Base Global.
+                              Los demás equipos descargan todo sin pedir llave.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleDisconnectCloud}
+                            className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 font-bold text-xs border border-rose-400/30 transition shrink-0"
+                          >
+                            Desconectar llave
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 

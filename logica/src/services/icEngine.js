@@ -3,6 +3,8 @@ import { SEED_IC_CATALOG } from '../data/seedCatalog.js';
 
 const STORAGE_KEYS = {
   CUSTOM_DB: 'eco_custom_db_v1',
+  CLOUD_DB: 'eco_cloud_db_v1',
+  CUSTOM_DELETED: 'eco_custom_deleted_v1',
   AUTO_LEARNED_DB: 'eco_auto_learned_db_v2',
   PENDING_SUGGESTIONS: 'eco_pending_suggestions_v1',
   ADMIN_PIN: 'eco_admin_pin_v2', // Actualizado a v2 con PIN maestro 252002
@@ -10,6 +12,16 @@ const STORAGE_KEYS = {
   BATCH_ITEMS: 'eco_batch_items_v1',
   USAGE_PROFILE: 'eco_usage_intelligence_v1',
 };
+
+// Mismas llaves que admin.js para compartir conexión con GitHub en el mismo dominio
+const GITHUB_TOKEN_KEY = 'ecoLogicaAdminGhToken';
+const GITHUB_USER_KEY = 'ecoLogicaAdminGhUser';
+const GITHUB_REPO_OWNER = 'AdanGarciaL';
+const GITHUB_REPO_NAME = 'reciclajes-g';
+const GITHUB_REPO_BRANCH = 'main';
+const GITHUB_CHIPS_PATH = 'data/custom-chips.json';
+const GITHUB_API_BASE = `https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}`;
+const GITHUB_RAW_CHIPS_URL = `https://raw.githubusercontent.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/${GITHUB_REPO_BRANCH}/${GITHUB_CHIPS_PATH}`;
 
 const DEFAULT_MASTER_PIN = '252002';
 
@@ -1134,16 +1146,190 @@ export function heuristicDecode(rawCode) {
 }
 
 // ============================================================================
-// GESTIÓN DE BASE DE DATOS LOCAL + PERSONALIZADA + AUTO-APRENDIZAJE
+// GESTIÓN DE BASE DE DATOS LOCAL + NUBE GLOBAL (GITHUB) + AUTO-APRENDIZAJE
 // ============================================================================
 
-export function getCustomDatabase() {
+function encodeUtf8ToBase64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+function decodeBase64ToUtf8(b64) {
+  const clean = String(b64 || '').replace(/\s+/g, '');
+  const binary = atob(clean);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder().decode(bytes);
+}
+
+export function getSavedGitHubToken() {
+  try {
+    const raw = localStorage.getItem(GITHUB_TOKEN_KEY);
+    if (!raw) return '';
+    return String(raw).trim().replace(/^"+|"+$/g, '');
+  } catch {
+    return '';
+  }
+}
+
+export function getSavedGitHubUser() {
+  try {
+    return localStorage.getItem(GITHUB_USER_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+export function getLocalDeviceCustomChips() {
   const list = safeGetStorage(STORAGE_KEYS.CUSTOM_DB, []);
   return Array.isArray(list) ? list : [];
 }
 
 export function saveCustomDatabase(list) {
   safeSetStorage(STORAGE_KEYS.CUSTOM_DB, Array.isArray(list) ? list : []);
+}
+
+function getLocalDeletedMap() {
+  const obj = safeGetStorage(STORAGE_KEYS.CUSTOM_DELETED, {});
+  return obj && typeof obj === 'object' && !Array.isArray(obj) ? obj : {};
+}
+
+function saveLocalDeletedMap(mapObj) {
+  safeSetStorage(
+    STORAGE_KEYS.CUSTOM_DELETED,
+    mapObj && typeof mapObj === 'object' ? mapObj : {}
+  );
+}
+
+export function getCloudCachedState() {
+  const saved = safeGetStorage(STORAGE_KEYS.CLOUD_DB, null);
+  if (saved && typeof saved === 'object') {
+    return {
+      version: 1,
+      updatedAt: saved.updatedAt || null,
+      updatedBy: saved.updatedBy || null,
+      deleted: saved.deleted && typeof saved.deleted === 'object' ? saved.deleted : {},
+      chips: Array.isArray(saved.chips) ? saved.chips : [],
+      lastCheckedAt: saved.lastCheckedAt || null,
+    };
+  }
+  return {
+    version: 1,
+    updatedAt: null,
+    updatedBy: null,
+    deleted: {},
+    chips: [],
+    lastCheckedAt: null,
+  };
+}
+
+function saveCloudCachedState(nextState) {
+  safeSetStorage(STORAGE_KEYS.CLOUD_DB, nextState);
+}
+
+function sanitizeChipEntry(chip, fallbackSource = 'Base Eco Lógica García') {
+  const code = normalizeCode(chip?.code);
+  if (!code || code.length < 3) return null;
+  return {
+    code,
+    partNumber: chip.partNumber ? normalizeCode(chip.partNumber) : code,
+    storage: String(chip.storage || chip.capacity || '64GB').toUpperCase().trim(),
+    ram: chip.ram ? String(chip.ram).toUpperCase().trim() : null,
+    manufacturer: chip.manufacturer || chip.brand || 'Samsung',
+    type: chip.type || 'eMCP',
+    tech: chip.tech || chip.type || 'eMCP',
+    package: chip.package || null,
+    notes: chip.notes || '',
+    updatedAt: chip.updatedAt || '2026-01-01T00:00:00.000Z',
+    source: chip.source || fallbackSource,
+  };
+}
+
+function areChipSpecsEqual(a, b) {
+  if (!a || !b) return false;
+  return (
+    String(a.storage || '').toUpperCase().trim() === String(b.storage || '').toUpperCase().trim() &&
+    String(a.ram || '').toUpperCase().trim() === String(b.ram || '').toUpperCase().trim() &&
+    String(a.manufacturer || '').trim() === String(b.manufacturer || '').trim() &&
+    String(a.type || '').trim() === String(b.type || '').trim() &&
+    String(a.notes || '').trim() === String(b.notes || '').trim()
+  );
+}
+
+function parseIsoMs(iso) {
+  if (!iso) return 0;
+  const ms = Date.parse(iso);
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+function mergeChipDatasets(localChips, localDeleted, cloudChips, cloudDeleted) {
+  const mergedDeleted = {};
+  for (const [rawCode, ts] of Object.entries(cloudDeleted || {})) {
+    const k = normalizeCode(rawCode);
+    if (k && ts) mergedDeleted[k] = ts;
+  }
+  for (const [rawCode, ts] of Object.entries(localDeleted || {})) {
+    const k = normalizeCode(rawCode);
+    if (!k || !ts) continue;
+    if (!mergedDeleted[k] || parseIsoMs(ts) >= parseIsoMs(mergedDeleted[k])) {
+      mergedDeleted[k] = ts;
+    }
+  }
+
+  const byCode = new Map();
+
+  for (const rawChip of Array.isArray(cloudChips) ? cloudChips : []) {
+    const entry = sanitizeChipEntry(rawChip, 'Base Global Eco Lógica García');
+    if (entry) {
+      byCode.set(entry.code, { ...entry, fromCloud: true });
+    }
+  }
+
+  for (const rawChip of Array.isArray(localChips) ? localChips : []) {
+    const entry = sanitizeChipEntry(rawChip, 'Base Eco Lógica García');
+    if (!entry) continue;
+    const existing = byCode.get(entry.code);
+    if (!existing) {
+      byCode.set(entry.code, entry);
+    } else {
+      const localMs = parseIsoMs(entry.updatedAt);
+      const cloudMs = parseIsoMs(existing.updatedAt);
+      if (localMs >= cloudMs) {
+        byCode.set(entry.code, entry);
+      }
+    }
+  }
+
+  for (const [code, chip] of Array.from(byCode.entries())) {
+    const delIso = mergedDeleted[code];
+    if (!delIso) continue;
+    const delMs = parseIsoMs(delIso);
+    const chipMs = parseIsoMs(chip.updatedAt);
+    if (delMs >= chipMs) {
+      byCode.delete(code);
+    } else {
+      delete mergedDeleted[code];
+    }
+  }
+
+  const chips = Array.from(byCode.values()).sort(
+    (a, b) => parseIsoMs(b.updatedAt) - parseIsoMs(a.updatedAt)
+  );
+
+  return { chips, deleted: mergedDeleted };
+}
+
+export function getCustomDatabase() {
+  const localChips = getLocalDeviceCustomChips();
+  const localDeleted = getLocalDeletedMap();
+  const cloudState = getCloudCachedState();
+  return mergeChipDatasets(localChips, localDeleted, cloudState.chips, cloudState.deleted).chips;
 }
 
 export function getAutoLearnedDatabase() {
@@ -1154,14 +1340,19 @@ export function getAutoLearnedDatabase() {
 export function addOrUpdateCustomChip(chip, originalCodeToReplace = null) {
   const code = normalizeCode(chip?.code);
   if (!code || code.length < 3) return null;
-  let list = getCustomDatabase();
+  let list = getLocalDeviceCustomChips();
+  const deletedMap = getLocalDeletedMap();
+  const nowIso = new Date().toISOString();
 
   if (originalCodeToReplace) {
     const oldNorm = normalizeCode(originalCodeToReplace);
     if (oldNorm && oldNorm !== code) {
       list = list.filter((item) => normalizeCode(item.code) !== oldNorm);
+      deletedMap[oldNorm] = nowIso;
     }
   }
+
+  delete deletedMap[code];
 
   const entry = {
     code,
@@ -1173,7 +1364,7 @@ export function addOrUpdateCustomChip(chip, originalCodeToReplace = null) {
     tech: chip.tech || chip.type || 'eMCP',
     package: chip.package || null,
     notes: chip.notes || '',
-    updatedAt: new Date().toISOString(),
+    updatedAt: nowIso,
     source: 'Base Eco Lógica García',
   };
 
@@ -1183,19 +1374,24 @@ export function addOrUpdateCustomChip(chip, originalCodeToReplace = null) {
   } else {
     list.unshift(entry);
   }
+  saveLocalDeletedMap(deletedMap);
   saveCustomDatabase(list);
   return entry;
 }
 
 export function addMultipleCustomChips(chipsArray) {
   if (!Array.isArray(chipsArray) || chipsArray.length === 0) return 0;
-  const list = getCustomDatabase();
+  const list = getLocalDeviceCustomChips();
+  const deletedMap = getLocalDeletedMap();
+  const nowIso = new Date().toISOString();
   let count = 0;
 
   for (let i = chipsArray.length - 1; i >= 0; i--) {
     const chip = chipsArray[i];
     const code = normalizeCode(chip?.code);
     if (!code || code.length < 3) continue;
+
+    delete deletedMap[code];
 
     const entry = {
       code,
@@ -1207,7 +1403,7 @@ export function addMultipleCustomChips(chipsArray) {
       tech: chip.tech || chip.type || 'eMCP',
       package: chip.package || null,
       notes: chip.notes || '',
-      updatedAt: new Date().toISOString(),
+      updatedAt: nowIso,
       source: 'Base Eco Lógica García',
     };
 
@@ -1221,6 +1417,7 @@ export function addMultipleCustomChips(chipsArray) {
   }
 
   if (count > 0) {
+    saveLocalDeletedMap(deletedMap);
     saveCustomDatabase(list);
   }
   return count;
@@ -1228,9 +1425,381 @@ export function addMultipleCustomChips(chipsArray) {
 
 export function deleteCustomChip(code) {
   const norm = normalizeCode(code);
-  const list = getCustomDatabase().filter((item) => normalizeCode(item.code) !== norm);
+  if (!norm) return getCustomDatabase();
+  const nowIso = new Date().toISOString();
+  const list = getLocalDeviceCustomChips().filter((item) => normalizeCode(item.code) !== norm);
+  const deletedMap = getLocalDeletedMap();
+  deletedMap[norm] = nowIso;
+  saveLocalDeletedMap(deletedMap);
   saveCustomDatabase(list);
-  return list;
+  return getCustomDatabase();
+}
+
+export function getCloudSyncStatus() {
+  const token = getSavedGitHubToken();
+  const githubUser = getSavedGitHubUser();
+  const localChips = getLocalDeviceCustomChips();
+  const localDeleted = getLocalDeletedMap();
+  const cloudState = getCloudCachedState();
+
+  const cloudMap = new Map();
+  for (const c of cloudState.chips) {
+    const k = normalizeCode(c?.code);
+    if (k) cloudMap.set(k, c);
+  }
+
+  const unsyncedItems = [];
+  for (const localItem of localChips) {
+    const k = normalizeCode(localItem?.code);
+    if (!k) continue;
+    const delMs = localDeleted[k] ? parseIsoMs(localDeleted[k]) : 0;
+    if (delMs && delMs >= parseIsoMs(localItem.updatedAt)) continue;
+
+    const remoteItem = cloudMap.get(k);
+    if (!remoteItem) {
+      unsyncedItems.push({ ...localItem, syncReason: 'nuevo' });
+    } else if (
+      !areChipSpecsEqual(localItem, remoteItem) &&
+      parseIsoMs(localItem.updatedAt) >= parseIsoMs(remoteItem.updatedAt)
+    ) {
+      unsyncedItems.push({
+        ...localItem,
+        syncReason: 'editado',
+        previousStorage: remoteItem.storage,
+      });
+    }
+  }
+
+  const unsyncedDeletes = [];
+  for (const [delCode, delIso] of Object.entries(localDeleted)) {
+    const k = normalizeCode(delCode);
+    const remoteItem = cloudMap.get(k);
+    if (remoteItem && parseIsoMs(delIso) >= parseIsoMs(remoteItem.updatedAt)) {
+      unsyncedDeletes.push(k);
+    }
+  }
+
+  return {
+    isConnected: Boolean(token),
+    githubUser: githubUser || null,
+    localCount: localChips.length,
+    cloudCount: cloudState.chips.length,
+    totalCustomCount: getCustomDatabase().length,
+    unsyncedCount: unsyncedItems.length + unsyncedDeletes.length,
+    unsyncedItems,
+    unsyncedDeletes,
+    cloudUpdatedAt: cloudState.updatedAt,
+    cloudUpdatedBy: cloudState.updatedBy,
+    lastCheckedAt: cloudState.lastCheckedAt,
+  };
+}
+
+function buildGitHubHeaders(token) {
+  return {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+}
+
+function translateGitHubError(status, actionLabel) {
+  if (status === 401) {
+    return `No se pudo ${actionLabel}: la llave de GitHub no es válida o ya venció. Conéctala de nuevo.`;
+  }
+  if (status === 403) {
+    return `No se pudo ${actionLabel}: esta llave no tiene permisos de escritura (Contents: Read and write) en ${GITHUB_REPO_NAME}.`;
+  }
+  if (status === 404) {
+    return `No se pudo ${actionLabel}: revisa que la llave incluya acceso al repositorio ${GITHUB_REPO_NAME}.`;
+  }
+  if (status === 409 || status === 422) {
+    return `Conflicto temporal al ${actionLabel}: intenta tocar "Subir mis cambios" una vez más.`;
+  }
+  return `No se pudo ${actionLabel} (código ${status}).`;
+}
+
+export async function connectCloudGitHubToken(rawToken) {
+  const token = String(rawToken || '').trim().replace(/^"+|"+$/g, '');
+  if (!token) {
+    throw new Error('Pega tu llave de GitHub (empieza con github_pat_ o ghp_).');
+  }
+
+  let userRes;
+  try {
+    userRes = await fetch('https://api.github.com/user', {
+      headers: buildGitHubHeaders(token),
+      cache: 'no-store',
+    });
+  } catch {
+    throw new Error('No hay conexión a internet para verificar la llave.');
+  }
+
+  if (!userRes.ok) {
+    throw new Error(translateGitHubError(userRes.status, 'validar la llave'));
+  }
+  const userData = await userRes.json();
+
+  const repoRes = await fetch(GITHUB_API_BASE, {
+    headers: buildGitHubHeaders(token),
+    cache: 'no-store',
+  });
+  if (!repoRes.ok) {
+    throw new Error(translateGitHubError(repoRes.status, 'conectar con el repositorio'));
+  }
+  const repoData = await repoRes.json();
+  if (repoData.permissions && repoData.permissions.push === false) {
+    throw new Error(
+      'Esta llave solo tiene permiso de lectura. Activa "Contents: Read and write" en GitHub.'
+    );
+  }
+
+  try {
+    localStorage.setItem(GITHUB_TOKEN_KEY, token);
+    localStorage.setItem(GITHUB_USER_KEY, userData.login || 'Admin');
+  } catch {
+    // ignore storage quota errors
+  }
+
+  // Sincronizar estado remoto tras conectar
+  try {
+    await pullCloudDatabase();
+  } catch {
+    // ignore
+  }
+
+  return {
+    ok: true,
+    username: userData.login || 'Admin',
+  };
+}
+
+export function disconnectCloudGitHubToken() {
+  try {
+    localStorage.removeItem(GITHUB_TOKEN_KEY);
+    localStorage.removeItem(GITHUB_USER_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+function parseCloudPayload(rawObj) {
+  if (!rawObj || typeof rawObj !== 'object') return null;
+  if (!Array.isArray(rawObj.chips)) return null;
+  return {
+    version: rawObj.version || 1,
+    updatedAt: rawObj.updatedAt || null,
+    updatedBy: rawObj.updatedBy || null,
+    deleted: rawObj.deleted && typeof rawObj.deleted === 'object' ? rawObj.deleted : {},
+    chips: rawObj.chips.map((c) => sanitizeChipEntry(c, 'Base Global Eco Lógica García')).filter(Boolean),
+  };
+}
+
+export async function pullCloudDatabase() {
+  const token = getSavedGitHubToken();
+  const candidates = [];
+
+  const fetchPromises = [];
+
+  if (token) {
+    fetchPromises.push(
+      fetch(`${GITHUB_API_BASE}/contents/${GITHUB_CHIPS_PATH}?ref=${GITHUB_REPO_BRANCH}`, {
+        headers: buildGitHubHeaders(token),
+        cache: 'no-store',
+      }).then(async (res) => {
+        if (!res.ok) return null;
+        const meta = await res.json();
+        if (meta && meta.login && !getSavedGitHubUser()) {
+          try {
+            localStorage.setItem(GITHUB_USER_KEY, meta.login);
+          } catch {}
+        }
+        if (!meta?.content) return null;
+        return parseCloudPayload(JSON.parse(decodeBase64ToUtf8(meta.content)));
+      })
+    );
+  }
+
+  fetchPromises.push(
+    fetch(`${GITHUB_RAW_CHIPS_URL}?t=${Date.now()}`, { cache: 'no-store' }).then(async (res) => {
+      if (!res.ok) return null;
+      return parseCloudPayload(await res.json());
+    })
+  );
+
+  if (typeof window !== 'undefined' && window.location.protocol !== 'file:') {
+    fetchPromises.push(
+      fetch(`../data/custom-chips.json?t=${Date.now()}`, { cache: 'no-store' }).then(async (res) => {
+        if (!res.ok) return null;
+        return parseCloudPayload(await res.json());
+      })
+    );
+  }
+
+  const settled = await Promise.allSettled(fetchPromises);
+  for (const item of settled) {
+    if (item.status === 'fulfilled' && item.value) {
+      candidates.push(item.value);
+    }
+  }
+
+  if (candidates.length === 0) {
+    return { ok: false, offline: true, status: getCloudSyncStatus() };
+  }
+
+  candidates.sort((a, b) => parseIsoMs(b.updatedAt) - parseIsoMs(a.updatedAt));
+  const freshest = candidates[0];
+  const prevCloud = getCloudCachedState();
+  const hasChanged =
+    prevCloud.updatedAt !== freshest.updatedAt ||
+    prevCloud.chips.length !== freshest.chips.length;
+
+  saveCloudCachedState({
+    ...freshest,
+    lastCheckedAt: new Date().toISOString(),
+  });
+
+  return {
+    ok: true,
+    hasChanged,
+    cloudCount: freshest.chips.length,
+    status: getCloudSyncStatus(),
+  };
+}
+
+export async function pushChangesToCloudDatabase(reasonNote = '') {
+  const token = getSavedGitHubToken();
+  if (!token) {
+    throw new Error(
+      'Este celular aún no tiene conectada la llave de guardado. Pégala una sola vez en la pestaña "Base Global".'
+    );
+  }
+
+  // Verificar usuario si aún no estaba guardado (ej. si la llave venía de admin.html)
+  let username = getSavedGitHubUser();
+  if (!username) {
+    try {
+      const uRes = await fetch('https://api.github.com/user', {
+        headers: buildGitHubHeaders(token),
+        cache: 'no-store',
+      });
+      if (uRes.ok) {
+        const uData = await uRes.json();
+        username = uData.login || 'Admin';
+        try {
+          localStorage.setItem(GITHUB_USER_KEY, username);
+        } catch {}
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const attemptUpload = async () => {
+    let remoteSha = undefined;
+    let remoteParsed = { chips: [], deleted: {} };
+
+    let getRes;
+    try {
+      getRes = await fetch(
+        `${GITHUB_API_BASE}/contents/${GITHUB_CHIPS_PATH}?ref=${GITHUB_REPO_BRANCH}`,
+        {
+          headers: buildGitHubHeaders(token),
+          cache: 'no-store',
+        }
+      );
+    } catch {
+      throw new Error('No hay conexión a internet en este momento. Tus cambios siguen seguros en tu celular.');
+    }
+
+    if (getRes.status === 200) {
+      const meta = await getRes.json();
+      remoteSha = meta.sha;
+      if (meta.content) {
+        try {
+          const decoded = JSON.parse(decodeBase64ToUtf8(meta.content));
+          const parsed = parseCloudPayload(decoded);
+          if (parsed) remoteParsed = parsed;
+        } catch {
+          // Si estaba vacío o corrupto se reconstruye limpio
+        }
+      }
+    } else if (getRes.status !== 404) {
+      throw new Error(translateGitHubError(getRes.status, 'leer la Base Global'));
+    }
+
+    const localChips = getLocalDeviceCustomChips();
+    const localDeleted = getLocalDeletedMap();
+    const merged = mergeChipDatasets(
+      localChips,
+      localDeleted,
+      remoteParsed.chips,
+      remoteParsed.deleted
+    );
+
+    const nowIso = new Date().toISOString();
+    const payloadObj = {
+      version: 1,
+      updatedAt: nowIso,
+      updatedBy: username ? `${username} (Detector IC)` : 'Detector IC Móvil',
+      deleted: merged.deleted,
+      chips: merged.chips.map(({ fromCloud, ...rest }) => rest),
+    };
+
+    const commitMsg = reasonNote
+      ? `chore(ic-db): ${reasonNote} (${payloadObj.chips.length} chips)`
+      : `chore(ic-db): sincronizar ${payloadObj.chips.length} chips desde Detector IC`;
+
+    const body = {
+      message: commitMsg,
+      content: encodeUtf8ToBase64(JSON.stringify(payloadObj, null, 2) + '\n'),
+      branch: GITHUB_REPO_BRANCH,
+    };
+    if (remoteSha) body.sha = remoteSha;
+
+    let putRes;
+    try {
+      putRes = await fetch(`${GITHUB_API_BASE}/contents/${GITHUB_CHIPS_PATH}`, {
+        method: 'PUT',
+        headers: {
+          ...buildGitHubHeaders(token),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+    } catch {
+      throw new Error('Se cortó el internet al subir. Tus chips siguen guardados en tu celular.');
+    }
+
+    if (!putRes.ok) {
+      const err = new Error(translateGitHubError(putRes.status, 'subir los chips a la Base Global'));
+      err.status = putRes.status;
+      throw err;
+    }
+
+    // Dejar estado local y caché de nube 100% alineados (0 pendientes)
+    saveCloudCachedState({
+      ...payloadObj,
+      lastCheckedAt: nowIso,
+    });
+    saveCustomDatabase(payloadObj.chips);
+    saveLocalDeletedMap(merged.deleted);
+
+    return {
+      ok: true,
+      totalCount: payloadObj.chips.length,
+      updatedAt: nowIso,
+      status: getCloudSyncStatus(),
+    };
+  };
+
+  try {
+    return await attemptUpload();
+  } catch (err) {
+    if (err && err.status === 409) {
+      return await attemptUpload();
+    }
+    throw err;
+  }
 }
 
 export function getAllEditableCatalog() {
@@ -1603,7 +2172,26 @@ export function searchChipsInstant(rawQuery, limit = 10) {
     results.push(enrichWithUsage(item));
   };
 
-  // 1. Primero buscar en el perfil de uso real del usuario (incluso desde 1 sola letra escrita)
+  const customChips = getCustomDatabase();
+  const customMap = new Map(customChips.map((c) => [normalizeCode(c.code), c]));
+
+  // 1. Primero buscar en la Base Oficial / Global editada por el Admin y en el perfil de uso real
+  for (const q of candidates) {
+    if (q.length < 1) continue;
+    for (const cChip of customChips) {
+      const codeNorm = normalizeCode(cChip.code);
+      const pnNorm = normalizeCode(cChip.partNumber || '');
+      if (codeNorm.startsWith(q) || (q.length >= 2 && (codeNorm.includes(q) || pnNorm.includes(q)))) {
+        pushUnique({
+          ...cChip,
+          storage: cChip.storage || cChip.capacity,
+          manufacturer: cChip.manufacturer || cChip.brand,
+          source: cChip.source || 'Base Eco Lógica García',
+        });
+      }
+    }
+  }
+
   const userSavedChips = Object.values(userChipsMap).sort((a, b) => (b.score || 0) - (a.score || 0));
   for (const q of candidates) {
     if (q.length < 1) continue;
@@ -1611,17 +2199,19 @@ export function searchChipsInstant(rawQuery, limit = 10) {
       const codeNorm = normalizeCode(uChip.code);
       const pnNorm = normalizeCode(uChip.partNumber || '');
       if (codeNorm.startsWith(q) || (q.length >= 2 && (codeNorm.includes(q) || pnNorm.includes(q)))) {
+        const customOverride = customMap.get(codeNorm);
         pushUnique({
           ...uChip,
-          storage: uChip.storage || uChip.capacity,
-          manufacturer: uChip.manufacturer || uChip.brand,
-          source: uChip.source || 'Frecuente en tu taller',
+          ...(customOverride || {}),
+          storage: customOverride?.storage || uChip.storage || uChip.capacity,
+          manufacturer: customOverride?.manufacturer || uChip.manufacturer || uChip.brand,
+          source: customOverride ? 'Base Eco Lógica García' : uChip.source || 'Frecuente en tu taller',
         });
       }
     }
   }
 
-  const allLocal = [...getCustomDatabase(), ...getAutoLearnedDatabase(), ...SEED_IC_CATALOG];
+  const allLocal = [...customChips, ...getAutoLearnedDatabase(), ...SEED_IC_CATALOG];
 
   for (const q of candidates) {
     if (q.length < 1) continue;
@@ -2019,6 +2609,7 @@ export function getDatabaseStats() {
   const learnedCount = getAutoLearnedDatabase().length;
   const seedCount = SEED_IC_CATALOG.length;
   const pendingCount = getPendingSuggestions().length;
+  const syncInfo = getCloudSyncStatus();
   const industrialCount = 25325;
 
   return {
@@ -2026,6 +2617,9 @@ export function getDatabaseStats() {
     learnedCount,
     seedCount,
     pendingCount,
+    unsyncedCount: syncInfo.unsyncedCount,
+    cloudCount: syncInfo.cloudCount,
+    cloudConnected: syncInfo.isConnected,
     industrialCount,
     totalOfflineCount: industrialCount + seedCount + customCount + learnedCount,
   };
