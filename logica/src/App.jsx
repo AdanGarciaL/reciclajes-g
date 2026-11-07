@@ -777,7 +777,8 @@ export default function App() {
       <header
         className={`sticky top-0 z-30 ${headerShieldClass} pb-1 px-2 sm:px-4 border-b border-emerald-500/20 shadow-[0_12px_32px_rgba(0,0,0,0.88)]`}
       >
-        <div className="max-w-5xl mx-auto rounded-2xl pro-panel px-2.5 sm:px-4 py-1.5 sm:py-2">
+        <div className="relative max-w-5xl mx-auto rounded-2xl pro-panel px-2.5 sm:px-4 py-1.5 sm:py-2">
+          <div className="xmas-header-lights" aria-hidden="true" />
           <div className="flex items-center justify-between gap-2">
             {/* Identidad */}
             <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -791,15 +792,33 @@ export default function App() {
                   <span>Web</span>
                 </a>
               )}
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-black flex items-center justify-center shadow-[0_0_14px_rgba(52,211,153,0.4)] shrink-0">
+              <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-black flex items-center justify-center shadow-[0_0_14px_rgba(52,211,153,0.4)] ring-1 ring-amber-300/40 shrink-0">
                 <Cpu className="w-4 h-4 stroke-[2.5]" />
+                <svg
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -top-1.5 -right-1.5 w-3.5 h-3.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]"
+                >
+                  <path d="M3 11 C4 6 8 4 13 5 C11 9 8 12 3 11 Z" fill="#15803d" stroke="#86efac" strokeWidth="0.9" />
+                  <circle cx="5.2" cy="10.5" r="2.2" fill="#ef4444" />
+                  <circle cx="8.5" cy="11.5" r="2" fill="#dc2626" />
+                  <path d="M11.5 1.2 L12.3 3.4 L14.5 4.2 L12.3 5 L11.5 7.2 L10.7 5 L8.5 4.2 L10.7 3.4 Z" fill="#fde047" />
+                </svg>
               </div>
               <div className="min-w-0">
                 <h1 className="font-black tracking-tight text-white text-xs sm:text-base leading-none truncate">
                   ECO LÓGICA <span className="text-emerald-400">GARCÍA</span>
                 </h1>
-                <span className="hidden sm:block text-[10px] text-emerald-200/75 font-mono font-medium truncate mt-0.5">
-                  {dbStats.totalOfflineCount.toLocaleString()} IC · Detector de Capacidad
+                <span className="hidden sm:flex items-center gap-1.5 text-[10px] text-emerald-200/75 font-mono font-medium truncate mt-0.5">
+                  <span className="truncate">
+                    {dbStats.totalOfflineCount.toLocaleString()} IC
+                    <span className="lg:hidden"> · Detector de Capacidad</span>
+                  </span>
+                  <span className="hidden lg:inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-amber-400/10 border border-amber-300/30 text-[9px] text-amber-200 font-semibold shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />
+                    Navidad
+                  </span>
                 </span>
               </div>
             </div>

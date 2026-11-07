@@ -1,47 +1,60 @@
 /* ==========================================================================
-   TEMPORADA DÍA DE MUERTOS — ARTE VISUAL, CALACAS, TELARAÑAS Y CEMPASÚCHIL
-   Sin etiquetas de texto invasivas. Integra figuras SVG artesanales,
-   calacas animadas, telarañas en esquinas con araña colgante, flores de
-   cempasúchil, veladoras con flama viva y papel picado en todas las páginas
-   y secciones, respetando 100% tipografía, logo y colores oficiales.
+   TEMPORADA NAVIDEÑA — EDICIÓN EJECUTIVA ECO LÓGICA GARCÍA
+   Arte visual vectorial de alta factura: guirnalda de pino y luces cálidas,
+   ramas de acebo en esquinas, esferas colgantes de cristal, estrellas de Belén,
+   flores de Nochebuena, coronas navideñas y nevada suave adaptable a modo
+   claro y modo oscuro, respetando 100% tipografía, logo e identidad oficial.
    ========================================================================== */
 
 :root {
-  --muertos-gold: #fde047;
-  --muertos-cempasuchil: #f59e0b;
-  --muertos-naranja: #ea580c;
-  --muertos-rosa: #ec4899;
-  --muertos-morado: #a855f7;
+  --navidad-pino-deep: #072917;
+  --navidad-pino: #0b3b22;
+  --navidad-emerald: #10b981;
+  --navidad-crimson: #dc2626;
+  --navidad-crimson-deep: #991b1b;
+  --navidad-gold: #fbbf24;
+  --navidad-gold-bright: #fde047;
+  --navidad-frost-ink: #3b82f6;
 
-  /* Papel Picado Calado con Calacas y Flores de Cempasúchil */
-  --papel-picado-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='42' viewBox='0 0 360 42'%3E%3Cdefs%3E%3ClinearGradient id='cuerda' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0%25' stop-color='%2310b981'/%3E%3Cstop offset='25%25' stop-color='%23f59e0b'/%3E%3Cstop offset='50%25' stop-color='%23ec4899'/%3E%3Cstop offset='75%25' stop-color='%23a855f7'/%3E%3Cstop offset='100%25' stop-color='%2310b981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='360' height='2.5' fill='url(%23cuerda)'/%3E%3Cg%3E%3C!-- Banderín 1: Calaca en Cempasúchil --%3E%3Cpath d='M5 2.5 H85 V26 L75 36 L65 28 L55 37 L45 28 L35 37 L25 28 L15 36 L5 26 Z' fill='%23291304' stroke='%23f59e0b' stroke-width='1.2'/%3E%3Ccircle cx='45' cy='14' r='6.5' fill='%23fef3c7'/%3E%3Crect x='41' y='18' width='8' height='4.5' rx='1' fill='%23fef3c7'/%3E%3Ccircle cx='42.6' cy='13.5' r='1.7' fill='%23291304'/%3E%3Ccircle cx='47.4' cy='13.5' r='1.7' fill='%23291304'/%3E%3Cpath d='M45 15.5 L43.8 17.5 H46.2 Z' fill='%23ec4899'/%3E%3Cline x1='43' y1='19.5' x2='43' y2='22' stroke='%23291304' stroke-width='1'/%3E%3Cline x1='45' y1='19.5' x2='45' y2='22' stroke='%23291304' stroke-width='1'/%3E%3Cline x1='47' y1='19.5' x2='47' y2='22' stroke='%23291304' stroke-width='1'/%3E%3Ccircle cx='20' cy='12' r='2.2' fill='%23fde047'/%3E%3Ccircle cx='70' cy='12' r='2.2' fill='%23fde047'/%3E%3Ccircle cx='20' cy='21' r='1.6' fill='%23fb923c'/%3E%3Ccircle cx='70' cy='21' r='1.6' fill='%23fb923c'/%3E%3C!-- Banderín 2: Flor de Cempasúchil en Verde Oficial --%3E%3Cpath d='M95 2.5 H175 V26 L165 36 L155 28 L145 37 L135 28 L125 37 L115 28 L105 36 L95 26 Z' fill='%2307261b' stroke='%2310b981' stroke-width='1.2'/%3E%3Ccircle cx='135' cy='16' r='4.2' fill='%23fde047'/%3E%3Ccircle cx='135' cy='8.8' r='2.4' fill='%23f59e0b'/%3E%3Ccircle cx='135' cy='23.2' r='2.4' fill='%23f59e0b'/%3E%3Ccircle cx='127.8' cy='16' r='2.4' fill='%23f59e0b'/%3E%3Ccircle cx='142.2' cy='16' r='2.4' fill='%23f59e0b'/%3E%3Ccircle cx='129.8' cy='10.8' r='2' fill='%23fb923c'/%3E%3Ccircle cx='140.2' cy='10.8' r='2' fill='%23fb923c'/%3E%3Ccircle cx='129.8' cy='21.2' r='2' fill='%23fb923c'/%3E%3Ccircle cx='140.2' cy='21.2' r='2' fill='%23fb923c'/%3E%3Ccircle cx='110' cy='14' r='2' fill='%2310b981'/%3E%3Ccircle cx='160' cy='14' r='2' fill='%2310b981'/%3E%3C!-- Banderín 3: Calaca en Morado Ofrenda --%3E%3Cpath d='M185 2.5 H265 V26 L255 36 L245 28 L235 37 L225 28 L215 37 L205 28 L195 36 L185 26 Z' fill='%231c0b2b' stroke='%23a855f7' stroke-width='1.2'/%3E%3Ccircle cx='225' cy='14' r='6.5' fill='%23f5d0fe'/%3E%3Crect x='221' y='18' width='8' height='4.5' rx='1' fill='%23f5d0fe'/%3E%3Ccircle cx='222.6' cy='13.5' r='1.7' fill='%231c0b2b'/%3E%3Ccircle cx='227.4' cy='13.5' r='1.7' fill='%231c0b2b'/%3E%3Cpath d='M225 15.5 L223.8 17.5 H226.2 Z' fill='%23f59e0b'/%3E%3Ccircle cx='200' cy='13' r='2.2' fill='%23c084fc'/%3E%3Ccircle cx='250' cy='13' r='2.2' fill='%23c084fc'/%3E%3C!-- Banderín 4: Rosa Mexicano Calado --%3E%3Cpath d='M275 2.5 H355 V26 L345 36 L335 28 L325 37 L315 28 L305 37 L295 28 L285 36 L275 26 Z' fill='%232b091c' stroke='%23ec4899' stroke-width='1.2'/%3E%3Ccircle cx='315' cy='16' r='4.2' fill='%23fde047'/%3E%3Ccircle cx='315' cy='8.8' r='2.4' fill='%23f472b6'/%3E%3Ccircle cx='315' cy='23.2' r='2.4' fill='%23f472b6'/%3E%3Ccircle cx='307.8' cy='16' r='2.4' fill='%23f472b6'/%3E%3Ccircle cx='322.2' cy='16' r='2.4' fill='%23f472b6'/%3E%3Ccircle cx='290' cy='14' r='2' fill='%23f472b6'/%3E%3Ccircle cx='340' cy='14' r='2' fill='%23f472b6'/%3E%3C/g%3E%3C/svg%3E");
+  /* Guirnalda artesanal de ramas de pino, serie de luces cálidas y esferas */
+  --guirnalda-navidad-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='38' viewBox='0 0 360 38'%3E%3C!-- Follaje denso de pino superior --%3E%3Cpath d='M0 0 H360 V10 C338 21 312 21 290 11 C268 22 242 22 220 11 C198 22 162 22 140 11 C118 22 92 22 70 11 C48 21 22 21 0 10 Z' fill='%23072917'/%3E%3Cpath d='M0 0 H360 V7 C335 16 305 16 280 7 C255 17 225 17 200 7 C175 17 145 17 120 7 C95 17 65 17 40 7 C20 14 8 12 0 7 Z' fill='%230f5132'/%3E%3Cg stroke='%2322c55e' stroke-width='1.1' stroke-linecap='round' opacity='0.55'%3E%3Cline x1='18' y1='4' x2='28' y2='13'/%3E%3Cline x1='34' y1='5' x2='26' y2='14'/%3E%3Cline x1='78' y1='4' x2='88' y2='13'/%3E%3Cline x1='108' y1='5' x2='98' y2='14'/%3E%3Cline x1='150' y1='4' x2='160' y2='13'/%3E%3Cline x1='195' y1='5' x2='185' y2='14'/%3E%3Cline x1='236' y1='4' x2='246' y2='13'/%3E%3Cline x1='276' y1='5' x2='266' y2='14'/%3E%3Cline x1='318' y1='4' x2='328' y2='13'/%3E%3Cline x1='346' y1='5' x2='336' y2='14'/%3E%3C/g%3E%3C!-- Cable dorado de serie navideña --%3E%3Cpath d='M0 8 Q45 26 90 9 Q135 26 180 9 Q225 26 270 9 Q315 26 360 8' fill='none' stroke='%23d97706' stroke-width='1.25'/%3E%3C!-- Esfera colgante rubí (x=90) --%3E%3Cline x1='90' y1='9' x2='90' y2='18' stroke='%23fbbf24' stroke-width='1.1'/%3E%3Ccircle cx='90' cy='24' r='5.4' fill='%23dc2626' stroke='%23fbbf24' stroke-width='0.9'/%3E%3Ccircle cx='88.2' cy='22.2' r='1.4' fill='%23fecaca' opacity='0.85'/%3E%3C!-- Bayas de acebo (x=90) --%3E%3Ccircle cx='88' cy='9' r='2' fill='%23ef4444'/%3E%3Ccircle cx='92' cy='9' r='2' fill='%23ef4444'/%3E%3Ccircle cx='90' cy='6.8' r='2' fill='%23dc2626'/%3E%3C!-- Esfera colgante dorada (x=180) --%3E%3Cline x1='180' y1='9' x2='180' y2='17' stroke='%23fde047' stroke-width='1.1'/%3E%3Ccircle cx='180' cy='23' r='5.2' fill='%23f59e0b' stroke='%23fef08a' stroke-width='0.9'/%3E%3Ccircle cx='178.3' cy='21.2' r='1.4' fill='%23fef9c3' opacity='0.9'/%3E%3Cpath d='M176 8 L180 10.5 L184 8 L183 11.5 L180 10 L177 11.5 Z' fill='%23dc2626'/%3E%3C!-- Esfera colgante rubí (x=270) --%3E%3Cline x1='270' y1='9' x2='270' y2='18' stroke='%23fbbf24' stroke-width='1.1'/%3E%3Ccircle cx='270' cy='24' r='5.4' fill='%23b91c1c' stroke='%23fbbf24' stroke-width='0.9'/%3E%3Ccircle cx='268.2' cy='22.2' r='1.4' fill='%23fecaca' opacity='0.85'/%3E%3Ccircle cx='268' cy='9' r='2' fill='%23ef4444'/%3E%3Ccircle cx='272' cy='9' r='2' fill='%23ef4444'/%3E%3Ccircle cx='270' cy='6.8' r='2' fill='%23dc2626'/%3E%3C!-- Focos LED cálidos con halo luminoso --%3E%3Cg%3E%3Ccircle cx='24' cy='15' r='4.2' fill='%23fde047' opacity='0.28'/%3E%3Ccircle cx='24' cy='15' r='2.1' fill='%23fef08a'/%3E%3Ccircle cx='45' cy='18' r='4.5' fill='%23ef4444' opacity='0.28'/%3E%3Ccircle cx='45' cy='18' r='2.2' fill='%23f87171'/%3E%3Ccircle cx='66' cy='15' r='4.2' fill='%2334d399' opacity='0.28'/%3E%3Ccircle cx='66' cy='15' r='2.1' fill='%236ee7b7'/%3E%3Ccircle cx='114' cy='15' r='4.2' fill='%23fde047' opacity='0.28'/%3E%3Ccircle cx='114' cy='15' r='2.1' fill='%23fef08a'/%3E%3Ccircle cx='135' cy='18' r='4.5' fill='%2334d399' opacity='0.28'/%3E%3Ccircle cx='135' cy='18' r='2.2' fill='%236ee7b7'/%3E%3Ccircle cx='156' cy='15' r='4.2' fill='%23ef4444' opacity='0.28'/%3E%3Ccircle cx='156' cy='15' r='2.1' fill='%23fca5a5'/%3E%3Ccircle cx='204' cy='15' r='4.2' fill='%23fef08a' opacity='0.28'/%3E%3Ccircle cx='204' cy='15' r='2.1' fill='%23fef9c3'/%3E%3Ccircle cx='225' cy='18' r='4.5' fill='%23ef4444' opacity='0.28'/%3E%3Ccircle cx='225' cy='18' r='2.2' fill='%23f87171'/%3E%3Ccircle cx='246' cy='15' r='4.2' fill='%23fde047' opacity='0.28'/%3E%3Ccircle cx='246' cy='15' r='2.1' fill='%23fef08a'/%3E%3Ccircle cx='294' cy='15' r='4.2' fill='%2334d399' opacity='0.28'/%3E%3Ccircle cx='294' cy='15' r='2.1' fill='%236ee7b7'/%3E%3Ccircle cx='315' cy='18' r='4.5' fill='%23fde047' opacity='0.3'/%3E%3Ccircle cx='315' cy='18' r='2.2' fill='%23fef08a'/%3E%3Ccircle cx='336' cy='15' r='4.2' fill='%23ef4444' opacity='0.28'/%3E%3Ccircle cx='336' cy='15' r='2.1' fill='%23fca5a5'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 /* ==========================================================================
-   1. GUIRNALDA SUPERIOR E INFERIOR DE PAPEL PICADO
+   1. GUIRNALDA SUPERIOR E INFERIOR DE PINO, LUCES Y ESFERAS
    ========================================================================== */
 .temporada-garland-top {
   position: relative;
   width: 100%;
-  height: 36px;
-  background-image: var(--papel-picado-svg);
+  height: 34px;
+  margin-bottom: -6px;
+  background-image: var(--guirnalda-navidad-svg);
   background-repeat: repeat-x;
   background-position: center top;
-  background-size: 340px 36px;
+  background-size: 340px 34px;
   pointer-events: none;
   z-index: 95;
-  opacity: 0.96;
-  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.5));
+  opacity: 0.98;
+  filter: drop-shadow(0 4px 10px rgba(7, 41, 23, 0.28));
   transform-origin: top center;
-  animation: papelPicadoWave 6s ease-in-out infinite alternate;
+  animation: navidadGarlandGlow 4.5s ease-in-out infinite alternate;
 }
 
-@keyframes papelPicadoWave {
+body.dark-mode .temporada-garland-top,
+body.legal-dark-mode .temporada-garland-top {
+  filter:
+    drop-shadow(0 5px 12px rgba(0, 0, 0, 0.6))
+    drop-shadow(0 0 10px rgba(251, 191, 36, 0.16));
+}
+
+@keyframes navidadGarlandGlow {
   0% {
-    transform: translateY(0) scaleY(0.98);
+    opacity: 0.93;
+    transform: scaleY(0.99);
   }
   100% {
-    transform: translateY(1.5px) scaleY(1.04);
+    opacity: 1;
+    transform: scaleY(1.02);
   }
 }
 
@@ -55,79 +68,105 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 32px;
-  background-image: var(--papel-picado-svg);
+  height: 30px;
+  background-image: var(--guirnalda-navidad-svg);
   background-repeat: repeat-x;
   background-position: center top;
-  background-size: 320px 32px;
-  opacity: 0.88;
+  background-size: 320px 30px;
+  opacity: 0.92;
   pointer-events: none;
 }
 
 /* ==========================================================================
-   2. TELARAÑAS EN LAS ESQUINAS DE LA PANTALLA + ARAÑA ANIMADA EN HILO
+   2. RAMAS DE PINO EN ESQUINAS + ESFERAS NAVIDEÑAS COLGANTES (ESCRITORIO)
    ========================================================================== */
-.temporada-corner-web {
+.temporada-corner-bough {
   position: fixed;
   top: 0;
-  width: 170px;
-  height: 170px;
+  width: 152px;
+  height: 152px;
   pointer-events: none;
-  z-index: 88;
-  opacity: 0.55;
-  filter: drop-shadow(0 2px 8px rgba(245, 158, 11, 0.22));
+  z-index: 102;
+  opacity: 0.88;
+  filter: drop-shadow(0 4px 12px rgba(7, 41, 23, 0.24));
   transition: opacity 0.3s ease;
 }
 
-.temporada-corner-web--left {
+body.dark-mode .temporada-corner-bough,
+body.legal-dark-mode .temporada-corner-bough {
+  opacity: 0.94;
+  filter:
+    drop-shadow(0 4px 14px rgba(0, 0, 0, 0.55))
+    drop-shadow(0 0 12px rgba(251, 191, 36, 0.16));
+}
+
+.temporada-corner-bough--left {
   left: 0;
 }
 
-.temporada-corner-web--right {
+.temporada-corner-bough--right {
   right: 0;
   transform: scaleX(-1);
 }
 
-.temporada-corner-web svg {
+.temporada-corner-bough svg {
   width: 100%;
   height: 100%;
   display: block;
 }
 
-/* Araña colgando de su hilo con animación suave */
-.temporada-hanging-spider {
+/* Esferas de cristal colgando en márgenes exteriores de pantallas amplias */
+.temporada-hanging-ornament {
   position: fixed;
   top: 0;
-  left: 64px;
-  width: 34px;
-  height: 140px;
+  left: 16px;
+  width: 38px;
+  height: 134px;
   pointer-events: none;
-  z-index: 89;
+  z-index: 103;
   transform-origin: top center;
-  animation: spiderDropBounce 7.5s ease-in-out infinite;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.3));
+  animation: ornamentPendulum 6.8s ease-in-out infinite;
 }
 
-.temporada-hanging-spider--right {
+.temporada-hanging-ornament--right {
   left: auto;
-  right: 72px;
-  animation-duration: 9s;
-  animation-delay: -3.2s;
+  right: 18px;
+  height: 122px;
+  animation-duration: 8.2s;
+  animation-delay: -2.8s;
 }
 
-@keyframes spiderDropBounce {
+.temporada-hanging-ornament svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@keyframes ornamentPendulum {
   0%, 100% {
-    transform: translateY(-18px) rotate(-2deg);
+    transform: rotate(-2.6deg) translateY(0);
   }
-  45% {
-    transform: translateY(14px) rotate(2.5deg);
+  50% {
+    transform: rotate(2.6deg) translateY(2px);
   }
-  70% {
-    transform: translateY(4px) rotate(-1deg);
+}
+
+/* En laptops compactas (< 1380px) ocultamos las esferas colgantes fijas y
+   compactamos las ramas esquineras para jamás rozar el logo ni los botones */
+@media (max-width: 1380px) {
+  .temporada-hanging-ornament {
+    display: none !important;
+  }
+  .temporada-corner-bough {
+    width: 76px;
+    height: 76px;
+    opacity: 0.72;
   }
 }
 
 /* ==========================================================================
-   3. DECORACIÓN VISUAL EN CADA SECCIÓN (TELARAÑAS, CALACAS, FLORES Y VELAS)
+   3. DECORACIÓN VISUAL EN SECCIONES (ESTRELLAS, ACEBO, NOCHEBUENAS Y PINOS)
    ========================================================================== */
 main > section,
 .section,
@@ -137,7 +176,7 @@ main > section,
   position: relative;
 }
 
-/* Línea luminosa de ofrenda al inicio de cada sección */
+/* Línea divisoria luminosa navideña (esmeralda, carmesí y oro champagne) */
 main > section::before,
 .legal-section::before,
 .section-block::before {
@@ -150,21 +189,21 @@ main > section::before,
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(16, 185, 129, 0.32) 15%,
-    rgba(245, 158, 11, 0.72) 40%,
-    rgba(253, 224, 71, 0.95) 50%,
-    rgba(236, 72, 153, 0.65) 60%,
-    rgba(168, 85, 247, 0.38) 85%,
+    rgba(16, 185, 129, 0.34) 16%,
+    rgba(220, 38, 38, 0.58) 38%,
+    rgba(251, 191, 36, 0.95) 50%,
+    rgba(220, 38, 38, 0.58) 62%,
+    rgba(16, 185, 129, 0.34) 84%,
     transparent 100%
   );
-  box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.22);
   pointer-events: none;
 }
 
-/* Emblema central de Calaca y Cempasúchil en el divisor de cada sección */
+/* Emblema central (Estrella de Belén + Hojas de Acebo) en secciones principales */
 .temporada-section-emblem {
   position: absolute;
-  top: -19px;
+  top: -18px;
   left: 50%;
   transform: translateX(-50%);
   display: inline-flex;
@@ -173,80 +212,100 @@ main > section::before,
   gap: 6px;
   padding: 4px 14px;
   border-radius: 999px;
-  background: radial-gradient(circle at 50% 50%, rgba(28, 18, 8, 0.96), rgba(7, 22, 16, 0.96));
-  border: 1px solid rgba(251, 191, 36, 0.45);
+  background: linear-gradient(135deg, #072917 0%, #0d3d23 50%, #072917 100%);
+  border: 1px solid rgba(251, 191, 36, 0.58);
   box-shadow:
-    0 6px 20px rgba(0, 0, 0, 0.45),
-    0 0 18px rgba(245, 158, 11, 0.22);
+    0 6px 18px rgba(7, 41, 23, 0.26),
+    0 0 16px rgba(251, 191, 36, 0.2);
   pointer-events: none;
   z-index: 6;
 }
 
+body.dark-mode .temporada-section-emblem {
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.55),
+    0 0 20px rgba(251, 191, 36, 0.25);
+}
+
 .temporada-section-emblem svg {
-  width: 22px;
-  height: 22px;
   display: block;
 }
 
-.temporada-section-emblem .emblem-flower {
+.temporada-section-emblem .emblem-holly {
   width: 17px;
   height: 17px;
-  animation: cempasuchilSpinSlow 18s linear infinite;
 }
 
-.temporada-section-emblem .emblem-skull {
-  width: 24px;
-  height: 24px;
-  animation: calacaNod 4.2s ease-in-out infinite;
+.temporada-section-emblem .emblem-holly--mirror {
+  transform: scaleX(-1);
 }
 
-/* Telarañas sutiles dentro de las esquinas de cada sección */
-.temporada-section-web {
+.temporada-section-emblem .emblem-star {
+  width: 22px;
+  height: 22px;
+  animation: navidadStarPulse 3.6s ease-in-out infinite;
+}
+
+/* Filigrana sutil de pino y escarcha en esquinas internas de sección */
+.temporada-section-sprig {
   position: absolute;
-  top: 2px;
-  width: 88px;
-  height: 88px;
+  top: 3px;
+  width: 78px;
+  height: 78px;
   pointer-events: none;
-  opacity: 0.38;
+  opacity: 0.34;
   z-index: 2;
 }
 
-.temporada-section-web--left {
+body.dark-mode .temporada-section-sprig,
+body.legal-dark-mode .temporada-section-sprig {
+  opacity: 0.44;
+}
+
+.temporada-section-sprig--left {
   left: 0;
 }
 
-.temporada-section-web--right {
+.temporada-section-sprig--right {
   right: 0;
   transform: scaleX(-1);
 }
 
-.temporada-section-web svg {
+.temporada-section-sprig svg {
   width: 100%;
   height: 100%;
+  display: block;
 }
 
-/* Figuras flotantes de Calacas, Catrinas, Veladoras y Mariposas en las secciones */
+/* Ilustraciones navideñas artesanales en márgenes de secciones amplias */
 .temporada-section-figure {
   position: absolute;
-  width: 68px;
-  height: 68px;
+  width: 60px;
+  height: 60px;
   pointer-events: none;
   z-index: 3;
-  opacity: 0.86;
-  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.45))
-          drop-shadow(0 0 14px rgba(245, 158, 11, 0.22));
-  animation: figureFloat 5.5s ease-in-out infinite;
+  opacity: 0.9;
+  filter:
+    drop-shadow(0 8px 16px rgba(7, 41, 23, 0.22))
+    drop-shadow(0 0 10px rgba(251, 191, 36, 0.18));
+  animation: navidadFigureFloat 5.8s ease-in-out infinite;
+}
+
+body.dark-mode .temporada-section-figure {
+  filter:
+    drop-shadow(0 8px 18px rgba(0, 0, 0, 0.55))
+    drop-shadow(0 0 14px rgba(251, 191, 36, 0.24));
 }
 
 .temporada-section-figure--right {
-  top: 26px;
-  right: max(1.2rem, 3%);
+  top: 24px;
+  right: max(1rem, 2.4%);
 }
 
 .temporada-section-figure--left {
-  top: 26px;
-  left: max(1.2rem, 3%);
-  animation-delay: -2.6s;
+  top: 24px;
+  left: max(1rem, 2.4%);
+  animation-delay: -2.9s;
 }
 
 .temporada-section-figure svg {
@@ -255,54 +314,36 @@ main > section::before,
   display: block;
 }
 
-/* Animaciones de las figuras */
-@keyframes figureFloat {
+@media (max-width: 1220px) {
+  .temporada-section-figure {
+    display: none !important;
+  }
+}
+
+@keyframes navidadFigureFloat {
   0%, 100% {
-    transform: translateY(0) rotate(-3deg) scale(1);
+    transform: translateY(0) rotate(-2deg) scale(1);
   }
   50% {
-    transform: translateY(-9px) rotate(3deg) scale(1.04);
+    transform: translateY(-7px) rotate(2deg) scale(1.03);
   }
 }
 
-@keyframes calacaNod {
+@keyframes navidadStarPulse {
   0%, 100% {
-    transform: translateY(0) rotate(-4deg);
+    transform: scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 4px rgba(253, 224, 71, 0.55));
   }
   50% {
-    transform: translateY(-2.5px) rotate(4deg);
+    transform: scale(1.1) rotate(6deg);
+    filter: drop-shadow(0 0 10px rgba(253, 224, 71, 0.95));
   }
-}
-
-@keyframes cempasuchilSpinSlow {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes candleFlameFlicker {
-  0%, 100% {
-    transform: scale(1) rotate(-2deg);
-    opacity: 0.95;
-  }
-  50% {
-    transform: scale(1.12, 0.92) rotate(2deg);
-    opacity: 1;
-  }
-}
-
-.temporada-flame {
-  transform-origin: center bottom;
-  animation: candleFlameFlicker 1.8s ease-in-out infinite;
 }
 
 /* ==========================================================================
-   4. LLUVIA DE PÉTALOS DE CEMPASÚCHIL, MARIPOSAS Y LUCES DE OFRENDA
+   4. NEVADA SUAVE Y DESTELLOS DORADOS NAVIDEÑOS (MODO CLARO + MODO OSCURO)
    ========================================================================== */
-.temporada-petals-layer {
+.temporada-snow-layer {
   position: fixed;
   inset: 0;
   pointer-events: none;
@@ -310,84 +351,105 @@ main > section::before,
   overflow: hidden;
 }
 
-body.temporada-effects-paused .temporada-petals-layer,
-body.temporada-effects-paused .temporada-hanging-spider {
+body.temporada-effects-paused .temporada-snow-layer {
   display: none !important;
 }
 
-.temporada-petal {
+body.temporada-effects-paused .temporada-hanging-ornament,
+body.temporada-effects-paused .temporada-garland-top,
+body.temporada-effects-paused .temporada-section-figure,
+body.temporada-effects-paused .temporada-section-emblem .emblem-star {
+  animation-play-state: paused !important;
+}
+
+.temporada-flake {
   position: absolute;
-  top: -40px;
+  top: -36px;
   pointer-events: none;
   will-change: transform, opacity;
-  animation: temporadaPetalFall linear infinite;
+  animation: temporadaSnowFall linear infinite;
 }
 
-.temporada-petal--marigold {
-  width: 14px;
-  height: 18px;
-  border-radius: 85% 15% 85% 15%;
-  background: radial-gradient(circle at 30% 30%, #fef08a 0%, #f59e0b 60%, #ea580c 100%);
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.45);
-  opacity: 0.78;
+/* Copo de cristal SVG: tinte hielo-pizarra visible en fondo blanco, blanco puro en oscuro */
+.temporada-flake--crystal {
+  width: 17px;
+  height: 17px;
+  color: #64748b;
+  opacity: 0.48;
+  filter: drop-shadow(0 1px 3px rgba(15, 23, 42, 0.14));
 }
 
-.temporada-petal--amber {
-  width: 11px;
-  height: 15px;
-  border-radius: 80% 20% 80% 20%;
-  background: radial-gradient(circle at 30% 30%, #fde047 0%, #fb923c 70%, #d97706 100%);
-  box-shadow: 0 0 8px rgba(251, 146, 60, 0.38);
-  opacity: 0.68;
+body.dark-mode .temporada-flake--crystal,
+body.legal-dark-mode .temporada-flake--crystal {
+  color: #f1f5f9;
+  opacity: 0.72;
+  filter: drop-shadow(0 0 6px rgba(186, 230, 253, 0.55));
 }
 
-.temporada-petal--rosa {
-  width: 10px;
-  height: 14px;
-  border-radius: 80% 20% 80% 20%;
-  background: radial-gradient(circle at 35% 35%, #fbcfe8 0%, #ec4899 75%, #be185d 100%);
-  box-shadow: 0 0 9px rgba(236, 72, 153, 0.38);
+.temporada-flake--crystal svg,
+.temporada-flake--star svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Copo suave perlado */
+.temporada-flake--soft {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #cbd5e1 70%, #94a3b8 100%);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.16);
   opacity: 0.58;
 }
 
-.temporada-petal--calaca-mini {
-  width: 20px;
-  height: 20px;
+body.dark-mode .temporada-flake--soft,
+body.legal-dark-mode .temporada-flake--soft {
+  background: radial-gradient(circle, #ffffff 0%, #e0f2fe 68%, transparent 100%);
+  box-shadow: 0 0 8px rgba(224, 242, 254, 0.65);
   opacity: 0.72;
-  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.45));
 }
 
-.temporada-petal--veladora {
+/* Destello dorado cálido navideño */
+.temporada-flake--gold {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: radial-gradient(circle, #fef9c3 0%, #fbbf24 65%, transparent 100%);
-  box-shadow: 0 0 12px rgba(251, 191, 36, 0.8);
-  opacity: 0.65;
+  background: radial-gradient(circle, #fef9c3 0%, #fbbf24 65%, #d97706 100%);
+  box-shadow: 0 0 9px rgba(245, 158, 11, 0.65);
+  opacity: 0.68;
 }
 
-@keyframes temporadaPetalFall {
+/* Estrellita dorada de cuatro puntas */
+.temporada-flake--star {
+  width: 13px;
+  height: 13px;
+  opacity: 0.72;
+  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.5));
+}
+
+@keyframes temporadaSnowFall {
   0% {
-    transform: translate3d(0, -36px, 0) rotate(0deg);
+    transform: translate3d(0, -32px, 0) rotate(0deg);
     opacity: 0;
   }
   12% {
-    opacity: 0.82;
+    opacity: 0.78;
   }
   50% {
-    transform: translate3d(34px, 48vh, 0) rotate(185deg);
+    transform: translate3d(26px, 49vh, 0) rotate(180deg);
   }
   88% {
-    opacity: 0.68;
+    opacity: 0.65;
   }
   100% {
-    transform: translate3d(-24px, 104vh, 0) rotate(360deg);
+    transform: translate3d(-18px, 104vh, 0) rotate(360deg);
     opacity: 0;
   }
 }
 
 /* ==========================================================================
-   5. BOTÓN FLOTANTE COMPACTO DE CONTROL DE ANIMACIÓN (ESQUINA INFERIOR)
+   5. BOTÓN FLOTANTE COMPACTO DE CONTROL DE TEMPORADA (ESQUINA INFERIOR)
    ========================================================================== */
 .temporada-toggle-btn {
   position: fixed;
@@ -397,38 +459,39 @@ body.temporada-effects-paused .temporada-hanging-spider {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.42rem 0.78rem;
+  padding: 0.42rem 0.82rem;
   border-radius: 999px;
-  background: linear-gradient(135deg, rgba(11, 31, 23, 0.94), rgba(24, 15, 32, 0.92));
-  border: 1px solid rgba(251, 191, 36, 0.48);
-  color: #fef08a;
+  background: linear-gradient(135deg, rgba(7, 41, 23, 0.96), rgba(15, 58, 34, 0.94));
+  border: 1px solid rgba(251, 191, 36, 0.55);
+  color: #fef3c7;
   font-family: inherit;
   font-size: 0.74rem;
   font-weight: 700;
+  letter-spacing: 0.01em;
   cursor: pointer;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow:
-    0 10px 26px rgba(0, 0, 0, 0.45),
-    0 0 16px rgba(245, 158, 11, 0.18);
-  transition: transform 0.2s ease, border-color 0.2s ease;
+    0 10px 24px rgba(7, 41, 23, 0.32),
+    0 0 14px rgba(251, 191, 36, 0.16);
+  transition: transform 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
 }
 
 .temporada-toggle-btn svg {
-  width: 17px;
-  height: 17px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
 }
 
 .temporada-toggle-btn:hover {
   transform: translateY(-2px);
-  border-color: rgba(253, 224, 71, 0.9);
+  border-color: rgba(253, 224, 71, 0.95);
 }
 
 .temporada-toggle-btn[aria-pressed="false"] {
-  opacity: 0.72;
-  border-color: rgba(16, 185, 129, 0.35);
-  color: #a7f3d0;
+  opacity: 0.76;
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #d1fae5;
 }
 
 /* ==========================================================================
@@ -513,20 +576,24 @@ body.temporada-effects-paused .temporada-hanging-spider {
   font-size: 0.78rem;
 }
 
+/* ==========================================================================
+   7. RESPONSIVO Y ACCESIBILIDAD DE MOVIMIENTO REDUCIDO
+   ========================================================================== */
 @media (max-width: 900px) {
-  /* En móviles y tablets: CERO estorbos visuales. Nada de telarañas ni arañas sobre el menú o logo */
-  .temporada-corner-web,
-  .temporada-hanging-spider,
+  /* En móviles y tablets: CERO estorbos visuales sobre encabezado, logo o textos */
+  .temporada-corner-bough,
+  .temporada-hanging-ornament,
   .temporada-section-figure,
-  .temporada-section-web,
+  .temporada-section-sprig,
   .temporada-section-emblem {
     display: none !important;
   }
 
   .temporada-garland-top {
-    height: 18px;
-    background-size: 220px 18px;
-    opacity: 0.9;
+    height: 20px;
+    margin-bottom: -4px;
+    background-size: 220px 20px;
+    opacity: 0.94;
   }
 
   .site-footer::after {
@@ -537,27 +604,26 @@ body.temporada-effects-paused .temporada-hanging-spider {
   .temporada-toggle-btn {
     left: 0.75rem;
     bottom: 5rem;
-    padding: 0.32rem 0.65rem;
+    padding: 0.34rem 0.68rem;
     font-size: 0.68rem;
   }
 }
 
 @media (max-width: 600px) {
   .temporada-garland-top {
-    height: 16px;
-    background-size: 190px 16px;
+    height: 17px;
+    background-size: 190px 17px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .temporada-petals-layer,
-  .temporada-hanging-spider {
+  .temporada-snow-layer,
+  .temporada-hanging-ornament {
     display: none !important;
   }
   .temporada-garland-top,
   .temporada-section-figure,
-  .temporada-section-emblem .emblem-flower,
-  .temporada-section-emblem .emblem-skull {
+  .temporada-section-emblem .emblem-star {
     animation: none !important;
   }
 }
