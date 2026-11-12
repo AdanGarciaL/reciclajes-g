@@ -46,6 +46,7 @@ import {
   disconnectCloudGitHubToken,
   pullCloudDatabase,
   pushChangesToCloudDatabase,
+  syncCloudDatabaseBidirectional,
 } from '../services/icEngine';
 
 const CAPACITIES = ['4GB', '8GB', '16GB', '32GB', '64GB', '128GB', '256GB', '512GB', '1TB', '2TB'];
@@ -144,10 +145,15 @@ export default function AdminDatabaseModal({
       setPinError('');
       setReviewData(null);
 
-      // Consultar la Base Global al abrir para detectar cambios nuevos
-      pullCloudDatabase()
-        .then(() => {
+      // Sincronizar bidireccionalmente con la Base Global al abrir (sube cambios pendientes del iPhone y descarga los nuevos)
+      syncCloudDatabaseBidirectional({ promotePending: true })
+        .then((res) => {
           refreshLists();
+          if (res?.pushed) {
+            setStatusMsg(
+              `✓ Tus ${res.totalCount} chip(s) actualizados en este equipo se subieron automáticamente a la Base Global.`
+            );
+          }
         })
         .catch(() => {});
 
@@ -191,52 +197,40 @@ export default function AdminDatabaseModal({
   }
 
   async function autoSyncAfterLocalChange(reasonNote, localSuccessMsg) {
-    const currentSync = getCloudSyncStatus();
-    if (!currentSync.isConnected) {
-      setStatusMsg(
-        `${localSuccessMsg} (Guardado en este celular · Toca "Conectar y Subir" arriba para publicarlo en la Base Global).`
-      );
-      return;
-    }
-
     setIsSyncingCloud(true);
-    setStatusMsg(`${localSuccessMsg} Subiendo automáticamente a la Base Global...`);
+    setStatusMsg(`${localSuccessMsg} Subiendo automáticamente a todos los dispositivos...`);
     try {
       const res = await pushChangesToCloudDatabase(reasonNote);
       refreshLists();
       setStatusMsg(
-        `✓ ${localSuccessMsg} Subido a la Base Global (${res.totalCount} chips activos en todos los equipos).`
+        `✓ ${localSuccessMsg} Sincronizado en la Base Global (${res.totalCount} chips activos en todos los equipos y apps descargadas).`
       );
     } catch (err) {
       refreshLists();
       setStatusMsg(
-        `${localSuccessMsg} (Guardado en tu celular; no se pudo subir ahora: ${err?.message || 'sin red'}. Puedes tocar "Subir mis cambios" cuando tengas señal).`
+        `${localSuccessMsg} (Guardado en tu equipo; se sincronizará automáticamente al recuperar señal: ${err?.message || 'modo offline'}).`
       );
     } finally {
       setIsSyncingCloud(false);
     }
   }
 
-  async function handleManualPushToCloud(reasonNote = 'subir cambios desde celular') {
+  async function handleManualPushToCloud(reasonNote = 'sincronización desde dispositivo') {
     setErrorMsg('');
-    const currentSync = getCloudSyncStatus();
-    if (!currentSync.isConnected) {
-      setReviewData(null);
-      setActiveTab('cloud');
-      setErrorMsg('Conecta tu llave de GitHub una sola vez aquí abajo para poder subir tus cambios.');
-      return;
-    }
-
     setIsSyncingCloud(true);
     try {
-      const res = await pushChangesToCloudDatabase(reasonNote);
+      const res = await syncCloudDatabaseBidirectional({
+        promotePending: true,
+        forcePushAllLocal: true,
+        reasonNote,
+      });
       refreshLists();
       setStatusMsg(
-        `✓ ¡Listo! Tus cambios ya están en la Base Global (${res.totalCount} chip(s) personalizados activos en todos los celulares y PCs).`
+        `✓ ¡Sincronización completa! Tus ${res.totalCount || getDatabaseStats().customCount} chip(s) actualizados ya están disponibles en todos los celulares, PCs y aplicaciones descargadas.`
       );
     } catch (err) {
       refreshLists();
-      setErrorMsg(err?.message || 'No se pudieron subir los cambios en este momento.');
+      setErrorMsg(err?.message || 'No se pudieron sincronizar los cambios en este momento.');
     } finally {
       setIsSyncingCloud(false);
     }
@@ -2090,59 +2084,23 @@ export default function AdminDatabaseModal({
                         </div>
                       </div>
 
-                      {/* Si aún NO está conectado: mostrar la caja de conexión arriba para pegar en 1 toque */}
-                      {!syncStatus.isConnected && (
-                        <div className="p-4 rounded-2xl bg-[#031209] border-2 border-amber-400/40 space-y-3 shadow-lg">
-                          <form onSubmit={handleConnectAndAutoUpload} className="space-y-3">
-                            <div className="space-y-1">
-                              <h4 className="font-extrabold text-sm text-white flex items-center gap-1.5">
-                                <KeyRound className="w-4 h-4 text-amber-300 shrink-0" />
-                                <span>Conectar este celular (1 sola vez)</span>
-                              </h4>
-                              <p className="text-xs text-emerald-200/80 leading-relaxed">
-                                Pega la misma llave de GitHub que usas en tu Panel Admin (
-                                <code className="text-emerald-300">github_pat_...</code> o{' '}
-                                <code className="text-emerald-300">ghp_...</code>). Al conectar,
-                                subiremos automáticamente los{' '}
-                                <strong className="text-amber-300">{syncStatus.localCount}</strong>{' '}
-                                chip(s) guardados en tu celular.
-                              </p>
-                            </div>
-
-                            <div className="flex flex-col sm:flex-row gap-2">
-                              <div className="flex-1 flex gap-1.5 min-w-0">
-                                <input
-                                  type="password"
-                                  value={ghTokenInput}
-                                  onChange={(e) => setGhTokenInput(e.target.value)}
-                                  placeholder="Pega tu llave github_pat_..."
-                                  aria-label="Llave de GitHub para Base Global"
-                                  className="w-full flex-1 min-w-0 px-3 py-2.5 rounded-xl bg-[#062011] border border-emerald-500/35 font-mono text-base sm:text-xs text-white focus:outline-none focus:border-emerald-400"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={handlePasteClipboardToken}
-                                  className="px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-emerald-200 font-bold text-xs shrink-0"
-                                >
-                                  Pegar
-                                </button>
-                              </div>
-
-                              <button
-                                type="submit"
-                                disabled={isSyncingCloud || !ghTokenInput.trim()}
-                                className="py-3 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 disabled:opacity-50 text-black font-black text-xs sm:text-sm shadow transition shrink-0"
-                              >
-                                {isSyncingCloud
-                                  ? 'Conectando y subiendo...'
-                                  : syncStatus.localCount > 0
-                                  ? `Conectar y Subir mis ${syncStatus.localCount} Chip(s)`
-                                  : 'Guardar y Conectar'}
-                              </button>
-                            </div>
-                          </form>
+                      {/* Banner de Nube Automática Activa sin necesidad de llave */}
+                      <div className="p-4 rounded-2xl bg-emerald-950/35 border border-emerald-400/40 flex flex-wrap items-center justify-between gap-3">
+                        <div className="space-y-1 min-w-0">
+                          <div className="text-xs sm:text-sm font-extrabold text-emerald-300 flex items-center gap-1.5">
+                            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <span>
+                              Sincronización Automática Activa (iPhone · Android · PC · App Descargada)
+                            </span>
+                          </div>
+                          <p className="text-[11px] sm:text-xs text-emerald-100/80 leading-relaxed">
+                            Cualquier actualización de capacidad (GB) o chip nuevo que guardes en tu{' '}
+                            <strong className="text-white">iPhone 14 Pro</strong> o en cualquier otro
+                            equipo se sube automáticamente a la Base Global y se actualiza al instante
+                            en los demás celulares (tanto con la app descargada como desde el navegador).
+                          </p>
                         </div>
-                      )}
+                      </div>
 
                       {/* Tarjeta de Subida / Sincronización Principal */}
                       <div className="p-4 rounded-2xl bg-[#031209] border border-emerald-500/30 space-y-3">
@@ -2150,11 +2108,12 @@ export default function AdminDatabaseModal({
                           <div className="space-y-0.5">
                             <h4 className="font-extrabold text-sm text-white flex items-center gap-1.5">
                               <Globe className="w-4 h-4 text-emerald-400 shrink-0" />
-                              <span>Subir mis códigos del celular a la Base Global</span>
+                              <span>Sincronizar mis códigos en todos los equipos ahora</span>
                             </h4>
                             <p className="text-xs text-emerald-200/75">
-                              Todo lo que subas aquí queda guardado en el servidor de Eco Lógica
-                              García y se descarga solo en los demás celulares y computadoras.
+                              Toca el botón de abajo para forzar el envío inmediato de los{' '}
+                              <strong className="text-white">{syncStatus.localCount}</strong> chip(s)
+                              personalizados o editados en este dispositivo hacia todos los demás equipos.
                             </p>
                           </div>
                         </div>
@@ -2164,7 +2123,7 @@ export default function AdminDatabaseModal({
                             type="button"
                             disabled={isSyncingCloud}
                             onClick={() =>
-                              handleManualPushToCloud('subir cambios guardados desde celular')
+                              handleManualPushToCloud('sincronización completa desde dispositivo')
                             }
                             className={`flex-1 py-3.5 px-4 rounded-2xl font-black text-xs sm:text-sm shadow-lg transition flex items-center justify-center gap-2 disabled:opacity-60 ${
                               syncStatus.unsyncedCount > 0
@@ -2175,10 +2134,10 @@ export default function AdminDatabaseModal({
                             <Upload className="w-4 h-4 shrink-0" />
                             <span>
                               {isSyncingCloud
-                                ? 'Sincronizando con Base Global...'
+                                ? 'Sincronizando con todos los equipos...'
                                 : syncStatus.unsyncedCount > 0
-                                ? `Subir mis ${syncStatus.unsyncedCount} cambio(s) a la Base Global`
-                                : 'Subir / Sincronizar este celular con la Base Global'}
+                                ? `Subir mis ${syncStatus.unsyncedCount} cambio(s) a todos los equipos`
+                                : `Sincronizar mis ${syncStatus.localCount} chip(s) con todos los equipos`}
                             </span>
                           </button>
 
@@ -2199,7 +2158,8 @@ export default function AdminDatabaseModal({
 
                         <div className="text-[11px] text-emerald-300/70 flex flex-wrap items-center justify-between gap-1 pt-1 border-t border-emerald-500/15">
                           <span>
-                            Última subida global: <strong>{formatSyncDate(syncStatus.cloudUpdatedAt)}</strong>
+                            Última sincronización global:{' '}
+                            <strong>{formatSyncDate(syncStatus.cloudUpdatedAt)}</strong>
                             {syncStatus.cloudUpdatedBy ? ` · ${syncStatus.cloudUpdatedBy}` : ''}
                           </span>
                           <span>Total activos: {customList.length} chip(s)</span>
@@ -2258,31 +2218,71 @@ export default function AdminDatabaseModal({
                         </div>
                       )}
 
-                      {/* Estado de conexión activa cuando ya tiene la llave guardada */}
-                      {syncStatus.isConnected && (
-                        <div className="p-4 rounded-2xl bg-[#031209] border border-emerald-500/25 flex flex-wrap items-center justify-between gap-3">
-                          <div className="space-y-1 min-w-0">
-                            <div className="text-xs font-extrabold text-emerald-300 flex items-center gap-1.5">
-                              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                              <span>
-                                Celular conectado para subir cambios
+                      {/* Opcional Avanzado: Respaldo directo en repositorio GitHub */}
+                      <details className="rounded-2xl bg-[#031209] border border-emerald-500/20 p-3.5 text-xs">
+                        <summary className="cursor-pointer font-bold text-emerald-300/85 hover:text-white select-none flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <KeyRound className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>
+                              Opcional Avanzado: Respaldo directo en repositorio GitHub
+                              {syncStatus.hasGitHubToken
+                                ? ` (Conectado${syncStatus.githubUser ? ` @${syncStatus.githubUser}` : ''})`
+                                : ' (No requerido)'}
+                            </span>
+                          </span>
+                        </summary>
+                        <div className="pt-3 mt-2 border-t border-emerald-500/15 space-y-2.5">
+                          {!syncStatus.hasGitHubToken ? (
+                            <form onSubmit={handleConnectAndAutoUpload} className="space-y-2.5">
+                              <p className="text-[11px] text-emerald-200/75 leading-relaxed">
+                                La sincronización en la nube ya funciona automáticamente sin llave. Si
+                                además deseas que tus cambios hagan commit directo al repositorio de
+                                GitHub, pega aquí tu token opcional:
+                              </p>
+                              <div className="flex flex-col sm:flex-row gap-2">
+                                <div className="flex-1 flex gap-1.5 min-w-0">
+                                  <input
+                                    type="password"
+                                    value={ghTokenInput}
+                                    onChange={(e) => setGhTokenInput(e.target.value)}
+                                    placeholder="Token opcional github_pat_..."
+                                    aria-label="Llave opcional de GitHub"
+                                    className="w-full flex-1 min-w-0 px-3 py-2 rounded-xl bg-[#062011] border border-emerald-500/35 font-mono text-base sm:text-xs text-white focus:outline-none focus:border-emerald-400"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={handlePasteClipboardToken}
+                                    className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-emerald-200 font-bold text-xs shrink-0"
+                                  >
+                                    Pegar
+                                  </button>
+                                </div>
+                                <button
+                                  type="submit"
+                                  disabled={isSyncingCloud || !ghTokenInput.trim()}
+                                  className="py-2 px-4 rounded-xl bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 text-black font-black text-xs transition shrink-0"
+                                >
+                                  Conectar GitHub
+                                </button>
+                              </div>
+                            </form>
+                          ) : (
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <span className="text-emerald-300 font-semibold">
+                                Token de GitHub activo
                                 {syncStatus.githubUser ? ` (@${syncStatus.githubUser})` : ''}
                               </span>
+                              <button
+                                type="button"
+                                onClick={handleDisconnectCloud}
+                                className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 font-bold text-xs border border-rose-400/30 transition"
+                              >
+                                Desconectar token
+                              </button>
                             </div>
-                            <p className="text-[11px] text-emerald-200/70">
-                              Cada chip que agregues o edites aquí se sube solo a la Base Global.
-                              Los demás equipos descargan todo sin pedir llave.
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={handleDisconnectCloud}
-                            className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 font-bold text-xs border border-rose-400/30 transition shrink-0"
-                          >
-                            Desconectar llave
-                          </button>
+                          )}
                         </div>
-                      )}
+                      </details>
                     </div>
                   )}
 

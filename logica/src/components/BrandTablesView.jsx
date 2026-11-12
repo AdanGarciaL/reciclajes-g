@@ -198,9 +198,22 @@ export default function BrandTablesView({
   const [tableFilter, setTableFilter] = useState('');
   const [sortOrder, setSortOrder] = useState('default'); // 'default' | 'desc' | 'asc'
 
+  const allCatalog = useMemo(() => {
+    return getAllEditableCatalog();
+  }, [catalogVersion]);
+
+  const customCount = useMemo(
+    () => allCatalog.filter((x) => Boolean(x.isCustom)).length,
+    [allCatalog]
+  );
+
   const brandTabs = [
     { id: 'ALL', label: 'Todas' },
     { id: 'MOST_SEARCHED', label: 'Más Buscados' },
+    {
+      id: 'CUSTOM_SYNCED',
+      label: customCount > 0 ? `☁️ Actualizados (${customCount})` : '☁️ Actualizados',
+    },
     { id: 'Samsung', label: 'Samsung' },
     { id: 'Micron', label: 'Micron (JW/JX/JZ)' },
     { id: 'SK Hynix', label: 'SK Hynix' },
@@ -220,17 +233,20 @@ export default function BrandTablesView({
     return profile.chips || {};
   }, [usageVersion, catalogVersion]);
 
-  const allCatalog = useMemo(() => {
-    return getAllEditableCatalog();
-  }, [catalogVersion]);
-
   const filteredCatalog = useMemo(() => {
     const baseList =
       selectedBrand === 'MOST_SEARCHED' ? getMostSearchedChips(24) : allCatalog;
 
     const filtered = baseList.filter((item) => {
+      if (selectedBrand === 'CUSTOM_SYNCED') {
+        if (!item.isCustom) return false;
+      }
       const mfg = String(item.manufacturer || item.brand || '').toLowerCase();
-      if (selectedBrand !== 'ALL' && selectedBrand !== 'MOST_SEARCHED') {
+      if (
+        selectedBrand !== 'ALL' &&
+        selectedBrand !== 'MOST_SEARCHED' &&
+        selectedBrand !== 'CUSTOM_SYNCED'
+      ) {
         const b = selectedBrand.toLowerCase();
         if (selectedBrand === 'iPhone') {
           if (!mfg.includes('apple') && !mfg.includes('iphone')) {
@@ -459,7 +475,7 @@ export default function BrandTablesView({
                     )}
                     {item.isCustom && (
                       <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[10px] font-bold">
-                        Propio
+                        ☁️ Actualizado
                       </span>
                     )}
                   </div>

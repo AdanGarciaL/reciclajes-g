@@ -1539,10 +1539,46 @@ if ("IntersectionObserver" in window && (navAnchors.length || railDots.length)) 
     K6A6RB5896: { storage: "256GB", tier: "256", brand: "Kioxia (iPhone)", ram: "—", type: "NVMe NAND", pre: "K6A", mark: "6", post: "RB5896", why: 'Número "6" = 256GB' },
   };
 
+  function storageToTier(storageStr) {
+    const s = String(storageStr || "64GB").toUpperCase();
+    if (s.includes("TB") || s.includes("512")) return "512";
+    if (s.includes("256")) return "256";
+    if (s.includes("128")) return "128";
+    if (s.includes("32")) return "32";
+    if (s.includes("16") || s.includes("8") || s.includes("4")) return "16";
+    return "64";
+  }
+
+  function registerCloudChipInPreview(chip) {
+    if (!chip || !chip.code) return;
+    const clean = String(chip.code).toUpperCase().trim().replace(/\s+/g, "");
+    if (!clean) return;
+    const cap = String(chip.storage || chip.capacity || "64GB").toUpperCase();
+    const basePart = clean.includes("-") ? clean.split("-")[0] : clean;
+    const entry = {
+      storage: cap,
+      tier: storageToTier(cap),
+      brand: chip.manufacturer || chip.brand || "Samsung",
+      ram: chip.ram || "—",
+      type: chip.type || "eMCP",
+      pre: clean.slice(0, Math.min(3, clean.length)),
+      mark: clean.slice(Math.min(3, clean.length), Math.min(6, clean.length)) || clean,
+      post: clean.slice(Math.min(6, clean.length)),
+      why: `☁️ Sincronizado en Nube = ${cap}`,
+      isCloudSynced: true,
+    };
+    PREVIEW_CATALOG[clean] = entry;
+    if (basePart && basePart.length >= 5) {
+      PREVIEW_CATALOG[basePart] = entry;
+    }
+  }
+
   function decodePreviewCode(raw) {
     const c = String(raw || "").toUpperCase().trim().replace(/\s+/g, "");
     if (!c) return PREVIEW_CATALOG.JZ186;
     if (PREVIEW_CATALOG[c]) return PREVIEW_CATALOG[c];
+    const cBase = c.includes("-") ? c.split("-")[0] : c;
+    if (cBase && PREVIEW_CATALOG[cBase]) return PREVIEW_CATALOG[cBase];
     for (const k of Object.keys(PREVIEW_CATALOG)) {
       if (k.startsWith(c) || c.startsWith(k)) return PREVIEW_CATALOG[k];
     }
@@ -1579,6 +1615,7 @@ if ("IntersectionObserver" in window && (navAnchors.length || railDots.length)) 
   const hlEl = document.getElementById("appPreviewCodeHighlight");
   const whyEl = document.getElementById("appPreviewWhy");
   const openLink = document.getElementById("appPreviewOpenLink");
+  const statusEl = document.getElementById("appPreviewCloudStatus");
 
   function updatePreview(rawCode) {
     const clean = String(rawCode || "").toUpperCase().trim();
@@ -1613,6 +1650,125 @@ if ("IntersectionObserver" in window && (navAnchors.length || railDots.length)) 
       updatePreview(btn.dataset.code);
     });
   }
+
+  // 3. Sincronización en vivo con la Base Global de Chips IC (y auto-subida si este navegador tiene chips locales guardados)
+  (async function syncWebShowcaseWithCloud() {
+    const CLOUD_PRIMARY = "https://api.restful-api.dev/objects/ff808181a09d98f701a1d215dbed1a93";
+    const CLOUD_MIRROR = "https://api.restful-api.dev/objects/ff808181a09d98f701a1d215dd351a94";
+    const CLOUD_NTFY = "https://ntfy.sh/ecologica_garcia_ic_cloud_v2";
+    const chipMap = new Map();
+
+    function ingestList(list) {
+      if (!Array.isArray(list)) return;
+      list.forEach((item) => {
+        if (!item || !item.code) return;
+        const code = String(item.code).toUpperCase().trim().replace(/\s+/g, "");
+        if (!code) return;
+        const existing = chipMap.get(code);
+        const itemTs = Date.parse(item.updatedAt || item.addedAt || "") || 0;
+        const existingTs = existing ? Date.parse(existing.updatedAt || existing.addedAt || "") || 0 : -1;
+        if (!existing || itemTs >= existingTs) {
+          chipMap.set(code, {
+            code,
+            storage: String(item.storage || item.capacity || "64GB").toUpperCase().trim(),
+            ram: item.ram || null,
+            manufacturer: item.manufacturer || item.brand || "Samsung",
+            type: item.type || "eMCP",
+            notes: item.notes || "",
+            updatedAt: item.updatedAt || item.addedAt || new Date().toISOString(),
+          });
+        }
+      });
+    }
+
+    let localChips = [];
+    try {
+      const rawLocal = localStorage.getItem("eco_custom_db_v1");
+      if (rawLocal) {
+        const parsed = JSON.parse(rawLocal);
+        if (Array.isArray(parsed)) localChips = parsed;
+      }
+      const rawPending = localStorage.getItem("eco_pending_suggestions_v1");
+      if (rawPending) {
+        const parsedP = JSON.parse(rawPending);
+        if (Array.isArray(parsedP)) localChips = localChips.concat(parsedP);
+      }
+    } catch (_e) {}
+
+    try {
+      const [r1, r2] = await Promise.allSettled([
+        fetch(`${CLOUD_PRIMARY}?t=${Date.now()}`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)),
+        fetch(`data/custom-chips.json?t=${Date.now()}`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)),
+      ]);
+      if (r2.status === "fulfilled" && r2.value && Array.isArray(r2.value.chips)) {
+        ingestList(r2.value.chips);
+      }
+      const cloudChips =
+        r1.status === "fulfilled" && r1.value && r1.value.data && Array.isArray(r1.value.data.chips)
+          ? r1.value.data.chips
+          : [];
+      ingestList(cloudChips);
+
+      // Si este dispositivo (por ejemplo el iPhone 14 Pro) tiene chips locales que no están en la nube, subirlos automáticamente
+      if (localChips.length > 0) {
+        const cloudKeys = new Set(
+          cloudChips.map((c) => `${String(c.code || "").toUpperCase()}:${String(c.storage || "").toUpperCase()}`)
+        );
+        ingestList(localChips);
+        const hasNewLocal = localChips.some(
+          (c) => c && c.code && !cloudKeys.has(`${String(c.code).toUpperCase()}:${String(c.storage || "").toUpperCase()}`)
+        );
+        if (hasNewLocal) {
+          const mergedPayload = {
+            version: 2,
+            updatedAt: new Date().toISOString(),
+            updatedBy: "Eco Lógica García (Auto-Sync Web)",
+            chips: Array.from(chipMap.values()),
+            deletedCodes: [],
+          };
+          const bodyStr = JSON.stringify({
+            name: "ecologica-garcia-custom-chips-v2",
+            data: mergedPayload,
+          });
+          Promise.allSettled([
+            fetch(CLOUD_PRIMARY, { method: "PUT", headers: { "Content-Type": "application/json" }, body: bodyStr }),
+            fetch(CLOUD_MIRROR, { method: "PUT", headers: { "Content-Type": "application/json" }, body: bodyStr }),
+            fetch(CLOUD_NTFY, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(mergedPayload) }),
+          ]).catch(() => {});
+        }
+      }
+
+      // Guardar la lista combinada en localStorage para que /logica/ también la tenga al instante
+      const allSynced = Array.from(chipMap.values());
+      if (allSynced.length > 0) {
+        try {
+          localStorage.setItem("eco_custom_db_v1", JSON.stringify(allSynced));
+        } catch (_e) {}
+        allSynced.forEach(registerCloudChipInPreview);
+        if (statusEl) {
+          statusEl.textContent = `☁️ Nube Activa · +${allSynced.length} actualizados`;
+        }
+        if (presets) {
+          const existingCodes = new Set(
+            Array.from(presets.querySelectorAll(".app-preset-chip")).map((b) => b.dataset.code)
+          );
+          allSynced.slice(0, 3).forEach((ch) => {
+            if (!existingCodes.has(ch.code)) {
+              const btn = document.createElement("button");
+              btn.type = "button";
+              btn.className = "app-preset-chip";
+              btn.dataset.code = ch.code;
+              btn.textContent = `${ch.code} (${ch.storage})`;
+              presets.prepend(btn);
+            }
+          });
+        }
+        if (input && input.value) {
+          updatePreview(input.value);
+        }
+      }
+    } catch (_e) {}
+  })();
 })();
 
 /* ---------- Aviso de Cookies y Almacenamiento Local (Solo primera visita) ---------- */

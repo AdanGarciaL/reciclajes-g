@@ -23,6 +23,12 @@ const GITHUB_CHIPS_PATH = 'data/custom-chips.json';
 const GITHUB_API_BASE = `https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}`;
 const GITHUB_RAW_CHIPS_URL = `https://raw.githubusercontent.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/${GITHUB_REPO_BRANCH}/${GITHUB_CHIPS_PATH}`;
 
+// Canales de Nube Automática Instantánea (Cero configuración / Sin necesidad de token en iPhone o Android)
+const CLOUD_REST_PRIMARY_URL = 'https://api.restful-api.dev/objects/ff808181a09d98f701a1d215dbed1a93';
+const CLOUD_REST_MIRROR_URL = 'https://api.restful-api.dev/objects/ff808181a09d98f701a1d215dd351a94';
+const CLOUD_NTFY_TOPIC = 'ecologica_garcia_ic_cloud_v2';
+const CLOUD_NTFY_BASE_URL = `https://ntfy.sh/${CLOUD_NTFY_TOPIC}`;
+
 const DEFAULT_MASTER_PIN = '252002';
 
 // Almacenamiento seguro en memoria por si Safari está en Modo Privado estricto
@@ -32,7 +38,7 @@ export function safeGetStorage(key, fallbackValue) {
   try {
     const raw = localStorage.getItem(key);
     if (raw === null || raw === undefined) {
-      return key in memoryFallbackStore ? memoryFallbackStore[key] : fallbackValue;
+      return fallbackValue;
     }
     return JSON.parse(raw);
   } catch {
@@ -1435,6 +1441,17 @@ export function deleteCustomChip(code) {
   return getCustomDatabase();
 }
 
+function detectDeviceName() {
+  if (typeof navigator === 'undefined') return 'Servidor / Nodo';
+  const ua = navigator.userAgent || '';
+  if (/iPhone/i.test(ua)) return 'iPhone (App)';
+  if (/iPad/i.test(ua)) return 'iPad (App)';
+  if (/Android/i.test(ua)) return 'Android (App)';
+  if (/Macintosh|Mac OS X/i.test(ua)) return 'Mac';
+  if (/Windows/i.test(ua)) return 'PC Windows';
+  return 'Dispositivo Móvil';
+}
+
 export function getCloudSyncStatus() {
   const token = getSavedGitHubToken();
   const githubUser = getSavedGitHubUser();
@@ -1480,8 +1497,10 @@ export function getCloudSyncStatus() {
   }
 
   return {
-    isConnected: Boolean(token),
-    githubUser: githubUser || null,
+    // La Nube Automática siempre está conectada sin requerir token manual en iPhone/Android
+    isConnected: true,
+    hasGitHubToken: Boolean(token),
+    githubUser: githubUser || detectDeviceName(),
     localCount: localChips.length,
     cloudCount: cloudState.chips.length,
     totalCustomCount: getCustomDatabase().length,
@@ -1584,22 +1603,96 @@ export function disconnectCloudGitHubToken() {
 
 function parseCloudPayload(rawObj) {
   if (!rawObj || typeof rawObj !== 'object') return null;
-  if (!Array.isArray(rawObj.chips)) return null;
+  const target = rawObj.data && Array.isArray(rawObj.data.chips) ? rawObj.data : rawObj;
+  if (!Array.isArray(target.chips)) return null;
   return {
-    version: rawObj.version || 1,
-    updatedAt: rawObj.updatedAt || null,
-    updatedBy: rawObj.updatedBy || null,
-    deleted: rawObj.deleted && typeof rawObj.deleted === 'object' ? rawObj.deleted : {},
-    chips: rawObj.chips.map((c) => sanitizeChipEntry(c, 'Base Global Eco Lógica García')).filter(Boolean),
+    version: target.version || 1,
+    updatedAt: target.updatedAt || null,
+    updatedBy: target.updatedBy || null,
+    deleted: target.deleted && typeof target.deleted === 'object' ? target.deleted : {},
+    chips: target.chips
+      .map((c) => sanitizeChipEntry(c, 'Base Global Eco Lógica García'))
+      .filter(Boolean),
+  };
+}
+
+function combineMultipleCloudPayloads(payloads) {
+  let accChips = [];
+  let accDeleted = {};
+  let latestUpdatedAt = null;
+  let latestUpdatedBy = null;
+
+  const sorted = [...payloads].sort((a, b) => parseIsoMs(a.updatedAt) - parseIsoMs(b.updatedAt));
+  for (const p of sorted) {
+    if (!p) continue;
+    const merged = mergeChipDatasets(p.chips, p.deleted, accChips, accDeleted);
+    accChips = merged.chips;
+    accDeleted = merged.deleted;
+    if (!latestUpdatedAt || parseIsoMs(p.updatedAt) >= parseIsoMs(latestUpdatedAt)) {
+      if (p.updatedAt) latestUpdatedAt = p.updatedAt;
+      if (p.updatedBy) latestUpdatedBy = p.updatedBy;
+    }
+  }
+
+  return {
+    version: 1,
+    updatedAt: latestUpdatedAt || new Date().toISOString(),
+    updatedBy: latestUpdatedBy || 'Base Global Eco Lógica García',
+    deleted: accDeleted,
+    chips: accChips.map(({ fromCloud, ...rest }) => rest),
   };
 }
 
 export async function pullCloudDatabase() {
   const token = getSavedGitHubToken();
   const candidates = [];
-
   const fetchPromises = [];
 
+  // 1. Canal Primario Permanente REST Cloud (Cero Token)
+  fetchPromises.push(
+    fetch(`${CLOUD_REST_PRIMARY_URL}?t=${Date.now()}`, { cache: 'no-store' }).then(async (res) => {
+      if (!res.ok) return null;
+      return parseCloudPayload(await res.json());
+    })
+  );
+
+  // 2. Canal Espejo Permanente REST Cloud (Cero Token)
+  fetchPromises.push(
+    fetch(`${CLOUD_REST_MIRROR_URL}?t=${Date.now()}`, { cache: 'no-store' }).then(async (res) => {
+      if (!res.ok) return null;
+      return parseCloudPayload(await res.json());
+    })
+  );
+
+  // 3. Canal en Tiempo Real ntfy.sh Stream (Cero Token)
+  fetchPromises.push(
+    fetch(`${CLOUD_NTFY_BASE_URL}/json?poll=1&since=all`, { cache: 'no-store' }).then(
+      async (res) => {
+        if (!res.ok) return null;
+        const text = await res.text();
+        if (!text || !text.trim()) return null;
+        const lines = text.trim().split(/\r?\n/).filter(Boolean);
+        const parsedFromStream = [];
+        for (const line of lines) {
+          try {
+            const ev = JSON.parse(line);
+            if (ev && ev.event === 'message' && typeof ev.message === 'string') {
+              const rawJson = ev.message.startsWith('ECODB:')
+                ? ev.message.slice(6)
+                : ev.message;
+              const p = parseCloudPayload(JSON.parse(rawJson));
+              if (p) parsedFromStream.push(p);
+            }
+          } catch {
+            // ignore malformed line
+          }
+        }
+        return parsedFromStream.length > 0 ? combineMultipleCloudPayloads(parsedFromStream) : null;
+      }
+    )
+  );
+
+  // 4. GitHub API (si hay token conectado)
   if (token) {
     fetchPromises.push(
       fetch(`${GITHUB_API_BASE}/contents/${GITHUB_CHIPS_PATH}?ref=${GITHUB_REPO_BRANCH}`, {
@@ -1619,6 +1712,7 @@ export async function pullCloudDatabase() {
     );
   }
 
+  // 5. GitHub Raw (respaldo público del repositorio)
   fetchPromises.push(
     fetch(`${GITHUB_RAW_CHIPS_URL}?t=${Date.now()}`, { cache: 'no-store' }).then(async (res) => {
       if (!res.ok) return null;
@@ -1626,6 +1720,7 @@ export async function pullCloudDatabase() {
     })
   );
 
+  // 6. Archivo estático en el mismo dominio
   if (typeof window !== 'undefined' && window.location.protocol !== 'file:') {
     fetchPromises.push(
       fetch(`../data/custom-chips.json?t=${Date.now()}`, { cache: 'no-store' }).then(async (res) => {
@@ -1646,183 +1741,370 @@ export async function pullCloudDatabase() {
     return { ok: false, offline: true, status: getCloudSyncStatus() };
   }
 
-  candidates.sort((a, b) => parseIsoMs(b.updatedAt) - parseIsoMs(a.updatedAt));
-  const freshest = candidates[0];
+  const combinedCloud = combineMultipleCloudPayloads(candidates);
   const prevCloud = getCloudCachedState();
+
+  const prevSerialized = JSON.stringify(
+    (prevCloud.chips || []).map((c) => `${c.code}:${c.storage}:${c.ram || ''}:${c.manufacturer || ''}`)
+  );
+  const nextSerialized = JSON.stringify(
+    (combinedCloud.chips || []).map((c) => `${c.code}:${c.storage}:${c.ram || ''}:${c.manufacturer || ''}`)
+  );
+
   const hasChanged =
-    prevCloud.updatedAt !== freshest.updatedAt ||
-    prevCloud.chips.length !== freshest.chips.length;
+    prevSerialized !== nextSerialized ||
+    prevCloud.updatedAt !== combinedCloud.updatedAt ||
+    prevCloud.chips.length !== combinedCloud.chips.length;
 
   saveCloudCachedState({
-    ...freshest,
+    ...combinedCloud,
     lastCheckedAt: new Date().toISOString(),
   });
 
   return {
     ok: true,
     hasChanged,
-    cloudCount: freshest.chips.length,
+    cloudCount: combinedCloud.chips.length,
     status: getCloudSyncStatus(),
   };
 }
 
 export async function pushChangesToCloudDatabase(reasonNote = '') {
   const token = getSavedGitHubToken();
-  if (!token) {
-    throw new Error(
-      'Este celular aún no tiene conectada la llave de guardado. Pégala una sola vez en la pestaña "Base Global".'
-    );
+  const savedUser = getSavedGitHubUser();
+  const authorLabel = savedUser ? `${savedUser} (${detectDeviceName()})` : detectDeviceName();
+
+  // 1. Primero descargar y combinar el estado actual de la nube para no pisar cambios de otro celular
+  try {
+    await pullCloudDatabase();
+  } catch {
+    // Continuar con caché actual
   }
 
-  // Verificar usuario si aún no estaba guardado (ej. si la llave venía de admin.html)
-  let username = getSavedGitHubUser();
-  if (!username) {
-    try {
-      const uRes = await fetch('https://api.github.com/user', {
-        headers: buildGitHubHeaders(token),
-        cache: 'no-store',
-      });
-      if (uRes.ok) {
-        const uData = await uRes.json();
-        username = uData.login || 'Admin';
-        try {
-          localStorage.setItem(GITHUB_USER_KEY, username);
-        } catch {}
-      }
-    } catch {
-      // ignore
-    }
-  }
+  const cloudState = getCloudCachedState();
+  const localChips = getLocalDeviceCustomChips();
+  const localDeleted = getLocalDeletedMap();
 
-  const attemptUpload = async () => {
-    let remoteSha = undefined;
-    let remoteParsed = { chips: [], deleted: {} };
+  const merged = mergeChipDatasets(
+    localChips,
+    localDeleted,
+    cloudState.chips,
+    cloudState.deleted
+  );
 
-    let getRes;
-    try {
-      getRes = await fetch(
-        `${GITHUB_API_BASE}/contents/${GITHUB_CHIPS_PATH}?ref=${GITHUB_REPO_BRANCH}`,
-        {
-          headers: buildGitHubHeaders(token),
-          cache: 'no-store',
-        }
-      );
-    } catch {
-      throw new Error('No hay conexión a internet en este momento. Tus cambios siguen seguros en tu celular.');
-    }
-
-    if (getRes.status === 200) {
-      const meta = await getRes.json();
-      remoteSha = meta.sha;
-      if (meta.content) {
-        try {
-          const decoded = JSON.parse(decodeBase64ToUtf8(meta.content));
-          const parsed = parseCloudPayload(decoded);
-          if (parsed) remoteParsed = parsed;
-        } catch {
-          // Si estaba vacío o corrupto se reconstruye limpio
-        }
-      }
-    } else if (getRes.status !== 404) {
-      throw new Error(translateGitHubError(getRes.status, 'leer la Base Global'));
-    }
-
-    const localChips = getLocalDeviceCustomChips();
-    const localDeleted = getLocalDeletedMap();
-    const merged = mergeChipDatasets(
-      localChips,
-      localDeleted,
-      remoteParsed.chips,
-      remoteParsed.deleted
-    );
-
-    const nowIso = new Date().toISOString();
-    const payloadObj = {
-      version: 1,
-      updatedAt: nowIso,
-      updatedBy: username ? `${username} (Detector IC)` : 'Detector IC Móvil',
-      deleted: merged.deleted,
-      chips: merged.chips.map(({ fromCloud, ...rest }) => rest),
-    };
-
-    const commitMsg = reasonNote
-      ? `chore(ic-db): ${reasonNote} (${payloadObj.chips.length} chips)`
-      : `chore(ic-db): sincronizar ${payloadObj.chips.length} chips desde Detector IC`;
-
-    const body = {
-      message: commitMsg,
-      content: encodeUtf8ToBase64(JSON.stringify(payloadObj, null, 2) + '\n'),
-      branch: GITHUB_REPO_BRANCH,
-    };
-    if (remoteSha) body.sha = remoteSha;
-
-    let putRes;
-    try {
-      putRes = await fetch(`${GITHUB_API_BASE}/contents/${GITHUB_CHIPS_PATH}`, {
-        method: 'PUT',
-        headers: {
-          ...buildGitHubHeaders(token),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
-    } catch {
-      throw new Error('Se cortó el internet al subir. Tus chips siguen guardados en tu celular.');
-    }
-
-    if (!putRes.ok) {
-      const err = new Error(translateGitHubError(putRes.status, 'subir los chips a la Base Global'));
-      err.status = putRes.status;
-      throw err;
-    }
-
-    // Dejar estado local y caché de nube 100% alineados (0 pendientes)
-    saveCloudCachedState({
-      ...payloadObj,
-      lastCheckedAt: nowIso,
-    });
-    saveCustomDatabase(payloadObj.chips);
-    saveLocalDeletedMap(merged.deleted);
-
-    return {
-      ok: true,
-      totalCount: payloadObj.chips.length,
-      updatedAt: nowIso,
-      status: getCloudSyncStatus(),
-    };
+  const nowIso = new Date().toISOString();
+  const payloadObj = {
+    version: 1,
+    updatedAt: nowIso,
+    updatedBy: authorLabel,
+    reason: reasonNote || 'Actualización de chips IC',
+    deleted: merged.deleted,
+    chips: merged.chips.map(({ fromCloud, ...rest }) => rest),
   };
 
-  try {
-    return await attemptUpload();
-  } catch (err) {
-    if (err && err.status === 409) {
-      return await attemptUpload();
-    }
-    throw err;
+  const uploadPromises = [];
+
+  // Canal 1: REST Primary (Cero Token)
+  uploadPromises.push(
+    fetch(CLOUD_REST_PRIMARY_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'ecologica_garcia_ic_cloud_primary_v2',
+        data: payloadObj,
+      }),
+    }).then((r) => {
+      if (!r.ok) throw new Error(`REST Primary ${r.status}`);
+      return 'rest-primary';
+    })
+  );
+
+  // Canal 2: REST Mirror (Cero Token)
+  uploadPromises.push(
+    fetch(CLOUD_REST_MIRROR_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'ecologica_garcia_ic_cloud_mirror_v2',
+        data: payloadObj,
+      }),
+    }).then((r) => {
+      if (!r.ok) throw new Error(`REST Mirror ${r.status}`);
+      return 'rest-mirror';
+    })
+  );
+
+  // Canal 3: ntfy.sh Real-Time Stream (Cero Token — avisa en <1s a todos los equipos abiertos)
+  uploadPromises.push(
+    fetch(CLOUD_NTFY_BASE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      body: `ECODB:${JSON.stringify(payloadObj)}`,
+    }).then((r) => {
+      if (!r.ok) throw new Error(`ntfy ${r.status}`);
+      return 'ntfy-stream';
+    })
+  );
+
+  // Canal 4: GitHub Repository (Opcional, si el equipo tiene token conectado)
+  if (token) {
+    uploadPromises.push(
+      (async () => {
+        const getRes = await fetch(
+          `${GITHUB_API_BASE}/contents/${GITHUB_CHIPS_PATH}?ref=${GITHUB_REPO_BRANCH}`,
+          {
+            headers: buildGitHubHeaders(token),
+            cache: 'no-store',
+          }
+        );
+        let remoteSha = undefined;
+        if (getRes.status === 200) {
+          const meta = await getRes.json();
+          remoteSha = meta.sha;
+        }
+        const commitMsg = reasonNote
+          ? `chore(ic-db): ${reasonNote} (${payloadObj.chips.length} chips)`
+          : `chore(ic-db): sincronizar ${payloadObj.chips.length} chips desde Detector IC`;
+        const body = {
+          message: commitMsg,
+          content: encodeUtf8ToBase64(JSON.stringify(payloadObj, null, 2) + '\n'),
+          branch: GITHUB_REPO_BRANCH,
+        };
+        if (remoteSha) body.sha = remoteSha;
+        const putRes = await fetch(`${GITHUB_API_BASE}/contents/${GITHUB_CHIPS_PATH}`, {
+          method: 'PUT',
+          headers: {
+            ...buildGitHubHeaders(token),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        });
+        if (!putRes.ok) throw new Error(`GitHub ${putRes.status}`);
+        return 'github';
+      })()
+    );
   }
+
+  const results = await Promise.allSettled(uploadPromises);
+  const succeededChannels = results
+    .filter((r) => r.status === 'fulfilled')
+    .map((r) => r.value);
+
+  if (succeededChannels.length === 0) {
+    throw new Error(
+      'No hay conexión a internet en este momento. Tus chips están seguros en tu celular y se subirán automáticamente en cuanto regrese la señal.'
+    );
+  }
+
+  // Dejar estado local y caché de nube 100% alineados (0 pendientes de subir)
+  saveCloudCachedState({
+    ...payloadObj,
+    lastCheckedAt: nowIso,
+  });
+  saveCustomDatabase(payloadObj.chips);
+  saveLocalDeletedMap(merged.deleted);
+
+  return {
+    ok: true,
+    channels: succeededChannels,
+    totalCount: payloadObj.chips.length,
+    updatedAt: nowIso,
+    status: getCloudSyncStatus(),
+  };
+}
+
+// Sincronización bidireccional inteligente:
+// 1) Si en este celular (ej. iPhone 14 Pro) había sugerencias pendientes en el buzón local, o
+//    cambios ya hechos en localStorage (eco_custom_db_v1) que aún no están en la nube global,
+//    los sube automáticamente sin pedir tokens ni pasos extra.
+// 2) Descarga cualquier cambio hecho en otros equipos y actualiza todo al instante.
+export async function syncCloudDatabaseBidirectional(options = {}) {
+  const {
+    promotePending = true,
+    forcePushAllLocal = false,
+    reasonNote = '',
+    reason = 'Auto-sincronización desde celular',
+  } = options;
+  const finalReason = reasonNote || reason;
+
+  let promotedCount = 0;
+  if (promotePending) {
+    const pending = getPendingSuggestions();
+    if (Array.isArray(pending) && pending.length > 0) {
+      for (const sug of pending) {
+        if (sug && sug.code) {
+          addOrUpdateCustomChip(
+            {
+              code: sug.code,
+              storage: sug.storage || '64GB',
+              ram: sug.ram || null,
+              manufacturer: sug.manufacturer || 'Samsung',
+              type: sug.type || 'eMCP',
+              notes: sug.notes || '',
+            },
+            sug.isEdit && sug.originalCode ? sug.originalCode : null
+          );
+          promotedCount++;
+        }
+      }
+      if (promotedCount > 0) {
+        safeSetStorage(STORAGE_KEYS.PENDING_SUGGESTIONS, []);
+      }
+    }
+  }
+
+  const pullRes = await pullCloudDatabase();
+  const statusAfterPull = getCloudSyncStatus();
+
+  if (
+    statusAfterPull.unsyncedCount > 0 ||
+    promotedCount > 0 ||
+    (forcePushAllLocal && statusAfterPull.localCount > 0)
+  ) {
+    const countToUpload = statusAfterPull.unsyncedCount || statusAfterPull.localCount;
+    try {
+      const pushRes = await pushChangesToCloudDatabase(finalReason);
+      return {
+        ok: true,
+        pulled: Boolean(pullRes?.hasChanged),
+        pushed: true,
+        promotedCount,
+        uploadedCount: countToUpload,
+        totalCount: pushRes.totalCount,
+        cloudCount: pushRes.totalCount,
+        status: pushRes.status,
+      };
+    } catch {
+      return {
+        ok: Boolean(pullRes?.ok),
+        pulled: Boolean(pullRes?.hasChanged),
+        pushed: false,
+        promotedCount,
+        uploadedCount: 0,
+        totalCount: statusAfterPull.totalCustomCount,
+        cloudCount: statusAfterPull.cloudCount,
+        status: statusAfterPull,
+      };
+    }
+  }
+
+  return {
+    ok: Boolean(pullRes?.ok),
+    pulled: Boolean(pullRes?.hasChanged),
+    pushed: false,
+    promotedCount,
+    uploadedCount: 0,
+    totalCount: statusAfterPull.totalCustomCount,
+    cloudCount: statusAfterPull.cloudCount,
+    status: statusAfterPull,
+  };
+}
+
+// Suscripción en tiempo real (SSE) para que todos los celulares y PCs abiertos reciban
+// los nuevos chips al instante (<1 segundo) cuando el iPhone 14 Pro guarda un cambio.
+export function subscribeToCloudRealtime(onCloudUpdated) {
+  if (typeof window === 'undefined' || typeof window.EventSource === 'undefined') {
+    return () => {};
+  }
+
+  let es = null;
+  let reconnectTimer = null;
+  let closed = false;
+
+  const connect = () => {
+    if (closed) return;
+    try {
+      es = new window.EventSource(`${CLOUD_NTFY_BASE_URL}/sse`);
+      es.onmessage = (event) => {
+        if (!event?.data) return;
+        try {
+          const ev = JSON.parse(event.data);
+          if (ev && ev.event === 'message' && typeof ev.message === 'string') {
+            const rawJson = ev.message.startsWith('ECODB:') ? ev.message.slice(6) : ev.message;
+            const incoming = parseCloudPayload(JSON.parse(rawJson));
+            if (!incoming) return;
+
+            const prevCloud = getCloudCachedState();
+            const combined = combineMultipleCloudPayloads([prevCloud, incoming]);
+            const prevSerialized = JSON.stringify(
+              (prevCloud.chips || []).map((c) => `${c.code}:${c.storage}:${c.ram || ''}`)
+            );
+            const nextSerialized = JSON.stringify(
+              (combined.chips || []).map((c) => `${c.code}:${c.storage}:${c.ram || ''}`)
+            );
+
+            saveCloudCachedState({
+              ...combined,
+              lastCheckedAt: new Date().toISOString(),
+            });
+
+            if (prevSerialized !== nextSerialized && typeof onCloudUpdated === 'function') {
+              onCloudUpdated({
+                totalCount: combined.chips.length,
+                updatedBy: incoming.updatedBy || 'Otro equipo',
+              });
+            }
+          }
+        } catch {
+          // ignore malformed SSE event
+        }
+      };
+      es.onerror = () => {
+        try {
+          es.close();
+        } catch {}
+        if (!closed) {
+          reconnectTimer = setTimeout(connect, 15000);
+        }
+      };
+    } catch {
+      // ignore SSE blocked environments
+    }
+  };
+
+  connect();
+
+  return () => {
+    closed = true;
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    if (es) {
+      try {
+        es.close();
+      } catch {}
+    }
+  };
 }
 
 export function getAllEditableCatalog() {
   const custom = getCustomDatabase();
   const auto = getAutoLearnedDatabase();
   const seen = new Set();
+  const seenBase = new Set();
   const merged = [];
 
   for (const item of custom) {
     const k = normalizeCode(item.code);
     if (!k || seen.has(k)) continue;
     seen.add(k);
-    merged.push({ ...item, isCustom: true });
+    const base = k.split('-')[0];
+    if (base.length >= 6) seenBase.add(base);
+    merged.push({
+      ...item,
+      storage: item.storage || item.capacity,
+      manufacturer: item.manufacturer || item.brand,
+      notes: item.notes || item.commonModels || item.explanation || '',
+      isCustom: true,
+    });
   }
   for (const item of auto) {
     const k = normalizeCode(item.code);
-    if (!k || seen.has(k)) continue;
+    if (!k || seen.has(k) || seenBase.has(k.split('-')[0])) continue;
     seen.add(k);
     merged.push({ ...item, isAutoLearned: true });
   }
   for (const item of SEED_IC_CATALOG) {
     const k = normalizeCode(item.code);
-    if (!k || seen.has(k)) continue;
+    if (!k || seen.has(k) || seenBase.has(k.split('-')[0])) continue;
     seen.add(k);
     merged.push({
       ...item,
@@ -1965,13 +2247,27 @@ function enrichWithSeedMetadata(resultObj) {
 function decodeSingleCandidateOffline(q) {
   if (!q || q.length < 2) return null;
 
-  // 1. Base de Datos Propia del Admin (Eco Lógica García)
+  // 1. Base de Datos Propia y Nube Global del Admin (Eco Lógica García) — Máxima Prioridad
   const customList = getCustomDatabase();
-  const exactCustom = customList.find(
-    (c) => normalizeCode(c.code) === q || (c.partNumber && normalizeCode(c.partNumber) === q)
-  );
+  const qBase = q.split('-')[0];
+  const exactCustom = customList.find((c) => {
+    const cNorm = normalizeCode(c.code);
+    const pnNorm = c.partNumber ? normalizeCode(c.partNumber) : '';
+    if (cNorm === q || pnNorm === q) return true;
+    if (qBase.length >= 5 && (cNorm.split('-')[0] === qBase || (pnNorm && pnNorm.split('-')[0] === qBase))) {
+      return true;
+    }
+    return false;
+  });
   if (exactCustom) {
-    return { ...exactCustom, source: 'Base Eco Lógica García (Admin)' };
+    return enrichWithSeedMetadata({
+      ...exactCustom,
+      code: q,
+      partNumber: exactCustom.partNumber || exactCustom.code,
+      representativePart: exactCustom.partNumber || exactCustom.code,
+      isCustom: true,
+      source: 'Base Global Eco Lógica García',
+    });
   }
 
   // 2. Decodificación Exacta en Motor Industrial Offline MIC (@itxtech/fdnext-core — 25,325 chips)
@@ -1997,7 +2293,7 @@ function decodeSingleCandidateOffline(q) {
 
   // 3. Catálogo Semilla Curado y Auto-Aprendido (incluyendo todos los alias verificados con MIC)
   const autoList = getAutoLearnedDatabase();
-  const combinedSeed = [...autoList, ...SEED_IC_CATALOG];
+  const combinedSeed = [...customList, ...autoList, ...SEED_IC_CATALOG];
   const exactSeed = combinedSeed.find(
     (c) =>
       normalizeCode(c.code) === q ||
@@ -2048,6 +2344,7 @@ function decodeSingleCandidateOffline(q) {
           commonModels: c.commonModels || c.notes || '',
           notes: c.notes || c.commonModels || c.explanation || '',
           matchedFromPartial: true,
+          isCustom: Boolean(c.updatedAt),
           source: c.source || 'Catálogo Verificado',
         });
       }
@@ -2164,16 +2461,40 @@ export function searchChipsInstant(rawQuery, limit = 10) {
     };
   };
 
+  const customChips = getCustomDatabase();
+  const customMap = new Map();
+  for (const c of customChips) {
+    const k = normalizeCode(c.code);
+    if (k) {
+      customMap.set(k, c);
+      const b = k.split('-')[0];
+      if (b.length >= 5 && !customMap.has(b)) {
+        customMap.set(b, c);
+      }
+    }
+  }
+
   const pushUnique = (item) => {
     if (!item || !item.code) return;
     const key = normalizeCode(item.code);
+    const baseKey = key.split('-')[0];
     if (seen.has(key)) return;
     seen.add(key);
-    results.push(enrichWithUsage(item));
+    const customOverride = customMap.get(key) || (baseKey.length >= 5 ? customMap.get(baseKey) : null);
+    const mergedItem = customOverride
+      ? {
+          ...item,
+          storage: customOverride.storage || item.storage,
+          ram: customOverride.ram || item.ram,
+          manufacturer: customOverride.manufacturer || item.manufacturer,
+          type: customOverride.type || item.type,
+          notes: customOverride.notes || item.notes,
+          isCustom: true,
+          source: 'Base Global Eco Lógica García',
+        }
+      : item;
+    results.push(enrichWithUsage(mergedItem));
   };
-
-  const customChips = getCustomDatabase();
-  const customMap = new Map(customChips.map((c) => [normalizeCode(c.code), c]));
 
   // 1. Primero buscar en la Base Oficial / Global editada por el Admin y en el perfil de uso real
   for (const q of candidates) {

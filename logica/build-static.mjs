@@ -72,7 +72,7 @@ const assetFiles = fs.existsSync(distAssetsDir)
   ? fs.readdirSync(distAssetsDir).map((f) => `./assets/${f}`)
   : [];
 
-const swContent = `const CACHE_NAME = 'ecologica-garcia-ic-v22';
+const swContent = `const CACHE_NAME = 'ecologica-garcia-ic-v23';
 const ASSETS = [
   './',
   './index.html',
@@ -85,9 +85,16 @@ ${assetFiles.map((a) => `  '${a}',`).join('\n')}
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('activate', (event) => {
@@ -102,12 +109,20 @@ self.addEventListener('fetch', (event) => {
   if (
     event.request.method !== 'GET' ||
     !event.request.url.startsWith(self.location.origin) ||
-    event.request.url.includes('custom-chips.json')
+    event.request.url.includes('custom-chips.json') ||
+    event.request.url.includes('restful-api.dev') ||
+    event.request.url.includes('ntfy.sh')
   ) {
     return;
   }
+  const isDocRequest =
+    event.request.mode === 'navigate' ||
+    event.request.destination === 'document' ||
+    event.request.url.endsWith('/') ||
+    event.request.url.endsWith('/index.html');
+
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, isDocRequest ? { cache: 'no-cache' } : undefined)
       .then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200 && event.request.url.startsWith(self.location.origin)) {
           const copy = networkResponse.clone();

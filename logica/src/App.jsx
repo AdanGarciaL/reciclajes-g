@@ -23,6 +23,8 @@ import {
   TrendingUp,
   Zap,
   Box,
+  Cloud,
+  RefreshCw,
 } from 'lucide-react';
 import {
   decodeChipOffline,
@@ -37,6 +39,10 @@ import {
   getAdaptiveQuickPrefixes,
   getUsageSummary,
   pullCloudDatabase,
+  pushChangesToCloudDatabase,
+  syncCloudDatabaseBidirectional,
+  subscribeToCloudRealtime,
+  getCloudSyncStatus,
   safeGetStorage,
   safeSetStorage,
 } from './services/icEngine';
@@ -375,22 +381,99 @@ export default function App() {
   const [editingChipTarget, setEditingChipTarget] = useState(null);
   const [catalogVersion, setCatalogVersion] = useState(0);
   const [dbStats, setDbStats] = useState(() => getDatabaseStats());
+  const [cloudSyncStatus, setCloudSyncStatus] = useState(() => getCloudSyncStatus());
+  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
 
-  // Sincronización automática en segundo plano con la Base Global (para todos los celulares y PCs)
+  function refreshCatalogStateAfterSync(toastText = '') {
+    setDbStats(getDatabaseStats());
+    setCloudSyncStatus(getCloudSyncStatus());
+    setCatalogVersion((v) => v + 1);
+    setRecentHistory((prev) => {
+      if (!Array.isArray(prev) || prev.length === 0) return getMostSearchedChips(6);
+      const updated = prev.map((x) => {
+        const verified = x?.code ? decodeChipOffline(x.code) : null;
+        return verified
+          ? {
+              ...x,
+              storage: verified.storage || x.storage || x.capacity || '64GB',
+              ram: verified.ram || x.ram,
+              manufacturer: verified.manufacturer || x.manufacturer || x.brand || 'Samsung',
+              type: verified.type || x.type,
+              isCustom: Boolean(verified.isCustom || verified.source === 'custom-db'),
+            }
+          : x;
+      });
+      safeSetStorage('eco_recent_history_v1', updated);
+      return updated;
+    });
+    if (toastText) {
+      setToastMsg(toastText);
+      setTimeout(() => setToastMsg(''), 3400);
+    }
+  }
+
+  async function handleInstantCloudSync() {
+    if (isCloudSyncing) return;
+    setIsCloudSyncing(true);
+    try {
+      const currentStatus = getCloudSyncStatus();
+      if (currentStatus.unsyncedCount > 0 || currentStatus.localCount > 0) {
+        const res = await syncCloudDatabaseBidirectional({
+          promotePending: true,
+          forcePushAllLocal: true,
+          reasonNote: 'sincronización directa desde cabecera',
+        });
+        if (res?.pushed) {
+          refreshCatalogStateAfterSync(
+            `☁️ ¡Sincronizado! ${res.totalCount} chip(s) activos en todos los equipos`
+          );
+          return;
+        }
+      }
+      const res = await syncCloudDatabaseBidirectional({ promotePending: true });
+      if (res?.pushed) {
+        refreshCatalogStateAfterSync(
+          `☁️ ¡Sincronizado! Tus ${res.totalCount} chips actualizados ya están en todos los equipos`
+        );
+      } else if (res?.pulled) {
+        refreshCatalogStateAfterSync(
+          `☁️ Base actualizada (${res.cloudCount} chips sincronizados)`
+        );
+      } else {
+        refreshCatalogStateAfterSync(
+          `☁️ Base Global al día (${res?.cloudCount || getDatabaseStats().customCount} chips sincronizados)`
+        );
+      }
+    } catch {
+      setToastMsg('Modo offline activo · Tus chips están seguros en este equipo');
+      setTimeout(() => setToastMsg(''), 2500);
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  }
+
+  // Sincronización bidireccional automática y en tiempo real con la Base Global (iPhone 14 Pro ↔ Todos los equipos y PWAs)
   useEffect(() => {
     let cancelled = false;
     let lastCheckMs = 0;
 
     async function syncFromGlobalCloud(force = false) {
       const now = Date.now();
-      if (!force && now - lastCheckMs < 45000) return;
+      if (!force && now - lastCheckMs < 20000) return;
       lastCheckMs = now;
       try {
-        const res = await pullCloudDatabase();
+        const res = await syncCloudDatabaseBidirectional({ promotePending: true });
         if (cancelled || !res?.ok) return;
         setDbStats(getDatabaseStats());
-        if (res.hasChanged) {
-          setCatalogVersion((v) => v + 1);
+        setCloudSyncStatus(getCloudSyncStatus());
+        if (res.pushed) {
+          refreshCatalogStateAfterSync(
+            `☁️ ¡Sincronizado! Tus ${res.totalCount} chips actualizados ya están en todos los equipos`
+          );
+        } else if (res.pulled || res.promotedCount > 0) {
+          refreshCatalogStateAfterSync(
+            res.pulled ? `☁️ Nuevas actualizaciones recibidas (${res.cloudCount} chips)` : ''
+          );
         }
       } catch {
         // Continúa 100% offline sin interrumpir al usuario
@@ -399,9 +482,23 @@ export default function App() {
 
     syncFromGlobalCloud(true);
 
-    function handleVisibility() {
+    // Suscripción en tiempo real (SSE) para que cualquier cambio desde el iPhone 14 Pro aparezca al instante en los demás dispositivos
+    const unsubscribeRealtime = subscribeToCloudRealtime((liveRes) => {
+      if (cancelled) return;
+      refreshCatalogStateAfterSync(
+        `☁️ Actualización en vivo recibida (${liveRes?.cloudCount || ''} chips)`
+      );
+    });
+
+    const intervalId = setInterval(() => {
       if (document.visibilityState === 'visible') {
         syncFromGlobalCloud(false);
+      }
+    }, 25000);
+
+    function handleVisibility() {
+      if (document.visibilityState === 'visible') {
+        syncFromGlobalCloud(true);
       }
     }
     function handleOnline() {
@@ -412,6 +509,8 @@ export default function App() {
     window.addEventListener('online', handleOnline);
     return () => {
       cancelled = true;
+      clearInterval(intervalId);
+      unsubscribeRealtime();
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('online', handleOnline);
     };
@@ -855,7 +954,7 @@ export default function App() {
                 <span className="hidden sm:flex items-center gap-1.5 text-[10px] text-emerald-200/75 font-mono font-medium truncate mt-0.5">
                   <span className="truncate">
                     {dbStats.totalOfflineCount.toLocaleString()} IC
-                    <span className="lg:hidden"> · Detector de Capacidad</span>
+                    {dbStats.customCount > 0 ? ` · ${dbStats.customCount} en Nube` : ''}
                   </span>
                   <span className="hidden lg:inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-amber-400/10 border border-amber-300/30 text-[9px] text-amber-200 font-semibold shrink-0">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />
@@ -980,11 +1079,43 @@ export default function App() {
 
               <button
                 type="button"
+                onClick={handleInstantCloudSync}
+                disabled={isCloudSyncing}
+                title={
+                  (cloudSyncStatus.unsyncedCount || 0) > 0
+                    ? `Sincronizar ahora ${cloudSyncStatus.unsyncedCount} chip(s) con todos los equipos`
+                    : `Base Global sincronizada en todos los celulares y PCs (${dbStats.customCount || 0} chips personalizados) · Toca para actualizar`
+                }
+                className={`px-2 sm:px-2.5 py-1.5 rounded-xl font-black text-xs flex items-center gap-1 transition shrink-0 ${
+                  (cloudSyncStatus.unsyncedCount || 0) > 0
+                    ? 'bg-amber-400 hover:bg-amber-300 text-black border border-amber-200 shadow-[0_0_16px_rgba(251,191,36,0.45)]'
+                    : 'pro-inset hover:border-emerald-400/50 text-emerald-300'
+                }`}
+              >
+                {isCloudSyncing ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-300" />
+                ) : (
+                  <Cloud className="w-3.5 h-3.5" />
+                )}
+                <span className="hidden lg:inline">
+                  {(cloudSyncStatus.unsyncedCount || 0) > 0
+                    ? `Subir (${cloudSyncStatus.unsyncedCount})`
+                    : 'Nube'}
+                </span>
+                {dbStats.customCount > 0 && (cloudSyncStatus.unsyncedCount || 0) === 0 && (
+                  <span className="font-mono text-[10px] text-emerald-400">
+                    {dbStats.customCount}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
                 onClick={openAddModal}
                 title={
                   (dbStats.unsyncedCount || 0) > 0
-                    ? `Tienes ${dbStats.unsyncedCount} chip(s) en este celular sin subir a la Base Global`
-                    : 'Agregar o editar chips IC / Base Global'
+                    ? `Tienes ${dbStats.unsyncedCount} chip(s) en este celular listos para sincronizar`
+                    : 'Agregar o editar chips IC / Base Global Sincronizada'
                 }
                 className="relative px-2 sm:px-2.5 py-1.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs flex items-center gap-1 shadow-[0_0_16px_rgba(52,211,153,0.35)] transition"
               >
@@ -1310,8 +1441,13 @@ export default function App() {
 
                       {/* Fabricante y RAM */}
                       <div className="min-w-0">
-                        <div className="font-black text-sm sm:text-base text-white truncate">
-                          {activeResult.manufacturer}
+                        <div className="font-black text-sm sm:text-base text-white truncate flex items-center gap-1.5 flex-wrap">
+                          <span className="truncate">{activeResult.manufacturer}</span>
+                          {(activeResult.isCustom || activeResult.source === 'custom-db') && (
+                            <span className="px-1.5 py-0.5 rounded bg-emerald-400/20 border border-emerald-400/45 text-emerald-300 font-mono font-black text-[10px] shrink-0">
+                              ☁️ ACTUALIZADO
+                            </span>
+                          )}
                         </div>
                         <div className="text-[11px] font-mono text-gray-300 truncate">
                           {hasDualMemoryInChip ? `RAM ${activeResult.ram}` : 'Sin RAM'}
@@ -2040,8 +2176,7 @@ export default function App() {
         initialCode={activeResult ? '' : query}
         initialEditChip={editingChipTarget}
         onDatabaseUpdated={() => {
-          setDbStats(getDatabaseStats());
-          setCatalogVersion((v) => v + 1);
+          refreshCatalogStateAfterSync();
           if (query) {
             const refreshed = decodeChipOffline(query);
             if (refreshed) setActiveResult(refreshed);
